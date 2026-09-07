@@ -8,6 +8,7 @@
 
   var G = DR.game = {};
   var canvas, ctx, dpr = 1;
+  var canvas3d = null, r3dReady = false;
   var mode = 'boot';            // boot | intro | menu | play | dead | over | complete
   var g = null;                 // active run state
   var lastTs = 0, acc = 0, tGlobal = 0;
@@ -25,6 +26,7 @@
   G.init = function (cv) {
     canvas = cv;
     ctx = canvas.getContext('2d', { alpha: false });
+    canvas3d = document.getElementById('canvas3d');
     resize();
     window.addEventListener('resize', resize);
     DR.ui.init();
@@ -96,6 +98,11 @@
     DR.ui.fade(true);
     setTimeout(function () {
       newRun(id);
+      canvas3d.hidden = false;
+      canvas.hidden = true;
+      if (R3D && R3D.init) {
+        r3dReady = R3D.init(canvas3d);
+      }
       DR.ui.hideAll();
       DR.ui.setHudVisible(true);
       DR.ui.buildLives(g.maxLives);
@@ -125,6 +132,9 @@
   G.quitToMenu = function () {
     DR.ui.fade(true);
     setTimeout(function () {
+      canvas3d.hidden = true;
+      canvas.hidden = false;
+      r3dReady = false;
       startAttract();
       DR.ui.setHudVisible(false);
       DR.ui.setBoss(null);
@@ -968,6 +978,10 @@
 
   function render() {
     if (!g) return;
+    if (r3dReady && R3D && R3D.render) {
+      R3D.render(g);
+      return;
+    }
     ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
     var t = g.time;
 

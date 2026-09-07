@@ -11,6 +11,7 @@
 </head>
 <body>
 <div id="stage">
+  <canvas id="canvas3d" width="960" height="540" style="position:absolute;top:0;left:0;"></canvas>
   <canvas id="game" width="960" height="540" aria-label="Ducky Run game"></canvas>
 
   <!-- ======================= HUD ======================= -->
@@ -164,6 +165,7 @@
   <div id="rotate" class="rotate">Rotate your device for the best run 🦆</div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/util.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/input.js"></script>
@@ -175,6 +177,7 @@
 <script src="js/boss.js"></script>
 <script src="js/intro.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/renderer-3d.js"></script>
 <script src="js/game.js"></script>
 <script src="js/main.js"></script>
 </body>
