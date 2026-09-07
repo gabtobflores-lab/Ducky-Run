@@ -3,7 +3,7 @@ const R3D = {};
   let scene, camera, renderer, duck, lanes = [], obstacles = {};
 
   R3D.init = function(canvas) {
-    if (!window.THREE) { console.error('THREE not loaded'); return false; }
+    if (!window.THREE) { console.warn('THREE.js not available - falling back to 2D'); return false; }
     
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87ceeb);

@@ -98,10 +98,18 @@
     DR.ui.fade(true);
     setTimeout(function () {
       newRun(id);
-      canvas3d.hidden = false;
-      canvas.hidden = true;
       if (R3D && R3D.init) {
         r3dReady = R3D.init(canvas3d);
+        if (r3dReady) {
+          canvas3d.hidden = false;
+          canvas.hidden = true;
+        } else {
+          canvas3d.hidden = true;
+          canvas.hidden = false;
+        }
+      } else {
+        canvas3d.hidden = true;
+        canvas.hidden = false;
       }
       DR.ui.hideAll();
       DR.ui.setHudVisible(true);
