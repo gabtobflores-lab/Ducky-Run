@@ -27,6 +27,8 @@
     canvas = cv;
     ctx = canvas.getContext('2d', { alpha: false });
     canvas3d = document.getElementById('canvas3d');
+    canvas3d.hidden = true;
+    canvas.hidden = false;
     resize();
     window.addEventListener('resize', resize);
     DR.ui.init();
@@ -986,7 +988,7 @@
 
   function render() {
     if (!g) return;
-    if (r3dReady && R3D && R3D.render) {
+    if (r3dReady && R3D && R3D.render && mode === 'play') {
       R3D.render(g);
       return;
     }
