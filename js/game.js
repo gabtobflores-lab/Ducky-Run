@@ -25,8 +25,14 @@
      ============================================================ */
   G.init = function (cv) {
     canvas = cv;
-    ctx = canvas.getContext('2d', { alpha: false });
+    ctx = canvas.getContext('2d', { alpha: true });
     canvas3d = document.getElementById('canvas3d');
+    try {
+      r3dReady = !!(window.R3D && R3D.init(canvas3d));
+    } catch (e) {
+      console.warn('[3D] init failed:', e.message);
+      r3dReady = false;
+    }
     canvas3d.hidden = true;
     canvas.hidden = false;
     resize();
@@ -44,6 +50,10 @@
     var w = Math.max(1, Math.round(rect.width * dpr));
     var h = Math.max(1, Math.round(rect.height * dpr));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    if (r3dReady) {
+      canvas3d.width = w; canvas3d.height = h;
+      R3D.resize(w, h);
+    }
   }
 
   /* ============================================================
@@ -100,24 +110,7 @@
     DR.ui.fade(true);
     setTimeout(function () {
       newRun(id);
-      if (R3D && R3D.init) {
-        try {
-          r3dReady = R3D.init(canvas3d);
-        } catch (e) {
-          console.error('3D init error:', e.message);
-          r3dReady = false;
-        }
-        if (r3dReady) {
-          canvas3d.hidden = false;
-          canvas.hidden = true;
-        } else {
-          canvas3d.hidden = true;
-          canvas.hidden = false;
-        }
-      } else {
-        canvas3d.hidden = true;
-        canvas.hidden = false;
-      }
+      if (r3dReady) { canvas3d.hidden = false; R3D.setTheme(g.level); }
       DR.ui.hideAll();
       DR.ui.setHudVisible(true);
       DR.ui.buildLives(g.maxLives);
@@ -147,10 +140,8 @@
   G.quitToMenu = function () {
     DR.ui.fade(true);
     setTimeout(function () {
-      canvas3d.hidden = true;
-      canvas.hidden = false;
-      r3dReady = false;
       startAttract();
+      if (r3dReady) { canvas3d.hidden = false; R3D.setTheme(g.level); }
       DR.ui.setHudVisible(false);
       DR.ui.setBoss(null);
       DR.ui.show('menu');
@@ -201,6 +192,7 @@
       renderIntro();
       if (DR.intro.done()) {
         startAttract();
+        if (r3dReady) { canvas3d.hidden = false; R3D.setTheme(g.level); }
         DR.ui.show('menu');
         DR.ui.setHudVisible(false);
         DR.audio.music('menu');
@@ -988,17 +980,25 @@
      ============================================================ */
   function renderIntro() {
     ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+    ctx.clearRect(0, 0, W, H);
     DR.intro.draw(ctx);
   }
 
   function render() {
     if (!g) return;
-    if (r3dReady && R3D && R3D.render && mode === 'play') {
-      R3D.render(g);
-      return;
-    }
     ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
     var t = g.time;
+
+    if (r3dReady) {
+      R3D.render(g, mode);
+      ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      ctx.translate(248, -18);
+      FX.drawPops(ctx);
+      ctx.restore();
+      drawOverlays(t);
+      return;
+    }
 
     ctx.save();
     if (g.shake > 0.2) {
@@ -1035,7 +1035,11 @@
 
     ctx.restore();
 
-    /* screen effects */
+    drawOverlays(t);
+  }
+
+  /* screen-space effects — shared by the 2D and 3D paths */
+  function drawOverlays(t) {
     if (vignette > 0) {
       ctx.save();
       var vg = ctx.createRadialGradient(W / 2, H / 2, H * .28, W / 2, H / 2, H * .78);
