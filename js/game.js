@@ -101,7 +101,12 @@
     setTimeout(function () {
       newRun(id);
       if (R3D && R3D.init) {
-        r3dReady = R3D.init(canvas3d);
+        try {
+          r3dReady = R3D.init(canvas3d);
+        } catch (e) {
+          console.error('3D init error:', e.message);
+          r3dReady = false;
+        }
         if (r3dReady) {
           canvas3d.hidden = false;
           canvas.hidden = true;
