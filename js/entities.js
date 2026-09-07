@@ -133,7 +133,10 @@
       }
       switch (e.kind) {
         case 'frog': {
-          e.hopT -= dt;
+          // Never hop right on top of the duck — a lane change the player
+          // cannot react to is not a challenge, it's a coin flip.
+          var relX = e.x - g.camX;
+          if (relX > 250 || relX < -40) e.hopT -= dt;
           if (e.hopT < .32 && e.hopT > 0) e.squat = U.clamp((.32 - e.hopT) / .32, 0, 1);
           if (e.hopT <= 0) {
             var dir = e.lane === 0 ? 1 : e.lane === 2 ? -1 : (Math.random() < .5 ? -1 : 1);
@@ -235,11 +238,11 @@
      Guarantees at least one clear path at every slot.
      ============================================================ */
   var SP = DR.spawner = {};
-  var nextX = 0, slotCount = 0, sinceHat = 0, sincePower = 0, sinceEgg = 0, lastLanes = [];
+  var nextX = 0, slotCount = 0, sinceHat = 0, sincePower = 0, sinceEgg = 0, prevBlocked = [];
 
   SP.reset = function (g) {
     nextX = g.camX + 1100;          // breathing room at the start of a level
-    slotCount = 0; sinceHat = 0; sincePower = 0; sinceEgg = 0; lastLanes = [];
+    slotCount = 0; sinceHat = 0; sincePower = 0; sinceEgg = 0; prevBlocked = [];
   };
 
   function freeLanes(blocked) {
@@ -275,20 +278,26 @@
       var x = nextX;
       slotCount++;
 
-      /* ---- hazards ---- */
+      /* ---- hazards ----
+         Fairness rule: at least one lane must stay clear across this slot AND
+         the previous one, so a run is always survivable on lane changes alone.
+         Jumping and dashing are then a skill layer for score, not a tax. */
       var blocked = [];
       if (Math.random() < lvl.hazard) {
         var howMany = (Math.random() < lvl.doubleLane && slotCount > 3) ? 2 : 1;
-        var lanes = [0, 1, 2].sort(function () { return Math.random() - .5; }).slice(0, howMany);
+        var order = [0, 1, 2].sort(function () { return Math.random() - .5; });
+        var lanes = [];
+        for (var c = 0; c < order.length && lanes.length < howMany; c++) {
+          if (freeLanes(prevBlocked.concat(lanes, [order[c]])).length >= 1) lanes.push(order[c]);
+        }
         for (var i = 0; i < lanes.length; i++) {
           var kind = U.pick(lvl.obstacles);
-          if (kind === 'bounce') { // bouncers are a treat, not a wall
-            if (Math.random() > .35) kind = U.pick(lvl.obstacles.filter(function (k) { return k !== 'bounce'; }));
+          if (kind === 'bounce' && Math.random() > .35) {
+            kind = U.pick(lvl.obstacles.filter(function (k) { return k !== 'bounce'; }));
           }
-          var ob = E.make('obstacle', kind, lanes[i], x + (i ? U.rand(-40, 40) : 0));
-          g.entities.push(ob);
+          g.entities.push(E.make('obstacle', kind, lanes[i], x + (i ? U.rand(-40, 40) : 0)));
           if (kind !== 'bounce') blocked.push(lanes[i]);
-          if (kind === 'bounce') {
+          else {
             // reward for using it: a hat arc directly above
             for (var b = 0; b < 5; b++) {
               g.entities.push(E.make('pickup', 'hat', lanes[i], x + 30 + b * 46, { yOff: 60 + Math.sin(b / 4 * Math.PI) * 70 }));
@@ -297,8 +306,11 @@
         }
       }
 
-      var free = freeLanes(blocked);
+      // lanes that stay walkable through both this slot and the last one
+      var free = freeLanes(prevBlocked.concat(blocked));
+      if (!free.length) free = freeLanes(blocked);
       if (!free.length) free = [1];
+      prevBlocked = blocked;
 
       /* ---- enemies ---- */
       if (Math.random() < lvl.enemy && slotCount > 2) {

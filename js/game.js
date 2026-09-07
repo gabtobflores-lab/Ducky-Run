@@ -371,7 +371,7 @@
         var fb = 400 * g.flawless;
         g.score += fb;
         DR.audio.play('unlock');
-        FX.pop(DR.PLAYER_X + 40, playerY(p) - 96, 'FLAWLESS +' + U.fmt(fb), '#41d6c3', 24);
+        FX.pop(DR.PLAYER_X + 40, playerY(p) - 96, 'FLAWLESS +' + U.fmt(fb), '#41d6c3', 24, true);
         DR.ui.toast('FLAWLESS ×' + g.flawless, '#41d6c3');
       }
     }
@@ -603,7 +603,7 @@
         e.x += 190; e.flash = 1; e.vx = 130; e.staggerT = 0.6;
         DR.audio.play('deny');
         FX.impact(DR.PLAYER_X + 26, playerY(p) - 24, '#b8c6d6');
-        FX.pop(DR.PLAYER_X + 40, playerY(p) - 72, 'TOO TOUGH!', '#b8c6d6', 16);
+        FX.pop(DR.PLAYER_X + 40, playerY(p) - 72, 'TOO TOUGH!', '#b8c6d6', 16, true);
         return;
       }
       damage(e);
@@ -655,7 +655,7 @@
       var dmg = p.duck.id === 'knight' ? 2 : 1;
       if (DR.bossSys.hit(b, g, dmg)) {
         DR.ui.bossHitFlash();
-        FX.pop(DR.PLAYER_X + 60, playerY(p) - 90, dmg > 1 ? 'CRITICAL!' : 'HIT!', '#ffd447', 24);
+        FX.pop(DR.PLAYER_X + 60, playerY(p) - 90, dmg > 1 ? 'CRITICAL!' : 'HIT!', '#ffd447', 24, true);
         p.vy = Math.max(p.vy, 260);
       }
       return;
@@ -679,7 +679,7 @@
         DR.audio.play('hat', Math.min(p.combo - 1, 9));
         FX.collect(DR.PLAYER_X + (e.x - g.camX), DR.laneY(e.lane) - e.yOff - e.h / 2, '#ffd447');
         if (p.combo % 5 === 0 && p.combo <= 20) {
-          FX.pop(sx + 46, sy - 34, mult.toFixed(1) + '× COMBO', '#ffae2b', 24);
+          FX.pop(sx + 46, sy - 34, mult.toFixed(1) + '× COMBO', '#ffae2b', 24, true);
           FX.ring(sx, sy, '#ffae2b', 22, .42);
         }
         break;
@@ -690,7 +690,7 @@
         DR.audio.play('egg');
         FX.collect(DR.PLAYER_X + (e.x - g.camX), DR.laneY(e.lane) - e.yOff - e.h / 2, '#41d6c3');
         FX.feathers(DR.PLAYER_X, sy, 6, ['#fff6dd', '#ffe1ef', '#41d6c3']);
-        FX.pop(sx + 30, sy - 20, '+' + eggVal, '#41d6c3', 22);
+        FX.pop(sx + 30, sy - 20, '+' + eggVal, '#41d6c3', 22, true);
         break;
       }
       case 'shield':
@@ -740,6 +740,7 @@
   function damage(src) {
     var p = g.player;
     if (p.invuln > 0 || p.dying) return;
+    g.lastHitBy = src ? (src.kind === 'proj' ? 'proj:' + src.art : src.kind || src.id || '?') : '?';
     if (g.powers.boost.t > 0) return;   // turbo makes you invincible
 
     if (p.shield) {
@@ -749,7 +750,7 @@
       DR.audio.play('shieldBreak');
       FX.ring(DR.PLAYER_X, playerY(p) - 26, '#41d6c3', 24, .5);
       FX.burst(DR.PLAYER_X, playerY(p) - 26, 22, { color: ['#41d6c3', '#fff'], shape: 'shard', add: true, spMax: 340, lifeMax: .7 });
-      FX.pop(DR.PLAYER_X, playerY(p) - 76, 'SHIELD!', '#41d6c3', 22);
+      FX.pop(DR.PLAYER_X, playerY(p) - 76, 'SHIELD!', '#41d6c3', 22, true);
       g.shake = Math.max(g.shake, 10);
       g.hitstop = Math.max(g.hitstop, .07);
       return;
@@ -768,7 +769,7 @@
     DR.audio.play('hurt');
     FX.feathers(DR.PLAYER_X, playerY(p) - 26, 16, [p.duck.look.body, '#fff', '#ffae2b']);
     FX.burst(DR.PLAYER_X, playerY(p) - 26, 16, { color: ['#ff5f6d', '#fff'], shape: 'spark', add: true, spMax: 420 });
-    FX.pop(DR.PLAYER_X, playerY(p) - 80, 'OUCH!', '#ff5f6d', 26);
+    FX.pop(DR.PLAYER_X, playerY(p) - 80, 'OUCH!', '#ff5f6d', 26, true);
     DR.ui.refreshLives(g.lives);
 
     if (g.lives <= 0) {
@@ -818,11 +819,11 @@
     if (e.lane === p.lane && p.py > 24) {
       g.dodges++;
       g.score += 30;
-      FX.pop(DR.PLAYER_X - 30, sy, 'AIR DODGE +30', '#8fd3ff', 17);
+      FX.pop(DR.PLAYER_X - 30, sy, 'AIR DODGE +30', '#8fd3ff', 17, true);
     } else if (e.lane === p.lastLane && (g.time - (p.laneSwitchAt || -9)) < 0.5) {
       g.dodges++;
       g.score += 60;
-      FX.pop(DR.PLAYER_X - 30, sy, 'CLOSE CALL +60', '#ffae2b', 18);
+      FX.pop(DR.PLAYER_X - 30, sy, 'CLOSE CALL +60', '#ffae2b', 18, true);
       FX.burst(DR.PLAYER_X - 20, sy + 40, 6, { color: ['#ffae2b', '#fff'], shape: 'spark', add: true, spMax: 200, lifeMax: .3 });
     }
   }
@@ -866,7 +867,7 @@
       DR.ui.refreshLives(g.lives);
     }
     DR.audio.play('win');
-    FX.pop(W / 2, 240, 'BOSS DOWN +' + U.fmt(bonus), '#ffd447', 30);
+    FX.pop(W / 2, 240, 'BOSS DOWN +' + U.fmt(bonus), '#ffd447', 30, true);
     DR.ui.toast('BOSS DOWN!\n+1 LIFE', '#ffd447');
     nextZone();
     DR.audio.music(g.level.music);

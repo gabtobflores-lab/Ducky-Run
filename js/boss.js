@@ -8,11 +8,11 @@
   'use strict';
   var U = DR.util, E = DR.ENT;
 
-  var HOME_X = 762, HOME_Y = 232;
+  var HOME_X = 748, HOME_Y = 250;
 
   var DEFS = {
     honker: {
-      name: 'HONKER THE GOOSE', art: 'honker', hp: 5, scale: 1.05,
+      name: 'HONKER THE GOOSE', art: 'honker', hp: 5, scale: 0.92,
       color: '#e6eaef', taunt: 'HONK!',
       script: [
         { m: 'volley', art: 'feather', lanes: 2, n: 3, tell: .6, dur: 1.0, speed: 380 },
@@ -34,7 +34,7 @@
       ]
     },
     mecha: {
-      name: 'RUBBER MECHA-DUCK', art: 'mecha', hp: 7, scale: 1.0,
+      name: 'RUBBER MECHA-DUCK', art: 'mecha', hp: 7, scale: 0.95,
       color: '#ffd447', taunt: 'SQUEAK!',
       script: [
         { m: 'volley', art: 'bubble', lanes: 3, n: 2, tell: .5, dur: 1.2, speed: 340, stagger: .3 },
@@ -46,7 +46,7 @@
       ]
     },
     drake: {
-      name: 'THE THUNDER DRAKE', art: 'drake', hp: 8, scale: 1.0,
+      name: 'THE THUNDER DRAKE', art: 'drake', hp: 8, scale: 0.9,
       color: '#8fd3ff', taunt: 'KRAKOOM!',
       script: [
         { m: 'bolt', lanes: 2, tell: .8, dur: 1.1 },
@@ -58,7 +58,7 @@
       ]
     },
     gander: {
-      name: 'THE GOLDEN GANDER', art: 'gander', hp: 10, scale: 1.05,
+      name: 'THE GOLDEN GANDER', art: 'gander', hp: 10, scale: 0.93,
       color: '#ffd447', taunt: 'BOW BEFORE ME!',
       script: [
         { m: 'volley', art: 'feather', lanes: 3, n: 3, tell: .46, dur: 1.2, speed: 480, stagger: .24 },
@@ -145,18 +145,22 @@
 
   function fireVolley(b, g, mv, idx) {
     var lanes = mv._lanes || (mv._lanes = laneSet(mv.lanes, g));
+    // A volley that covers every lane at once is undodgeable, so lanes are
+    // always spaced far enough apart to read as a wave.
+    var stagger = mv.stagger || 0;
+    if (lanes.length >= 3) stagger = Math.max(stagger, 0.3);
     lanes.forEach(function (ln, i) {
       var art = mv.art;
       var p = E.makeProj(ln, g.camX + (b.x - DR.PLAYER_X) - 40, {
         vx: projSpeed(mv, b, g),
         art: art,
-        yOff: art === 'bolt' ? 30 : U.rand(18, 64),
+        yOff: U.rand(10, 40),
         w: art === 'bubble' ? 26 : 22, h: art === 'bubble' ? 26 : 22,
         r: art === 'bubble' ? 13 : undefined,
         spin: art === 'feather' ? 5 : 2,
         color: b.def.color
       });
-      if (mv.stagger) p.x += i * mv.stagger * 320;
+      if (stagger) p.x += i * stagger * 1000;
       g.entities.push(p);
     });
     DR.audio.play('bossShoot');

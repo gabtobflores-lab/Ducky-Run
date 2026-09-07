@@ -101,9 +101,9 @@
     },
 
     farm: {
-      sky: ['#ffd08a', '#ffe9b0', '#fff6dd'],
+      sky: ['#ffd08a', '#ffe9b0', '#d8bd77'],
       path: '#6b4423', pathTop: '#f2d89b', pathEdge: '#33200c', dirt: '#43280f',
-      deep: '#33190a', fog: 'rgba(255,210,140,.10)', tint: '#6b4423',
+      deep: '#2c2008', fog: 'rgba(255,210,140,.10)', tint: '#6b4423',
       far: function (ctx, camX, t) {
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = radial(ctx, 'farmSun', 200, 130, 10, 150, 'rgba(255,240,190,.9)', 'rgba(255,200,120,0)');
@@ -137,6 +137,20 @@
           ctx.fillStyle = 'rgba(109,68,35,.5)';
           ctx.fillRect(x, 292, 8, 42);
           ctx.fillRect(x - 24, 300, 56, 5);
+        });
+        // hay bales break up the field between the paths
+        tile(camX, .68, 236, function (x, i) {
+          var y = 316 + (i % 2) * 104;
+          ctx.save();
+          ctx.globalAlpha = .55;
+          ctx.fillStyle = '#d9b45b';
+          U.roundRect(ctx, x - 22, y, 44, 26, 8); ctx.fill();
+          ctx.strokeStyle = 'rgba(90,58,26,.6)'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x - 14, y); ctx.lineTo(x - 14, y + 26);
+          ctx.moveTo(x + 6, y); ctx.lineTo(x + 6, y + 26);
+          ctx.stroke();
+          ctx.restore();
         });
       },
       fore: function (ctx, camX, t) {

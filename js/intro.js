@@ -200,7 +200,7 @@
       var sc2 = 1 + (1 - k2) * 0.5;
       var sh2 = t > 1.62 && t < 1.86 ? (1.86 - t) * 46 : 0;
       ctx.save();
-      ctx.translate(x2 + U.rand(-sh2, sh2) * .3, 322 + U.rand(-sh2, sh2) * .2);
+      ctx.translate(x2 + U.rand(-sh2, sh2) * .3, 334 + U.rand(-sh2, sh2) * .2);
       ctx.scale(sc2, sc2);
       letterBlock(ctx, 'RUN', 0, 0, 96, '#ffffff', '#123a55', 34);
       ctx.restore();
@@ -210,7 +210,7 @@
     if (t > 2.05 && t < 3.3) {
       var sk = (t - 2.05) / 1.25;
       ctx.save();
-      ctx.beginPath(); ctx.rect(120, 175, 720, 210); ctx.clip();
+      ctx.beginPath(); ctx.rect(120, 172, 720, 222); ctx.clip();
       ctx.globalCompositeOperation = 'lighter';
       var lx = 60 + sk * 900;
       var lg = ctx.createLinearGradient(lx - 90, 0, lx + 90, 0);

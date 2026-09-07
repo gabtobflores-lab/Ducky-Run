@@ -173,8 +173,8 @@
 
   /* ---------------- floating text popups ---------------- */
   var pops = [];
-  P.pop = function (x, y, text, color, size) {
-    pops.push({ x: x, y: y, text: text, color: color || '#fff', size: size || 20, t: 0, life: .95 });
+  P.pop = function (x, y, text, color, size, fixed) {
+    pops.push({ x: x, y: y, text: text, color: color || '#fff', size: size || 20, t: 0, life: .95, fixed: !!fixed });
     if (pops.length > 26) pops.shift();
   };
   P.updatePops = function (dt, scrollDx) {
@@ -182,7 +182,7 @@
       var q = pops[i];
       q.t += dt;
       q.y -= 52 * dt;
-      q.x -= scrollDx || 0;
+      if (!q.fixed) q.x -= scrollDx || 0;
       if (q.t >= q.life) pops.splice(i, 1);
     }
   };

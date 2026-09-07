@@ -260,3 +260,6 @@ kbd{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);bord
 
 .card-endless{background:linear-gradient(150deg,rgba(255,154,92,.22),rgba(66,37,107,.28));border-color:rgba(255,212,71,.4)}
 .card-endless h3{color:var(--gold)}
+
+.hint{margin-top:.9em;font-size:.82em;opacity:.55;letter-spacing:.06em}
+.hint kbd{font-size:.8em}
