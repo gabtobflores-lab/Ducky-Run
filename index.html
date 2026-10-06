@@ -51,6 +51,13 @@
   .toast{background:rgba(20,8,30,.92);border:1px solid var(--ac);padding:8px 16px;border-radius:12px;font-weight:700;font-size:14px;animation:toast 3.6s forwards;box-shadow:0 6px 24px rgba(0,0,0,.4)}
   .spark{position:fixed;width:74px;height:74px;margin:-37px 0 0 -37px;z-index:8;cursor:pointer;animation:sparkIn .5s cubic-bezier(.3,1.8,.5,1),float 3s ease-in-out infinite .5s;filter:drop-shadow(0 0 16px #ffc24a)}
   .spark.out{animation:sparkOut .3s forwards}
+  #keybtn{position:fixed;left:8px;bottom:8px;z-index:7;background:none;border:0;opacity:.25;font-size:16px;padding:6px}
+  #keybtn:hover{opacity:.8}
+  #codebox{position:fixed;left:8px;bottom:42px;z-index:7;display:none;gap:6px}
+  #codebox input{background:rgba(20,8,30,.95);border:1px solid var(--ac);color:var(--tx);border-radius:8px;padding:7px 10px;font:inherit;width:170px;outline:0}
+  #modal{position:fixed;inset:0;z-index:20;background:rgba(10,4,16,.75);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+  #modal .box{max-width:420px;width:100%;display:flex;flex-direction:column;gap:10px;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+  #modal h2{margin:0 0 4px;text-align:center;color:var(--ac2);font-size:20px}
   @keyframes pop{from{transform:scale(.3)}to{transform:scale(1)}}
   @keyframes buy{0%{transform:scale(1)}30%{transform:scale(1.04);background:rgba(255,220,120,.3)}100%{transform:scale(1)}}
   @keyframes toast{0%{opacity:0;transform:translateY(-20px) scale(.9)}10%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
@@ -92,6 +99,9 @@
   </section>
 </div>
 <div id="toasts"></div>
+<button id="keybtn" title="Enter a code">🔑</button>
+<div id="codebox"><input id="codein" maxlength="20" placeholder="secret code" autocomplete="off" autocapitalize="off"></div>
+<div id="modal"><div class="box" id="mbox"></div></div>
 <script>
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
@@ -129,7 +139,7 @@ B.forEach((b, i) => TIERS.forEach(([cnt, mult, adj], k) => U.push({
   U.push({ id: 'l' + k, name, ico: '🍀', cost, desc: 'Golden sparks appear more often and last longer.', req: () => S.total >= cost / 4, fx: m => { m.spark *= .7; m.life *= 1.4; } }));
 
 // ---------- state ----------
-let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true };
+let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true, skin: 'logo', codes: {} };
 try { const d = JSON.parse(localStorage.sparkClicker || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
 let M, cpsBase = 0, buffs = [], qty = 1, tab = 'b';
 function recalc() {
@@ -265,7 +275,7 @@ function zoneRect() { const r = zone.getBoundingClientRect(); R = Math.max(50, M
 let sc = 1, scv = 0, rot = 0, wob = 0, wobv = 0, hover = false, parts = [], floats = [], rain = [], ripples = [];
 const chips = [[-.38, -.3, .13], [.1, -.5, .11], [.42, -.15, .14], [-.1, .02, .12], [.3, .35, .12], [-.45, .25, .11], [.0, .55, .1], [-.2, -.62, .08], [.62, .1, .07]];
 function burst(x, y, n, sp, col) {
-  for (let i = 0; i < n; i++) { const a = rand(0, 6.283), v = rand(sp * .4, sp * 2.2); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: rand(.5, 1), max: 1, r: rand(2, 5), rot: rand(0, 6), col: col || (Math.random() < .5 ? '#d97757' : '#f2a583') }); }
+  for (let i = 0; i < n; i++) { const a = rand(0, 6.283), v = rand(sp * .4, sp * 2.2); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: rand(.5, 1), max: 1, r: rand(2, 5), rot: rand(0, 6), col: col || (S.skin === 'choc' ? (Math.random() < .5 ? '#b8782f' : '#6b3a14') : (Math.random() < .5 ? '#d97757' : '#f2a583')) }); }
 }
 function floatText(x, y, txt, big) { floats.push({ x: x + rand(-14, 14), y, txt, life: 1, big }); }
 function doClick(x, y) {
@@ -286,7 +296,19 @@ addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat) { e.prev
 
 function cookiePath(r) { ctx.beginPath(); for (let a = 0; a <= 6.2832; a += .05) { const rr = r * (.95 + .05 * Math.cos(a * 14)); a ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(rr, 0); } ctx.closePath(); }
 const RAYS = [1, .82, .95, .74, 1, .86, .78, .97, .84, 1, .76, .92];
+function drawChoc(r, big) {
+  cookiePath(r);
+  const g = ctx.createRadialGradient(-r * .3, -r * .35, r * .1, 0, 0, r * 1.05);
+  g.addColorStop(0, '#f8c874'); g.addColorStop(.55, '#dc9140'); g.addColorStop(1, '#a85a1c');
+  ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = big ? 5 : 1.5; ctx.strokeStyle = '#7a3d10'; ctx.stroke();
+  chips.forEach(([x, y, k]) => {
+    ctx.fillStyle = '#4a2511'; ctx.beginPath(); ctx.ellipse(x * r, y * r, k * r * 1.15, k * r * .9, x * 3, 0, 7); ctx.fill();
+    if (big) { ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.ellipse(x * r - k * r * .3, y * r - k * r * .3, k * r * .35, k * r * .2, 0, 0, 7); ctx.fill(); }
+  });
+  if (big) { ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.ellipse(-r * .35, -r * .6, r * .4, r * .17, -.6, 0, 7); ctx.fill(); }
+}
 function drawCookie(r, big) {
+  if (S.skin === 'choc') return drawChoc(r, big);
   const g = ctx.createRadialGradient(-r * .3, -r * .35, r * .05, 0, 0, r * 1.05);
   g.addColorStop(0, '#f2a583'); g.addColorStop(.55, '#d97757'); g.addColorStop(1, '#bf5a3a');
   ctx.strokeStyle = g; ctx.fillStyle = g; ctx.lineCap = 'round';
@@ -345,6 +367,44 @@ function loop(now) {
   ctx.globalAlpha = 1;
   requestAnimationFrame(loop);
 }
+
+// ---------- secret codes ----------
+const CODES = { megaspark: 'mega', goldenpick: 'pick', chocochip: 'skin' };
+function modal(html) { $('#mbox').innerHTML = html; $('#modal').style.display = 'flex'; }
+function tryCode(txt) {
+  const k = Object.keys(CODES).find(c => txt.endsWith(c)); if (!k) return false;
+  const type = CODES[k];
+  if (type === 'skin') {
+    S.skin = S.skin === 'choc' ? 'logo' : 'choc'; toast(S.skin === 'choc' ? 'Secret unlocked: chocolate chip cookie!' : 'Back to the starburst'); beep(660, .4, 'sine', .08, 600);
+    const z = zoneRect(); burst(z.cx, z.cy, 40, R * 1.2); return true;
+  }
+  if (S.codes[type]) { toast('You already used that code'); return true; }
+  S.codes[type] = 1;
+  if (type === 'mega') {
+    buffs.push({ name: 'MEGA x99999', left: 60, cps: 99999, click: 99999 }); toast('Secret code! Everything x99999 for 60s'); beep(300, .8, 'sawtooth', .07, 900);
+    const z = zoneRect(); burst(z.cx, z.cy, 60, R * 1.6, '#ffd24a');
+  } else {
+    const left = U.filter(u => !S.upg[u.id]), near = left.filter(u => u.cost <= Math.max(5e4, S.total * 20)), pool = (near.length >= 3 ? near : left.sort((a, b) => a.cost - b.cost).slice(0, 6)).sort(() => Math.random() - .5).slice(0, 3);
+    if (!pool.length) { toast('You already own every upgrade!'); return true; }
+    modal('<h2>Secret code! Pick a free upgrade</h2>' + pool.map(u => `<div class="row can" data-id="${u.id}"><div class="ico">${u.ico}</div><div class="meta"><div class="nm">${u.name}</div><div class="sub">${u.desc}</div></div></div>`).join(''));
+    $('#mbox').querySelectorAll('.row').forEach(r => r.onclick = () => {
+      const u = U.find(x => x.id === r.dataset.id); S.upg[u.id] = 1; recalc(); uKey = ''; $('#modal').style.display = 'none';
+      toast('Free upgrade: ' + u.name); beep(700, .3, 'sine', .08, 700); const z = zoneRect(); burst(z.cx, z.cy, 30, R);
+    });
+  }
+  return true;
+}
+let codeBuf = '';
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.key.length !== 1 || !/[a-z0-9]/i.test(e.key)) return;
+  codeBuf = (codeBuf + e.key.toLowerCase()).slice(-16); if (tryCode(codeBuf)) codeBuf = '';
+});
+$('#keybtn').onclick = () => { const b = $('#codebox'); b.style.display = b.style.display === 'flex' ? 'none' : 'flex'; if (b.style.display === 'flex') $('#codein').focus(); };
+$('#codein').addEventListener('keydown', e => {
+  e.stopPropagation(); if (e.key !== 'Enter') return;
+  const v = e.target.value.toLowerCase().trim(); e.target.value = '';
+  if (!tryCode(v)) toast('Nothing happened...'); else $('#codebox').style.display = 'none';
+});
 
 // ---------- save / misc ----------
 function save() { S.last = Date.now(); try { localStorage.sparkClicker = JSON.stringify(S); } catch (e) {} }
