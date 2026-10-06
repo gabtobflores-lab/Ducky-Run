@@ -1,0 +1,215 @@
+{
+ "last_updated": "2026-10-06",
+ "note": "Dates are scheduled windows; exact dates must be verified with the company/Fed calendar.",
+ "items": [
+  {
+   "company": "Federal Reserve",
+   "ticker": "MACRO",
+   "catalyst": "FOMC rate decision",
+   "date": "2026-10-28",
+   "type": "Macro",
+   "impact": "High",
+   "confidence": "High",
+   "status": "UPCOMING",
+   "source": "federalreserve.gov calendar"
+  },
+  {
+   "company": "Federal Reserve",
+   "ticker": "MACRO",
+   "catalyst": "FOMC rate decision + projections",
+   "date": "2026-12-09",
+   "type": "Macro",
+   "impact": "High",
+   "confidence": "High",
+   "status": "UPCOMING",
+   "source": "federalreserve.gov calendar"
+  },
+  {
+   "company": "US Elections",
+   "ticker": "MACRO",
+   "catalyst": "US midterm elections",
+   "date": "2026-11-03",
+   "type": "Political",
+   "impact": "Medium",
+   "confidence": "High",
+   "status": "UPCOMING",
+   "source": "Public calendar"
+  },
+  {
+   "company": "Alphabet",
+   "ticker": "GOOGL",
+   "catalyst": "Q3 earnings \u2014 Cloud growth & capex",
+   "date": "2026-10 (late)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "UPCOMING",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "Microsoft",
+   "ticker": "MSFT",
+   "catalyst": "FQ1 earnings \u2014 Azure growth",
+   "date": "2026-10 (late)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "UPCOMING",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "Meta Platforms",
+   "ticker": "META",
+   "catalyst": "Q3 earnings \u2014 2027 capex guide",
+   "date": "2026-10 (late)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "UPCOMING",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "Amazon",
+   "ticker": "AMZN",
+   "catalyst": "Q3 earnings \u2014 AWS growth",
+   "date": "2026-10 (late)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "UPCOMING",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "TSMC",
+   "ticker": "TSM",
+   "catalyst": "Q3 earnings + monthly sales",
+   "date": "2026-10 (mid)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "UPCOMING",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "NVIDIA",
+   "ticker": "NVDA",
+   "catalyst": "FQ3 earnings \u2014 data-center guide",
+   "date": "2026-11 (late)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "UPCOMING",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "NVIDIA",
+   "ticker": "NVDA",
+   "catalyst": "FQ2 earnings",
+   "date": "2026-08 (late)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "PASSED",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "Eli Lilly",
+   "ticker": "LLY",
+   "catalyst": "Oral GLP-1 (orforglipron) launch/coverage",
+   "date": "2026 H2",
+   "type": "Product/Regulatory",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "ACTIVE",
+   "source": "Company pipeline disclosures"
+  },
+  {
+   "company": "Novo Nordisk",
+   "ticker": "NVO",
+   "catalyst": "Next-gen obesity pipeline readouts",
+   "date": "2026\u20132027",
+   "type": "Clinical",
+   "impact": "High",
+   "confidence": "Low",
+   "status": "ACTIVE",
+   "source": "Company pipeline disclosures"
+  },
+  {
+   "company": "UnitedHealth",
+   "ticker": "UNH",
+   "catalyst": "2027 Medicare Advantage final rate notice",
+   "date": "2027-04",
+   "type": "Regulatory",
+   "impact": "High",
+   "confidence": "High",
+   "status": "UPCOMING",
+   "source": "CMS annual cycle"
+  },
+  {
+   "company": "Alphabet",
+   "ticker": "GOOGL",
+   "catalyst": "Search antitrust remedies / appeals",
+   "date": "2026\u20132027",
+   "type": "Legal",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "ACTIVE",
+   "source": "Court dockets"
+  },
+  {
+   "company": "Rocket Lab",
+   "ticker": "RKLB",
+   "catalyst": "Neutron rocket early flights",
+   "date": "2026 H2 \u2013 2027",
+   "type": "Product",
+   "impact": "Very high",
+   "confidence": "Low",
+   "status": "ACTIVE",
+   "source": "Company guidance"
+  },
+  {
+   "company": "Uber",
+   "ticker": "UBER",
+   "catalyst": "Robotaxi partnerships scaling (new cities)",
+   "date": "2026\u20132027",
+   "type": "Product",
+   "impact": "Medium",
+   "confidence": "Medium",
+   "status": "ACTIVE",
+   "source": "Company announcements"
+  },
+  {
+   "company": "Constellation Energy",
+   "ticker": "CEG",
+   "catalyst": "Co-location / data-center PPA rulings",
+   "date": "2026\u20132027",
+   "type": "Regulatory",
+   "impact": "Medium",
+   "confidence": "Medium",
+   "status": "ACTIVE",
+   "source": "FERC dockets"
+  },
+  {
+   "company": "Micron",
+   "ticker": "MU",
+   "catalyst": "FQ1 earnings \u2014 HBM pricing",
+   "date": "2026-12 (mid)",
+   "type": "Earnings",
+   "impact": "High",
+   "confidence": "Medium",
+   "status": "UPCOMING",
+   "source": "Typical reporting window"
+  },
+  {
+   "company": "Exxon Mobil",
+   "ticker": "XOM",
+   "catalyst": "Oil > $90 sustains buybacks (thesis check)",
+   "date": "ongoing",
+   "type": "Macro",
+   "impact": "Medium",
+   "confidence": "Medium",
+   "status": "ACTIVE",
+   "source": "WTI $96.16 on 2026-09-29"
+  }
+ ]
+}

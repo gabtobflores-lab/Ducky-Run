@@ -1,0 +1,761 @@
+{
+ "last_updated": "2026-10-06",
+ "type": "RESEARCH HYPOTHESIS",
+ "criteria": [
+  "demand",
+  "originality",
+  "profit",
+  "startup_cost",
+  "margin",
+  "recurring",
+  "scalability",
+  "defensibility",
+  "teen_feasibility",
+  "speed",
+  "long_term"
+ ],
+ "categories": [
+  "Original",
+  "Proven money-maker"
+ ],
+ "ideas": [
+  {
+   "id": "recruit",
+   "name": "Recruit Reel",
+   "category": "Original",
+   "pitch": "College-recruiting highlight films and athlete profiles for high-school athletes, filmed at their games and delivered in 72 hours.",
+   "problem": "Most of the ~8M US high-school athletes never get seen by college coaches. Recruiting services charge $1,000\u2013$4,000+, and parents film shaky sideline clips that coaches skip after 10 seconds.",
+   "customer": "Parents of sophomore\u2013senior athletes in football, soccer, basketball, lacrosse, volleyball and baseball who hope to play in college (D1\u2013D3, NAIA, JUCO).",
+   "how": "Film 2\u20133 games with a phone on an auto-tracking gimbal. Cut a 3\u20134 minute reel with the athlete's best plays first, spotlight arrows, stats overlay and contact card. Add a one-page web profile (measurables, GPA, schedule, video) and a coach-email template list.",
+   "pricing": "Reel $249 \u00b7 Reel + profile + coach-email kit $449 \u00b7 Season plan (4 updates) $799",
+   "unit_economics": "\u2248$449 average order, \u2248$25 cost (storage, music license, gas), \u22486 hours of work \u2192 \u2248$70/hour and 94% gross margin",
+   "startup_cost": "$350\u2013$700: auto-tracking phone gimbal, tripod, CapCut/DaVinci (free), a $12/yr domain, Google Forms",
+   "time_to_first_dollar": "1\u20132 weeks (film a teammate free, post the reel, sell the next one)",
+   "year1": "$8K\u2013$30K (20\u201360 families). Word of mouth inside teams is powerful because every reel is visible to the whole roster.",
+   "moat": "A portfolio of reels in one school district, relationships with coaches who refer families, and turnaround speed. Big platforms sell software; you sell a finished product made in person.",
+   "risks": [
+    "Families who think a free phone clip is enough",
+    "Seasonal peaks (fall football, spring sports)",
+    "Filming permission at some venues",
+    "Never promise a scholarship; promise exposure only"
+   ],
+   "first_steps": [
+    "Make 3 free reels for teammates and post them with permission",
+    "Build a one-page site with pricing and a booking form",
+    "Ask every club and HS coach for a 2-minute intro at a parent meeting"
+   ],
+   "teen_note": "Fully teen-doable: you're already at the games. A parent handles payments and contracts.",
+   "why_now": "Coaches now recruit from video first. Auto-tracking gimbals cost under $200, so pro-looking footage no longer needs a camera crew.",
+   "scores": {
+    "demand": 9,
+    "originality": 7,
+    "profit": 8,
+    "startup_cost": 9,
+    "margin": 10,
+    "recurring": 6,
+    "scalability": 7,
+    "defensibility": 6,
+    "teen_feasibility": 9,
+    "speed": 9,
+    "long_term": 8
+   },
+   "total": 8.0,
+   "weighted": 7.97
+  },
+  {
+   "id": "ref",
+   "name": "Ref Ready",
+   "category": "Original",
+   "pitch": "A referee staffing service for youth rec leagues: certified teen and adult refs booked, scheduled and paid through one simple system.",
+   "problem": "Youth leagues across the US are canceling games because of referee shortages, and league volunteers spend hours every week filling slots by text.",
+   "customer": "Rec and club leagues (soccer, basketball, flag football), tournament directors and schools' intramural programs.",
+   "how": "Recruit and certify local teens (many sports certify refs from age 12\u201314). Leagues post games; Ref Ready fills them, sends reminders, handles no-shows and collects one invoice. Add mentoring for new refs to reduce dropout.",
+   "pricing": "League pays the normal ref fee + a $5\u2013$8 booking fee per game slot \u00b7 Tournament packages",
+   "unit_economics": "A league with 60 games per weekend \u00d7 $6 \u2248 $360/weekend for scheduling work; you can also ref games yourself ($25\u2013$50 each)",
+   "startup_cost": "$100\u2013$400 (your certification, a scheduling tool, a simple site)",
+   "time_to_first_dollar": "2\u20133 weeks",
+   "year1": "$6K\u2013$20K, more if you referee too",
+   "moat": "Pool of reliable certified refs and league contracts; switching costs once a league runs on your schedule.",
+   "risks": [
+    "Abuse from parents toward young refs; insist on a league code of conduct",
+    "Payroll/tax handling (refs are usually independent contractors; a parent handles this)",
+    "Certification rules vary by sport and state"
+   ],
+   "first_steps": [
+    "Get certified yourself and ref this season",
+    "Recruit 10 certified friends",
+    "Offer one league a free month of scheduling"
+   ],
+   "teen_note": "Ideal: teens are the supply. A parent handles contracts and payouts.",
+   "why_now": "Referee shortages are widespread after the pandemic, and leagues will pay to never chase refs again.",
+   "scores": {
+    "demand": 7,
+    "originality": 9,
+    "profit": 7,
+    "startup_cost": 10,
+    "margin": 8,
+    "recurring": 8,
+    "scalability": 8,
+    "defensibility": 7,
+    "teen_feasibility": 8,
+    "speed": 8,
+    "long_term": 7
+   },
+   "total": 7.91,
+   "weighted": 7.77
+  },
+  {
+   "id": "glow",
+   "name": "Glow Holiday Lights",
+   "category": "Proven money-maker",
+   "pitch": "Design, install, take down and store holiday lights for homes and small businesses: one booking, zero ladders for the customer.",
+   "problem": "Families want a beautiful house for the holidays but hate ladders, tangles, burnt bulbs and January takedown.",
+   "customer": "Busy homeowners in $400K+ neighborhoods, HOAs, restaurants and storefronts.",
+   "how": "Measure the roofline from photos, quote commercial-grade LED C9s cut to fit, install in November, maintain through the season, then take down, label and store in January. Next year is a one-click rebooking.",
+   "pricing": "Average home $900\u2013$2,000 (lights included year 1) \u00b7 Renewal ~60% of year 1 \u00b7 Storage $50/yr",
+   "unit_economics": "\u2248$1,200 ticket; \u2248$350 lights (reused 3+ seasons) + \u2248$100 clips/labor \u2192 60\u201370% margin year 1 and 80%+ on renewals",
+   "startup_cost": "$1,500\u2013$3,000: ladders, safety harness, starter light inventory, insurance (parent-held)",
+   "time_to_first_dollar": "2\u20133 weeks into the season",
+   "year1": "$15K\u2013$40K in a 10-week season with 15\u201330 homes",
+   "moat": "Stored, pre-cut custom lights mean customers rarely switch. Renewal rates in this industry run very high.",
+   "risks": [
+    "Roof and ladder safety: an adult must do anything above one story; teens do ground-level work, design, sales",
+    "Seasonal cash flow",
+    "Weather delays"
+   ],
+   "first_steps": [
+    "Decorate your own house and 2 neighbors' at cost; photograph at dusk",
+    "Flyer streets with the best-lit houses in October",
+    "Pre-sell with a 20% deposit by Oct 31"
+   ],
+   "teen_note": "Best as a parent-teen team: the adult handles roofs, you handle design, sales, ground work and the customer list.",
+   "why_now": "Commercial LED strings now last 5+ seasons, so year-2 margins are almost pure profit.",
+   "scores": {
+    "demand": 9,
+    "originality": 4,
+    "profit": 9,
+    "startup_cost": 6,
+    "margin": 9,
+    "recurring": 9,
+    "scalability": 7,
+    "defensibility": 7,
+    "teen_feasibility": 6,
+    "speed": 7,
+    "long_term": 8
+   },
+   "total": 7.36,
+   "weighted": 7.59
+  },
+  {
+   "id": "scoop",
+   "name": "Scoop Squad",
+   "category": "Proven money-maker",
+   "pitch": "Weekly dog-waste removal subscriptions: boring, unglamorous and very profitable.",
+   "problem": "Nobody wants to do it; dog owners would pay to never think about it.",
+   "customer": "Dog-owning households, especially multi-dog homes.",
+   "how": "Weekly visits, gates logged in an app, before/after photo texted. Upsell deodorizing.",
+   "pricing": "$15\u2013$25 per weekly visit for 1\u20132 dogs",
+   "unit_economics": "\u224810 minutes per yard; 30 clients \u2248 $2,400/month",
+   "startup_cost": "$150\u2013$400",
+   "time_to_first_dollar": "1 week",
+   "year1": "$8K\u2013$25K recurring",
+   "moat": "Recurring subscriptions are sticky; route density.",
+   "risks": [
+    "Dog bites (meet dogs first)",
+    "Disposal rules",
+    "Low status (that's why it's profitable)"
+   ],
+   "first_steps": [
+    "Flyer 200 homes with visible dogs",
+    "First visit free",
+    "Referral credit"
+   ],
+   "teen_note": "Fully teen-doable.",
+   "why_now": "Pet ownership hit record highs, and owners pay for convenience.",
+   "scores": {
+    "demand": 8,
+    "originality": 2,
+    "profit": 7,
+    "startup_cost": 10,
+    "margin": 9,
+    "recurring": 10,
+    "scalability": 7,
+    "defensibility": 4,
+    "teen_feasibility": 9,
+    "speed": 10,
+    "long_term": 6
+   },
+   "total": 7.45,
+   "weighted": 7.38
+  },
+  {
+   "id": "slab",
+   "name": "Slab Club",
+   "category": "Original",
+   "pitch": "A trading-card grading concierge: collectors drop off cards; you pre-screen, batch-submit to PSA/SGC/BGS at bulk rates and return slabbed cards.",
+   "problem": "Grading is confusing and expensive for casual collectors. They overpay on single submissions and send cards that will grade poorly.",
+   "customer": "Sports, Pok\u00e9mon and TCG collectors, card-shop customers, parents of young collectors.",
+   "how": "Collect cards at shops and meetups. Inspect centering, corners and surface under a loupe and light box; reject likely low grades. Pool cards into bulk submissions to cut per-card cost, track every card online and return slabs.",
+   "pricing": "$10\u2013$15 per card on top of the grading fee \u00b7 Pre-screen only $2/card \u00b7 Sell-on-consignment option 10%",
+   "unit_economics": "\u2248$12 fee \u00d7 100 cards per batch = $1,200 a batch for \u22488 hours of work plus shipping/insurance \u2248$60",
+   "startup_cost": "$200\u2013$500: loupe, light box, sleeves/top-loaders, a grading-company membership, shipping insurance",
+   "time_to_first_dollar": "2\u20134 weeks (first batch return takes longer; fees are collected up front)",
+   "year1": "$6K\u2013$25K depending on volume",
+   "moat": "Trust plus a track record of grade predictions. Publish your pre-screen accuracy.",
+   "risks": [
+    "Loss or damage in shipping (insure everything)",
+    "Grading-company turnaround and price changes",
+    "Liability for high-value cards; cap the declared value at first"
+   ],
+   "first_steps": [
+    "Grade 20 of your own cards to learn the process",
+    "Partner with one local card shop for counter space",
+    "Post before/after grade results publicly"
+   ],
+   "teen_note": "A parent co-signs the grading account and insurance. Everything else is teen-run.",
+   "why_now": "Card collecting stayed big after the 2020\u201321 boom, and grading companies keep restructuring prices, which rewards experts who batch.",
+   "scores": {
+    "demand": 7,
+    "originality": 8,
+    "profit": 7,
+    "startup_cost": 9,
+    "margin": 8,
+    "recurring": 7,
+    "scalability": 7,
+    "defensibility": 6,
+    "teen_feasibility": 8,
+    "speed": 7,
+    "long_term": 7
+   },
+   "total": 7.36,
+   "weighted": 7.3
+  },
+  {
+   "id": "setup",
+   "name": "SetUp Concierge",
+   "category": "Proven money-maker",
+   "pitch": "Tech setup and monthly check-ins for seniors: phones, TVs, smart doorbells, video calls, scam protection.",
+   "problem": "Seniors struggle with new devices and are top targets for scams; their adult children live far away.",
+   "customer": "Seniors and their adult children (often the buyers), plus retirement communities.",
+   "how": "Home visits to set up devices, write a personal one-page guide, then a monthly check-in visit or call. Add scam-awareness sessions at community centers.",
+   "pricing": "$60 setup visit \u00b7 $35\u2013$50/month membership \u00b7 $200 community session",
+   "unit_economics": "\u2248$45/month \u00d7 30 members \u2248 $1,350/month recurring",
+   "startup_cost": "$50\u2013$200",
+   "time_to_first_dollar": "1 week",
+   "year1": "$6K\u2013$18K",
+   "moat": "Trust and referrals inside retirement communities.",
+   "risks": [
+    "Privacy and liability (never handle passwords for banks)",
+    "Scheduling",
+    "Slow word-of-mouth start"
+   ],
+   "first_steps": [
+    "Help 3 neighbors free and collect testimonials",
+    "Talk to a retirement community's activities director",
+    "Sell the membership to adult children"
+   ],
+   "teen_note": "Ideal for teens: patience and tech skills are the product.",
+   "why_now": "The 65+ population is the fastest-growing group, and so are scam losses.",
+   "scores": {
+    "demand": 8,
+    "originality": 4,
+    "profit": 6,
+    "startup_cost": 10,
+    "margin": 9,
+    "recurring": 8,
+    "scalability": 6,
+    "defensibility": 6,
+    "teen_feasibility": 10,
+    "speed": 9,
+    "long_term": 6
+   },
+   "total": 7.45,
+   "weighted": 7.26
+  },
+  {
+   "id": "curb",
+   "name": "Curbside",
+   "category": "Proven money-maker",
+   "pitch": "Weekly trash-bin valet plus monthly bin washing: bins out to the curb, back in, and smelling clean, on subscription.",
+   "problem": "Seniors, busy families and people who travel forget bin day, and dirty bins attract pests.",
+   "customer": "Seniors, busy families, vacation homes and HOAs.",
+   "how": "Route-based weekly service on trash day; monthly bin wash with a pressure washer and eco-safe deodorizer.",
+   "pricing": "Valet $20\u2013$30/month \u00b7 Washing $15/month \u00b7 HOA bulk contracts",
+   "unit_economics": "Dense routes: 40 homes in 2 hours \u2248 $1,000/month for \u22488 hours/month",
+   "startup_cost": "$300\u2013$900 (pressure washer, deodorizer, door hangers)",
+   "time_to_first_dollar": "1 week",
+   "year1": "$6K\u2013$15K recurring",
+   "moat": "Route density and HOA contracts.",
+   "risks": [
+    "Low ticket size; you need density",
+    "Water-runoff rules in some cities",
+    "Weather"
+   ],
+   "first_steps": [
+    "Sign up your own street with door hangers",
+    "Offer the HOA a bulk rate",
+    "Add washing as an upsell after 30 days"
+   ],
+   "teen_note": "Very teen-feasible; walkable routes.",
+   "why_now": "Aging population and busy dual-income households.",
+   "scores": {
+    "demand": 8,
+    "originality": 4,
+    "profit": 6,
+    "startup_cost": 9,
+    "margin": 8,
+    "recurring": 10,
+    "scalability": 6,
+    "defensibility": 5,
+    "teen_feasibility": 10,
+    "speed": 9,
+    "long_term": 5
+   },
+   "total": 7.27,
+   "weighted": 7.11
+  },
+  {
+   "id": "gear",
+   "name": "Gear Library",
+   "category": "Original",
+   "pitch": "A size-up subscription for kids' sports equipment: hockey, lacrosse, skates and cleats swapped for the next size every season.",
+   "problem": "Kids outgrow $300+ of gear every year; parents keep buying new or hunting through used listings.",
+   "customer": "Families with kids aged 5\u201314 in gear-heavy sports.",
+   "how": "Families subscribe per kid per sport. They get sanitized, inspected gear in the right size; return it when outgrown and get the next size. Inventory comes from trade-ins and bulk buys.",
+   "pricing": "$15\u2013$30 per kid per month, or $120/season",
+   "unit_economics": "A $200 kit rented 3+ seasons at $120 \u2192 80%+ margin after year 1",
+   "startup_cost": "$800\u2013$2,000 starter inventory (largely used gear)",
+   "time_to_first_dollar": "3\u20134 weeks",
+   "year1": "$5K\u2013$18K",
+   "moat": "Inventory depth across sizes and club partnerships, which are hard to copy quickly.",
+   "risks": [
+    "Sanitizing standards",
+    "Inventory gaps in popular sizes",
+    "Lost gear (deposit)"
+   ],
+   "first_steps": [
+    "Collect outgrown gear from your own club",
+    "Pilot with 10 families in one sport",
+    "Partner with the club for a discount"
+   ],
+   "teen_note": "Teen-run with a parent for storage and payments.",
+   "why_now": "Youth sports costs keep rising; parents want circular options.",
+   "scores": {
+    "demand": 7,
+    "originality": 8,
+    "profit": 6,
+    "startup_cost": 6,
+    "margin": 8,
+    "recurring": 9,
+    "scalability": 6,
+    "defensibility": 7,
+    "teen_feasibility": 7,
+    "speed": 6,
+    "long_term": 7
+   },
+   "total": 7.0,
+   "weighted": 6.95
+  },
+  {
+   "id": "yard",
+   "name": "Yard Card",
+   "category": "Proven money-maker",
+   "pitch": "Overnight celebration lawn signs for birthdays, graduations, signing days and \"welcome home\": set up before sunrise, gone in 24 hours.",
+   "problem": "Parents want a big, photo-worthy surprise without buying and storing giant decorations.",
+   "customer": "Parents in your area, schools (senior signs), teams (signing day), real-estate agents (sold signs).",
+   "how": "Own a library of corrugated letters, numbers and graphics. Customer picks a theme online; you set up overnight and collect the next day.",
+   "pricing": "$95\u2013$175 per display \u00b7 School senior-sign packages $25/sign \u00d7 class size",
+   "unit_economics": "\u2248$125 per rental, \u2248$5 gas, \u22481 hour \u2192 ~95% margin once inventory is paid off (often after 6\u20138rentals)",
+   "startup_cost": "$600\u2013$1,200 for the first letter/graphic set and stakes",
+   "time_to_first_dollar": "1 week",
+   "year1": "$5K\u2013$20K; graduation season (May\u2013June) is huge",
+   "moat": "Local brand + school contracts; inventory and booking calendar are easy to copy, but relationships aren't.",
+   "risks": [
+    "Weather",
+    "Inventory theft (rare; include a deposit)",
+    "Driving needs a licensed driver"
+   ],
+   "first_steps": [
+    "Buy one set, do your sibling's birthday, post it",
+    "Pitch the senior class sponsor on graduation signs",
+    "List on local Facebook groups and Nextdoor"
+   ],
+   "teen_note": "Excellent teen fit: light, fast, local. A parent drives until you can.",
+   "why_now": "Social media rewards photo-worthy moments, and the signs are now cheap to print.",
+   "scores": {
+    "demand": 8,
+    "originality": 4,
+    "profit": 7,
+    "startup_cost": 7,
+    "margin": 10,
+    "recurring": 5,
+    "scalability": 6,
+    "defensibility": 4,
+    "teen_feasibility": 9,
+    "speed": 10,
+    "long_term": 5
+   },
+   "total": 6.82,
+   "weighted": 6.71
+  },
+  {
+   "id": "formal",
+   "name": "Formal Closet",
+   "category": "Original",
+   "pitch": "A rental closet for prom, homecoming and winter formal: dresses, suits and accessories at 20% of retail, with fitting nights at your house.",
+   "problem": "Teens spend $200\u2013$600 on outfits worn once. Big rental platforms rarely serve teen sizes or local timing.",
+   "customer": "High-school students and parents, starting with 3\u20135 local schools.",
+   "how": "Buy inventory cheaply (donations, end-of-season sales, thrift), then host fitting nights before each dance. Rent with a deposit and professional cleaning.",
+   "pricing": "$40\u2013$90 per rental + $25 cleaning \u00b7 Accessories $10\u2013$20",
+   "unit_economics": "A $60 dress rented 6 times \u2248 $400 revenue",
+   "startup_cost": "$800\u2013$2,000 inventory + steamer and racks",
+   "time_to_first_dollar": "Next dance season",
+   "year1": "$5K\u2013$15K",
+   "moat": "Peer network inside schools; inventory curated to local trends.",
+   "risks": [
+    "Damage and stains (deposits)",
+    "Inventory of popular sizes",
+    "Seasonality (big peaks)"
+   ],
+   "first_steps": [
+    "Run a donation drive with Student Council",
+    "Host the first fitting night before homecoming",
+    "Instagram lookbook"
+   ],
+   "teen_note": "Excellent teen fit; it lives inside your school's social network.",
+   "why_now": "Sustainability is a strong value for Gen Z, and resale apps proved teens accept pre-owned fashion.",
+   "scores": {
+    "demand": 7,
+    "originality": 7,
+    "profit": 6,
+    "startup_cost": 6,
+    "margin": 8,
+    "recurring": 6,
+    "scalability": 6,
+    "defensibility": 6,
+    "teen_feasibility": 9,
+    "speed": 6,
+    "long_term": 6
+   },
+   "total": 6.64,
+   "weighted": 6.56
+  },
+  {
+   "id": "edge",
+   "name": "FLOW Edge",
+   "category": "Original",
+   "pitch": "A skate-sharpening and gear-freshening subscription for youth hockey families, picked up after practice and returned before the next one.",
+   "problem": "Pro-shop trips and dull skates waste family time.",
+   "customer": "Youth hockey and figure-skating families at one rink.",
+   "how": "Team pickup, a consumer automatic sharpener, a sharpening log and reminders.",
+   "pricing": "$10/sharpen \u00b7 $35/month family plan \u00b7 $120/month team plan",
+   "unit_economics": "\u22485 minutes per pair; 90% margin on sharpening",
+   "startup_cost": "$1,200\u2013$1,800",
+   "time_to_first_dollar": "2 weeks",
+   "year1": "$4K\u2013$12K",
+   "moat": "Team-manager relationships and per-skater data.",
+   "risks": [
+    "Rink pro-shop pushback",
+    "Seasonality",
+    "Quality mistakes"
+   ],
+   "first_steps": [
+    "Sharpen 50 pairs free for practice",
+    "Confirm the rink's policy",
+    "Pilot with one team"
+   ],
+   "teen_note": "Teen-run; a parent buys the machine.",
+   "why_now": "Consumer automatic sharpeners made pro-level sharpening portable.",
+   "scores": {
+    "demand": 6,
+    "originality": 8,
+    "profit": 5,
+    "startup_cost": 6,
+    "margin": 9,
+    "recurring": 9,
+    "scalability": 5,
+    "defensibility": 6,
+    "teen_feasibility": 8,
+    "speed": 7,
+    "long_term": 5
+   },
+   "total": 6.73,
+   "weighted": 6.5
+  },
+  {
+   "id": "booth",
+   "name": "Snapbooth",
+   "category": "Proven money-maker",
+   "pitch": "A sleek iPad photo booth for parties, proms, bar mitzvahs and corporate events, with instant texted GIFs and branded prints.",
+   "problem": "Professional booths cost $600\u2013$1,500 a night. Smaller events want the fun without the price.",
+   "customer": "Party hosts, school dances, quincea\u00f1eras, small businesses, real-estate open houses.",
+   "how": "iPad booth app (e.g. a subscription booth app), ring light, backdrop, props, optional dye-sub printer. Guests text themselves photos and GIFs; host gets a gallery.",
+   "pricing": "$250\u2013$450 for 3 hours \u00b7 Prints +$150 \u00b7 Custom backdrop +$75",
+   "unit_economics": "\u2248$350 per event, \u2248$40 consumables/app, \u22485 hours including setup \u2192 85%+ margin",
+   "startup_cost": "$900\u2013$2,000 (iPad you may already own, stand, light, backdrop, props)",
+   "time_to_first_dollar": "2\u20133 weeks",
+   "year1": "$8K\u2013$25K (25\u201360 events)",
+   "moat": "Reviews and venue/DJ referral partnerships.",
+   "risks": [
+    "Weekend-only demand",
+    "Equipment damage",
+    "Competition from cheap rentals; win on looks and service"
+   ],
+   "first_steps": [
+    "Run it free at a friend's party, collect video testimonials",
+    "Partner with 2 local DJs for referrals",
+    "Offer schools a prom package"
+   ],
+   "teen_note": "Teen-run at events; a parent co-signs bookings and drives gear.",
+   "why_now": "Instant sharing made booths more social. Venues love them as add-ons.",
+   "scores": {
+    "demand": 7,
+    "originality": 4,
+    "profit": 7,
+    "startup_cost": 6,
+    "margin": 9,
+    "recurring": 4,
+    "scalability": 6,
+    "defensibility": 5,
+    "teen_feasibility": 8,
+    "speed": 8,
+    "long_term": 6
+   },
+   "total": 6.36,
+   "weighted": 6.35
+  },
+  {
+   "id": "moveout",
+   "name": "Move-Out Rescue",
+   "category": "Proven money-maker",
+   "pitch": "Collect furniture students abandon at college move-out (free or cheap) and resell it to incoming students at move-in, delivered.",
+   "problem": "Thousands of mini-fridges, desks and couches get dumped every May while new students buy the same items in August.",
+   "customer": "Graduating students (supply) and incoming freshmen and their parents (demand).",
+   "how": "Arrange free pickups in May, store in a rented unit, sell move-in bundles online in August with delivery.",
+   "pricing": "Bundles $150\u2013$400 \u00b7 Mini-fridges $60\u2013$90 \u00b7 Delivery fee $40",
+   "unit_economics": "Items acquired near $0; storage \u2248$150/month for 3 months; 100 items \u2248 $8K\u2013$12K revenue",
+   "startup_cost": "$600\u2013$1,500 (truck rental, storage unit)",
+   "time_to_first_dollar": "4 months (cash comes at move-in)",
+   "year1": "$5K\u2013$20K per cycle",
+   "moat": "Relationships with campus housing and student groups.",
+   "risks": [
+    "Needs a truck and storage (parent)",
+    "Campus rules",
+    "Bed bugs: skip mattresses"
+   ],
+   "first_steps": [
+    "Pick one nearby college",
+    "Contact housing and sustainability offices",
+    "Pre-sell bundles to incoming students on parent Facebook groups"
+   ],
+   "teen_note": "A parent drives and rents the storage. Teens run sourcing, listings and sales.",
+   "why_now": "Universities want less move-out waste, and sustainability offices partner readily.",
+   "scores": {
+    "demand": 8,
+    "originality": 5,
+    "profit": 8,
+    "startup_cost": 6,
+    "margin": 9,
+    "recurring": 3,
+    "scalability": 7,
+    "defensibility": 5,
+    "teen_feasibility": 6,
+    "speed": 4,
+    "long_term": 6
+   },
+   "total": 6.09,
+   "weighted": 6.31
+  },
+  {
+   "id": "memory",
+   "name": "Memory Lane",
+   "category": "Proven money-maker",
+   "pitch": "Local pickup of old photos, slides and home videos, digitized, organized by year and delivered in a private online album plus a USB drive.",
+   "problem": "Boxes of VHS tapes and photos are decaying in closets; mail-away services feel risky.",
+   "customer": "Grandparents and parents, plus families preparing anniversaries or memorials.",
+   "how": "Pickup in person, scan photos with a high-speed scanner, capture tapes with a VHS-to-USB device, auto-enhance, organize by date and deliver.",
+   "pricing": "$0.40\u2013$0.60 per photo \u00b7 $25\u2013$35 per tape \u00b7 Memorial slideshow $150",
+   "unit_economics": "A typical order (1,000 photos + 10 tapes) \u2248 $800 for \u224812 hours of mostly machine time",
+   "startup_cost": "$700\u2013$1,500 (fast photo scanner, capture device, VCR, storage)",
+   "time_to_first_dollar": "2\u20133 weeks",
+   "year1": "$8K\u2013$30K",
+   "moat": "Trust (local, in-person) beats mail-away; reviews from seniors spread through churches and community centers.",
+   "risks": [
+    "Handling irreplaceable items (insurance, careful process)",
+    "Old tapes can be damaged",
+    "Time-intensive if not batched"
+   ],
+   "first_steps": [
+    "Digitize your own family's albums",
+    "Offer a demo at a senior center",
+    "Holiday-gift campaign in November"
+   ],
+   "teen_note": "Excellent teen fit; work from home.",
+   "why_now": "Original media is now 30\u201360 years old and degrading.",
+   "scores": {
+    "demand": 7,
+    "originality": 4,
+    "profit": 7,
+    "startup_cost": 6,
+    "margin": 8,
+    "recurring": 3,
+    "scalability": 6,
+    "defensibility": 6,
+    "teen_feasibility": 9,
+    "speed": 7,
+    "long_term": 6
+   },
+   "total": 6.27,
+   "weighted": 6.28
+  },
+  {
+   "id": "tourney",
+   "name": "Tourney Base",
+   "category": "Original",
+   "pitch": "A tournament-day basecamp for youth sports families: canopy, chairs, cooler, charging and snacks set up before the first game.",
+   "problem": "All-day tournaments mean hauling gear across huge complexes in heat or rain.",
+   "customer": "Families and teams at travel tournaments.",
+   "how": "Teams book per weekend; you set up a branded basecamp near their field and take it down at the end of the day.",
+   "pricing": "$300\u2013$500 per team per tournament day \u00b7 Snack add-ons",
+   "unit_economics": "$400 per team; \u2248$60 costs; 2 teams per staffer per day",
+   "startup_cost": "$1,000\u2013$2,500 (canopies, chairs, coolers, cart)",
+   "time_to_first_dollar": "3\u20134 weeks",
+   "year1": "$6K\u2013$20K",
+   "moat": "Tournament-director partnerships (an official vendor slot).",
+   "risks": [
+    "Weather",
+    "Venue permissions",
+    "Labor intensity"
+   ],
+   "first_steps": [
+    "Do it free for your own team once",
+    "Pitch the tournament director on vendor status",
+    "Sell to team managers, not parents"
+   ],
+   "teen_note": "Teen crew with a parent supervising and driving.",
+   "why_now": "Travel sports is a $30B+ industry and families spend heavily on convenience.",
+   "scores": {
+    "demand": 6,
+    "originality": 9,
+    "profit": 6,
+    "startup_cost": 5,
+    "margin": 7,
+    "recurring": 5,
+    "scalability": 6,
+    "defensibility": 6,
+    "teen_feasibility": 7,
+    "speed": 5,
+    "long_term": 6
+   },
+   "total": 6.18,
+   "weighted": 6.15
+  }
+ ],
+ "top3": [
+  "Recruit Reel",
+  "Ref Ready",
+  "Glow Holiday Lights"
+ ],
+ "red_team": [
+  {
+   "name": "Recruit Reel",
+   "attacks": [
+    [
+     "Why would customers refuse?",
+     "Free tools exist (phone + editing apps), and big recruiting services already sell to these families."
+    ],
+    [
+     "Why hasn't this already won?",
+     "National services sell software and email blasts, not in-person filming at local games. Local videographers charge $1,000+ and are slow."
+    ],
+    [
+     "Could competitors copy it?",
+     "Yes, but the moat is local presence, speed, and a visible portfolio inside each team."
+    ],
+    [
+     "Is the market large enough?",
+     "One high school has ~300 varsity athletes; even 5% buying at $449 is about $6.7K per school per year."
+    ],
+    [
+     "Is pricing realistic?",
+     "Yes: well under recruiting services ($1K\u2013$4K) and higher-value than a shaky clip."
+    ],
+    [
+     "Can a teenager execute it?",
+     "Yes: you're already at games, editing skills are learnable in weeks, and the gear is under $500."
+    ],
+    [
+     "Legal issues",
+     "Filming minors needs parent consent; use licensed music; NCAA rules allow third-party highlight videos. Never promise scholarships."
+    ],
+    [
+     "Operational bottleneck",
+     "Editing time in peak season. Fix: templates, a standard reel structure, and hiring a second editor."
+    ],
+    [
+     "Killer assumption",
+     "Parents will pay before seeing results. Mitigation: free 30-second teaser from the first game."
+    ]
+   ],
+   "fix": "Lead with a free teaser, sell the $449 package, and add season updates for recurring revenue. Build a coach-email tracker to prove exposure (opens and replies)."
+  },
+  {
+   "name": "Ref Ready",
+   "attacks": [
+    [
+     "Why would leagues refuse?",
+     "Some assignors already do this as volunteers or through assigning software."
+    ],
+    [
+     "Killer assumption",
+     "You can keep enough reliable refs. Teen refs quit mostly because of parent abuse, so mentoring and conduct rules are the product."
+    ],
+    [
+     "Copyable?",
+     "Assigning software exists. The moat is your pool of refs and the league relationship."
+    ],
+    [
+     "Legal",
+     "Contractor payments, certification requirements and youth work rules. A parent runs payouts."
+    ]
+   ],
+   "fix": "Start as a ref yourself, then add scheduling for one league. Charge per filled slot and guarantee coverage with a backup list."
+  },
+  {
+   "name": "Glow Holiday Lights",
+   "attacks": [
+    [
+     "Killer assumption",
+     "A teen can safely do roof installs. They can't alone: adult handles all elevated work."
+    ],
+    [
+     "Seasonality",
+     "90% of revenue in 10 weeks. Fine as a high-earning winter season."
+    ],
+    [
+     "Copyable?",
+     "Easily, but stored custom-cut lights create high renewal lock-in."
+    ],
+    [
+     "Legal",
+     "Liability insurance and adult ownership required."
+    ]
+   ],
+   "fix": "Parent-teen company. Ground-level and single-story homes first; upsell permanent track lighting via an installer partner for referral fees."
+  }
+ ],
+ "method": "Each idea is scored 1\u201310 on 11 criteria, with 'Low cost' and 'Teen-able' scored so higher is better. The FLOW score weights earning power: profit \u00d72, demand and long-term \u00d71.5, scalability \u00d71.3, recurring \u00d71.2, speed \u00d70.8, the rest \u00d71. Earnings ranges are estimates for a part-time teen operator with parental help; verify local prices.",
+ "weights": {
+  "demand": 1.5,
+  "originality": 1,
+  "profit": 2,
+  "startup_cost": 1,
+  "margin": 1,
+  "recurring": 1.2,
+  "scalability": 1.3,
+  "defensibility": 1,
+  "teen_feasibility": 1,
+  "speed": 0.8,
+  "long_term": 1.5
+ }
+}

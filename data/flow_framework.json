@@ -1,0 +1,308 @@
+{
+ "last_updated": "2026-10-06",
+ "type": "RESEARCH HYPOTHESIS",
+ "name": "FLOW DIVERGENCE",
+ "subtitle": "Stress\u2013Fundamental Divergence",
+ "principle": "Prices and fundamentals are coupled with a lag. When fear pushes price down while fundamentals are still improving, forward returns should be high; when price AND fundamentals break together, risk dominates.",
+ "intuition": "Most frameworks look at price OR fundamentals. FLOW DIVERGENCE trades the disagreement between them \u2014 the moment investor psychology decouples from business reality.",
+ "math": [
+  "DD_t = P_t / max(P_\u2264t) \u2212 1   (stress: how far below the peak)",
+  "\u0394E_t = E_t / E_{t\u221212} \u2212 1   (fundamental direction: trailing earnings growth)",
+  "Trend_t = 1[P_t > SMA10_t]",
+  "w_t = Trend_t; override w_t = 1 if DD_t \u2264 \u03b8 and \u0394E_t > 0 (stress + healthy fundamentals); force w_t = 0 if Trend_t = 0 and \u0394E_t < 0 (both broken)",
+  "Decided at month-end t, applied in t+1 (no look-ahead). \u03b8 = \u221210%."
+ ],
+ "inputs": [
+  "Price drawdown from peak",
+  "Trailing 12-month earnings growth",
+  "10-month moving average",
+  "(v2) Earnings yield \u2212 10Y yield vs its 20-year median"
+ ],
+ "rules": [
+  "Default: follow the trend.",
+  "Divergence buy: price \u226510% off highs while earnings still growing \u2192 stay invested.",
+  "Confirmation sell: below trend AND earnings falling \u2192 cash."
+ ],
+ "portfolio": "Index-level: 100% equities or 100% T-bills. Stock-level version (untested): rank stocks by drawdown \u00d7 positive estimate revisions.",
+ "risk": [
+  "Max 1 switch per month",
+  "10 bps cost per switch",
+  "No leverage"
+ ],
+ "exits": [
+  "Earnings growth turns negative while below trend",
+  "Drawdown recovers above trend (override no longer needed)"
+ ],
+ "rebalancing": "Monthly, at month-end close.",
+ "failure": [
+  "Earnings data lags (reported quarterly, revised) \u2014 the 'healthy fundamentals' you see may already be stale.",
+  "Crises where earnings fall after prices (2008): the override keeps you in too long."
+ ],
+ "advantages": [
+  "Intuitive, few parameters",
+  "Combines psychology (stress) with fundamentals"
+ ],
+ "disadvantages": [
+  "Needs timely earnings data",
+  "Mostly overlaps with trend following"
+ ],
+ "tests": {
+  "full": {
+   "cagr": 0.1146,
+   "vol": 0.1133,
+   "maxdd": -0.5063,
+   "sharpe": 0.7,
+   "sortino": 0.63,
+   "months": 1488,
+   "exposure": 0.801
+  },
+  "train": {
+   "cagr": 0.1055,
+   "vol": 0.1209,
+   "maxdd": -0.5063,
+   "sharpe": 0.64,
+   "sortino": 0.59,
+   "months": 960,
+   "exposure": 0.785
+  },
+  "test": {
+   "cagr": 0.1312,
+   "vol": 0.0979,
+   "maxdd": -0.2597,
+   "sharpe": 0.83,
+   "sortino": 0.72,
+   "months": 528,
+   "exposure": 0.83
+  },
+  "trend_full": {
+   "cagr": 0.1141,
+   "vol": 0.0985,
+   "maxdd": -0.4263,
+   "sharpe": 0.78,
+   "sortino": 0.69,
+   "months": 1488
+  },
+  "trend_train": {
+   "cagr": 0.1079,
+   "vol": 0.1027,
+   "maxdd": -0.4263,
+   "sharpe": 0.76,
+   "sortino": 0.67,
+   "months": 960
+  },
+  "trend_test": {
+   "cagr": 0.1254,
+   "vol": 0.0904,
+   "maxdd": -0.1896,
+   "sharpe": 0.84,
+   "sortino": 0.72,
+   "months": 528
+  },
+  "bh_full": {
+   "cagr": 0.0985,
+   "vol": 0.1465,
+   "maxdd": -0.815,
+   "sharpe": 0.47,
+   "sortino": 0.44,
+   "months": 1488
+  },
+  "bh_train": {
+   "cagr": 0.0884,
+   "vol": 0.157,
+   "maxdd": -0.815,
+   "sharpe": 0.43,
+   "sortino": 0.41,
+   "months": 960
+  },
+  "bh_test": {
+   "cagr": 0.117,
+   "vol": 0.125,
+   "maxdd": -0.4895,
+   "sharpe": 0.58,
+   "sortino": 0.51,
+   "months": 528
+  },
+  "sensitivity": [
+   {
+    "p": -0.05,
+    "test_sharpe": 0.77,
+    "train_sharpe": 0.59
+   },
+   {
+    "p": -0.1,
+    "test_sharpe": 0.83,
+    "train_sharpe": 0.64
+   },
+   {
+    "p": -0.15,
+    "test_sharpe": 0.9,
+    "train_sharpe": 0.67
+   },
+   {
+    "p": -0.2,
+    "test_sharpe": 0.88,
+    "train_sharpe": 0.7
+   },
+   {
+    "p": -0.3,
+    "test_sharpe": 0.83,
+    "train_sharpe": 0.68
+   }
+  ],
+  "v2": {
+   "train": {
+    "cagr": 0.1092,
+    "vol": 0.1389,
+    "maxdd": -0.4865,
+    "sharpe": 0.6,
+    "sortino": 0.6,
+    "months": 960
+   },
+   "test": {
+    "cagr": 0.1275,
+    "vol": 0.1056,
+    "maxdd": -0.4,
+    "sharpe": 0.75,
+    "sortino": 0.64,
+    "months": 528
+   },
+   "sensitivity": [
+    {
+     "p": -0.05,
+     "train_sharpe": 0.6,
+     "test_sharpe": 0.74
+    },
+    {
+     "p": -0.1,
+     "train_sharpe": 0.6,
+     "test_sharpe": 0.75
+    },
+    {
+     "p": -0.15,
+     "train_sharpe": 0.61,
+     "test_sharpe": 0.76
+    },
+    {
+     "p": -0.2,
+     "train_sharpe": 0.66,
+     "test_sharpe": 0.71
+    },
+    {
+     "p": -0.3,
+     "train_sharpe": 0.68,
+     "test_sharpe": 0.76
+    }
+   ]
+  },
+  "corr_with_trend": 0.87,
+  "signal_overlap_with_trend": 0.861,
+  "conditional_forward_returns": [
+   {
+    "state": "Stress + healthy earnings (drawdown <= -10%, EPS growth > 0)",
+    "period": "train",
+    "months": 326,
+    "avg_fwd12": 0.0555,
+    "hit": 0.607
+   },
+   {
+    "state": "Stress + healthy earnings (drawdown <= -10%, EPS growth > 0)",
+    "period": "test",
+    "months": 113,
+    "avg_fwd12": 0.1369,
+    "hit": 0.982
+   },
+   {
+    "state": "Stress + falling earnings (drawdown <= -10%, EPS growth < 0)",
+    "period": "train",
+    "months": 268,
+    "avg_fwd12": 0.089,
+    "hit": 0.664
+   },
+   {
+    "state": "Stress + falling earnings (drawdown <= -10%, EPS growth < 0)",
+    "period": "test",
+    "months": 57,
+    "avg_fwd12": 0.0535,
+    "hit": 0.544
+   },
+   {
+    "state": "Calm + healthy earnings",
+    "period": "train",
+    "months": 269,
+    "avg_fwd12": 0.0202,
+    "hit": 0.539
+   },
+   {
+    "state": "Calm + healthy earnings",
+    "period": "test",
+    "months": 217,
+    "avg_fwd12": 0.0859,
+    "hit": 0.724
+   },
+   {
+    "state": "Calm + falling earnings",
+    "period": "train",
+    "months": 94,
+    "avg_fwd12": 0.0933,
+    "hit": 0.691
+   },
+   {
+    "state": "Calm + falling earnings",
+    "period": "test",
+    "months": 128,
+    "avg_fwd12": 0.1126,
+    "hit": 0.781
+   }
+  ]
+ },
+ "verdict": "REJECTED (as a new edge). v1 behaved 86% like plain trend following (return correlation 0.87) and did not beat it out-of-sample (Sharpe 0.83 vs 0.84). The 'stress + healthy earnings' state was the WORST stress state in 1900\u20131979 and the best in 1980\u20132023 \u2014 an unstable relationship, not a law. v2 (equity-risk-premium gate) was worse than trend (0.75 vs 0.89). FLOW did not force a success.",
+ "break_it": [
+  [
+   "Is it actually different?",
+   "Barely. 86% of months had the same position as the 10-month trend rule."
+  ],
+  [
+   "Is it secretly an existing factor?",
+   "Yes \u2014 mostly time-series momentum/trend, with a valuation-ish tilt in v2."
+  ],
+  [
+   "Is it overfit?",
+   "\u03b8 sensitivity was flat (test Sharpe 0.77\u20130.90 across \u22125% to \u221230%), so not fragile \u2014 just not better."
+  ],
+  [
+   "Does hindsight create the edge?",
+   "The 1980\u20132023 'stress + healthy earnings' 98% hit rate is hindsight-prone: few independent episodes (\u22485 bear markets)."
+  ],
+  [
+   "Do costs destroy it?",
+   "No \u2014 ~1 switch/year; costs are small."
+  ],
+  [
+   "Multiple periods?",
+   "Conditional forward returns flipped between periods. Fails."
+  ],
+  [
+   "Multiple regimes?",
+   "Helps in slow bear markets, hurts in fast earnings-led crashes."
+  ],
+  [
+   "Out-of-sample?",
+   "Not better than the simpler rule."
+  ],
+  [
+   "Overly complex?",
+   "Yes relative to its value."
+  ],
+  [
+   "Explained by something simpler?",
+   "Yes: the 10-month trend rule."
+  ]
+ ],
+ "theory": {
+  "idea": "Edges live where human behavior forces prices away from reality \u2014 but the simplest description of that behavior (trend) already captures most of it at the index level.",
+  "method": "Hypothesis \u2192 rules \u2192 126 years of data \u2192 train/test split \u2192 walk-forward \u2192 parameter sensitivity \u2192 red team \u2192 accept/reject. Failed ideas are kept.",
+  "evidence": "Trend following was the only index rule that survived every test: OOS Sharpe 0.89 vs 0.63, max drawdown \u221219% vs \u221249%, every parameter from 3\u201324 months beat buy-and-hold OOS, walk-forward Sharpe 0.77 vs 0.50 since 1920. Its gain is risk control, not higher returns.",
+  "weaknesses": "Monthly index data only; no point-in-time stock fundamentals; few independent bear markets; dividends frozen after 2023; WTI used as swing proxy.",
+  "next": "Test FLOW DIVERGENCE at the STOCK level with point-in-time analyst estimate revisions (price drawdown \u00d7 upward revisions), where the disagreement between price and fundamentals is far more frequent than at index level."
+ }
+}

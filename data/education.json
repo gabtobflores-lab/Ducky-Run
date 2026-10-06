@@ -1,0 +1,545 @@
+{
+ "last_updated": "2026-10-06",
+ "type": "EDUCATION",
+ "basics": [
+  {
+   "term": "Stock",
+   "simple": "A slice of ownership in a company.",
+   "deep": "You own a claim on future profits. Price = what others will pay for that claim today."
+  },
+  {
+   "term": "Company",
+   "simple": "An organization that turns inputs into products people pay for.",
+   "deep": "Its value is the cash it can return to owners over its whole life."
+  },
+  {
+   "term": "Market cap",
+   "simple": "Share price \u00d7 shares outstanding.",
+   "deep": "The market's price tag on the whole company. Compare companies by market cap, never by share price."
+  },
+  {
+   "term": "Revenue",
+   "simple": "Money customers pay \u2014 the top line.",
+   "deep": "Growth in revenue matters only if it eventually becomes profit."
+  },
+  {
+   "term": "Profit",
+   "simple": "Revenue minus all costs.",
+   "deep": "Gross \u2192 operating \u2192 net profit, each removing more costs."
+  },
+  {
+   "term": "EPS",
+   "simple": "Net profit \u00f7 shares.",
+   "deep": "Buybacks raise EPS without the business growing \u2014 check both."
+  },
+  {
+   "term": "P/E",
+   "simple": "Price \u00f7 earnings per share.",
+   "deep": "What you pay per $1 of profit. A 25 P/E means a 4% earnings yield."
+  },
+  {
+   "term": "Free cash flow",
+   "simple": "Cash from operations minus capital spending.",
+   "deep": "The cash that can actually be returned to owners. Harder to manipulate than earnings."
+  },
+  {
+   "term": "Debt",
+   "simple": "Borrowed money with fixed claims ahead of shareholders.",
+   "deep": "Debt amplifies outcomes. In a downturn, lenders get paid first \u2014 shareholders can be wiped out."
+  },
+  {
+   "term": "Margins",
+   "simple": "Profit as a share of revenue.",
+   "deep": "High and stable margins usually signal pricing power."
+  },
+  {
+   "term": "ROIC",
+   "simple": "Operating profit after tax \u00f7 capital invested.",
+   "deep": "The single best quality measure: how much profit each dollar reinvested earns. ROIC above cost of capital (~8\u201310%) creates value."
+  },
+  {
+   "term": "Valuation",
+   "simple": "What you pay relative to what you get.",
+   "deep": "Great company + bad price can be a bad investment. Expected return = yield + growth \u00b1 change in multiple."
+  },
+  {
+   "term": "Growth",
+   "simple": "How fast revenue/profit/cash expand.",
+   "deep": "Growth is worth more when ROIC is high and runway long."
+  },
+  {
+   "term": "Moat",
+   "simple": "A durable advantage that keeps competitors out.",
+   "deep": "Sources: network effects, switching costs, scale, brands, patents, regulation."
+  },
+  {
+   "term": "Competitive advantage",
+   "simple": "Doing something rivals can't easily copy.",
+   "deep": "Moats are the long-lived version; advantages can be temporary."
+  },
+  {
+   "term": "Catalyst",
+   "simple": "An event that can make the market change its mind.",
+   "deep": "Earnings, products, regulation, spin-offs. Catalysts put a clock on a thesis."
+  },
+  {
+   "term": "Risk",
+   "simple": "The chance of permanent loss \u2014 not just volatility.",
+   "deep": "Volatility is the price of admission; permanent loss is what to avoid."
+  },
+  {
+   "term": "Diversification",
+   "simple": "Owning things that don't fail together.",
+   "deep": "10 AI stocks are one bet. Correlation, not count, is what matters."
+  },
+  {
+   "term": "Expected value",
+   "simple": "\u03a3 probability \u00d7 outcome.",
+   "deep": "A 20% chance of 5\u00d7 and 80% chance of \u221250% has EV +20% \u2014 but you may not survive the losses. Size for survival."
+  }
+ ],
+ "styles": [
+  {
+   "name": "Value investing",
+   "what": "Buy assets below intrinsic value.",
+   "why": "Investors overreact to bad news; mean reversion in fundamentals and multiples.",
+   "when": "After panics; when rates fall; when cheap stocks are not value traps.",
+   "fails": "Value traps; technology disruption; long periods (2010\u20132020) when growth dominates.",
+   "horizon": "3\u20135 yrs",
+   "risk": "Paying a low price for a declining business."
+  },
+  {
+   "name": "Growth investing",
+   "what": "Own companies growing fast for a long time.",
+   "why": "Compounding of revenue and profit outruns any starting valuation.",
+   "when": "Low rates, new tech cycles.",
+   "fails": "Rising rates; growth decelerates while priced for perfection (2000, 2022).",
+   "horizon": "3\u201310 yrs",
+   "risk": "Multiple compression."
+  },
+  {
+   "name": "Quality investing",
+   "what": "Own high-ROIC, low-debt, steady businesses.",
+   "why": "Markets underprice persistence of high profitability.",
+   "when": "Recessions and slow markets.",
+   "fails": "Junk rallies; when quality becomes expensive.",
+   "horizon": "5\u201310+ yrs",
+   "risk": "Overpaying for safety."
+  },
+  {
+   "name": "Momentum",
+   "what": "Buy recent winners, avoid losers.",
+   "why": "Under-reaction to news, herding, slow capital flows.",
+   "when": "Trending markets.",
+   "fails": "Sharp reversals after bear-market bottoms (2009 momentum crash).",
+   "horizon": "3\u201312 mo",
+   "risk": "Crashes; high turnover."
+  },
+  {
+   "name": "Factor investing",
+   "what": "Systematically tilt toward rewarded traits (value, momentum, quality, size, low vol).",
+   "why": "Risk premia or persistent behavioral errors.",
+   "when": "Over long horizons, diversified across factors.",
+   "fails": "Factors can underperform for a decade; crowding.",
+   "horizon": "10+ yrs",
+   "risk": "Long droughts; data-mined factors."
+  },
+  {
+   "name": "Contrarian",
+   "what": "Buy what's hated.",
+   "why": "Sentiment extremes overshoot.",
+   "when": "Capitulation moments.",
+   "fails": "When the bad news is correct.",
+   "horizon": "1\u20133 yrs",
+   "risk": "Catching falling knives."
+  },
+  {
+   "name": "Special situations",
+   "what": "Spin-offs, restructurings, mergers, buybacks.",
+   "why": "Forced sellers and complexity create mispricing.",
+   "when": "Any market; low correlation.",
+   "fails": "Deals break; complexity hides risk.",
+   "horizon": "6\u201324 mo",
+   "risk": "Event risk."
+  },
+  {
+   "name": "Event-driven",
+   "what": "Trade around defined events (earnings, approvals, deals).",
+   "why": "Market misprices event probabilities.",
+   "when": "High-dispersion markets.",
+   "fails": "Binary outcomes go wrong.",
+   "horizon": "Days\u2013months",
+   "risk": "Binary loss."
+  },
+  {
+   "name": "Long-term compounding",
+   "what": "Hold great businesses for decades.",
+   "why": "Time \u00d7 ROIC \u00d7 reinvestment; low taxes and costs.",
+   "when": "Always \u2014 if you can hold.",
+   "fails": "If you sell in panics or the moat erodes.",
+   "horizon": "10+ yrs",
+   "risk": "Behavioral \u2014 not holding."
+  },
+  {
+   "name": "Thematic",
+   "what": "Invest in a structural trend (AI, electrification).",
+   "why": "Big shifts create big winners.",
+   "when": "Early in a cycle.",
+   "fails": "Theme right, stocks wrong (dot-com).",
+   "horizon": "3\u201310 yrs",
+   "risk": "Paying for the theme twice."
+  },
+  {
+   "name": "Macro",
+   "what": "Position based on rates, inflation, growth, currencies.",
+   "why": "Macro drives cross-asset returns.",
+   "when": "Regime changes (2022).",
+   "fails": "Macro is hard to forecast and timing is everything.",
+   "horizon": "Months\u2013years",
+   "risk": "Being early = being wrong."
+  },
+  {
+   "name": "Optionality",
+   "what": "Small positions with large possible payoffs.",
+   "why": "Markets underprice convex outcomes sometimes.",
+   "when": "When sized small and diversified.",
+   "fails": "When positions are oversized.",
+   "horizon": "3\u201310 yrs",
+   "risk": "Most options expire worthless."
+  }
+ ],
+ "quant": [
+  {
+   "term": "Returns",
+   "simple": "% change in price (plus dividends).",
+   "deep": "Simple return r = P1/P0 \u2212 1. Multiply (1+r) across periods to compound."
+  },
+  {
+   "term": "Log returns",
+   "simple": "ln(P1/P0).",
+   "deep": "They add across time, which makes math easier. \u2248 simple return for small moves."
+  },
+  {
+   "term": "Volatility",
+   "simple": "Standard deviation of returns, annualized.",
+   "deep": "Monthly \u03c3 \u00d7 \u221a12, daily \u03c3 \u00d7 \u221a252. The S&P 500 has run \u224815\u201316% per year since 1900."
+  },
+  {
+   "term": "Correlation",
+   "simple": "How two return streams move together (\u22121 to 1).",
+   "deep": "Diversification works when correlations are low \u2014 and they rise in crises."
+  },
+  {
+   "term": "Covariance",
+   "simple": "Correlation \u00d7 \u03c3a \u00d7 \u03c3b.",
+   "deep": "Drives portfolio variance: \u03c3p\u00b2 = w\u1d40\u03a3w."
+  },
+  {
+   "term": "Momentum",
+   "simple": "Recent performance continues.",
+   "deep": "Cross-sectional (winners vs losers) and time-series (asset vs its own past)."
+  },
+  {
+   "term": "Mean reversion",
+   "simple": "Extremes pull back toward average.",
+   "deep": "Works at short horizons in some assets; FLOW's index test failed out of sample."
+  },
+  {
+   "term": "Moving averages",
+   "simple": "Average of the last N prices.",
+   "deep": "A slow average is a crude trend detector. Price above = trend up."
+  },
+  {
+   "term": "Relative strength",
+   "simple": "Performance of A vs B.",
+   "deep": "Rotate toward stronger assets."
+  },
+  {
+   "term": "Beta",
+   "simple": "Sensitivity to the market.",
+   "deep": "\u03b2 = cov(r, m)/var(m). \u03b2 1.5 moves ~1.5\u00d7 the market."
+  },
+  {
+   "term": "Alpha",
+   "simple": "Return not explained by market exposure.",
+   "deep": "Most 'alpha' disappears after costs and correct benchmarks."
+  },
+  {
+   "term": "Factors",
+   "simple": "Common drivers of returns across stocks.",
+   "deep": "Market, size, value, momentum, quality, low volatility."
+  },
+  {
+   "term": "Sharpe ratio",
+   "simple": "Excess return \u00f7 volatility.",
+   "deep": "(R \u2212 Rf)/\u03c3. 0.5 \u2248 stock market long-run; >1 sustained is rare."
+  },
+  {
+   "term": "Sortino ratio",
+   "simple": "Excess return \u00f7 downside deviation.",
+   "deep": "Only penalizes bad volatility."
+  },
+  {
+   "term": "Max drawdown",
+   "simple": "Worst peak-to-trough loss.",
+   "deep": "The number that decides whether you'll actually stick with a strategy. S&P 1929\u201332: \u221281%."
+  },
+  {
+   "term": "Statistical arbitrage",
+   "simple": "Bet on relationships between many securities converging.",
+   "deep": "Needs low costs, fast execution, and leverage \u2014 institutional territory."
+  },
+  {
+   "term": "Pairs trading",
+   "simple": "Long one, short a related one when the spread widens.",
+   "deep": "Requires short selling (account permissions). Relationships break."
+  },
+  {
+   "term": "Market regimes",
+   "simple": "Persistent states: bull/bear, high/low vol, inflation up/down.",
+   "deep": "Strategies that work in one regime often fail in another."
+  },
+  {
+   "term": "Backtesting",
+   "simple": "Simulating rules on historical data.",
+   "deep": "Necessary, never sufficient."
+  },
+  {
+   "term": "Overfitting",
+   "simple": "Fitting noise instead of signal.",
+   "deep": "Test many ideas \u2192 the best one is lucky. Use out-of-sample data and simple rules."
+  },
+  {
+   "term": "Look-ahead bias",
+   "simple": "Using information not available at the time.",
+   "deep": "Example: trading on a month's close at that month's start. FLOW shifts all signals one period."
+  },
+  {
+   "term": "Survivorship bias",
+   "simple": "Testing only on today's survivors.",
+   "deep": "Today's index members excluded the failures \u2014 inflates returns."
+  },
+  {
+   "term": "Transaction costs",
+   "simple": "Commissions, spreads, taxes.",
+   "deep": "FLOW charges 10 bps/switch (index) and 5 bps/side (swing)."
+  },
+  {
+   "term": "Slippage",
+   "simple": "Getting a worse price than the signal price.",
+   "deep": "Grows with size and volatility."
+  },
+  {
+   "term": "Position sizing",
+   "simple": "How much to put in each trade.",
+   "deep": "Risk per trade (e.g., 1% of capital) \u00f7 distance to stop = position size."
+  }
+ ],
+ "swing": [
+  {
+   "term": "What swing trading is",
+   "simple": "Holding positions for days to weeks to capture a 'swing' in price."
+  },
+  {
+   "term": "Time horizon",
+   "simple": "2 days \u2013 8 weeks. Long enough to avoid intraday noise, short enough for frequent decisions."
+  },
+  {
+   "term": "Trend",
+   "simple": "Higher highs and higher lows. Trade with it \u2014 the base rate is on your side."
+  },
+  {
+   "term": "Momentum",
+   "simple": "Speed of the move. Strong momentum tends to persist briefly, then fade."
+  },
+  {
+   "term": "Support / resistance",
+   "simple": "Price zones where buying or selling previously overwhelmed the other side."
+  },
+  {
+   "term": "Volume",
+   "simple": "Participation. Breakouts on heavy volume are more credible (not testable in FLOW's data)."
+  },
+  {
+   "term": "Breakouts",
+   "simple": "Price leaves a range. Most fail; the few that work run far \u2014 low win rate, high payoff."
+  },
+  {
+   "term": "Pullbacks",
+   "simple": "Temporary dips inside an uptrend. High win rate, small wins \u2014 vulnerable to regime shifts."
+  },
+  {
+   "term": "Moving averages",
+   "simple": "20/50/200-day trend filters. Simple, robust, laggy."
+  },
+  {
+   "term": "Relative strength",
+   "simple": "Prefer what's outperforming its benchmark."
+  },
+  {
+   "term": "Volatility",
+   "simple": "Wider stops in volatile markets; smaller size to keep risk constant."
+  },
+  {
+   "term": "Earnings catalysts",
+   "simple": "Gaps around earnings can jump stops \u2014 reduce size or avoid holding through."
+  },
+  {
+   "term": "Market structure",
+   "simple": "Most stocks follow the index. Fighting a falling market lowers win rates."
+  },
+  {
+   "term": "Risk/reward",
+   "simple": "Target at least 2:1 reward-to-risk, or a high win rate if lower."
+  },
+  {
+   "term": "Trade invalidation",
+   "simple": "Decide before entry what price proves you wrong."
+  },
+  {
+   "term": "Position sizing",
+   "simple": "Risk 0.5\u20131% of the paper account per trade."
+  },
+  {
+   "term": "Drawdowns",
+   "simple": "Losing streaks of 6\u201310 trades happen even with an edge. Size so they're survivable."
+  }
+ ],
+ "trading_styles": [
+  {
+   "name": "Investing",
+   "horizon": "Years",
+   "idea": "Own businesses; let compounding work.",
+   "data": "Fundamentals, valuation",
+   "risks": "Overpaying; permanent loss",
+   "mistakes": "Selling in panics",
+   "fails": "Behavior, not math"
+  },
+  {
+   "name": "Swing trading",
+   "horizon": "Days\u2013weeks",
+   "idea": "Capture short trends/bounces.",
+   "data": "Daily prices, volume, catalysts",
+   "risks": "Gaps, whipsaw",
+   "mistakes": "No stop, too large size",
+   "fails": "Edges are small and decay"
+  },
+  {
+   "name": "Position trading",
+   "horizon": "Weeks\u2013months",
+   "idea": "Ride intermediate trends.",
+   "data": "Trend, fundamentals",
+   "risks": "Trend reversals",
+   "mistakes": "Exiting too late",
+   "fails": "Lag at turning points"
+  },
+  {
+   "name": "Day trading (concepts)",
+   "horizon": "Minutes\u2013hours",
+   "idea": "Exploit intraday flows.",
+   "data": "Intraday data, order flow",
+   "risks": "Costs, speed disadvantage",
+   "mistakes": "Overtrading",
+   "fails": "Most retail day traders lose money after costs; US pattern-day-trader rules require $25K margin accounts."
+  },
+  {
+   "name": "Trend following",
+   "horizon": "Months",
+   "idea": "Own what's rising, exit what's falling.",
+   "data": "Prices",
+   "risks": "Whipsaw in sideways markets",
+   "mistakes": "Abandoning during flat years",
+   "fails": "Sideways regimes"
+  },
+  {
+   "name": "Momentum",
+   "horizon": "3\u201312 months",
+   "idea": "Winners keep winning.",
+   "data": "Returns ranks",
+   "risks": "Momentum crashes",
+   "mistakes": "Ignoring crash risk",
+   "fails": "Reversal after bear markets"
+  },
+  {
+   "name": "Mean reversion",
+   "horizon": "Days",
+   "idea": "Extremes revert.",
+   "data": "Prices, volatility",
+   "risks": "Trends that don't revert",
+   "mistakes": "Averaging down",
+   "fails": "Regime changes"
+  },
+  {
+   "name": "Quantitative trading",
+   "horizon": "Any",
+   "idea": "Rules from data.",
+   "data": "Clean historical data",
+   "risks": "Overfitting",
+   "mistakes": "Data mining",
+   "fails": "Edge was noise"
+  },
+  {
+   "name": "Algorithmic trading",
+   "horizon": "Any",
+   "idea": "Automated execution of rules.",
+   "data": "Data, broker API",
+   "risks": "Bugs, outages",
+   "mistakes": "No kill switch",
+   "fails": "Operational risk"
+  },
+  {
+   "name": "Statistical arbitrage",
+   "horizon": "Days",
+   "idea": "Many small mean-reverting bets.",
+   "data": "Universe data, shorting",
+   "risks": "Crowding (Aug 2007 quant crash)",
+   "mistakes": "Leverage",
+   "fails": "Needs institutional costs"
+  },
+  {
+   "name": "Pairs trading",
+   "horizon": "Days\u2013weeks",
+   "idea": "Spread between related assets reverts.",
+   "data": "Two price series, shorting",
+   "risks": "Relationship breaks",
+   "mistakes": "Assuming cointegration lasts",
+   "fails": "Structural change"
+  },
+  {
+   "name": "Event-driven",
+   "horizon": "Days\u2013months",
+   "idea": "Price events correctly.",
+   "data": "News, filings, calendars",
+   "risks": "Binary outcomes",
+   "mistakes": "Oversizing binary bets",
+   "fails": "Probabilities mis-estimated"
+  }
+ ],
+ "extreme_upside": [
+  {
+   "multiple": "2\u00d7",
+   "annual": "\u2248 26%/yr over 3 yrs \u00b7 15%/yr over 5",
+   "needs": "Revenue +50\u201370% with flat multiple, or steady growth + modest re-rating. Achievable for quality growth.",
+   "category": "High expected return"
+  },
+  {
+   "multiple": "3\u00d7",
+   "annual": "\u2248 44%/yr over 3 yrs \u00b7 25%/yr over 5",
+   "needs": "Revenue roughly doubles AND margins expand or multiple rises. Requires a real inflection.",
+   "category": "High expected return / high volatility"
+  },
+  {
+   "multiple": "5\u00d7",
+   "annual": "\u2248 71%/yr over 3 yrs \u00b7 38%/yr over 5",
+   "needs": "Revenue 3\u00d7 plus profitability inflection; usually a small/mid cap (<$30B) at the start.",
+   "category": "Speculation"
+  },
+  {
+   "multiple": "10\u00d7",
+   "annual": "\u2248 115%/yr over 3 yrs \u00b7 58%/yr over 5",
+   "needs": "A new market or category win: revenue 5\u201310\u00d7 AND a re-rating. Base rates are low; most candidates fall 70%+ along the way.",
+   "category": "Lottery-like"
+  }
+ ],
+ "upside_math": "Return multiple = (Revenue_end/Revenue_start) \u00d7 (Margin_end/Margin_start) \u00d7 (Multiple_end/Multiple_start) \u00d7 (Shares_start/Shares_end). Every 10\u00d7 needs several of these to move at once."
+}

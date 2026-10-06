@@ -1,0 +1,76 @@
+{
+ "last_updated": "2026-10-06",
+ "type": "EDUCATION",
+ "untested": [
+  {
+   "name": "Volume-confirmed breakout",
+   "reason": "No volume data available in FLOW's datasets. Hypothesis: requires breakout volume \u2265 1.5\u00d7 50-day average. Status: NOT TESTED."
+  },
+  {
+   "name": "Catalyst-based swing",
+   "reason": "No point-in-time catalyst history. Taught conceptually; use the Catalyst tracker for paper trades. Status: NOT TESTED."
+  },
+  {
+   "name": "Pairs trading",
+   "reason": "Requires short selling (margin + permissions). Taught only; not simulated."
+  }
+ ],
+ "lab": [
+  {
+   "id": "trend_sma",
+   "name": "Trend following",
+   "explain": "Hold equities when the market is above its long-term average; otherwise T-bills.",
+   "stress": "Fails in V-shaped crashes (1987, 2020): sells near the bottom.",
+   "breakit": "Every SMA length from 3 to 24 months beat buy-and-hold out-of-sample on Sharpe, and walk-forward selection also beat it. Not broken. Since 1900 it returned slightly more (11.6% vs 10.1%/yr) with far smaller drawdowns \u2014 the edge is mostly avoiding a few deep bear markets."
+  },
+  {
+   "id": "tsmom",
+   "name": "Momentum (time-series)",
+   "explain": "Hold when trailing 12-month return beats cash.",
+   "stress": "Late at turning points; whipsaws in choppy years.",
+   "breakit": "Out-of-sample Sharpe held up; closely related to trend following (same underlying effect)."
+  },
+  {
+   "id": "mean_rev",
+   "name": "Mean reversion",
+   "explain": "Buy after big down months, hold 3 months.",
+   "stress": "Big down months cluster in bear markets.",
+   "breakit": "Broken: Sharpe \u22480.01 train, 0.14 test. Rejected."
+  },
+  {
+   "id": "trend_vol",
+   "name": "Trend + calm-vol override",
+   "explain": "Stay invested in calm markets even below trend.",
+   "stress": "Calm markets turn violent quickly.",
+   "breakit": "Weaker than plain trend. Adding a parameter added nothing. Rejected."
+  },
+  {
+   "id": "vol_target",
+   "name": "Volatility-adjusted exposure",
+   "explain": "Scale exposure inversely to recent volatility.",
+   "stress": "Vol spikes after the fall \u2014 reduces exposure late.",
+   "breakit": "Did not beat buy-and-hold Sharpe out-of-sample at the monthly index level. Rejected for this use."
+  },
+  {
+   "id": "value_timing",
+   "name": "Value (valuation timing)",
+   "explain": "Hold only when CAPE is near its own history.",
+   "stress": "Markets stay expensive for decades (1990s, 2010s).",
+   "breakit": "Worst result: out of the market for long bull runs. Rejected as a timing tool."
+  },
+  {
+   "id": "value_mom",
+   "name": "Value + momentum",
+   "explain": "In the market if EITHER trend is up OR valuation is reasonable.",
+   "stress": "Inherits value's late exits.",
+   "breakit": "Better than value alone, worse than trend alone. Value added no robustness."
+  },
+  {
+   "id": "rel_strength",
+   "name": "Quality/relative strength rotation (stocks vs gold)",
+   "explain": "Hold whichever of stocks or gold has the stronger 6-month return.",
+   "stress": "2013 gold crash, 2022 stock-bond-gold mix.",
+   "breakit": "Every lookback beat stocks-only Sharpe 2000\u20132026. But this period is gold-favorable; 1971\u20131999 result was only similar to stocks. Partially robust."
+  }
+ ]
+}
