@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Spark Clicker</title>
+<title>Cookie Clicker</title>
 <style>
   :root{--bg1:#1a1022;--bg2:#3a1a33;--ac:#ff9a3c;--ac2:#ffd27a;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.12);--tx:#fff4e6;--dim:#c9a9b8}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -166,7 +166,7 @@
 <div id="app">
   <section id="left">
     <div id="top">
-      <div id="title">SPARK CLICKER</div>
+      <div id="title">COOKIE CLICKER</div>
       <div id="count">0</div>
       <div id="cname">cookies</div>
       <div id="cps">per second: 0</div>
@@ -190,7 +190,7 @@
 </div>
 <div id="glare"></div>
 <div id="dimctl"><span>☀</span><input type="range" id="dim" min="10" max="100" value="100" aria-label="Brightness"><span id="dimv">100%</span></div>
-<div id="menu"><canvas id="mcv"></canvas><div id="mtitle">SPARK CLICKER</div><div id="msub">tap the cookie. fill the world.</div><div id="mskins"></div><button id="mplay">BAKE</button><div id="mstat"></div></div>
+<div id="menu"><canvas id="mcv"></canvas><div id="mtitle">COOKIE CLICKER</div><div id="msub">tap the cookie. fill the world.</div><div id="mskins"></div><button id="mplay">BAKE</button><div id="mstat"></div></div>
 <canvas id="fx"></canvas>
 <button id="cinebtn">Keep baking ✦</button>
 <div id="flash"></div>
@@ -377,7 +377,7 @@ function renderUI() {
   const bd = $('#buffs'); bd.innerHTML = buffs.map(b => `<span class="buff">${b.name} ${Math.ceil(b.left)}s</span>`).join('');
   document.body.classList.toggle('frenzy', buffs.some(b => b.cps > 1));
   $('#ach').textContent = `🏆 ${Object.keys(S.ach).length}/${A.length}`;
-  document.title = fmtBig(S.cookies) + ' cookies - Spark Clicker';
+  document.title = fmtBig(S.cookies) + ' cookies - Cookie Clicker';
 }
 
 // ---------- achievements ----------
