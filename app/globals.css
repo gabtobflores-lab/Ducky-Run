@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #f4efe6;
+  --color-paper: #faf8f3;
+  --color-beige: #ebe3d5;
+  --color-sand: #ddd2bf;
+  --color-line: #e2d8c7;
+  --color-ink: #29231f;
+  --color-brown: #4b3a2e;
+  --color-muted: #6d6157;
+  --color-faint: #93877c;
+  --color-clay: #c6613f;
+  --color-clay-dark: #a64d2f;
+  --color-coral: #dc8a6c;
+  --color-blush: #f3dfd3;
+  --color-pos: #4f7a4a;
+  --color-neg: #b0453a;
+  --color-gold: #b88a3c;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 72px; -webkit-text-size-adjust: 100%; }
+body { background: var(--color-cream); color: var(--color-ink); font-family: var(--font-sans); font-feature-settings: "ss01", "cv11"; }
+.num { font-variant-numeric: tabular-nums; }
+::selection { background: var(--color-blush); }
+:focus-visible { outline: 2px solid var(--color-clay); outline-offset: 2px; border-radius: 4px; }
+
+/* range inputs: large touch targets */
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; cursor: pointer; }
+input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: var(--color-sand); }
+input[type="range"]::-moz-range-track { height: 4px; border-radius: 4px; background: var(--color-sand); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -9px; border-radius: 50%; background: var(--color-paper); border: 2px solid var(--color-clay); box-shadow: 0 1px 3px rgb(41 35 31 / .2); }
+input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--color-paper); border: 2px solid var(--color-clay); }
+
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+details[open] .chev { transform: rotate(90deg); }
+.chev { transition: transform .15s ease; }
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ---------- Ask Claude overlay ---------- */
+@keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bloom { 0% { transform: translate(-50%, -50%) scale(0); opacity: .9; } 70% { opacity: .55; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+@keyframes spark-fly { 0% { transform: translate(-50%, -50%) scale(.4) rotate(-90deg); opacity: 0; } 35% { opacity: 1; } 60% { transform: translate(-50%, -50%) scale(1.6) rotate(20deg); } 100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; } }
+@keyframes panel-up { from { transform: translateY(24px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@keyframes ray { 0% { transform: rotate(var(--a)) translateX(0) scaleX(.2); opacity: 0; } 30% { opacity: 1; } 100% { transform: rotate(var(--a)) translateX(46vmax) scaleX(1); opacity: 0; } }
+@keyframes msg-in { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes bar-in { from { transform: translate(-50%, 120%); } to { transform: translate(-50%, 0); } }
+@keyframes caret { 50% { opacity: 0; } }
+
+.veil { animation: veil-in .35s ease both; }
+.bloom { animation: bloom .9s cubic-bezier(.2,.7,.2,1) both; }
+.spark-fly { animation: spark-fly .85s cubic-bezier(.2,.8,.2,1) both; }
+.panel-up { animation: panel-up .45s cubic-bezier(.2,.8,.2,1) .35s both; }
+.ray { animation: ray .8s cubic-bezier(.2,.7,.2,1) both; }
+.thinking { animation: spin-slow 2.4s linear infinite, breathe 1.2s ease-in-out infinite; }
+.msg-in { animation: msg-in .25s ease both; }
+.bar-in { animation: bar-in .6s cubic-bezier(.2,.8,.2,1) .4s both; }
+.caret::after { content: "▍"; color: var(--color-clay); animation: caret 1s steps(1) infinite; margin-left: 1px; }
+.anim-w { transition: width .35s cubic-bezier(.2,.8,.2,1), flex-basis .35s cubic-bezier(.2,.8,.2,1); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .ray, .bloom { display: none; }
+}

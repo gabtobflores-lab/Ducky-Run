@@ -1,0 +1,482 @@
+{
+ "last_updated": "2026-10-06",
+ "type": "RESEARCH HYPOTHESIS",
+ "criteria": [
+  "demand",
+  "originality",
+  "profit",
+  "startup_cost",
+  "margin",
+  "recurring",
+  "scalability",
+  "defensibility",
+  "teen_feasibility",
+  "speed",
+  "long_term"
+ ],
+ "rejected_generic": [
+  "Dropshipping",
+  "Generic clothing",
+  "Reselling",
+  "Social media management",
+  "AI/web agency",
+  "Tutoring",
+  "Content creation",
+  "Print-on-demand"
+ ],
+ "ideas": [
+  {
+   "name": "FLOW Edge",
+   "pitch": "Mobile skate sharpening + gear-drying subscription for youth hockey & figure-skating families, delivered at the rink or doorstep.",
+   "scores": {
+    "demand": 8,
+    "originality": 8,
+    "profit": 7,
+    "startup_cost": 6,
+    "margin": 9,
+    "recurring": 9,
+    "scalability": 6,
+    "defensibility": 6,
+    "teen_feasibility": 8,
+    "speed": 8,
+    "long_term": 7
+   },
+   "total": 7.45
+  },
+  {
+   "name": "Calc Library",
+   "pitch": "Rents graphing calculators to students by the semester through school clubs; buys used, refurbishes, re-rents.",
+   "scores": {
+    "demand": 7,
+    "originality": 8,
+    "profit": 6,
+    "startup_cost": 7,
+    "margin": 8,
+    "recurring": 8,
+    "scalability": 6,
+    "defensibility": 5,
+    "teen_feasibility": 9,
+    "speed": 7,
+    "long_term": 5
+   },
+   "total": 6.91
+  },
+  {
+   "name": "Club Treasurer Kit",
+   "pitch": "Done-for-you dues collection, ledgers and receipts for school clubs and youth teams (parent-signed).",
+   "scores": {
+    "demand": 6,
+    "originality": 7,
+    "profit": 5,
+    "startup_cost": 9,
+    "margin": 9,
+    "recurring": 8,
+    "scalability": 7,
+    "defensibility": 5,
+    "teen_feasibility": 7,
+    "speed": 6,
+    "long_term": 6
+   },
+   "total": 6.82
+  },
+  {
+   "name": "String Run",
+   "pitch": "Tennis/pickleball racket restringing with court-side pickup and 48-hour return.",
+   "scores": {
+    "demand": 7,
+    "originality": 6,
+    "profit": 6,
+    "startup_cost": 6,
+    "margin": 8,
+    "recurring": 7,
+    "scalability": 5,
+    "defensibility": 5,
+    "teen_feasibility": 8,
+    "speed": 8,
+    "long_term": 5
+   },
+   "total": 6.45
+  },
+  {
+   "name": "Gear Swap Night",
+   "pitch": "Runs seasonal consignment nights for youth sports clubs \u2014 families sell outgrown gear; FLOW takes 20%.",
+   "scores": {
+    "demand": 8,
+    "originality": 6,
+    "profit": 6,
+    "startup_cost": 8,
+    "margin": 7,
+    "recurring": 6,
+    "scalability": 6,
+    "defensibility": 5,
+    "teen_feasibility": 7,
+    "speed": 7,
+    "long_term": 5
+   },
+   "total": 6.45
+  },
+  {
+   "name": "Pet Waste Removal",
+   "pitch": "Weekly yard pet-waste cleanup.",
+   "scores": {
+    "demand": 7,
+    "originality": 2,
+    "profit": 6,
+    "startup_cost": 9,
+    "margin": 8,
+    "recurring": 9,
+    "scalability": 6,
+    "defensibility": 3,
+    "teen_feasibility": 7,
+    "speed": 8,
+    "long_term": 4
+   },
+   "total": 6.27
+  },
+  {
+   "name": "Rec League Stats",
+   "pitch": "Live stat-keeping + season stat sheets for rec leagues that have none.",
+   "scores": {
+    "demand": 5,
+    "originality": 6,
+    "profit": 4,
+    "startup_cost": 9,
+    "margin": 9,
+    "recurring": 6,
+    "scalability": 6,
+    "defensibility": 4,
+    "teen_feasibility": 8,
+    "speed": 6,
+    "long_term": 4
+   },
+   "total": 6.09
+  },
+  {
+   "name": "Senior Phone Setup",
+   "pitch": "Sets up and simplifies phones/tablets for grandparents; monthly check-in plan.",
+   "scores": {
+    "demand": 7,
+    "originality": 4,
+    "profit": 5,
+    "startup_cost": 9,
+    "margin": 9,
+    "recurring": 6,
+    "scalability": 4,
+    "defensibility": 3,
+    "teen_feasibility": 8,
+    "speed": 8,
+    "long_term": 4
+   },
+   "total": 6.09
+  },
+  {
+   "name": "Locker Fresh",
+   "pitch": "Ozone/UV deodorizing of team gear bags between practices, sold to team managers.",
+   "scores": {
+    "demand": 6,
+    "originality": 7,
+    "profit": 5,
+    "startup_cost": 6,
+    "margin": 7,
+    "recurring": 8,
+    "scalability": 5,
+    "defensibility": 4,
+    "teen_feasibility": 7,
+    "speed": 6,
+    "long_term": 4
+   },
+   "total": 5.91
+  },
+  {
+   "name": "Science Fair Kit Lab",
+   "pitch": "Pre-tested experiment kits + parts lending library for middle-school science fairs.",
+   "scores": {
+    "demand": 6,
+    "originality": 7,
+    "profit": 5,
+    "startup_cost": 7,
+    "margin": 6,
+    "recurring": 4,
+    "scalability": 6,
+    "defensibility": 5,
+    "teen_feasibility": 8,
+    "speed": 6,
+    "long_term": 5
+   },
+   "total": 5.91
+  },
+  {
+   "name": "Lost & Found Return",
+   "pitch": "Photographs school/gym lost-and-found, posts searchable gallery, charges for delivery.",
+   "scores": {
+    "demand": 5,
+    "originality": 8,
+    "profit": 3,
+    "startup_cost": 9,
+    "margin": 8,
+    "recurring": 4,
+    "scalability": 5,
+    "defensibility": 3,
+    "teen_feasibility": 8,
+    "speed": 7,
+    "long_term": 3
+   },
+   "total": 5.73
+  },
+  {
+   "name": "Tournament Day Ops",
+   "pitch": "Check-in, brackets, and score boards for small chess/esports/badminton tournaments.",
+   "scores": {
+    "demand": 5,
+    "originality": 6,
+    "profit": 5,
+    "startup_cost": 8,
+    "margin": 8,
+    "recurring": 5,
+    "scalability": 5,
+    "defensibility": 4,
+    "teen_feasibility": 7,
+    "speed": 6,
+    "long_term": 4
+   },
+   "total": 5.73
+  },
+  {
+   "name": "Robotics Parts Exchange",
+   "pitch": "Buys/sells surplus FIRST/VEX robotics parts between teams at season end.",
+   "scores": {
+    "demand": 5,
+    "originality": 8,
+    "profit": 4,
+    "startup_cost": 6,
+    "margin": 6,
+    "recurring": 5,
+    "scalability": 5,
+    "defensibility": 5,
+    "teen_feasibility": 8,
+    "speed": 6,
+    "long_term": 4
+   },
+   "total": 5.64
+  },
+  {
+   "name": "Uniform Library",
+   "pitch": "Leases uniforms to small clubs and collects/launders them at season end.",
+   "scores": {
+    "demand": 5,
+    "originality": 7,
+    "profit": 5,
+    "startup_cost": 5,
+    "margin": 6,
+    "recurring": 7,
+    "scalability": 5,
+    "defensibility": 5,
+    "teen_feasibility": 6,
+    "speed": 5,
+    "long_term": 5
+   },
+   "total": 5.55
+  },
+  {
+   "name": "3D-Printed Team Gear",
+   "pitch": "Custom 3D-printed bag tags, mouthguard cases, trophies for teams.",
+   "scores": {
+    "demand": 5,
+    "originality": 5,
+    "profit": 4,
+    "startup_cost": 6,
+    "margin": 8,
+    "recurring": 4,
+    "scalability": 5,
+    "defensibility": 3,
+    "teen_feasibility": 8,
+    "speed": 7,
+    "long_term": 4
+   },
+   "total": 5.36
+  },
+  {
+   "name": "Bike Tune Pop-up",
+   "pitch": "Pop-up bike tune-ups at schools in spring.",
+   "scores": {
+    "demand": 6,
+    "originality": 4,
+    "profit": 5,
+    "startup_cost": 6,
+    "margin": 7,
+    "recurring": 5,
+    "scalability": 4,
+    "defensibility": 3,
+    "teen_feasibility": 7,
+    "speed": 7,
+    "long_term": 3
+   },
+   "total": 5.18
+  },
+  {
+   "name": "Garden Bed Starter",
+   "pitch": "Builds and plants raised garden beds for families; seasonal replant subscription.",
+   "scores": {
+    "demand": 5,
+    "originality": 5,
+    "profit": 6,
+    "startup_cost": 5,
+    "margin": 6,
+    "recurring": 6,
+    "scalability": 4,
+    "defensibility": 4,
+    "teen_feasibility": 6,
+    "speed": 5,
+    "long_term": 4
+   },
+   "total": 5.09
+  },
+  {
+   "name": "Event Program Printing",
+   "pitch": "Programs + rosters for recitals, meets, and school plays.",
+   "scores": {
+    "demand": 4,
+    "originality": 5,
+    "profit": 3,
+    "startup_cost": 8,
+    "margin": 6,
+    "recurring": 4,
+    "scalability": 4,
+    "defensibility": 3,
+    "teen_feasibility": 8,
+    "speed": 6,
+    "long_term": 3
+   },
+   "total": 4.91
+  },
+  {
+   "name": "Dorm Move Help",
+   "pitch": "Summer moving/storage for local college students.",
+   "scores": {
+    "demand": 6,
+    "originality": 3,
+    "profit": 6,
+    "startup_cost": 6,
+    "margin": 6,
+    "recurring": 3,
+    "scalability": 5,
+    "defensibility": 3,
+    "teen_feasibility": 5,
+    "speed": 6,
+    "long_term": 4
+   },
+   "total": 4.82
+  },
+  {
+   "name": "Study Room Booking",
+   "pitch": "Rents quiet study space in partnership with a community center.",
+   "scores": {
+    "demand": 4,
+    "originality": 6,
+    "profit": 3,
+    "startup_cost": 4,
+    "margin": 5,
+    "recurring": 6,
+    "scalability": 4,
+    "defensibility": 4,
+    "teen_feasibility": 4,
+    "speed": 4,
+    "long_term": 4
+   },
+   "total": 4.36
+  }
+ ],
+ "top3": [
+  "FLOW Edge",
+  "Calc Library",
+  "Club Treasurer Kit"
+ ],
+ "red_team": [
+  {
+   "name": "FLOW Edge",
+   "attacks": [
+    [
+     "Why would customers refuse?",
+     "They already use the rink pro shop and trust it with $300 skates."
+    ],
+    [
+     "Why hasn't this won?",
+     "Pro shops own the rink; most sharpeners are adults behind a counter, not a delivery service."
+    ],
+    [
+     "Can competitors copy it?",
+     "Yes \u2014 a pro shop could add pickup. Defense: subscription relationships with team managers and better turnaround."
+    ],
+    [
+     "Is the market big enough?",
+     "One rink with ~300 youth skaters is enough for a teen business; scaling needs more rinks."
+    ],
+    [
+     "Is pricing realistic?",
+     "$8\u201312 per sharpen is market rate; a $35/month family plan is plausible for frequent skaters."
+    ],
+    [
+     "Can a teen execute it?",
+     "Yes with a consumer-grade automatic sharpener (parent purchase) and practice on own skates first."
+    ],
+    [
+     "Legal issues",
+     "Rink may forbid on-site commerce \u2014 operate via doorstep pickup/drop or get written permission. Liability waiver; parent as business owner on paperwork."
+    ],
+    [
+     "Bottleneck",
+     "Time during school weeks; seasonality (Sep\u2013Mar)."
+    ],
+    [
+     "Killer assumption",
+     "That families will hand skates to a teen. Mitigation: free first sharpen, references from team manager."
+    ]
+   ],
+   "fix": "Sell to team managers as a team plan (one pickup, 15 pairs), not to individual parents. Add summer string-run variant to cover seasonality."
+  },
+  {
+   "name": "Calc Library",
+   "attacks": [
+    [
+     "Why refuse?",
+     "Many schools lend calculators free."
+    ],
+    [
+     "Killer assumption",
+     "Students lack calculators AND the school doesn't lend. Must verify at your school first."
+    ],
+    [
+     "Bottleneck",
+     "Loss/damage; deposit management."
+    ],
+    [
+     "Copyable?",
+     "Easily, but low incentive for others."
+    ]
+   ],
+   "fix": "Deposit + rental bundle; partner with math department for referrals; sell refurbished units at semester end."
+  },
+  {
+   "name": "String Run",
+   "attacks": [
+    [
+     "Why refuse?",
+     "Club pros already string."
+    ],
+    [
+     "Market",
+     "Depends on local courts; pickleball paddles don't need stringing."
+    ],
+    [
+     "Bottleneck",
+     "Stringing skill takes weeks to learn."
+    ],
+    [
+     "Copyable?",
+     "Yes."
+    ]
+   ],
+   "fix": "Fold into FLOW Edge as the warm-season service line rather than a standalone business."
+  }
+ ]
+}

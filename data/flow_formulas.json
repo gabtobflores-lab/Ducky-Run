@@ -1,0 +1,228 @@
+{
+ "last_updated": "2026-10-06",
+ "type": "RESEARCH HYPOTHESIS",
+ "scenario_weights": {
+  "bear": 0.25,
+  "base": 0.45,
+  "bull": 0.22,
+  "xbull": 0.08
+ },
+ "extreme": {
+  "name": "FLOW EXTREME",
+  "formula": "E = 0.25\u00b7Growth + 0.25\u00b7Optionality + 0.20\u00b7Momentum + 0.15\u00b7ExpectationGap + 0.15\u00b7Catalyst   (gate: BalanceSheet \u2265 5)",
+  "weights": {
+   "g": 0.25,
+   "o": 0.25,
+   "m": 0.2,
+   "x": 0.15,
+   "c": 0.15
+  },
+  "gate": "Balance sheet score \u2265 5 (exclude dilution/bankruptcy risk \u2014 the main source of permanent loss in speculative names).",
+  "sizing": "Top 8 by score, weight \u221d score, cap 20% per name, kill rule: exit at \u221235% from entry or on thesis invalidation.",
+  "why_weights": [
+   "Momentum has the longest documented record of any return anomaly (\u2248 1927\u2013present, many countries) \u2014 kept at 20%, not more, because momentum crashes after bear markets.",
+   "Growth and optionality drive the right tail (5\u201310\u00d7) that this formula exists to capture.",
+   "Expectation gap and catalysts make the upside time-bound instead of hope-based.",
+   "Valuation is deliberately excluded \u2014 it is the main thing EXTREME is willing to pay for; it reappears as a risk, not a score."
+  ],
+  "top": [
+   "RKLB",
+   "GOOGL",
+   "AMD",
+   "PLTR",
+   "NVDA",
+   "IONQ",
+   "VRT",
+   "MU",
+   "LLY",
+   "AVGO"
+  ],
+  "avg_bear": -53.5,
+  "avg_base": 17.5,
+  "avg_bull": 78.5,
+  "avg_xbull": 207.0,
+  "avg_vol_score": 7.8,
+  "est_maxdd": "\u221255% to \u221280% (high-growth tech drawdowns: Nasdaq \u221278% 2000\u201302, \u221235% 2022; single names often \u221270%+)",
+  "horizon": "3\u20135 years",
+  "best_env": "Falling rates, risk-on, a new technology cycle with expanding multiples.",
+  "worst_env": "Rising real rates + earnings disappointments (2000\u201302, 2022). Multiple compression hits high-optionality names first.",
+  "failure": [
+   "Narrative outruns fundamentals; expectation gap closes the wrong way.",
+   "Correlated holdings fall together \u2014 diversification is illusory.",
+   "Momentum reverses sharply after a bear-market bottom (momentum crash)."
+  ],
+  "robustness": 0.94,
+  "corr_momentum": 0.64,
+  "versions": [
+   {
+    "name": "v1 \u2014 equal weight, all 9 inputs",
+    "weights": {
+     "g": 0.1111111111111111,
+     "q": 0.1111111111111111,
+     "v": 0.1111111111111111,
+     "m": 0.1111111111111111,
+     "c": 0.1111111111111111,
+     "o": 0.1111111111111111,
+     "b": 0.1111111111111111,
+     "x": 0.1111111111111111
+    },
+    "verdict": "Rejected: dilutes asymmetry; ranks quality megacaps on top \u2014 it became a CORE clone.",
+    "top5": [
+     "GOOGL",
+     "NVDA",
+     "TSM",
+     "AMD",
+     "META"
+    ],
+    "stability": 0.87,
+    "corr_momentum": 0.27
+   },
+   {
+    "name": "v2 \u2014 growth + momentum only",
+    "weights": {
+     "g": 0.5,
+     "m": 0.5
+    },
+    "verdict": "Rejected: ~pure momentum; no protection against priced-for-perfection names.",
+    "top5": [
+     "PLTR",
+     "RKLB",
+     "NVDA",
+     "AVGO",
+     "GEV"
+    ],
+    "stability": 0.94,
+    "corr_momentum": 0.78
+   },
+   {
+    "name": "v3 \u2014 final",
+    "weights": {
+     "g": 0.25,
+     "o": 0.25,
+     "m": 0.2,
+     "x": 0.15,
+     "c": 0.15
+    },
+    "verdict": "Kept: highest stability under weight noise among non-trivial versions; distinct from momentum alone.",
+    "top5": [
+     "RKLB",
+     "GOOGL",
+     "AMD",
+     "PLTR",
+     "NVDA"
+    ],
+    "stability": 0.94,
+    "corr_momentum": 0.64
+   }
+  ],
+  "oos": "No point-in-time stock fundamentals are available, so EXTREME has NO true out-of-sample test. Treat it as a ranking hypothesis."
+ },
+ "core": {
+  "name": "FLOW CORE",
+  "formula": "C = 0.30\u00b7Quality + 0.20\u00b7BalanceSheet + 0.15\u00b7Valuation + 0.15\u00b7(10 \u2212 Volatility) + 0.10\u00b7Growth + 0.10\u00b7Momentum   \u00d7 Market-trend overlay",
+  "weights": {
+   "q": 0.3,
+   "b": 0.2,
+   "v": 0.15,
+   "lowvol": 0.15,
+   "g": 0.1,
+   "m": 0.1
+  },
+  "overlay": "When the S&P 500 closes a month below its 10-month average, cut equity to 50% and hold T-bills (tested 1900\u20132026, walk-forward validated).",
+  "sizing": "Top 12, equal weight, max 12% per name, max 30% per sector, rebalance quarterly.",
+  "why_weights": [
+   "Profitability/quality and low volatility are documented, persistent factors (Novy-Marx 2013; Frazzini\u2013Pedersen 2014).",
+   "Balance sheet strength reduces permanent loss in recessions.",
+   "Valuation kept small (15%): our own test showed valuation timing failed out of sample at the index level; it still prevents overpaying.",
+   "The trend overlay is the one component with a real out-of-sample result in FLOW's own backtests."
+  ],
+  "top": [
+   "MSFT",
+   "TSM",
+   "GOOGL",
+   "BRK.B",
+   "V",
+   "NVDA",
+   "ISRG",
+   "ASML",
+   "COST",
+   "META"
+  ],
+  "avg_bear": -29.5,
+  "avg_base": 28.0,
+  "avg_bull": 61.0,
+  "avg_xbull": 102.0,
+  "avg_vol_score": 4.3,
+  "est_maxdd": "\u221220% to \u221235% with overlay (index-level overlay test: \u221219% max drawdown 1980\u20132026 vs \u221249% buy-and-hold)",
+  "horizon": "5\u201310+ years",
+  "best_env": "Slow grinding markets, recessions (overlay + quality), sideways valuations.",
+  "worst_env": "Sharp V-shaped rebounds (overlay is late re-entering), speculative melt-ups where quality lags.",
+  "failure": [
+   "Whipsaw: overlay sells near bottoms in fast corrections (1987, 2020).",
+   "Quality becomes crowded and expensive.",
+   "Lags badly in junk rallies \u2014 behavioral risk of abandoning it."
+  ],
+  "robustness": 0.97,
+  "corr_momentum": -0.32,
+  "versions": [
+   {
+    "name": "v1 \u2014 valuation-heavy (value 50%)",
+    "weights": {
+     "v": 0.5,
+     "q": 0.25,
+     "b": 0.25
+    },
+    "verdict": "Rejected: our index backtest shows valuation timing underperformed out of sample (Sharpe 0.51 vs 0.63 buy-and-hold); it loads on troubled names.",
+    "top5": [
+     "GOOGL",
+     "TSM",
+     "BRK.B",
+     "ASML",
+     "NVO"
+    ],
+    "stability": 0.92,
+    "corr_momentum": -0.5
+   },
+   {
+    "name": "v2 \u2014 quality only",
+    "weights": {
+     "q": 1.0
+    },
+    "verdict": "Rejected: too many ties, no valuation discipline.",
+    "top5": [
+     "NVDA",
+     "MSFT",
+     "ASML",
+     "TSM",
+     "V"
+    ],
+    "stability": 1.0,
+    "corr_momentum": -0.44
+   },
+   {
+    "name": "v3 \u2014 final",
+    "weights": {
+     "q": 0.3,
+     "b": 0.2,
+     "v": 0.15,
+     "lowvol": 0.15,
+     "g": 0.1,
+     "m": 0.1
+    },
+    "verdict": "Kept: balanced, stable ranking, plus a tested market-trend overlay.",
+    "top5": [
+     "MSFT",
+     "TSM",
+     "GOOGL",
+     "BRK.B",
+     "V"
+    ],
+    "stability": 0.97,
+    "corr_momentum": -0.32
+   }
+  ],
+  "oos": "Overlay: out-of-sample 1980\u20132026 Sharpe 0.89 vs 0.63 buy-and-hold. Stock-ranking part: no point-in-time data, not tested."
+ },
+ "corr_extreme_core": -0.27,
+ "overlap_top10": 2
+}

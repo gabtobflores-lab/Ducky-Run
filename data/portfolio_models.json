@@ -1,0 +1,562 @@
+{
+ "last_updated": "2026-10-06",
+ "type": "SIMULATION",
+ "scenario_weights": {
+  "bear": 0.25,
+  "base": 0.45,
+  "bull": 0.22,
+  "xbull": 0.08
+ },
+ "horizon_note": "Scenario returns are 3-year total-return midpoints.",
+ "instruments": [
+  {
+   "ticker": "NVDA",
+   "company": "NVIDIA",
+   "scen": [
+    -45,
+    25,
+    70,
+    150
+   ],
+   "s": 7
+  },
+  {
+   "ticker": "MSFT",
+   "company": "Microsoft",
+   "scen": [
+    -25,
+    30,
+    60,
+    95
+   ],
+   "s": 3
+  },
+  {
+   "ticker": "GOOGL",
+   "company": "Alphabet",
+   "scen": [
+    -30,
+    40,
+    85,
+    160
+   ],
+   "s": 5
+  },
+  {
+   "ticker": "AMZN",
+   "company": "Amazon",
+   "scen": [
+    -30,
+    35,
+    75,
+    130
+   ],
+   "s": 5
+  },
+  {
+   "ticker": "META",
+   "company": "Meta Platforms",
+   "scen": [
+    -35,
+    30,
+    70,
+    120
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "TSM",
+   "company": "Taiwan Semiconductor",
+   "scen": [
+    -40,
+    40,
+    80,
+    130
+   ],
+   "s": 5
+  },
+  {
+   "ticker": "AVGO",
+   "company": "Broadcom",
+   "scen": [
+    -40,
+    20,
+    60,
+    110
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "ASML",
+   "company": "ASML",
+   "scen": [
+    -30,
+    30,
+    65,
+    100
+   ],
+   "s": 5
+  },
+  {
+   "ticker": "AMD",
+   "company": "Advanced Micro Devices",
+   "scen": [
+    -50,
+    25,
+    90,
+    200
+   ],
+   "s": 8
+  },
+  {
+   "ticker": "MU",
+   "company": "Micron Technology",
+   "scen": [
+    -55,
+    30,
+    90,
+    180
+   ],
+   "s": 9
+  },
+  {
+   "ticker": "ANET",
+   "company": "Arista Networks",
+   "scen": [
+    -40,
+    25,
+    65,
+    110
+   ],
+   "s": 7
+  },
+  {
+   "ticker": "VRT",
+   "company": "Vertiv",
+   "scen": [
+    -50,
+    30,
+    80,
+    150
+   ],
+   "s": 8
+  },
+  {
+   "ticker": "GEV",
+   "company": "GE Vernova",
+   "scen": [
+    -35,
+    25,
+    60,
+    100
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "CEG",
+   "company": "Constellation Energy",
+   "scen": [
+    -35,
+    20,
+    55,
+    90
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "LLY",
+   "company": "Eli Lilly",
+   "scen": [
+    -35,
+    25,
+    60,
+    100
+   ],
+   "s": 5
+  },
+  {
+   "ticker": "NVO",
+   "company": "Novo Nordisk",
+   "scen": [
+    -35,
+    30,
+    70,
+    110
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "UNH",
+   "company": "UnitedHealth",
+   "scen": [
+    -40,
+    30,
+    65,
+    90
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "ISRG",
+   "company": "Intuitive Surgical",
+   "scen": [
+    -30,
+    20,
+    50,
+    80
+   ],
+   "s": 4
+  },
+  {
+   "ticker": "BRK.B",
+   "company": "Berkshire Hathaway",
+   "scen": [
+    -15,
+    25,
+    45,
+    60
+   ],
+   "s": 2
+  },
+  {
+   "ticker": "V",
+   "company": "Visa",
+   "scen": [
+    -20,
+    25,
+    50,
+    70
+   ],
+   "s": 3
+  },
+  {
+   "ticker": "COST",
+   "company": "Costco",
+   "scen": [
+    -25,
+    15,
+    35,
+    55
+   ],
+   "s": 3
+  },
+  {
+   "ticker": "CRWD",
+   "company": "CrowdStrike",
+   "scen": [
+    -50,
+    15,
+    55,
+    100
+   ],
+   "s": 7
+  },
+  {
+   "ticker": "PLTR",
+   "company": "Palantir",
+   "scen": [
+    -70,
+    0,
+    50,
+    120
+   ],
+   "s": 10
+  },
+  {
+   "ticker": "NFLX",
+   "company": "Netflix",
+   "scen": [
+    -30,
+    25,
+    55,
+    85
+   ],
+   "s": 5
+  },
+  {
+   "ticker": "UBER",
+   "company": "Uber",
+   "scen": [
+    -45,
+    30,
+    75,
+    130
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "MELI",
+   "company": "MercadoLibre",
+   "scen": [
+    -45,
+    35,
+    80,
+    140
+   ],
+   "s": 7
+  },
+  {
+   "ticker": "SPOT",
+   "company": "Spotify",
+   "scen": [
+    -40,
+    20,
+    55,
+    90
+   ],
+   "s": 6
+  },
+  {
+   "ticker": "RKLB",
+   "company": "Rocket Lab",
+   "scen": [
+    -75,
+    10,
+    120,
+    400
+   ],
+   "s": 10
+  },
+  {
+   "ticker": "IONQ",
+   "company": "IonQ",
+   "scen": [
+    -85,
+    -30,
+    80,
+    500
+   ],
+   "s": 10
+  },
+  {
+   "ticker": "XOM",
+   "company": "Exxon Mobil",
+   "scen": [
+    -30,
+    20,
+    45,
+    70
+   ],
+   "s": 5
+  },
+  {
+   "ticker": "VTI",
+   "company": "Total US market ETF",
+   "scen": [
+    -35,
+    25,
+    50,
+    70
+   ],
+   "s": 4
+  },
+  {
+   "ticker": "SGOV",
+   "company": "0\u20133 month T-bill ETF (defensive)",
+   "scen": [
+    11,
+    12,
+    12,
+    12
+   ],
+   "s": 0
+  }
+ ],
+ "models": [
+  {
+   "id": "growth",
+   "name": "FLOW GROWTH",
+   "thesis": "Quality compounders at the center of AI, with an index core and a cash buffer.",
+   "horizon": "5+ years",
+   "allocation": [
+    {
+     "ticker": "GOOGL",
+     "weight": 14,
+     "why": "Cheapest megacap with the most optionality (Cloud, TPU, Waymo)."
+    },
+    {
+     "ticker": "NVDA",
+     "weight": 12,
+     "why": "Platform leader; capped because it is the consensus bet."
+    },
+    {
+     "ticker": "MSFT",
+     "weight": 10,
+     "why": "Enterprise AI distribution, fortress balance sheet."
+    },
+    {
+     "ticker": "TSM",
+     "weight": 10,
+     "why": "Picks-and-shovels for every AI chip; geopolitics limits the weight."
+    },
+    {
+     "ticker": "AMZN",
+     "weight": 10,
+     "why": "Retail margin + AWS re-acceleration."
+    },
+    {
+     "ticker": "META",
+     "weight": 8,
+     "why": "AI already monetizing through ads."
+    },
+    {
+     "ticker": "LLY",
+     "weight": 8,
+     "why": "Non-tech growth: obesity franchise."
+    },
+    {
+     "ticker": "V",
+     "weight": 6,
+     "why": "Low-volatility compounder; diversifies away from AI."
+    },
+    {
+     "ticker": "VTI",
+     "weight": 12,
+     "why": "Index core: humility about stock picking."
+    },
+    {
+     "ticker": "SGOV",
+     "weight": 10,
+     "why": "Dry powder and drawdown cushion."
+    }
+   ],
+   "bear": -29.0,
+   "base": 29.2,
+   "bull": 62.4,
+   "xbull": 107.3,
+   "weighted": 28.2,
+   "hhi": 0.105,
+   "risk": 4.6
+  },
+  {
+   "id": "asymmetric",
+   "name": "FLOW ASYMMETRIC",
+   "thesis": "Where the market's expectations look too low \u2014 contrarian and second-order bets.",
+   "horizon": "3\u20135 years",
+   "allocation": [
+    {
+     "ticker": "GOOGL",
+     "weight": 14,
+     "why": "Largest expectation gap among megacaps."
+    },
+    {
+     "ticker": "TSM",
+     "weight": 12,
+     "why": "Geopolitical discount on a monopoly."
+    },
+    {
+     "ticker": "UBER",
+     "weight": 10,
+     "why": "Priced as AV loser; may be the AV aggregator."
+    },
+    {
+     "ticker": "NVO",
+     "weight": 9,
+     "why": "Sentiment trough on a cash machine."
+    },
+    {
+     "ticker": "AMD",
+     "weight": 9,
+     "why": "Second-source GPU optionality."
+    },
+    {
+     "ticker": "UNH",
+     "weight": 7,
+     "why": "Earnings reset special situation."
+    },
+    {
+     "ticker": "VRT",
+     "weight": 8,
+     "why": "Second-order AI power/cooling."
+    },
+    {
+     "ticker": "MELI",
+     "weight": 8,
+     "why": "Long runway, underfollowed region."
+    },
+    {
+     "ticker": "RKLB",
+     "weight": 5,
+     "why": "Small lottery-like right tail."
+    },
+    {
+     "ticker": "SGOV",
+     "weight": 18,
+     "why": "Large cash buffer to add on drawdowns \u2014 asymmetry needs ammunition."
+    }
+   ],
+   "bear": -33.3,
+   "base": 28.3,
+   "bull": 68.9,
+   "xbull": 130.6,
+   "weighted": 30.0,
+   "hhi": 0.113,
+   "risk": 5.4
+  },
+  {
+   "id": "aggressive",
+   "name": "FLOW AGGRESSIVE",
+   "thesis": "Concentrated, high-volatility, high-optionality. Expect \u221250% drawdowns.",
+   "horizon": "3\u20135 years",
+   "allocation": [
+    {
+     "ticker": "NVDA",
+     "weight": 18,
+     "why": "Core of the AI cycle."
+    },
+    {
+     "ticker": "AMD",
+     "weight": 15,
+     "why": "Highest beta to AI GPU spend."
+    },
+    {
+     "ticker": "MU",
+     "weight": 12,
+     "why": "HBM upcycle \u2014 cyclical leverage."
+    },
+    {
+     "ticker": "VRT",
+     "weight": 12,
+     "why": "Power/cooling bottleneck."
+    },
+    {
+     "ticker": "RKLB",
+     "weight": 10,
+     "why": "Space optionality."
+    },
+    {
+     "ticker": "MELI",
+     "weight": 10,
+     "why": "Growth outside the AI trade."
+    },
+    {
+     "ticker": "UBER",
+     "weight": 10,
+     "why": "AV optionality, cheaper valuation."
+    },
+    {
+     "ticker": "PLTR",
+     "weight": 5,
+     "why": "Momentum leader; small because valuation is extreme."
+    },
+    {
+     "ticker": "IONQ",
+     "weight": 3,
+     "why": "Pure lottery ticket \u2014 sized to lose."
+    },
+    {
+     "ticker": "SGOV",
+     "weight": 5,
+     "why": "Minimal buffer."
+    }
+   ],
+   "bear": -50.2,
+   "base": 22.6,
+   "bull": 79.5,
+   "xbull": 185.2,
+   "weighted": 29.9,
+   "hhi": 0.12,
+   "risk": 7.3
+  }
+ ]
+}

@@ -1,0 +1,1431 @@
+{
+ "last_updated": "2026-10-06",
+ "scenario_weights": {
+  "bear": 0.25,
+  "base": 0.45,
+  "bull": 0.22,
+  "xbull": 0.08
+ },
+ "universe_size": 30,
+ "top10": [
+  "GOOGL",
+  "TSM",
+  "AMZN",
+  "MSFT",
+  "ASML",
+  "AMD",
+  "BRK.B",
+  "META",
+  "NVO",
+  "RKLB"
+ ],
+ "items": [
+  {
+   "ticker": "NVDA",
+   "company": "NVIDIA",
+   "sector": "Semiconductors",
+   "market_cap": "~$4-5T",
+   "business": "AI accelerator + software platform (CUDA) with networking attached",
+   "scores": {
+    "g": 9,
+    "q": 10,
+    "v": 5,
+    "m": 7,
+    "c": 8,
+    "o": 7,
+    "b": 9,
+    "x": 4,
+    "s": 7
+   },
+   "metrics": "Very high growth, net cash, ~mid-20s to 30s forward P/E (approx).",
+   "scenarios": {
+    "bear": -45,
+    "base": 25,
+    "bull": 70,
+    "xbull": 150
+   },
+   "ev": 27.4,
+   "rr": 0.61,
+   "why": "Dominant AI compute platform; software lock-in and networking make it a system vendor, not a chip vendor.",
+   "go_right": "AI capex keeps compounding; inference demand broadens to enterprises and sovereigns; margins hold ~70%+.",
+   "go_wrong": "Hyperscaler capex digestion, custom ASIC share gains, export controls, cyclical gross-margin compression.",
+   "invalidation": "Two consecutive quarters of falling data-center revenue with guidance cut, or gross margin < 65%.",
+   "catalysts": [
+    "Next-gen platform ramp",
+    "Hyperscaler capex guides",
+    "Sovereign AI deals"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.37,
+   "flow_extreme": 7.2,
+   "flow_core": 7.6
+  },
+  {
+   "ticker": "MSFT",
+   "company": "Microsoft",
+   "sector": "Software",
+   "market_cap": "~$3.5-4T",
+   "business": "Enterprise distribution + Azure + Copilot monetization",
+   "scores": {
+    "g": 7,
+    "q": 10,
+    "v": 5,
+    "m": 5,
+    "c": 6,
+    "o": 6,
+    "b": 10,
+    "x": 4,
+    "s": 3
+   },
+   "metrics": "Low-teens revenue growth, ~45% operating margin, AAA balance sheet (approx).",
+   "scenarios": {
+    "bear": -25,
+    "base": 30,
+    "bull": 60,
+    "xbull": 95
+   },
+   "ev": 28.1,
+   "rr": 1.12,
+   "why": "The default enterprise AI distribution channel with the strongest balance sheet in software.",
+   "go_right": "Azure AI growth sustains 30%+; Copilot attach becomes a material revenue line.",
+   "go_wrong": "AI capex depresses FCF; Copilot adoption slower than priced; OpenAI relationship friction.",
+   "invalidation": "Azure growth decelerating below 20% while capex keeps rising.",
+   "catalysts": [
+    "Azure quarterly growth",
+    "Copilot seat disclosures"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 7.03,
+   "flow_extreme": 5.75,
+   "flow_core": 8.0
+  },
+  {
+   "ticker": "GOOGL",
+   "company": "Alphabet",
+   "sector": "Internet",
+   "market_cap": "~$2.5-3.5T",
+   "business": "Search + YouTube + Cloud + TPUs + Waymo optionality",
+   "scores": {
+    "g": 7,
+    "q": 9,
+    "v": 7,
+    "m": 6,
+    "c": 7,
+    "o": 9,
+    "b": 10,
+    "x": 7,
+    "s": 5
+   },
+   "metrics": "Low-teens growth, ~30%+ op margin, lowest P/E of mega-cap tech (approx).",
+   "scenarios": {
+    "bear": -30,
+    "base": 40,
+    "bull": 85,
+    "xbull": 160
+   },
+   "ev": 42.0,
+   "rr": 1.4,
+   "why": "Market priced it as an AI loser; it owns models, chips (TPU), cloud, distribution and Waymo.",
+   "go_right": "Search holds share while Cloud and TPU revenue accelerate; Waymo valued as a separate business.",
+   "go_wrong": "AI answers erode search ad pricing; antitrust remedies; capex intensity.",
+   "invalidation": "Paid-click growth turns negative for 2+ quarters with no offset from Cloud.",
+   "catalysts": [
+    "Antitrust remedy rulings",
+    "Waymo city expansion",
+    "Cloud margin"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 8.84,
+   "flow_extreme": 7.3,
+   "flow_core": 7.8
+  },
+  {
+   "ticker": "AMZN",
+   "company": "Amazon",
+   "sector": "Internet / Cloud",
+   "market_cap": "~$2-2.5T",
+   "business": "AWS + retail margin expansion + advertising",
+   "scores": {
+    "g": 7,
+    "q": 8,
+    "v": 6,
+    "m": 5,
+    "c": 6,
+    "o": 7,
+    "b": 8,
+    "x": 5,
+    "s": 5
+   },
+   "metrics": "~10% growth, rising operating margins (approx).",
+   "scenarios": {
+    "bear": -30,
+    "base": 35,
+    "bull": 75,
+    "xbull": 130
+   },
+   "ev": 35.1,
+   "rr": 1.17,
+   "why": "Retail margins still expanding from automation; AWS re-accelerating with AI; ads quietly huge.",
+   "go_right": "Robotics drive retail margin toward high single digits; AWS grows 20%+.",
+   "go_wrong": "AWS loses AI workloads to Azure/neoclouds; consumer slowdown; heavy capex.",
+   "invalidation": "AWS growth < 12% for multiple quarters.",
+   "catalysts": [
+    "AWS growth",
+    "Robotics/fulfillment cost disclosures"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 7.26,
+   "flow_extreme": 6.15,
+   "flow_core": 6.85
+  },
+  {
+   "ticker": "META",
+   "company": "Meta Platforms",
+   "sector": "Internet",
+   "market_cap": "~$1.5-2T",
+   "business": "Ads engine + AI-driven targeting; Reality Labs optionality",
+   "scores": {
+    "g": 8,
+    "q": 9,
+    "v": 6,
+    "m": 5,
+    "c": 6,
+    "o": 7,
+    "b": 9,
+    "x": 5,
+    "s": 6
+   },
+   "metrics": "High-teens growth, ~40% op margin (approx).",
+   "scenarios": {
+    "bear": -35,
+    "base": 30,
+    "bull": 70,
+    "xbull": 120
+   },
+   "ev": 29.8,
+   "rr": 0.85,
+   "why": "AI directly improves ad ROI today; 3B+ daily users is unmatched distribution.",
+   "go_right": "Ad growth sustains high teens; capex efficiency improves; AI assistants monetize.",
+   "go_wrong": "Capex surge without matching revenue; regulatory/teen-safety actions; Reality Labs losses.",
+   "invalidation": "Ad impression pricing falls while capex guidance rises again.",
+   "catalysts": [
+    "Capex guidance",
+    "Ad pricing trends"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.68,
+   "flow_extreme": 6.4,
+   "flow_core": 7.3
+  },
+  {
+   "ticker": "TSM",
+   "company": "Taiwan Semiconductor",
+   "sector": "Semiconductors",
+   "market_cap": "~$1-1.5T",
+   "business": "Monopoly-like leading-edge foundry",
+   "scores": {
+    "g": 8,
+    "q": 10,
+    "v": 7,
+    "m": 6,
+    "c": 7,
+    "o": 5,
+    "b": 9,
+    "x": 6,
+    "s": 5
+   },
+   "metrics": "~25-35% growth, ~45% op margin, P/E below US peers (approx).",
+   "scenarios": {
+    "bear": -40,
+    "base": 40,
+    "bull": 80,
+    "xbull": 130
+   },
+   "ev": 36.0,
+   "rr": 0.9,
+   "why": "Every AI chip, regardless of designer, is likely made by TSMC; discount exists mainly for geopolitics.",
+   "go_right": "Leading-edge pricing power plus advanced packaging (CoWoS) capacity ramp.",
+   "go_wrong": "Taiwan geopolitical risk is a true tail; US fab margin dilution; cycle downturn.",
+   "invalidation": "Any blockade/conflict signal; leading-edge share loss to Intel/Samsung.",
+   "catalysts": [
+    "Monthly revenue reports",
+    "2nm ramp"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 7.6,
+   "flow_extreme": 6.4,
+   "flow_core": 8.0
+  },
+  {
+   "ticker": "AVGO",
+   "company": "Broadcom",
+   "sector": "Semiconductors",
+   "market_cap": "~$1-1.5T",
+   "business": "Custom AI ASICs + networking + VMware cash flows",
+   "scores": {
+    "g": 8,
+    "q": 9,
+    "v": 4,
+    "m": 7,
+    "c": 7,
+    "o": 6,
+    "b": 6,
+    "x": 4,
+    "s": 6
+   },
+   "metrics": "Strong FCF, elevated debt from VMware (approx).",
+   "scenarios": {
+    "bear": -40,
+    "base": 20,
+    "bull": 60,
+    "xbull": 110
+   },
+   "ev": 21.0,
+   "rr": 0.53,
+   "why": "The main beneficiary if hyperscalers shift from GPUs to custom silicon.",
+   "go_right": "Custom accelerator revenue grows with 3+ hyperscaler programs.",
+   "go_wrong": "Lumpy customer concentration; acquisition debt; premium valuation.",
+   "invalidation": "Loss of a top custom-silicon customer.",
+   "catalysts": [
+    "AI revenue guidance",
+    "New ASIC customers"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 5.24,
+   "flow_extreme": 6.55,
+   "flow_core": 6.6
+  },
+  {
+   "ticker": "ASML",
+   "company": "ASML",
+   "sector": "Semi equipment",
+   "market_cap": "~$300-400B",
+   "business": "Sole supplier of EUV lithography",
+   "scores": {
+    "g": 6,
+    "q": 10,
+    "v": 6,
+    "m": 4,
+    "c": 6,
+    "o": 5,
+    "b": 9,
+    "x": 6,
+    "s": 5
+   },
+   "metrics": "Mid-teens margins expansion potential (approx).",
+   "scenarios": {
+    "bear": -30,
+    "base": 30,
+    "bull": 65,
+    "xbull": 100
+   },
+   "ev": 28.3,
+   "rr": 0.94,
+   "why": "A true monopoly on EUV; cyclical air pockets create entry points.",
+   "go_right": "High-NA EUV adoption and memory/logic capex upcycle in 2027.",
+   "go_wrong": "China export restrictions; customer capex delays; cyclicality.",
+   "invalidation": "Orders decline for 3+ quarters with High-NA delays.",
+   "catalysts": [
+    "Quarterly bookings",
+    "Export-rule changes"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.99,
+   "flow_extreme": 5.35,
+   "flow_core": 7.45
+  },
+  {
+   "ticker": "AMD",
+   "company": "Advanced Micro Devices",
+   "sector": "Semiconductors",
+   "market_cap": "~$250-400B",
+   "business": "Second-source AI GPUs + CPU share gains",
+   "scores": {
+    "g": 8,
+    "q": 7,
+    "v": 5,
+    "m": 6,
+    "c": 8,
+    "o": 8,
+    "b": 8,
+    "x": 6,
+    "s": 8
+   },
+   "metrics": "Rapid growth from AI, moderate margins (approx).",
+   "scenarios": {
+    "bear": -50,
+    "base": 25,
+    "bull": 90,
+    "xbull": 200
+   },
+   "ev": 34.5,
+   "rr": 0.69,
+   "why": "Hyperscalers want a second GPU supplier; any meaningful share is a large revenue swing.",
+   "go_right": "MI-series GPUs win multi-GW deployments; server CPU share keeps rising.",
+   "go_wrong": "Software gap vs CUDA; execution risk; high multiple on forward hopes.",
+   "invalidation": "AI GPU revenue guidance cut or a marquee deployment cancelled.",
+   "catalysts": [
+    "AI GPU ramps",
+    "Large customer announcements"
+   ],
+   "horizon": "3 years",
+   "confidence": "Low",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.75,
+   "flow_extreme": 7.3,
+   "flow_core": 6.15
+  },
+  {
+   "ticker": "MU",
+   "company": "Micron Technology",
+   "sector": "Semiconductors",
+   "market_cap": "~$150-250B",
+   "business": "HBM memory for AI accelerators",
+   "scores": {
+    "g": 8,
+    "q": 6,
+    "v": 7,
+    "m": 7,
+    "c": 7,
+    "o": 6,
+    "b": 7,
+    "x": 6,
+    "s": 9
+   },
+   "metrics": "Cyclical earnings near peak margins (approx).",
+   "scenarios": {
+    "bear": -55,
+    "base": 30,
+    "bull": 90,
+    "xbull": 180
+   },
+   "ev": 34.0,
+   "rr": 0.62,
+   "why": "HBM changed memory from commodity to constrained supply; cycle may be longer than history suggests.",
+   "go_right": "HBM share gains + tight DRAM supply extend the upcycle.",
+   "go_wrong": "Memory is brutally cyclical; supply additions crush pricing.",
+   "invalidation": "DRAM contract prices fall two quarters in a row.",
+   "catalysts": [
+    "HBM qualification",
+    "DRAM pricing"
+   ],
+   "horizon": "3 years",
+   "confidence": "Low",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.27,
+   "flow_extreme": 6.85,
+   "flow_core": 5.9
+  },
+  {
+   "ticker": "ANET",
+   "company": "Arista Networks",
+   "sector": "Networking",
+   "market_cap": "~$150-200B",
+   "business": "Ethernet switching for AI clusters",
+   "scores": {
+    "g": 8,
+    "q": 9,
+    "v": 4,
+    "m": 6,
+    "c": 6,
+    "o": 6,
+    "b": 10,
+    "x": 5,
+    "s": 7
+   },
+   "metrics": "~25% growth, ~40% op margin, net cash (approx).",
+   "scenarios": {
+    "bear": -40,
+    "base": 25,
+    "bull": 65,
+    "xbull": 110
+   },
+   "ev": 24.4,
+   "rr": 0.61,
+   "why": "AI back-end networks moving to Ethernet; best-in-class software and margins.",
+   "go_right": "Ethernet wins scale-out AI networks at hyperscalers.",
+   "go_wrong": "NVIDIA networking competition; customer concentration; premium multiple.",
+   "invalidation": "Major cloud customer shifts to in-house or NVIDIA networking.",
+   "catalysts": [
+    "AI networking revenue targets"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.05,
+   "flow_extreme": 6.35,
+   "flow_core": 7.15
+  },
+  {
+   "ticker": "VRT",
+   "company": "Vertiv",
+   "sector": "Industrials (data-center power/cooling)",
+   "market_cap": "~$40-60B",
+   "business": "Power and liquid cooling for AI data centers",
+   "scores": {
+    "g": 8,
+    "q": 7,
+    "v": 5,
+    "m": 7,
+    "c": 7,
+    "o": 6,
+    "b": 6,
+    "x": 6,
+    "s": 8
+   },
+   "metrics": "Strong orders backlog, moderate leverage (approx).",
+   "scenarios": {
+    "bear": -50,
+    "base": 30,
+    "bull": 80,
+    "xbull": 150
+   },
+   "ev": 30.6,
+   "rr": 0.61,
+   "why": "Second-order AI beneficiary: every GPU needs power and cooling; liquid cooling is a step change.",
+   "go_right": "Backlog converts at expanding margins as liquid cooling becomes standard.",
+   "go_wrong": "Data-center build pause; execution; competition from Schneider/Eaton.",
+   "invalidation": "Book-to-bill below 1 for two quarters.",
+   "catalysts": [
+    "Backlog and orders",
+    "Margin targets"
+   ],
+   "horizon": "3 years",
+   "confidence": "Low",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.05,
+   "flow_extreme": 6.85,
+   "flow_core": 5.85
+  },
+  {
+   "ticker": "GEV",
+   "company": "GE Vernova",
+   "sector": "Power equipment",
+   "market_cap": "~$150-200B",
+   "business": "Gas turbines, grid equipment, wind",
+   "scores": {
+    "g": 7,
+    "q": 7,
+    "v": 4,
+    "m": 8,
+    "c": 7,
+    "o": 6,
+    "b": 8,
+    "x": 4,
+    "s": 6
+   },
+   "metrics": "Rapidly improving margins, net cash (approx).",
+   "scenarios": {
+    "bear": -35,
+    "base": 25,
+    "bull": 60,
+    "xbull": 100
+   },
+   "ev": 23.7,
+   "rr": 0.68,
+   "why": "Electricity demand growth (AI, electrification) meets sold-out gas turbine capacity.",
+   "go_right": "Pricing power on turbines and grid equipment through 2028.",
+   "go_wrong": "Wind losses; capacity additions normalize pricing; already-priced success.",
+   "invalidation": "Turbine order pricing flattens or backlog shrinks.",
+   "catalysts": [
+    "Turbine slot reservations",
+    "Grid orders"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 5.55,
+   "flow_extreme": 6.5,
+   "flow_core": 6.4
+  },
+  {
+   "ticker": "CEG",
+   "company": "Constellation Energy",
+   "sector": "Utilities (nuclear)",
+   "market_cap": "~$80-120B",
+   "business": "Largest US nuclear fleet; PPAs with hyperscalers",
+   "scores": {
+    "g": 6,
+    "q": 7,
+    "v": 4,
+    "m": 6,
+    "c": 7,
+    "o": 6,
+    "b": 6,
+    "x": 4,
+    "s": 6
+   },
+   "metrics": "Utility-like balance sheet, merchant price exposure (approx).",
+   "scenarios": {
+    "bear": -35,
+    "base": 20,
+    "bull": 55,
+    "xbull": 90
+   },
+   "ev": 19.6,
+   "rr": 0.56,
+   "why": "Carbon-free 24/7 power is scarce; hyperscaler contracts reprice an old fleet.",
+   "go_right": "More long-term data-center PPAs at premium prices.",
+   "go_wrong": "Power-price normalization; regulatory pushback on co-location; acquisition integration.",
+   "invalidation": "FERC/state rules block behind-the-meter deals and power prices fall.",
+   "catalysts": [
+    "New PPAs",
+    "Regulatory rulings"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 4.88,
+   "flow_extreme": 5.85,
+   "flow_core": 5.7
+  },
+  {
+   "ticker": "LLY",
+   "company": "Eli Lilly",
+   "sector": "Pharma",
+   "market_cap": "~$700B-1T",
+   "business": "GLP-1 obesity franchise + oral pipeline",
+   "scores": {
+    "g": 9,
+    "q": 9,
+    "v": 4,
+    "m": 5,
+    "c": 8,
+    "o": 7,
+    "b": 7,
+    "x": 4,
+    "s": 5
+   },
+   "metrics": "30%+ growth, high margins (approx).",
+   "scenarios": {
+    "bear": -35,
+    "base": 25,
+    "bull": 60,
+    "xbull": 100
+   },
+   "ev": 23.7,
+   "rr": 0.68,
+   "why": "Obesity may become the largest drug category ever; Lilly leads on efficacy and supply.",
+   "go_right": "Oral GLP-1 approval and broad Medicare/insurer coverage.",
+   "go_wrong": "Price cuts from policy, compounded copies, competition; premium multiple.",
+   "invalidation": "Oral pipeline failure plus significant US price compression.",
+   "catalysts": [
+    "Orforglipron launch",
+    "Coverage decisions"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 5.85,
+   "flow_extreme": 6.8,
+   "flow_core": 6.85
+  },
+  {
+   "ticker": "NVO",
+   "company": "Novo Nordisk",
+   "sector": "Pharma",
+   "market_cap": "~$200-300B",
+   "business": "GLP-1 incumbent that lost momentum",
+   "scores": {
+    "g": 4,
+    "q": 8,
+    "v": 8,
+    "m": 2,
+    "c": 6,
+    "o": 6,
+    "b": 7,
+    "x": 7,
+    "s": 6
+   },
+   "metrics": "Slowing growth, cheap vs history (approx).",
+   "scenarios": {
+    "bear": -35,
+    "base": 30,
+    "bull": 70,
+    "xbull": 110
+   },
+   "ev": 28.9,
+   "rr": 0.83,
+   "why": "Contrarian: priced as a loser after pipeline and US share disappointments; still a huge cash generator.",
+   "go_right": "Stabilized share, cheaper valuation re-rates with next-gen pipeline data.",
+   "go_wrong": "Continued share loss to Lilly, price cuts, management turnover.",
+   "invalidation": "Revenue declines for full year with no pipeline win.",
+   "catalysts": [
+    "Pipeline readouts",
+    "US pricing"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.54,
+   "flow_extreme": 4.85,
+   "flow_core": 6.2
+  },
+  {
+   "ticker": "UNH",
+   "company": "UnitedHealth",
+   "sector": "Healthcare services",
+   "market_cap": "~$250-350B",
+   "business": "Largest US insurer + Optum",
+   "scores": {
+    "g": 4,
+    "q": 7,
+    "v": 8,
+    "m": 2,
+    "c": 5,
+    "o": 4,
+    "b": 6,
+    "x": 7,
+    "s": 6
+   },
+   "metrics": "Earnings trough, low P/E vs history (approx).",
+   "scenarios": {
+    "bear": -40,
+    "base": 30,
+    "bull": 65,
+    "xbull": 90
+   },
+   "ev": 25.0,
+   "rr": 0.62,
+   "why": "Contrarian special situation: earnings reset, legal/regulatory overhang, depressed multiple.",
+   "go_right": "Medical cost trend normalizes; margins recover toward historical range.",
+   "go_wrong": "DOJ investigations, Medicare Advantage rate pressure, structural cost trend.",
+   "invalidation": "Guidance cut again or adverse DOJ outcome.",
+   "catalysts": [
+    "Medicare rate notices",
+    "Investigations"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 5.61,
+   "flow_extreme": 4.2,
+   "flow_core": 5.7
+  },
+  {
+   "ticker": "ISRG",
+   "company": "Intuitive Surgical",
+   "sector": "Medtech",
+   "market_cap": "~$150-200B",
+   "business": "Surgical robotics razor/blade model",
+   "scores": {
+    "g": 7,
+    "q": 10,
+    "v": 3,
+    "m": 5,
+    "c": 5,
+    "o": 5,
+    "b": 10,
+    "x": 3,
+    "s": 4
+   },
+   "metrics": "Mid-teens growth, net cash (approx).",
+   "scenarios": {
+    "bear": -30,
+    "base": 20,
+    "bull": 50,
+    "xbull": 80
+   },
+   "ev": 18.9,
+   "rr": 0.63,
+   "why": "Recurring instruments revenue on a growing installed base; deep moat.",
+   "go_right": "da Vinci 5 upgrade cycle, international growth.",
+   "go_wrong": "Valuation, competition from Medtronic/J&J, GLP-1 reducing bariatric procedures.",
+   "invalidation": "Procedure growth below 10%.",
+   "catalysts": [
+    "Procedure growth"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 5.43,
+   "flow_extreme": 5.2,
+   "flow_core": 7.55
+  },
+  {
+   "ticker": "BRK.B",
+   "company": "Berkshire Hathaway",
+   "sector": "Conglomerate",
+   "market_cap": "~$1T",
+   "business": "Diversified cash generator with huge cash pile",
+   "scores": {
+    "g": 4,
+    "q": 9,
+    "v": 7,
+    "m": 4,
+    "c": 4,
+    "o": 5,
+    "b": 10,
+    "x": 4,
+    "s": 2
+   },
+   "metrics": "Fortress balance sheet (approx).",
+   "scenarios": {
+    "bear": -15,
+    "base": 25,
+    "bull": 45,
+    "xbull": 60
+   },
+   "ev": 22.2,
+   "rr": 1.48,
+   "why": "Defensive compounding with optionality in its cash pile during a crisis.",
+   "go_right": "Large accretive deployment of cash in a downturn.",
+   "go_wrong": "Succession; low growth; cash drag in bull markets.",
+   "invalidation": "Persistent underperformance plus value-destroying capital allocation.",
+   "catalysts": [
+    "Capital deployment"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.75,
+   "flow_extreme": 4.25,
+   "flow_core": 7.75
+  },
+  {
+   "ticker": "V",
+   "company": "Visa",
+   "sector": "Payments",
+   "market_cap": "~$600-700B",
+   "business": "Global card network toll road",
+   "scores": {
+    "g": 6,
+    "q": 10,
+    "v": 5,
+    "m": 5,
+    "c": 4,
+    "o": 4,
+    "b": 9,
+    "x": 3,
+    "s": 3
+   },
+   "metrics": "~10% growth, ~65% op margin (approx).",
+   "scenarios": {
+    "bear": -20,
+    "base": 25,
+    "bull": 50,
+    "xbull": 70
+   },
+   "ev": 22.9,
+   "rr": 1.14,
+   "why": "Toll on global consumer spending; ~65% operating margins.",
+   "go_right": "Cross-border travel and value-added services keep low-teens growth.",
+   "go_wrong": "Stablecoins/real-time payments, interchange regulation.",
+   "invalidation": "Legislation that caps interchange broadly.",
+   "catalysts": [
+    "Regulation",
+    "Cross-border volumes"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.23,
+   "flow_extreme": 4.55,
+   "flow_core": 7.7
+  },
+  {
+   "ticker": "COST",
+   "company": "Costco",
+   "sector": "Retail",
+   "market_cap": "~$400-450B",
+   "business": "Membership warehouse retail",
+   "scores": {
+    "g": 6,
+    "q": 10,
+    "v": 2,
+    "m": 4,
+    "c": 3,
+    "o": 3,
+    "b": 10,
+    "x": 2,
+    "s": 3
+   },
+   "metrics": "High-single-digit growth, rich P/E (approx).",
+   "scenarios": {
+    "bear": -25,
+    "base": 15,
+    "bull": 35,
+    "xbull": 55
+   },
+   "ev": 12.6,
+   "rr": 0.5,
+   "why": "Highest-quality retailer; membership fees are recurring.",
+   "go_right": "Steady unit growth and fee increases.",
+   "go_wrong": "Valuation ~50x leaves no room for error.",
+   "invalidation": "Comparable sales < 3% for several quarters.",
+   "catalysts": [
+    "Membership fee changes"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 4.43,
+   "flow_extreme": 3.8,
+   "flow_core": 7.35
+  },
+  {
+   "ticker": "CRWD",
+   "company": "CrowdStrike",
+   "sector": "Cybersecurity",
+   "market_cap": "~$100-130B",
+   "business": "Endpoint security platform",
+   "scores": {
+    "g": 8,
+    "q": 8,
+    "v": 2,
+    "m": 6,
+    "c": 5,
+    "o": 6,
+    "b": 9,
+    "x": 3,
+    "s": 7
+   },
+   "metrics": "~20% growth, strong FCF margin, high valuation (approx).",
+   "scenarios": {
+    "bear": -50,
+    "base": 15,
+    "bull": 55,
+    "xbull": 100
+   },
+   "ev": 14.3,
+   "rr": 0.29,
+   "why": "Platform consolidation winner in security.",
+   "go_right": "Module adoption drives 20%+ ARR growth.",
+   "go_wrong": "Very high multiple; competition from Microsoft/Palo Alto.",
+   "invalidation": "Net new ARR declining year over year.",
+   "catalysts": [
+    "Net new ARR"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 4.22,
+   "flow_extreme": 5.9,
+   "flow_core": 6.35
+  },
+  {
+   "ticker": "PLTR",
+   "company": "Palantir",
+   "sector": "Software",
+   "market_cap": "~$300-450B",
+   "business": "AI decision platform for government + enterprise",
+   "scores": {
+    "g": 10,
+    "q": 8,
+    "v": 1,
+    "m": 8,
+    "c": 6,
+    "o": 8,
+    "b": 10,
+    "x": 2,
+    "s": 10
+   },
+   "metrics": "40%+ growth, P/S among highest in large caps (approx).",
+   "scenarios": {
+    "bear": -70,
+    "base": 0,
+    "bull": 50,
+    "xbull": 120
+   },
+   "ev": 3.1,
+   "rr": 0.04,
+   "why": "Fastest-growing large software company, but valuation implies perfection.",
+   "go_right": "US commercial growth sustains 50%+ for years.",
+   "go_wrong": "Extreme multiple; any deceleration compresses valuation violently.",
+   "invalidation": "US commercial growth below 30%.",
+   "catalysts": [
+    "Government contracts",
+    "Commercial growth"
+   ],
+   "horizon": "3 years",
+   "confidence": "Low",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 3.1,
+   "flow_extreme": 7.3,
+   "flow_core": 6.35
+  },
+  {
+   "ticker": "NFLX",
+   "company": "Netflix",
+   "sector": "Media",
+   "market_cap": "~$400-500B",
+   "business": "Global streaming + ads",
+   "scores": {
+    "g": 7,
+    "q": 9,
+    "v": 4,
+    "m": 5,
+    "c": 5,
+    "o": 5,
+    "b": 8,
+    "x": 4,
+    "s": 5
+   },
+   "metrics": "Low-teens growth, rising margins (approx).",
+   "scenarios": {
+    "bear": -30,
+    "base": 25,
+    "bull": 55,
+    "xbull": 85
+   },
+   "ev": 22.6,
+   "rr": 0.76,
+   "why": "Won the streaming war; ad tier and pricing power lift margins.",
+   "go_right": "Operating margin toward 35%+, ads scale.",
+   "go_wrong": "Content cost inflation; engagement shifting to YouTube/short video.",
+   "invalidation": "Engagement hours decline two years running.",
+   "catalysts": [
+    "Ad revenue",
+    "Price increases"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 5.68,
+   "flow_extreme": 5.35,
+   "flow_core": 6.85
+  },
+  {
+   "ticker": "UBER",
+   "company": "Uber",
+   "sector": "Mobility",
+   "market_cap": "~$150-200B",
+   "business": "Ride-hailing + delivery network; AV aggregator",
+   "scores": {
+    "g": 7,
+    "q": 7,
+    "v": 6,
+    "m": 5,
+    "c": 6,
+    "o": 7,
+    "b": 7,
+    "x": 7,
+    "s": 6
+   },
+   "metrics": "Mid-teens growth, strong FCF (approx).",
+   "scenarios": {
+    "bear": -45,
+    "base": 30,
+    "bull": 75,
+    "xbull": 130
+   },
+   "ev": 29.1,
+   "rr": 0.65,
+   "why": "Market fears robotaxis disrupt it; Uber may instead be the demand aggregator for AV fleets.",
+   "go_right": "AV partners use Uber's network; FCF and buybacks compound.",
+   "go_wrong": "Tesla/Waymo go direct; regulatory labor reclassification.",
+   "invalidation": "Major AV operator scales without Uber and takes share in core cities.",
+   "catalysts": [
+    "AV partnerships",
+    "FCF"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.15,
+   "flow_extreme": 6.45,
+   "flow_core": 6.2
+  },
+  {
+   "ticker": "MELI",
+   "company": "MercadoLibre",
+   "sector": "E-commerce / fintech",
+   "market_cap": "~$100-130B",
+   "business": "Latin American commerce + payments + credit",
+   "scores": {
+    "g": 8,
+    "q": 8,
+    "v": 5,
+    "m": 5,
+    "c": 5,
+    "o": 7,
+    "b": 6,
+    "x": 5,
+    "s": 7
+   },
+   "metrics": "30%+ growth, FX exposure (approx).",
+   "scenarios": {
+    "bear": -45,
+    "base": 35,
+    "bull": 80,
+    "xbull": 140
+   },
+   "ev": 33.3,
+   "rr": 0.74,
+   "why": "Amazon + PayPal of Latin America with long runway.",
+   "go_right": "Fintech credit book scales profitably; logistics moat widens.",
+   "go_wrong": "Credit losses, currency swings (ARS/BRL), political risk.",
+   "invalidation": "Non-performing loans spike with margin compression.",
+   "catalysts": [
+    "Credit quality",
+    "Brazil/Mexico growth"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.23,
+   "flow_extreme": 6.25,
+   "flow_core": 6.1
+  },
+  {
+   "ticker": "SPOT",
+   "company": "Spotify",
+   "sector": "Media",
+   "market_cap": "~$100-150B",
+   "business": "Audio platform with pricing power",
+   "scores": {
+    "g": 7,
+    "q": 7,
+    "v": 4,
+    "m": 5,
+    "c": 5,
+    "o": 5,
+    "b": 8,
+    "x": 4,
+    "s": 6
+   },
+   "metrics": "Mid-teens growth (approx).",
+   "scenarios": {
+    "bear": -40,
+    "base": 20,
+    "bull": 55,
+    "xbull": 90
+   },
+   "ev": 18.3,
+   "rr": 0.46,
+   "why": "Shifted from growth-at-all-costs to margins; price increases stick.",
+   "go_right": "Margins expand toward 15%+ with audiobooks/ads.",
+   "go_wrong": "Label economics; premium valuation.",
+   "invalidation": "Subscriber churn after price hikes.",
+   "catalysts": [
+    "Price increases",
+    "Margins"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 4.65,
+   "flow_extreme": 5.35,
+   "flow_core": 6.1
+  },
+  {
+   "ticker": "RKLB",
+   "company": "Rocket Lab",
+   "sector": "Space",
+   "market_cap": "~$15-35B",
+   "business": "Launch + spacecraft components; Neutron rocket",
+   "scores": {
+    "g": 9,
+    "q": 5,
+    "v": 2,
+    "m": 8,
+    "c": 8,
+    "o": 10,
+    "b": 6,
+    "x": 4,
+    "s": 10
+   },
+   "metrics": "Unprofitable, high growth, very high valuation (approx).",
+   "scenarios": {
+    "bear": -75,
+    "base": 10,
+    "bull": 120,
+    "xbull": 400
+   },
+   "ev": 44.1,
+   "rr": 0.59,
+   "why": "Lottery-like optionality: the only credible small/medium launch + space systems contender besides SpaceX.",
+   "go_right": "Neutron flies reliably and wins constellation/defense launches.",
+   "go_wrong": "Neutron delays/failure, cash burn, dilution, SpaceX pricing.",
+   "invalidation": "Neutron failure plus major customer loss.",
+   "catalysts": [
+    "Neutron first flights",
+    "Defense contracts"
+   ],
+   "horizon": "3 years",
+   "confidence": "Low",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 6.51,
+   "flow_extreme": 8.15,
+   "flow_core": 4.7
+  },
+  {
+   "ticker": "IONQ",
+   "company": "IonQ",
+   "sector": "Quantum computing",
+   "market_cap": "~$10-25B",
+   "business": "Trapped-ion quantum systems",
+   "scores": {
+    "g": 8,
+    "q": 3,
+    "v": 1,
+    "m": 6,
+    "c": 6,
+    "o": 10,
+    "b": 7,
+    "x": 3,
+    "s": 10
+   },
+   "metrics": "Tiny revenue vs valuation, cash from equity raises (approx).",
+   "scenarios": {
+    "bear": -85,
+    "base": -30,
+    "bull": 80,
+    "xbull": 500
+   },
+   "ev": 22.9,
+   "rr": 0.27,
+   "why": "Pure lottery ticket on quantum advantage arriving early.",
+   "go_right": "Commercial quantum advantage demonstrated with paying workloads.",
+   "go_wrong": "Technology may be a decade away; heavy dilution; valuation on narrative.",
+   "invalidation": "No commercially useful advantage by 2028.",
+   "catalysts": [
+    "Technical milestones"
+   ],
+   "horizon": "3 years",
+   "confidence": "Low",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 3.97,
+   "flow_extreme": 7.05,
+   "flow_core": 3.85
+  },
+  {
+   "ticker": "XOM",
+   "company": "Exxon Mobil",
+   "sector": "Energy",
+   "market_cap": "~$450-550B",
+   "business": "Integrated oil major; Guyana + Permian",
+   "scores": {
+    "g": 4,
+    "q": 7,
+    "v": 7,
+    "m": 7,
+    "c": 5,
+    "o": 4,
+    "b": 9,
+    "x": 4,
+    "s": 5
+   },
+   "metrics": "Cyclical; low debt (approx).",
+   "scenarios": {
+    "bear": -30,
+    "base": 20,
+    "bull": 45,
+    "xbull": 70
+   },
+   "ev": 17.0,
+   "rr": 0.57,
+   "why": "With WTI ~$96 (Sep 2026), cash returns are large; low-cost barrels and balance sheet.",
+   "go_right": "Oil stays above $80; Guyana growth adds volume.",
+   "go_wrong": "Oil price collapse; energy transition demand risk.",
+   "invalidation": "WTI < $60 for a sustained period.",
+   "catalysts": [
+    "Oil price",
+    "Guyana production"
+   ],
+   "horizon": "3 years",
+   "confidence": "Medium",
+   "fidelity": "Potentially accessible (US-listed stock/ADR)",
+   "type": "RESEARCH HYPOTHESIS",
+   "last_updated": "2026-06 (knowledge base) \u2014 prices/metrics approximate; verify before use",
+   "sources": [
+    "company_filings",
+    "flow_analyst_judgment"
+   ],
+   "flow_rank_score": 4.8,
+   "flow_extreme": 4.75,
+   "flow_core": 6.8
+  }
+ ],
+ "method": "Rank = 0.30\u00b7scenario EV + 0.20\u00b7EV/|bear| + 0.15\u00b7quality + 0.15\u00b7expectation gap + 0.10\u00b7catalyst + 0.10\u00b7balance sheet (all scaled 0\u201310). Not ranked by recent performance."
+}

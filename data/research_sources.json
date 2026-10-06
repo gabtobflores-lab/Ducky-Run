@@ -1,0 +1,87 @@
+{
+ "last_updated": "2026-10-06",
+ "policy": "Fetch once, cache in research/raw, recompute locally. Refresh only market snapshot data when stale (>30 days).",
+ "sources": [
+  {
+   "id": "shiller_sp500",
+   "name": "S&P 500 monthly price, dividends, earnings, CAPE (Shiller via datasets/s-and-p-500)",
+   "url": "https://github.com/datasets/s-and-p-500",
+   "cached": "research/raw/sp500_monthly.csv",
+   "coverage": "1871-01 \u2192 2026-09 (dividends/earnings \u2192 2023-06, CAPE \u2192 2023-09)",
+   "fetched": "2026-10-06",
+   "type": "CURRENT DATA"
+  },
+  {
+   "id": "cboe_vix",
+   "name": "CBOE VIX daily",
+   "url": "https://github.com/datasets/finance-vix",
+   "cached": "research/raw/vix_daily.csv",
+   "coverage": "1990-01 \u2192 2026-09-22",
+   "fetched": "2026-10-06",
+   "type": "CURRENT DATA"
+  },
+  {
+   "id": "fred_10y",
+   "name": "US 10-year Treasury yield, monthly",
+   "url": "https://github.com/datasets/bond-yields-us-10y",
+   "cached": "research/raw/us10y_monthly.csv",
+   "coverage": "1953-04 \u2192 2026-08",
+   "fetched": "2026-10-06",
+   "type": "CURRENT DATA"
+  },
+  {
+   "id": "bls_cpi",
+   "name": "US CPI-U index",
+   "url": "https://github.com/datasets/cpi-us",
+   "cached": "research/raw/cpi_monthly.csv",
+   "coverage": "1913-01 \u2192 2026-08",
+   "fetched": "2026-10-06",
+   "type": "CURRENT DATA"
+  },
+  {
+   "id": "eia_wti",
+   "name": "WTI crude oil daily spot",
+   "url": "https://github.com/datasets/oil-prices",
+   "cached": "research/raw/wti_daily.csv",
+   "coverage": "1986-01 \u2192 2026-09-29",
+   "fetched": "2026-10-06",
+   "type": "CURRENT DATA"
+  },
+  {
+   "id": "gold_monthly",
+   "name": "Gold price monthly",
+   "url": "https://github.com/datasets/gold-prices",
+   "cached": "research/raw/gold_monthly.csv",
+   "coverage": "1833 \u2192 2026-09",
+   "fetched": "2026-10-06",
+   "type": "CURRENT DATA"
+  },
+  {
+   "id": "company_filings",
+   "name": "Company 10-K/10-Q/20-F filings and earnings releases (via model knowledge to mid-2026)",
+   "url": "https://www.sec.gov/edgar",
+   "cached": null,
+   "coverage": "to ~2026-06",
+   "fetched": "knowledge base",
+   "type": "STALE DATA"
+  },
+  {
+   "id": "flow_analyst_judgment",
+   "name": "FLOW factor scores and scenario ranges",
+   "url": null,
+   "cached": "research/investments_src.py",
+   "coverage": "2026-06 view",
+   "fetched": "2026-10-06",
+   "type": "RESEARCH HYPOTHESIS"
+  },
+  {
+   "id": "academic",
+   "name": "Factor literature: Jegadeesh\u2013Titman 1993 (momentum), Moskowitz\u2013Ooi\u2013Pedersen 2012 (time-series momentum), Faber 2007 (10-month SMA), Novy-Marx 2013 (profitability), Frazzini\u2013Pedersen 2014 (low beta), Bailey\u2013L\u00f3pez de Prado 2014 (deflated Sharpe)",
+   "url": null,
+   "cached": null,
+   "coverage": "\u2014",
+   "fetched": "knowledge base",
+   "type": "EDUCATION"
+  }
+ ]
+}
