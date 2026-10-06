@@ -3,6 +3,10 @@
 **Research the edge.** An interactive single-page lab for investing, swing trading, quant strategies, portfolio scenarios and a teen-startable business. It is for education and simulation only. It never executes trades.
 
 ## Open it (no install)
+**Get FLOW its own link (free, about 1 minute), either way:**
+- **Netlify Drop:** open https://app.netlify.com/drop and drag in the `out/` folder (or unzip `flow-site.zip` first). You get a link like `flow-xyz.netlify.app`. Sign up free to keep it, then rename it under Site settings → Change site name, e.g. `flow-lab.netlify.app`.
+- **Vercel:** [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/gabtobflores-lab/Ducky-Run&project-name=flow&repository-name=flow). This gives a link like `flow.vercel.app` that redeploys on every push.
+
 **Hosted link (claude.ai):** https://claude.ai/artifact/Kf6rwoY3TRB5hiNHXQCKzU. Ask Claude here uses your own Claude account. To rebuild it: `npm run build && python3 scripts/artifact.py`.
 
 **GitHub Pages:** https://gabtobflores-lab.github.io/Ducky-Run/
