@@ -349,7 +349,7 @@ function renderUI() {
   document.body.classList.toggle('sun', S.boss === 3 && dimV > .45); document.body.classList.toggle('space', S.boss === 3 && dimV <= .45);
   $('#dimctl').style.display = S.boss === 3 && !S.cine ? 'flex' : 'none';
   $('#glare').style.opacity = S.boss === 3 ? Math.pow(clamp01((dimV - SAFE) / (1 - SAFE)), 1.2) * .92 * (.93 + .07 * Math.sin(t * 1.2)) : 0;
-  $('#boost').textContent = S.boostN ? `✦ x999 BOOST STACK ${S.boostN}  (x${fmt(bm())})` : '';
+  $('#boost').textContent = S.boostN ? `✦ x999 BOOST (THIS LEVEL) STACK ${S.boostN}  (x${fmt(bm())})` : '';
   if (S.boss === 2) { const h = (performance.now() / 40) % 360, st = document.documentElement.style; st.setProperty('--ac', `hsl(${h},100%,62%)`); st.setProperty('--ac2', `hsl(${(h + 40) % 360},100%,80%)`); st.setProperty('--bg1', `hsl(${h},60%,5%)`); st.setProperty('--bg2', `hsl(${(h + 30) % 360},70%,14%)`); }
   renderUpgrades();
   const bd = $('#buffs'); bd.innerHTML = buffs.map(b => `<span class="buff">${b.name} ${Math.ceil(b.left)}s</span>`).join('');
@@ -556,7 +556,7 @@ $('#ascend').onclick = () => {
   $('#mno').onclick = () => { $('#modal').style.display = 'none'; };
   $('#myes').onclick = () => {
     $('#modal').style.display = 'none';
-    S.ascents++; S.cookies = 0; S.total = 0; S.clicks = 0; S.owned = B.map(() => 0); S.upg = {}; S.seen = {}; S.inf = false; buffs = []; uKey = '';
+    resetBoost('rebirth'); S.ascents++; S.cookies = 0; S.total = 0; S.clicks = 0; S.owned = B.map(() => 0); S.upg = {}; S.seen = {}; S.inf = false; buffs = []; uKey = '';
     recalc(); applyTheme(); const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
     const z = zoneRect(); burst(z.cx, z.cy, 100, R * 2, T.g[0]); beep(300, 1, 'sine', .09, 1200); toast(`Ascended! Welcome to the ${T.n} realm (+${S.ascents * 10}% production)`);
     setTab('b'); save();
@@ -644,8 +644,9 @@ function startCine(kind) {
   S.cine = kind; fx.style.display = 'block'; document.querySelectorAll('.spark').forEach(x => x.remove()); save();
 }
 function endCine() { FX.kind = ''; S.cine = ''; fx.style.display = 'none'; $('#cinebtn').style.display = 'none'; save(); }
+function resetBoost(why) { if (S.boostN) toast(`Your x999 boost faded with the ${why}.`); S.boostN = 0; }
 function startBoss(stage) {
-  S.boss = stage; S.bossTotal = 0; S.cookies = 0; S.total = 0; S.inf = false; buffs = []; uKey = ''; S.cine = '';
+  resetBoost('new level'); S.boss = stage; S.bossTotal = 0; S.cookies = 0; S.total = 0; S.inf = false; buffs = []; uKey = ''; S.cine = '';
   dimV = 1; flareT = 12; document.body.style.setProperty('--b', 1); $('#dim').value = 100; $('#dimv').textContent = '100%';
   if (stage === 1 || stage === 3) { S.owned = B.map(() => 0); S.upg = {}; S.seen = {}; S.clicks = 0; }
   document.querySelectorAll('.spark').forEach(x => x.remove()); recalc(); applyTheme(); setTab('b'); save();
@@ -782,7 +783,7 @@ function sceneEnding(T0, dt, W, H) {
 }
 $('#cinebtn').onclick = () => {
   if (FX.kind === 'sunwarn') { FX.go = FX.t; $('#cinebtn').style.display = 'none'; return; }
-  S.won = 1; S.boss = 0; S.bossTotal = 0; S.skin = 'choc'; recalc(); applyTheme(); uKey = ''; endCine(); toast('You found the meaning of life. Keep baking!'); beep(660, .6, 'sine', .08, 600);
+  resetBoost('new level'); S.won = 1; S.boss = 0; S.bossTotal = 0; S.skin = 'choc'; recalc(); applyTheme(); uKey = ''; endCine(); toast('You found the meaning of life. Keep baking!'); beep(660, .6, 'sine', .08, 600);
 };
 
 
@@ -897,7 +898,7 @@ function sceneAngel(T0, dt, W, H) {
     const wg = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(W, H) * (.2 + w)); wg.addColorStop(0, `rgba(255,255,255,${w})`); wg.addColorStop(1, `rgba(255,255,255,${w * .8})`); ctx.fillStyle = wg; ctx.fillRect(0, 0, W, H);
     once('swell', 15, () => [392, 523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 3, 'sine', .05), i * 350)));
   }
-  once('menu', 18.6, () => { S.sunDone = 1; S.boss = 0; S.bossTotal = 0; S.skin = 'angel'; dimV = 1; document.body.style.setProperty('--b', 1); recalc(); applyTheme(); uKey = ''; showMenu(true); save(); });
+  once('menu', 18.6, () => { resetBoost('new level'); S.sunDone = 1; S.boss = 0; S.bossTotal = 0; S.skin = 'angel'; dimV = 1; document.body.style.setProperty('--b', 1); recalc(); applyTheme(); uKey = ''; showMenu(true); save(); });
   if (T0 > 18.6) { ctx.fillStyle = `rgba(255,255,255,${1 - ease((T0 - 18.6) / 2.4)})`; ctx.fillRect(0, 0, W, H); }
   if (T0 > 21) { endCine(); toast('The angel left a halo on your cookie.'); }
 }
@@ -939,7 +940,7 @@ const CODE_INFO = [
 ];
 function renderCodes() {
   const el = $('#codelist'), lock = S.boss || S.cine;
-  el.innerHTML = `<h4>SECRET CODES${lock ? '  (sealed by the boss)' : ''}</h4>` + CODE_INFO.map(([c, d, k]) => `<div class="cd" data-c="${c}"><b>${c}</b><span>${d}</span>${S.codes[k] ? '<i>used</i>' : ''}</div>`).join('') + '<div class="cd"><b>↑ ↓ ← →</b><span>swipe/press on the cookie: permanent x999, stacks</span></div>';
+  el.innerHTML = `<h4>SECRET CODES${lock ? '  (sealed by the boss)' : ''}</h4>` + CODE_INFO.map(([c, d, k]) => `<div class="cd" data-c="${c}"><b>${c}</b><span>${d}</span>${S.codes[k] ? '<i>used</i>' : ''}</div>`).join('') + '<div class="cd"><b>↑ ↓ ← →</b><span>swipe/press on the cookie: x999 for this level, stacks, resets on rebirth</span></div>';
   el.querySelectorAll('.cd[data-c]').forEach(r => r.onclick = () => { $('#codein').value = r.dataset.c; el.classList.remove('open'); });
 }
 $('#codebook').onclick = e => { e.stopPropagation(); const el = $('#codelist'); if (!el.classList.contains('open')) renderCodes(); el.classList.toggle('open'); };
