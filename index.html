@@ -110,7 +110,7 @@
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
-const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+const SUF = ['', 'K', 'M', 'B', 'T', 'QA', 'QI', 'SX', 'SP', 'OC', 'NO', 'DC', 'UD', 'DD', 'TD'];
 function fmt(n) {
   if (n < 1e3) return n < 10 && n % 1 ? n.toFixed(1) : Math.floor(n).toString();
   const i = Math.min(SUF.length - 1, Math.floor(Math.log10(n) / 3)), v = n / Math.pow(1000, i);
@@ -373,7 +373,7 @@ function loop(now) {
 }
 
 // ---------- secret codes ----------
-const CODES = { megaspark: 'mega', goldenpick: 'pick', chocochip: 'skin' };
+const CODES = { megaspark: 'mega', goldenpick: 'pick', chocochip: 'skin', cookiegalaxy: 'bank' };
 function modal(html) { $('#mbox').innerHTML = html; $('#modal').style.display = 'flex'; }
 function tryCode(txt) {
   const k = Object.keys(CODES).find(c => txt.endsWith(c)); if (!k) return false;
@@ -384,6 +384,10 @@ function tryCode(txt) {
   }
   if (S.codes[type]) { toast('You already used that code'); return true; }
   S.codes[type] = 1;
+  if (type === 'bank') {
+    S.cookies += 999e15; S.total += 999e15; toast('SUPER SECRET! +999QA cookies'); beep(200, 1.2, 'sawtooth', .08, 1400);
+    const z = zoneRect(); burst(z.cx, z.cy, 90, R * 2, '#ffd24a'); floatText(z.cx, z.cy - R, '+999QA', true); return true;
+  }
   if (type === 'mega') {
     buffs.push({ name: 'MEGA x99999', left: 60, cps: 99999, click: 99999 }); toast('Secret code! Everything x99999 for 60s'); beep(300, .8, 'sawtooth', .07, 900);
     const z = zoneRect(); burst(z.cx, z.cy, 60, R * 1.6, '#ffd24a');
