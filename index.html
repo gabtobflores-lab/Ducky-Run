@@ -47,7 +47,7 @@
   .row:not(.can) .cost{color:#ff8a8a}
   .own{font-size:26px;font-weight:900;opacity:.35;min-width:34px;text-align:right}
   .ucard .nm{font-size:14px}
-  #toasts{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:9;pointer-events:none;align-items:center}
+  #toasts{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:50;pointer-events:none;align-items:center}
   .toast{background:rgba(20,8,30,.92);border:1px solid var(--ac);padding:8px 16px;border-radius:12px;font-weight:700;font-size:14px;animation:toast 3.6s forwards;box-shadow:0 6px 24px rgba(0,0,0,.4)}
   .spark{position:fixed;width:74px;height:74px;margin:-37px 0 0 -37px;z-index:8;cursor:pointer;animation:sparkIn .5s cubic-bezier(.3,1.8,.5,1),float 3s ease-in-out infinite .5s;filter:drop-shadow(0 0 16px #ffc24a)}
   .spark.out{animation:sparkOut .3s forwards}
@@ -83,6 +83,21 @@
   #bossfill i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:99px;transition:width .2s}
   #boost{font-size:11px;font-weight:800;color:var(--ac2);letter-spacing:.08em;margin-top:4px;min-height:0}
   #left{touch-action:none}
+  #glare{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 38%,#fff 0%,#fffbe0 45%,#ffe9a0 100%);transition:opacity .25s}
+  body.sun{--tx:#3a2a00;--dim:#7a6420;--card:rgba(255,255,255,.55);--line:rgba(140,100,0,.3)}
+  body.sun #app,body.sun #bg{filter:brightness(var(--b,1))}
+  body.sun #list{padding-bottom:84px}
+  #dimctl{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));z-index:32;width:min(88vw,340px);display:none;align-items:center;gap:10px;background:rgba(20,10,0,.9);color:#ffe9b0;padding:8px 14px;border-radius:99px;font-weight:800;font-size:12px;letter-spacing:.08em;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  #dimctl input{flex:1;accent-color:#ffb020;min-width:0}
+  #menu{position:fixed;inset:0;z-index:35;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;background:linear-gradient(160deg,var(--bg1),var(--bg2));text-align:center;padding:20px 20px max(40px,10vh);transition:opacity .7s}
+  #menu.hide{opacity:0;pointer-events:none}
+  #mcv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #menu>:not(canvas){position:relative}
+  #mtitle{font-weight:900;letter-spacing:.22em;font-size:clamp(26px,7vw,48px);color:var(--ac2);text-shadow:0 4px 0 rgba(0,0,0,.35)}
+  #msub{color:var(--dim);font-size:14px}
+  #mplay{margin-top:8px;background:linear-gradient(180deg,var(--ac2),var(--ac));color:#2a0f1e;border:0;border-radius:99px;padding:14px 60px;font-weight:900;font-size:22px;letter-spacing:.22em;animation:glow 2s ease-in-out infinite;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+  #mplay:active{transform:scale(.96)}
+  #mstat{font-size:12px;color:var(--dim)}
   #fx{position:fixed;inset:0;width:100%;height:100%;z-index:40;display:none;touch-action:none}
   #cinebtn{position:fixed;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:45;display:none;background:#fff6dc;color:#5a3010;border:0;border-radius:99px;padding:12px 28px;font-weight:900;font-size:16px;letter-spacing:.06em;box-shadow:0 8px 30px rgba(255,200,100,.5);animation:fadein 1.5s}
   @keyframes fadein{from{opacity:0}to{opacity:1}}
@@ -144,6 +159,9 @@
     <div id="list"></div>
   </section>
 </div>
+<div id="glare"></div>
+<div id="dimctl"><span>☀</span><input type="range" id="dim" min="10" max="100" value="100" aria-label="Brightness"><span id="dimv">100%</span></div>
+<div id="menu"><canvas id="mcv"></canvas><div id="mtitle">SPARK CLICKER</div><div id="msub">tap the cookie. fill the world.</div><button id="mplay">BAKE</button><div id="mstat"></div></div>
 <canvas id="fx"></canvas>
 <button id="cinebtn">Keep baking ✦</button>
 <div id="flash"></div>
@@ -188,7 +206,7 @@ B.forEach((b, i) => TIERS.forEach(([cnt, mult, adj], k) => U.push({
   U.push({ id: 'l' + k, name, ico: '🍀', cost, desc: 'Golden sparks appear more often and last longer.', req: () => S.total >= cost / 4, fx: m => { m.spark *= .7; m.life *= 1.4; } }));
 
 // ---------- state ----------
-let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true, skin: 'logo', codes: {}, ascents: 0, omega: false, inf: false, boss: 0, bossTotal: 0, won: 0, cine: '', boostN: 0 };
+let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true, skin: 'logo', codes: {}, ascents: 0, omega: false, inf: false, boss: 0, bossTotal: 0, won: 0, cine: '', boostN: 0, sunDone: 0 };
 try { const d = JSON.parse(localStorage.sparkClicker || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
 if (S.inf) { S.cookies = Infinity; S.total = Infinity; }
 const THEMES = [
@@ -200,12 +218,14 @@ const THEMES = [
   { n: 'Ice', ac: '#5cc8ff', ac2: '#bfe9ff', b1: '#0b1830', b2: '#12315a', g: ['#b5e6ff', '#4fb4f0', '#2c82c4'], rgb: '90,200,255' },
   { n: 'Lime', ac: '#a6e64a', ac2: '#dcffa0', b1: '#101c0e', b2: '#25401a', g: ['#d4f58f', '#8fd23a', '#5a9a1e'], rgb: '166,230,74' },
 ];
-const BOSS = [null, { target: 1e9, K: 100, name: 'THE HOLLOW COOKIE' }, { target: 1e12, K: 400, name: 'THE CHROMATIC ONE' }];
+const BOSS = [null, { target: 1e9, K: 100, name: 'THE HOLLOW COOKIE' }, { target: 1e12, K: 400, name: 'THE CHROMATIC ONE' }, { target: 1e14, K: 3000, name: 'THE SUN' }];
 const BOSS1 = { n: 'Hollow', ac: '#ff3355', ac2: '#ff9aa8', b1: '#080000', b2: '#2a0008', g: ['#ff7a8a', '#ff2b45', '#8a0a1c'], rgb: '255,40,60' };
 const BOSS2 = { n: 'Chromatic', ac: '#ff66ff', ac2: '#ffd1ff', b1: '#06000f', b2: '#150033', g: ['#fff', '#c46bff', '#6b2bff'], rgb: '200,100,255' };
+const BOSS3 = { n: 'Sun', ac: '#ffb020', ac2: '#fff2b0', b1: '#fff6d0', b2: '#ffd36a', g: ['#fff', '#ffe680', '#ffb020'], rgb: '255,220,120' };
+let dimV = 1;
 let T = THEMES[0];
 function applyTheme() {
-  T = S.boss === 1 ? BOSS1 : S.boss === 2 ? BOSS2 : THEMES[S.ascents % THEMES.length]; const st = document.documentElement.style;
+  T = S.boss === 1 ? BOSS1 : S.boss === 2 ? BOSS2 : S.boss === 3 ? BOSS3 : THEMES[S.ascents % THEMES.length]; const st = document.documentElement.style;
   st.setProperty('--ac', T.ac); st.setProperty('--ac2', T.ac2); st.setProperty('--bg1', T.b1); st.setProperty('--bg2', T.b2);
 }
 applyTheme();
@@ -306,7 +326,10 @@ function renderUI() {
   $('#ascend').style.display = S.omega && !S.boss ? '' : 'none';
   const sealed = !!(S.boss || S.cine), ci = $('#codein'); ci.disabled = sealed; ci.placeholder = sealed ? 'sealed by the boss...' : 'enter secret code'; $('#codebar').style.opacity = sealed ? .45 : 1;
   const bb = $('#bossbar'); bb.style.display = S.boss ? '' : 'none';
-  if (S.boss) { const bo = BOSS[S.boss]; $('#bosslbl').textContent = `${bo.name}  ${fmt(S.bossTotal)} / ${fmt(bo.target)}`; $('#bossfill i').style.width = Math.min(100, S.bossTotal / bo.target * 100) + '%'; }
+  if (S.boss) { const bo = BOSS[S.boss]; $('#bosslbl').textContent = S.boss === 3 && dimV > .5 ? 'THE SUN  TOO BRIGHT! LOWER BRIGHTNESS' : `${bo.name}  ${fmt(S.bossTotal)} / ${fmt(bo.target)}`; $('#bossfill i').style.width = Math.min(100, S.bossTotal / bo.target * 100) + '%'; }
+  document.body.classList.toggle('sun', S.boss === 3);
+  $('#dimctl').style.display = S.boss === 3 && !S.cine ? 'flex' : 'none';
+  $('#glare').style.opacity = S.boss === 3 ? Math.min(.92, dimV * dimV * .92 * (.92 + .08 * Math.sin(t * 1.2))) : 0;
   $('#boost').textContent = S.boostN ? `✦ x999 BOOST STACK ${S.boostN}  (x${fmt(bm())})` : '';
   if (S.boss === 2) { const h = (performance.now() / 40) % 360, st = document.documentElement.style; st.setProperty('--ac', `hsl(${h},100%,62%)`); st.setProperty('--ac2', `hsl(${(h + 40) % 360},100%,80%)`); st.setProperty('--bg1', `hsl(${h},60%,5%)`); st.setProperty('--bg2', `hsl(${(h + 30) % 360},70%,14%)`); }
   renderUpgrades();
@@ -344,10 +367,10 @@ function spawnSpark() {
 }
 
 // ---------- canvas ----------
-const cv = $('#bg'), mainCtx = cv.getContext('2d'), zone = $('#zone'), fx = $('#fx'), fctx = fx.getContext('2d');
+const cv = $('#bg'), mainCtx = cv.getContext('2d'), zone = $('#zone'), fx = $('#fx'), fctx = fx.getContext('2d'), mcv = $('#mcv'), mctx = mcv.getContext('2d');
 let ctx = mainCtx;
 let dpr = 1, R = 100, t = 0;
-function resize() { dpr = Math.min(devicePixelRatio || 1, 2); cv.width = fx.width = innerWidth * dpr; cv.height = fx.height = innerHeight * dpr; }
+function resize() { dpr = Math.min(devicePixelRatio || 1, 2); cv.width = fx.width = mcv.width = innerWidth * dpr; cv.height = fx.height = mcv.height = innerHeight * dpr; }
 addEventListener('resize', resize); resize();
 function zoneRect() { const r = zone.getBoundingClientRect(); R = Math.max(50, Math.min(r.width, r.height) * (innerWidth < 760 ? .4 : .34)); return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; }
 let sc = 1, scv = 0, rot = 0, wob = 0, wobv = 0, hover = false, parts = [], floats = [], rain = [], ripples = [];
@@ -357,6 +380,10 @@ function burst(x, y, n, sp, col) {
 }
 function floatText(x, y, txt, big) { floats.push({ x: x + rand(-14, 14), y, txt, life: 1, big }); }
 function doClick(x, y) {
+  if (S.boss === 3 && dimV > .5) {
+    if (performance.now() - (doClick.w || 0) > 900) { doClick.w = performance.now(); toast('TOO BRIGHT! Lower the brightness to 50% or less.'); beep(120, .2, 'square', .05, -40); }
+    floatText(x, y - 10, 'too bright!'); return;
+  }
   const v = clickVal(); S.cookies += v; S.total += v; S.clicks++; if (S.boss) S.bossTotal += v;
   const z = zoneRect(); sc = .9; scv = 2.2; wobv += rand(-2.5, 2.5);
   burst(x, y, 7, 130); floatText(x, y - 10, '+' + fmt(v));
@@ -388,6 +415,7 @@ function drawChoc(r, big) {
 function drawCookie(r, big) {
   if (S.boss) return drawBoss(r, big);
   if (S.skin === 'choc') return drawChoc(r, big);
+  if (S.skin === 'angel') return drawAngelCookie(r, big);
   const g = ctx.createRadialGradient(-r * .3, -r * .35, r * .05, 0, 0, r * 1.05);
   g.addColorStop(0, T.g[0]); g.addColorStop(.55, T.g[1]); g.addColorStop(1, T.g[2]);
   ctx.strokeStyle = g; ctx.fillStyle = g; ctx.lineCap = 'round';
@@ -402,7 +430,7 @@ function drawCookie(r, big) {
 function loop(now) {
   const dt = Math.min(.05, (now - (loop.l || now)) / 1000); loop.l = now; t += dt;
   const c = cps(); S.cookies += c * dt; S.total += c * dt;
-  if (S.boss && !S.cine && S.bossTotal >= BOSS[S.boss].target) startCine(S.boss === 1 ? 'explode' : 'ending');
+  if (S.boss && !S.cine && S.bossTotal >= BOSS[S.boss].target) startCine(S.boss === 1 ? 'explode' : S.boss === 2 ? 'ending' : 'angel');
   buffs.forEach(b => b.left -= dt); buffs = buffs.filter(b => b.left > 0);
   sparkT -= dt; if (sparkT <= 0) { if (!S.boss && !S.cine) spawnSpark(); sparkT = rand(60, 130) * M.spark; }
   const z = zoneRect();
@@ -446,6 +474,7 @@ function loop(now) {
   floats.forEach(f => { ctx.globalAlpha = Math.min(1, f.life * 1.6); ctx.font = `900 ${f.big ? 30 : 22}px system-ui,sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(40,10,20,.8)'; ctx.strokeText(f.txt, f.x, f.y); ctx.fillStyle = f.big ? '#ffd24a' : '#fff4e6'; ctx.fillText(f.txt, f.x, f.y); });
   ctx.globalAlpha = 1;
   if (FX.kind) drawCine(dt);
+  if (menuOn) drawMenu(dt);
   requestAnimationFrame(loop);
 }
 
@@ -510,6 +539,7 @@ $('#ascend').onclick = () => {
     const z = zoneRect(); burst(z.cx, z.cy, 100, R * 2, T.g[0]); beep(300, 1, 'sine', .09, 1200); toast(`Ascended! Welcome to the ${T.n} realm (+${S.ascents * 10}% production)`);
     setTab('b'); save();
     if (S.ascents === 5 && !S.won && !S.boss) startCine('win');
+    else if (S.ascents === 15 && S.won && !S.sunDone && !S.boss) startCine('sunwarn');
   };
 };
 
@@ -522,7 +552,23 @@ function drawHeart(px) {
     ctx.fillRect(Math.round((x - 5.5) * px), Math.round((y - 5) * px), Math.ceil(px), Math.ceil(px));
   }));
 }
+function drawSun(r) {
+  const g = ctx.createRadialGradient(0, 0, r * .2, 0, 0, r * 2.8); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.3, 'rgba(255,250,200,.95)'); g.addColorStop(.55, 'rgba(255,205,90,.45)'); g.addColorStop(1, 'rgba(255,150,40,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r * 2.8, 0, 7); ctx.fill(); ctx.lineCap = 'round';
+  for (let i = 0; i < 24; i++) {
+    const a = i / 24 * 6.2832 + t * .08, L = r * (1.5 + .5 * Math.sin(t * 1.5 + i * 2.1));
+    ctx.strokeStyle = `rgba(255,${230 + (i * 7) % 25},150,.85)`; ctx.lineWidth = r * (i % 2 ? .035 : .06);
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * .9, Math.sin(a) * r * .9); ctx.lineTo(Math.cos(a) * L, Math.sin(a) * L); ctx.stroke();
+  }
+  const c = ctx.createRadialGradient(-r * .2, -r * .2, r * .05, 0, 0, r * .85); c.addColorStop(0, '#fff'); c.addColorStop(.7, '#fffbe0'); c.addColorStop(1, '#ffd860');
+  ctx.fillStyle = c; ctx.beginPath(); ctx.arc(0, 0, r * .85 * (1 + Math.sin(t * 1.2) * .02), 0, 7); ctx.fill();
+}
+function drawAngelCookie(r, big) {
+  drawChoc(r, big); ctx.save(); ctx.strokeStyle = '#ffe27a'; ctx.shadowColor = '#ffd24a'; ctx.shadowBlur = 18; ctx.lineWidth = Math.max(2, r * .07);
+  ctx.beginPath(); ctx.ellipse(0, -r * 1.12, r * .42, r * .11, 0, 0, 7); ctx.stroke(); ctx.restore();
+}
 function drawBoss(r, big, st = S.boss) {
+  if (st === 3) return drawSun(r);
   const n = st === 1 ? 20 : 28; ctx.lineCap = 'round';
   for (let i = 0; i < n; i++) {
     const lg = i % 2 === 0, a = i / n * 6.2832 + (st === 2 ? Math.sin(t * .8 + i) * .03 : 0);
@@ -570,12 +616,14 @@ const back = x => { x = clamp01(x); return 1 + 2.70158 * Math.pow(x - 1, 3) + 1.
 function startCine(kind) {
   const z = zoneRect(); Object.assign(FX, { t: 0, kind, p: [], fired: {}, ox: z.cx, oy: z.cy, R, rings: [], flash: 0, chars: 0, am: 1, sw: [], fire: 0, beat: 0,
     crack: Array.from({ length: 16 }, () => rand(-1, 1)) });
+  FX.go = 0; $('#cinebtn').textContent = kind === 'sunwarn' ? 'I lowered it. Bring on the sun' : 'Keep baking ✦'; $('#menu').classList.add('hide'); menuOn = false;
   S.cine = kind; fx.style.display = 'block'; document.querySelectorAll('.spark').forEach(x => x.remove()); save();
 }
 function endCine() { FX.kind = ''; S.cine = ''; fx.style.display = 'none'; $('#cinebtn').style.display = 'none'; save(); }
 function startBoss(stage) {
   S.boss = stage; S.bossTotal = 0; S.cookies = 0; S.total = 0; S.inf = false; buffs = []; uKey = ''; S.cine = '';
-  if (stage === 1) { S.owned = B.map(() => 0); S.upg = {}; S.seen = {}; S.clicks = 0; }
+  dimV = 1; document.body.style.setProperty('--b', 1); $('#dim').value = 100; $('#dimv').textContent = '100%';
+  if (stage === 1 || stage === 3) { S.owned = B.map(() => 0); S.upg = {}; S.seen = {}; S.clicks = 0; }
   document.querySelectorAll('.spark').forEach(x => x.remove()); recalc(); applyTheme(); setTab('b'); save();
 }
 function fxBurst(x, y, n, sp, cols, g = 300, life = 1.4, rect) {
@@ -602,7 +650,7 @@ function rays(x, y, n, len, rot, col) {
 function drawCine(dt) {
   FX.t += dt; const W = innerWidth, H = innerHeight;
   ctx = fctx; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-  ({ win: sceneWin, explode: sceneExplode, ending: sceneEnding })[FX.kind](FX.t, dt, W, H);
+  ({ win: sceneWin, explode: sceneExplode, ending: sceneEnding, sunwarn: sceneSunWarn, angel: sceneAngel })[FX.kind](FX.t, dt, W, H);
   ctx = mainCtx;
 }
 
@@ -709,9 +757,100 @@ function sceneEnding(T0, dt, W, H) {
   }
 }
 $('#cinebtn').onclick = () => {
+  if (FX.kind === 'sunwarn') { FX.go = FX.t; $('#cinebtn').style.display = 'none'; return; }
   S.won = 1; S.boss = 0; S.bossTotal = 0; S.skin = 'choc'; recalc(); applyTheme(); uKey = ''; endCine(); toast('You found the meaning of life. Keep baking!'); beep(660, .6, 'sine', .08, 600);
 };
 
+
+// ---------- dimmer, menu, sun scenes ----------
+$('#dim').addEventListener('input', e => { dimV = e.target.value / 100; document.body.style.setProperty('--b', dimV); $('#dimv').textContent = Math.round(dimV * 100) + '%'; });
+let menuOn = false; const MENU = { p: [] };
+function showMenu(on) {
+  menuOn = on; $('#menu').classList.toggle('hide', !on);
+  if (on) $('#mstat').textContent = `ascensions ${S.ascents}   ·   ${fmtBig(S.total)} cookies baked`;
+}
+$('#mplay').onclick = () => { showMenu(false); beep(520, .25, 'triangle', .07, 400); const z = zoneRect(); burst(z.cx, z.cy, 24, R); };
+function drawMenu(dt) {
+  const W = innerWidth, H = innerHeight, r = Math.min(W, H) * .22, cx = W / 2, cy = H * .33;
+  ctx = mctx; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  if (Math.random() < 3 * dt) MENU.p.push({ x: rand(0, W), y: -30, vy: rand(40, 100), rot: rand(0, 6), vr: rand(-1, 1), s: rand(10, 24) });
+  MENU.p.forEach(q => { q.y += q.vy * dt; q.rot += q.vr * dt; }); MENU.p = MENU.p.filter(q => q.y < H + 40);
+  ctx.globalAlpha = .28; MENU.p.forEach(q => { ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.rot); drawCookie(q.s, false); ctx.restore(); }); ctx.globalAlpha = 1;
+  const gg = ctx.createRadialGradient(cx, cy, r * .4, cx, cy, r * 2.2); gg.addColorStop(0, `rgba(${T.rgb},.4)`); gg.addColorStop(1, `rgba(${T.rgb},0)`); ctx.fillStyle = gg; ctx.fillRect(0, 0, W, H);
+  const k = 1 + Math.sin(t * 2.2) * .03; ctx.save(); ctx.translate(cx, cy + Math.sin(t * 1.6) * r * .04); ctx.rotate(Math.sin(t * .8) * .09); ctx.scale(k, k); drawCookie(r, true); ctx.restore();
+  ctx = mainCtx;
+}
+
+function drawAngel(s, open) {
+  ctx.save(); ctx.scale(s, s);
+  [-1, 1].forEach(d => { for (let i = 0; i < 7; i++) {
+    const len = 118 - i * 7; ctx.save(); ctx.translate(d * 20, -62); ctx.rotate(d * (.35 + i * .32 * open));
+    const g = ctx.createLinearGradient(0, 0, 0, -len); g.addColorStop(0, '#fff'); g.addColorStop(1, '#fff3d0');
+    ctx.fillStyle = g; ctx.strokeStyle = 'rgba(214,160,40,.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, -len / 2, 13, len / 2, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+  } });
+  const rg = ctx.createLinearGradient(0, -70, 0, 95); rg.addColorStop(0, '#fff'); rg.addColorStop(1, '#ffe9bd');
+  ctx.fillStyle = rg; ctx.strokeStyle = 'rgba(214,160,40,.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-22, -68); ctx.quadraticCurveTo(0, -78, 22, -68); ctx.quadraticCurveTo(30, 10, 48, 95); ctx.lineTo(-48, 95); ctx.quadraticCurveTo(-30, 10, -22, -68); ctx.fill(); ctx.stroke();
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#fff6e6'; ctx.lineWidth = 15; ctx.beginPath(); ctx.moveTo(16, -58); ctx.lineTo(58, -34); ctx.stroke();
+  ctx.fillStyle = '#ffe8cc'; ctx.beginPath(); ctx.arc(60, -33, 9, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -92, 20, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(214,160,40,.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = '#8a6a40'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(-7, -93, 4, .2, 2.9); ctx.stroke(); ctx.beginPath(); ctx.arc(7, -93, 4, .2, 2.9); ctx.stroke(); ctx.beginPath(); ctx.arc(0, -86, 6, .3, 2.8); ctx.stroke();
+  ctx.strokeStyle = '#ffd24a'; ctx.shadowColor = '#ffd24a'; ctx.shadowBlur = 16; ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(0, -122, 24, 7, 0, 0, 7); ctx.stroke();
+  ctx.restore();
+}
+function sceneSunWarn(T0, dt, W, H) {
+  const cx = W / 2, go = FX.go ? T0 - FX.go : -1, fs = Math.min(W * .042, 20);
+  ctx.fillStyle = 'rgba(0,0,0,.94)'; ctx.fillRect(0, 0, W, H);
+  if (T0 < 3) fxText('15 ascensions.', cx, H * .45, Math.min(W * .1, 52), '#fff', Math.min(clamp01(T0 / .8), clamp01(3 - T0)));
+  else if (T0 < 5.6) fxText('you thought it was over?', cx, H * .45, Math.min(W * .075, 40), '#ffb0b8', Math.min(clamp01(T0 - 3), clamp01(5.6 - T0)), 'monospace', '700');
+  else {
+    const a = clamp01((T0 - 5.6) / .8);
+    fxText('⚠ BRIGHTNESS WARNING', cx, H * .3, Math.min(W * .052, 34), '#ffb020', a);
+    ['The final boss is the sun.', 'It is blinding.', 'Lower your phone brightness now.', 'It cannot be hurt at full brightness.', '(Contains slow bright pulses.)'].forEach((l, i) => fxText(l, cx, H * (.4 + i * .06), fs, i === 4 ? '#a08c70' : '#fff', clamp01((T0 - 6 - i * .4) / .6), 'system-ui,sans-serif', '600'));
+    if (T0 > 8.2 && !FX.go) $('#cinebtn').style.display = 'block';
+  }
+  if (go >= 0) {
+    if (!FX.fired.sw) { FX.fired.sw = 1; beep(200, 1.6, 'sawtooth', .08, 1500); }
+    ctx.fillStyle = `rgba(255,248,215,${clamp01(go / 1.4) * (go > 1.6 ? clamp01(1 - (go - 1.6) / 1.4) : 1)})`; ctx.fillRect(0, 0, W, H);
+    if (go > 1.6 && !FX.fired.sb) { FX.fired.sb = 1; startBoss(3); }
+    if (go > 3.1) { endCine(); toast('THE SUN. Lower your brightness, then click it down to 100T.'); }
+  }
+}
+function sceneAngel(T0, dt, W, H) {
+  const { ox, oy, R: r } = FX, cx = W / 2, cy = H * .5, cr = Math.min(W, H) * .2, sTarget = Math.min(H * .5 / 235, W * .92 / 290);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  if (T0 < 2.6) { ctx.save(); ctx.translate(ox, oy); ctx.globalAlpha = 1 - clamp01((T0 - 1.5) / 1); ctx.scale(1 + T0 * .25, 1 + T0 * .25); drawSun(r); ctx.restore(); }
+  once('boom', 1.5, () => { fxBurst(ox, oy, 140, 560, ['#fff', '#ffe680', '#ffb020'], 0, 2.2); FX.rings.push({ r: 0 }); beep(120, .9, 'sine', .12, -40); });
+  const bg = ctx.createRadialGradient(cx, cy, 20, cx, cy, Math.max(W, H) * .8); bg.addColorStop(0, '#fffbe8'); bg.addColorStop(1, '#f6bc5c');
+  ctx.globalAlpha = clamp01((T0 - 1.5) / 1.5); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+  FX.rings.forEach(g => { g.r += 800 * dt; ctx.strokeStyle = `rgba(255,255,255,${clamp01(1 - g.r / 1100)})`; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(ox, oy, g.r, 0, 7); ctx.stroke(); });
+  if (T0 > 2) rays(cx, cy, 18, Math.max(W, H), T0 * .15, `rgba(255,255,255,${.22 * clamp01((T0 - 2) / 2)})`);
+  once('pad', 2, () => [262, 330, 392, 523].forEach((f, i) => setTimeout(() => beep(f, 3, 'sine', .05), i * 300)));
+  fxParts(dt);
+  const grow = ease((T0 - 2) / 2.5), s = sTarget * (.12 + .88 * grow), open = ease((T0 - 3.2) / 2.2), bob = Math.sin(T0 * 1.3) * 8;
+  const fade = T0 > 11 ? 1 - .75 * ease((T0 - 11) / 3) : 1;
+  if (T0 > 2) {
+    ctx.save(); ctx.globalAlpha = fade * clamp01((T0 - 2) / .8); ctx.translate(cx, cy + bob); drawAngel(s, open); ctx.restore();
+    if (T0 > 4 && T0 < 14 && Math.random() < 6 * dt) FX.p.push({ x: cx + rand(-W * .3, W * .3), y: cy - H * .2, vx: rand(-15, 15), vy: rand(25, 60), g: 0, life: 6, max: 6, col: '#fff', r: rand(3, 6) });
+  }
+  const serif = 'Georgia,serif';
+  fxText('you faced the light.', cx, H * .86, Math.min(W * .06, 28), '#7a5214', Math.min(clamp01((T0 - 6.5) / 1), clamp01((10 - T0) / .8)), serif, '400');
+  fxText('well done, little baker.', cx, H * .86, Math.min(W * .065, 30), '#6b4410', Math.min(clamp01((T0 - 9) / 1), clamp01((13.2 - T0) / .8)), serif, '700');
+  if (T0 > 11) {
+    const p = ease((T0 - 11) / 2.4), hs = s, hx = cx + 60 * hs, hy = cy + bob - 33 * hs;
+    const x = hx + (cx - hx) * p, y = hy + (cy - H * .02 - hy) * p, k = cr * (.15 + .85 * p);
+    const gl = ctx.createRadialGradient(x, y, k * .4, x, y, k * 2.2); gl.addColorStop(0, 'rgba(255,240,170,.9)'); gl.addColorStop(1, 'rgba(255,240,170,0)'); ctx.fillStyle = gl; ctx.fillRect(x - k * 2.4, y - k * 2.4, k * 4.8, k * 4.8);
+    ctx.save(); ctx.translate(x, y + Math.sin(T0 * 1.6) * 5 * p); ctx.rotate(Math.sin(T0 * .8) * .05); drawAngelCookie(k, true); ctx.restore();
+    fxText('a cookie, for you.', cx, H * .86, Math.min(W * .065, 30), '#6b4410', clamp01((T0 - 13.4) / 1), serif, '700');
+  }
+  if (T0 > 15) {
+    const w = ease((T0 - 15) / 3.4);
+    const wg = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(W, H) * (.2 + w)); wg.addColorStop(0, `rgba(255,255,255,${w})`); wg.addColorStop(1, `rgba(255,255,255,${w * .8})`); ctx.fillStyle = wg; ctx.fillRect(0, 0, W, H);
+    once('swell', 15, () => [392, 523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 3, 'sine', .05), i * 350)));
+  }
+  once('menu', 18.6, () => { S.sunDone = 1; S.boss = 0; S.bossTotal = 0; S.skin = 'angel'; dimV = 1; document.body.style.setProperty('--b', 1); recalc(); applyTheme(); uKey = ''; showMenu(true); save(); });
+  if (T0 > 18.6) { ctx.fillStyle = `rgba(255,255,255,${1 - ease((T0 - 18.6) / 2.4)})`; ctx.fillRect(0, 0, W, H); }
+  if (T0 > 21) { endCine(); toast('The angel left a halo on your cookie.'); }
+}
 // ---------- save / misc ----------
 let resetting = false;
 function save() { if (resetting) return; S.last = Date.now(); try { const o = Object.assign({}, S); if (S.inf) { o.cookies = 0; o.total = 0; } localStorage.sparkClicker = JSON.stringify(o); } catch (e) {} }
@@ -726,7 +865,7 @@ $('#snd').textContent = S.sound ? 'Sound on' : 'Sound off';
 setInterval(save, 10000); addEventListener('beforeunload', save);
 setInterval(renderUI, 100); setInterval(checkAch, 700);
 setTab('b'); renderUI(); requestAnimationFrame(loop);
-if (S.cine) startCine(S.cine); else if (S.ascents >= 5 && !S.won && !S.boss) startCine('win');
+if (S.cine) startCine(S.cine); else if (S.ascents >= 5 && !S.won && !S.boss) startCine('win'); else if (S.ascents >= 15 && S.won && !S.sunDone && !S.boss) startCine('sunwarn'); else showMenu(true);
 </script>
 </body>
 </html>
