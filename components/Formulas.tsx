@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import f from "@/data/flow_formulas.json";
 import inv from "@/data/investments.json";
 import { Badge, H3, Section } from "./ui";
+import { Segmented } from "./Motion";
 import { ppt } from "@/lib/fmt";
 
 const NAMES: Record<string, string> = { g: "Growth", o: "Optionality", m: "Momentum", x: "Expectation gap", c: "Catalyst", q: "Quality", b: "Balance sheet", v: "Valuation", lowvol: "Low volatility" };
@@ -49,7 +50,7 @@ export default function Formulas() {
 
       <div className="mt-16">
         <H3>Head to head</H3>
-        <div className="mt-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="mt-6 scroll-x -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[640px] text-sm">
             <thead><tr className="text-left text-xs uppercase tracking-wider border-b border-line"><th className="py-2 font-medium text-faint w-[26%]" /><th className="font-medium text-clay-dark">FLOW EXTREME</th><th className="font-medium text-pos">FLOW CORE</th></tr></thead>
             <tbody className="divide-y divide-line">{rows.map(([k, a, b]) => <tr key={k} className="align-top"><td className="py-2.5 pr-4 text-muted">{k}</td><td className="py-2.5 pr-4">{a}</td><td className="py-2.5">{b}</td></tr>)}</tbody>
@@ -61,9 +62,7 @@ export default function Formulas() {
         <div>
           <div className="flex items-center gap-2"><H3>Stress the weights yourself</H3><Badge t="SIMULATION" /></div>
           <p className="text-sm text-muted mt-2">Change any weight and watch the ranking. A good formula should not depend on exact numbers.</p>
-          <div role="tablist" className="mt-4 flex gap-2">
-            {(["extreme", "core"] as const).map((m) => <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={`rounded-full px-4 py-1.5 text-sm font-medium ${mode === m ? "bg-ink text-cream" : "bg-beige hover:bg-sand"}`}>{m === "extreme" ? "EXTREME" : "CORE"}</button>)}
-          </div>
+          <div className="mt-4"><Segmented label="Formula" value={mode} onChange={setMode} options={[{ v: "extreme", l: "EXTREME" }, { v: "core", l: "CORE" }]} /></div>
           <div className="mt-5 space-y-3">
             {Object.keys(base).map((k) => (
               <div key={k} className="grid grid-cols-[120px_1fr_44px] items-center gap-3">

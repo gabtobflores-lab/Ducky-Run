@@ -1,59 +1,59 @@
-# FLOW Edge
+# Recruit Reel
 
-> Sharp skates and fresh gear, picked up and returned before the next practice — on subscription.
+> Get seen by college coaches: a recruiting film made at your games, delivered in 72 hours.
 
-**Problem.** Youth hockey and figure skaters need sharpening every 8–15 hours of ice. Parents must drive to a pro shop during open hours, wait or return, and gear bags smell from constant use.
+**Problem.** Most high-school athletes are never seen by college coaches. Recruiting services charge $1,000–$4,000+, and parent-filmed clips are shaky, too long and skip the best plays.
 
-**Customer.** Families of youth hockey/figure skaters (ages 6–17) at one local rink; buyer = parent, champion = team manager.
+**Customer.** Parents of sophomore–senior athletes who want to play in college at any level. The athlete is the champion; the parent pays.
 
-**Pain.** Extra trips, pro-shop queues on game days, forgotten sharpenings that hurt performance, stinky gear.
+**Pain.** Coaches decide in seconds. A bad reel means no reply, the recruiting window closes junior year, and parents don't know what coaches want to see.
 
-**Existing alternatives.** Rink pro shop; sporting-goods store; home sharpener (~$1,000+ for consumer automatic models — approximate, verify); doing nothing.
+**Existing alternatives.** National recruiting platforms, team film software, freelance videographers ($800–$2,000), or parents editing phone clips themselves.
 
-**Why they fail.** Inconvenient hours, inconsistent quality, no reminders, nobody tracks when skates were last sharpened.
+**Why they fail.** Platforms sell software and promises, not a finished film. Freelancers are slow and expensive. Parents lack the footage angles and editing know-how.
 
-**FLOW solution.** Team-level pickup after practice, 24-hour return, sharpening log per skater, optional gear-bag deodorizing. Reminders via text when it's been ~10 ice hours.
+**FLOW solution.** Filmed in person at 2–3 games with an auto-tracking gimbal and cut to the format coaches prefer: best 5 plays first, spotlight markers, stat overlay, contact card. Delivered in 72 hours with a web profile and a coach-email kit.
 
-**Pricing.** $10 per sharpen à la carte; Family plan $35/month (up to 4 sharpenings); Team plan $120/month per 15-skater team (1 pickup/week); gear refresh $8/bag.
+**Pricing.** Reel $249 · Reel + profile + coach-email kit $449 (core) · Season plan with 4 updates $799.
 
-**Revenue model.** Recurring subscriptions + à la carte + summer racket-stringing line (String Run) for off-season.
+**Revenue model.** One-time packages plus season-update plans; add-ons (extra game $75, rush 24-hour delivery $50, training-session filming $120).
 
-**Startup cost.** ~$1,200–$1,800: consumer automatic skate sharpener (parent-owned), test skates, labeled bags, ozone gear box (~$150), simple website/QR form. Range is an estimate; verify current prices.
+**Startup cost.** $350–$700: auto-tracking phone gimbal, tripod, external mic, free editing software (CapCut/DaVinci), $12/yr domain, Google Forms and payment app (parent-held).
 
-**First customer.** Your own team or a friend's team: offer the manager 2 free team sharpening days in exchange for feedback and a referral.
+**First customer.** A teammate: make their reel free, post it (with permission) and ask their parents to share it in the team group chat.
 
-**First $100.** 10 sharpenings at $10 from one team in the first week.
+**First $100.** One $249 reel for a second teammate after the free sample, in week 2.
 
-**First $1,000.** 3 family plans + 1 team plan for ~2 months, plus à la carte on game weekends.
+**First $1,000.** Three core packages ($449 × 3) in the first season, driven by one team.
 
-**First $10,000.** ~6 team plans + 25 family plans across one season (≈ 7 months).
+**First $10,000.** ~22 core packages across 3–4 teams and 2 sports in year 1, plus season plans.
 
-**First $100,000.** Multiple rinks, a second sharpener, hired teen operators paid per pair, and the summer stringing line. Requires a parent-run LLC and insurance.
+**First $100,000.** A small studio: 2–3 trained student filmers per school, 6–10 schools, templated editing; you run sales, quality and coach relationships. Requires an LLC and insurance (parent-owned).
 
-**Customer acquisition.** Team managers, rink bulletin boards, QR code on returned skate guards, tournament weekend pop-ups (with rink permission).
+**Customer acquisition.** Team parent meetings, coaches' referrals, a 30-second free teaser of every game you're already at, Instagram/TikTok highlight posts (with consent).
 
-**Referral system.** Each family referral = 1 free sharpen; team managers who sign a team plan get their own family plan free.
+**Referral system.** $50 credit per referred family; team-bundle pricing (5+ athletes = 15% off) turns one buyer into a roster.
 
-**Retention.** Sharpening log + reminders make it a habit; skate guards branded FLOW; season-end summary per skater.
+**Retention.** Season plans; senior-year updates; a 'commitment day' graphic and film when an athlete commits.
 
-**Automation.** Google Form/QR intake → spreadsheet log → scheduled text reminders; payments through a parent-controlled payment app.
+**Automation.** Booking form → schedule → upload folder → editing template → auto email with link and invoice. Coach-email tracker shows opens and replies.
 
-**Operations.** Pickup after Tuesday/Thursday practices, sharpen same evening (~5 min/pair), return next practice. Bag tags with skater name + hollow preference.
+**Operations.** Film Friday/Saturday games, edit Sunday–Tuesday, deliver within 72 hours. Standard reel structure keeps edit time near 4 hours.
 
-**Required tools.** Automatic skate sharpener + consumables, radius/hollow gauge, edge checker, labeled bags, ozone box, phone.
+**Required tools.** Phone, auto-tracking gimbal, tripod, mic, laptop, editing software, cloud storage, simple website.
 
-**Parental involvement.** Purchases equipment, owns payment account, signs any rink agreement, handles taxes and insurance; drives for pickups if needed.
+**Parental involvement.** Holds the payment account and any contracts, signs off on pricing, drives to away games, owns the LLC if it grows.
 
-**Legal considerations.** Local business license rules; sales tax rules for services; liability waiver for sharpening; rink permission for on-site work; payment accounts must be held by an adult.
+**Legal considerations.** Written parent consent to film minors; respect venue filming rules; licensed music only; NCAA permits third-party highlight video, so never promise scholarships or act as an agent.
 
-**Risks.** Pro shop pushback; quality mistakes ruining blades; seasonality; time conflict with school; machine breakdown.
+**Risks.** Peak-season editing crunch, venue restrictions, quality inconsistency as you add filmers, and families expecting guaranteed offers.
 
-**Competitive advantage.** Convenience + per-skater data + relationships with team managers. Pro shops sell sharpening; FLOW sells never thinking about it.
+**Competitive advantage.** Present at the game, fast, affordable, and built to what coaches actually watch. Every finished reel advertises the next one inside the team.
 
-**30-day plan.** Buy/borrow sharpener, sharpen 50 pairs for family/friends free to build skill, confirm rink policy, sign 1 team manager pilot.
+**30-day plan.** Make 3 free reels, build the site, post samples, pitch 2 coaches, sell the first 2 paid packages.
 
-**90-day plan.** 3 team plans, 15 family plans, reminder automation running, first referral wave, measure turnaround and complaints.
+**90-day plan.** 10 paid packages, team-bundle deals with 2 teams, a templated workflow under 4 hours per reel, and 5 testimonials.
 
-**1-year vision.** Primary sharpening option for 2 rinks; summer stringing line; ~$10K revenue; documented playbook.
+**1-year vision.** Go-to recruiting film service for 3–4 schools across 2–3 sports; ~$10K revenue; one trained second filmer.
 
-**Long-term vision.** A 'FLOW Edge in a box' playbook licensed to teen operators at other rinks — the brand is the system, not the machine.
+**Long-term vision.** A network of student filmers across the region using the Recruit Reel template, with a recruiting dashboard that tracks coach engagement for every athlete.

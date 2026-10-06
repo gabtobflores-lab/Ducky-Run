@@ -12,10 +12,10 @@ export default function Catalysts() {
   return (
     <Section id="catalysts" n="10 — Catalysts" title="What could change minds." lede="Events that put a clock on a thesis.">
       <div className="flex flex-wrap items-center gap-2 mb-6"><Badge t="RESEARCH HYPOTHESIS" /><span className="text-sm text-muted">{cat.note}</span></div>
-      <div className="flex gap-1.5 overflow-x-auto scrollbar-none" role="group" aria-label="Filter by status">
+      <div className="flex gap-1.5 scroll-x scrollbar-none" role="group" aria-label="Filter by status">
         {ST.map((s) => <button key={s} aria-pressed={f === s} onClick={() => setF(s)} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold tracking-wider ${f === s ? "bg-ink text-cream" : "bg-beige text-brown hover:bg-sand"}`}>{s} <span className="opacity-60">{s === "ALL" ? cat.items.length : cat.items.filter((i) => i.status === s).length}</span></button>)}
       </div>
-      <div className="mt-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="mt-6 scroll-x -mx-4 px-4 sm:mx-0 sm:px-0">
         <table className="w-full min-w-[720px] text-sm">
           <thead><tr className="text-left text-faint text-xs uppercase tracking-wider border-b border-line"><th className="py-2 font-medium">Company</th><th className="font-medium">Catalyst</th><th className="font-medium">Date</th><th className="font-medium">Type</th><th className="font-medium">Impact</th><th className="font-medium">Confidence</th><th className="font-medium">Status</th><th className="font-medium">Source</th></tr></thead>
           <tbody className="divide-y divide-line">

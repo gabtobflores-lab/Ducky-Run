@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import inv from "@/data/investments.json";
 import edu from "@/data/education.json";
 import { Badge, H3, Note, Section } from "./ui";
+import { Disclosure, Tween } from "./Motion";
 import { ppt } from "@/lib/fmt";
 
 type Item = (typeof inv.items)[number];
@@ -51,15 +52,14 @@ export default function Opportunities() {
 
       <ol className="border-t border-line">
         {TOP.map((i, n) => (
-          <li key={i.ticker} className="border-b border-line">
-            <details className="group" open={n === 0}>
-              <summary className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2.5rem_220px_1fr_80px] items-center gap-x-4 py-4">
+          <li key={i.ticker} className="border-b border-line" data-reveal style={{ ["--d" as string]: `${n * 40}ms` }}>
+            <Disclosure defaultOpen={n === 0} title={<span className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2.5rem_200px_1fr_72px] items-center gap-x-4">
                 <span className="font-serif text-2xl text-clay num">{n + 1}</span>
                 <span className="min-w-0"><span className="font-semibold">{i.ticker}</span> <span className="text-muted">{i.company}</span><span className="block text-xs text-faint truncate">{i.sector}</span></span>
                 <span className="hidden sm:block"><ScenarioBar s={i.scenarios} /></span>
                 <span className="text-right num"><span className="text-xs text-faint block">EV</span><span className="font-medium">{ppt(i.ev, 0)}</span></span>
-              </summary>
-              <div className="pb-6 sm:pl-14 grid md:grid-cols-2 gap-x-10 gap-y-5">
+              </span>}>
+              <div className="pb-2 sm:pl-10 grid md:grid-cols-2 gap-x-10 gap-y-5">
                 <div className="sm:hidden md:col-span-2"><ScenarioBar s={i.scenarios} /></div>
                 <Block k="Why it is interesting" v={i.why} />
                 <Block k="What could go right" v={i.go_right} c="text-pos" />
@@ -70,7 +70,7 @@ export default function Opportunities() {
                   <span>{i.metrics}</span><span>Confidence: {i.confidence}</span>
                 </div>
               </div>
-            </details>
+            </Disclosure>
           </li>
         ))}
       </ol>
@@ -107,7 +107,7 @@ export default function Opportunities() {
             ))}
           </div>
           <div className="mt-6 flex items-baseline gap-4 flex-wrap">
-            <div><div className="text-xs uppercase tracking-wider text-faint">Scenario-weighted</div><div className="num font-serif text-5xl text-clay">{ppt(ev, 1)}</div></div>
+            <div><div className="text-xs uppercase tracking-wider text-faint">Scenario-weighted</div><Tween value={ev} format={(v) => ppt(v, 1)} className="font-serif text-5xl text-clay" /></div>
             <div className="text-sm text-muted">Reward / risk: <span className="num text-ink">{(ev / Math.abs(it.scenarios.bear)).toFixed(2)}</span> · Volatility score {it.scores.s}/10</div>
           </div>
           <dl className="mt-6 grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
@@ -132,7 +132,7 @@ export default function Opportunities() {
               </div>
             ))}
           </div>
-          <div className="rounded-2xl bg-paper border border-line p-6">
+          <div className="rounded-3xl bg-paper border border-line p-6 sm:p-8 shadow-[0_20px_60px_-40px_rgb(41_35_31/.35)]">
             <div className="font-medium">Return decomposition calculator</div>
             {([["Revenue multiple", rev, setRev, 0.5, 10, 0.1], ["Margin change (×)", mar, setMar, 0.3, 3, 0.05], ["Valuation multiple change (×)", mult, setMult, 0.3, 3, 0.05], ["Share count change (×)", sh, setSh, 0.7, 2, 0.05]] as [string, number, (v: number) => void, number, number, number][]).map(([l, v, f, a, b, s]) => (
               <div key={l} className="mt-4">
@@ -142,7 +142,7 @@ export default function Opportunities() {
             ))}
             <div className="mt-5 border-t border-line pt-4 flex items-baseline justify-between">
               <span className="text-sm text-muted">Price multiple</span>
-              <span className={`num font-serif text-5xl ${mOut >= 5 ? "text-clay" : mOut < 1 ? "text-neg" : ""}`}>{mOut.toFixed(2)}×</span>
+              <Tween value={mOut} format={(v) => `${v.toFixed(2)}×`} className={`font-serif text-5xl ${mOut >= 5 ? "text-clay" : mOut < 1 ? "text-neg" : ""}`} />
             </div>
             <p className="text-xs text-faint mt-2">{mOut >= 10 ? "Lottery-like: needs everything to go right at once." : mOut >= 5 ? "Speculative: requires an inflection + re-rating." : mOut >= 2 ? "Plausible for quality growth over 3–5 years." : mOut < 1 ? "Permanent-loss zone: multiple compression or dilution outweighs growth." : "Modest outcome."}</p>
           </div>
@@ -152,7 +152,7 @@ export default function Opportunities() {
       {/* Universe */}
       <div className="mt-20">
         <div className="flex items-center gap-2"><H3>The full universe</H3><span className="text-sm text-muted">· {ITEMS.length} candidates · tap a header to sort</span></div>
-        <div className="mt-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="mt-6 scroll-x -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[760px] text-sm num">
             <thead><tr className="text-left text-faint text-xs uppercase tracking-wider border-b border-line">
               {th("ticker", "Ticker")}{th("sector", "Sector")}{th("flow_rank_score", "Rank")}{th("ev", "EV")}{th("bear", "Bear")}{th("bull", "Bull")}{th("xbull", "Ext.")}{th("flow_extreme", "EXTREME")}{th("flow_core", "CORE")}<th className="font-medium">Horizon</th>

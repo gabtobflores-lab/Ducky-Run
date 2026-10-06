@@ -24,7 +24,7 @@ export default function StrategyLab() {
     <Section id="strategy" n="08 — Strategy Lab" title="Explain. Test. Break." lede="Eight classic strategies on 126 years of data. Each is explained, backtested, stress-tested, compared — and attacked." tone="paper">
       <div className="flex items-center gap-2 mb-6 flex-wrap"><Badge t="BACKTEST" /><span className="text-sm text-muted">{q.split} · {q.cost_assumption} · S&amp;P 500 monthly total return</span></div>
       <div className="grid lg:grid-cols-[260px_1fr] gap-8">
-        <div role="tablist" aria-label="Strategies" className="flex lg:flex-col gap-1 overflow-x-auto scrollbar-none -mx-4 px-4 lg:mx-0 lg:px-0">
+        <div role="tablist" aria-label="Strategies" className="flex lg:flex-col gap-1 scroll-x scrollbar-none -mx-4 px-4 lg:mx-0 lg:px-0">
           {EX.map((x) => (
             <button key={x.id} role="tab" aria-selected={id === x.id} onClick={() => setId(x.id)} className={`shrink-0 text-left rounded-lg px-3 py-2.5 transition-colors ${id === x.id ? "bg-ink text-cream" : "hover:bg-beige"}`}>
               <div className="text-sm font-medium whitespace-nowrap">{LAB[x.id].name}</div>
@@ -37,7 +37,7 @@ export default function StrategyLab() {
           <h4 className="font-serif text-3xl mt-1">{e.name}</h4>
           <p className="text-muted mt-2">{lab.explain} <span className="text-ink">Hypothesis:</span> {e.hypothesis}</p>
           <ul className="mt-3 text-sm space-y-1">{e.rules.map((r) => <li key={r} className="flex gap-2"><span className="text-clay">→</span>{r}</li>)}</ul>
-          <div className="mt-6 overflow-x-auto">
+          <div className="mt-6 scroll-x">
             <table className="w-full min-w-[480px] text-sm num">
               <thead><tr className="text-left text-faint text-xs uppercase tracking-wider border-b border-line"><th className="py-2 font-medium" /><th className="font-medium">Train</th><th className="font-medium">B&amp;H train</th><th className="font-medium">Test</th><th className="font-medium">B&amp;H test</th></tr></thead>
               <tbody className="divide-y divide-line">{MR.map(([k, f]) => <tr key={k}><td className="py-2 text-muted">{k}</td><td>{f(e.train)}</td><td className="text-faint">{f(e.bh_train)}</td><td className="font-semibold">{f(e.test)}</td><td className="text-faint">{f(e.bh_test)}</td></tr>)}</tbody>
@@ -83,7 +83,7 @@ export default function StrategyLab() {
         <div>
           <H3>Market regimes</H3>
           <p className="text-sm text-muted mt-1">Trend following vs buy-and-hold by decade. It loses in roaring decades and wins in crashes.</p>
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 scroll-x">
             <table className="w-full min-w-[380px] text-sm num">
               <thead><tr className="text-left text-faint text-xs uppercase tracking-wider border-b border-line"><th className="py-2 font-medium">Decade</th><th className="font-medium">B&amp;H /yr</th><th className="font-medium">Trend /yr</th><th className="font-medium">B&amp;H DD</th><th className="font-medium">Trend DD</th></tr></thead>
               <tbody className="divide-y divide-line">{q.regimes.map((r) => <tr key={r.decade}><td className="py-1.5">{r.decade}</td><td className={r.bh_cagr < 0 ? "text-neg" : ""}>{pct(r.bh_cagr, 1)}</td><td className={r.trend_cagr > r.bh_cagr ? "text-pos font-medium" : ""}>{pct(r.trend_cagr, 1)}</td><td className="text-faint">{pct(r.bh_maxdd, 0)}</td><td className="text-faint">{pct(r.trend_maxdd, 0)}</td></tr>)}</tbody>

@@ -2,7 +2,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Spark } from "./ui";
 import { SECTIONS } from "./Nav";
-import { warmUp, streamChat, type Model, type Msg } from "@/lib/claude";
+import { connectionState, puterSignIn, warmUp, streamChat, type Model, type Msg } from "@/lib/claude";
 const SUGGEST = [
   "Explain why trend following survived out-of-sample",
   "What's the bear case for the #1 opportunity?",
@@ -52,24 +52,37 @@ export default function AskClaude() {
   const list = useRef<HTMLDivElement>(null);
   const abort = useRef<{ stop: boolean } | null>(null);
   const [used, setUsed] = useState("");
+  const [hideBar, setHideBar] = useState(false);
+  useEffect(() => {
+    let last = scrollY;
+    const on = () => { const y = scrollY; if (Math.abs(y - last) > 8) { setHideBar(y > last && y > 200); last = y; } };
+    addEventListener("scroll", on, { passive: true }); return () => removeEventListener("scroll", on);
+  }, []);
+  const [conn, setConn] = useState<"host" | "ready" | "signin" | "offline" | "checking">("checking");
 
   const doOpen = () => {
     const r = btn.current?.getBoundingClientRect();
     if (r) setOrigin({ x: ((r.left + r.width / 2) / window.innerWidth) * 100, y: ((r.top + r.height / 2) / window.innerHeight) * 100 });
     setSection(currentSection());
     setClosing(false); setOpen(true);
-    warmUp();
+    warmUp(); connectionState().then(setConn);
   };
   const doClose = useCallback(() => { setClosing(true); setTimeout(() => { setOpen(false); setClosing(false); btn.current?.focus(); }, 220); }, []);
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    const t = setTimeout(() => ta.current?.focus(), 500);
+    const y = scrollY, b = document.body.style;
+    const prev = { position: b.position, top: b.top, width: b.width, overflow: b.overflow };
+    Object.assign(b, { position: "fixed", top: `-${y}px`, width: "100%", overflow: "hidden" });
+    const vv = window.visualViewport;
+    const fit = () => { if (vv) document.documentElement.style.setProperty("--vvh", `${vv.height}px`); };
+    fit(); vv?.addEventListener("resize", fit);
+    const t = setTimeout(() => { if (matchMedia("(hover: hover)").matches) ta.current?.focus(); }, 500);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") doClose(); };
     window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = prev; clearTimeout(t); window.removeEventListener("keydown", onKey); };
+    return () => { Object.assign(b, prev); scrollTo(0, y); vv?.removeEventListener("resize", fit); clearTimeout(t); window.removeEventListener("keydown", onKey); };
   }, [open, doClose]);
+  useEffect(() => { const h = () => doOpen(); addEventListener("flow:ask", h); return () => removeEventListener("flow:ask", h); });
   useEffect(() => { const onK = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); open ? doClose() : doOpen(); } }; window.addEventListener("keydown", onK); return () => window.removeEventListener("keydown", onK); });
   useEffect(() => { list.current?.scrollTo({ top: list.current.scrollHeight, behavior: busy ? "auto" : "smooth" }); }, [msgs, busy]);
 
@@ -94,11 +107,13 @@ export default function AskClaude() {
     <>
       {!open && (
         <div className="fixed left-1/2 z-50 bar-in w-[calc(100%-32px)] max-w-md" style={{ bottom: "max(16px, env(safe-area-inset-bottom))" }}>
+          <div className="transition-transform duration-500 [transition-timing-function:cubic-bezier(.22,1,.36,1)]" style={{ transform: hideBar ? "translateY(140%)" : "none" }}>
           <button ref={btn} onClick={doOpen} aria-haspopup="dialog" className="group w-full flex items-center gap-3 rounded-full bg-ink/95 text-cream pl-2 pr-4 py-2 shadow-[0_10px_30px_-8px_rgb(41_35_31/.45)] ring-1 ring-white/10 backdrop-blur hover:bg-ink transition-colors">
             <span className="grid place-items-center h-9 w-9 rounded-full bg-paper transition-transform duration-300 group-hover:rotate-45"><Spark className="h-5 w-5" /></span>
             <span className="flex-1 text-left text-[15px] text-sand group-hover:text-cream transition-colors">Ask Claude about anything here…</span>
             <span className="hidden sm:inline text-[11px] text-sand/70 border border-white/15 rounded px-1.5 py-0.5">⌘K</span>
           </button>
+          </div>
         </div>
       )}
 
@@ -114,7 +129,7 @@ export default function AskClaude() {
             <div className="spark-fly absolute left-1/2 top-1/2 text-clay [animation-fill-mode:both]" style={{ animation: "spark-fly .85s cubic-bezier(.2,.8,.2,1) both, veil-in .3s ease .7s reverse both" }}><Spark className="h-40 w-40 sm:h-56 sm:w-56" /></div>
           </div>
 
-          <div className="panel-up absolute inset-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[min(720px,92vw)] sm:h-[min(760px,88dvh)] flex flex-col bg-paper sm:rounded-3xl shadow-[0_30px_80px_-20px_rgb(41_35_31/.5)] ring-1 ring-line overflow-hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <div style={{ height: "var(--vvh, 100dvh)", paddingTop: "env(safe-area-inset-top)" }} className="panel-up absolute inset-x-0 top-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[min(720px,92vw)] sm:!h-[min(760px,88dvh)] flex flex-col bg-paper sm:rounded-3xl shadow-[0_30px_80px_-20px_rgb(41_35_31/.5)] ring-1 ring-line overflow-hidden">
             <header className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-line">
               <span className={`grid place-items-center h-9 w-9 rounded-full bg-cream ring-1 ring-line ${waiting ? "thinking" : ""}`}><Spark className="h-5 w-5" /></span>
               <div className="flex-1 min-w-0"><div className="font-medium leading-tight">Claude</div><div className="text-xs text-muted truncate">Viewing: {section}</div></div>
@@ -131,6 +146,13 @@ export default function AskClaude() {
                   <Spark className="h-10 w-10 text-clay" />
                   <h2 className="font-serif text-3xl sm:text-4xl mt-4 leading-tight">What should we figure out?</h2>
                   <p className="text-muted mt-2">I can see all of FLOW&apos;s research — backtests, portfolios, formulas and the business plan. {model === "haiku" ? "Haiku is fast." : "Sonnet thinks deeper."}</p>
+                  {conn === "signin" && (
+                    <button onClick={() => { puterSignIn().then(() => setConn("ready")).catch(() => {}); }} className="mt-6 self-start inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 font-medium">
+                      <Spark className="h-4 w-4" /> Connect free Claude
+                    </button>
+                  )}
+                  {conn === "signin" && <p className="text-xs text-faint mt-2">One-time free sign-in through Puter. No API key or payment.</p>}
+                  {conn === "offline" && <p className="mt-4 text-sm text-neg">Can&apos;t reach the free Claude connection right now. Check your internet connection or content blocker.</p>}
                   <div className="mt-6 grid sm:grid-cols-2 gap-2">
                     {SUGGEST.map((s, i) => <button key={s} onClick={() => send(s)} className="msg-in text-left text-sm rounded-xl border border-line bg-cream px-3.5 py-3 hover:border-clay hover:bg-blush/40 transition-colors" style={{ animationDelay: `${0.5 + i * 0.06}s` }}>{s}</button>)}
                   </div>
@@ -152,7 +174,7 @@ export default function AskClaude() {
             <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="border-t border-line p-3 sm:p-4" style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
               <div className="flex items-end gap-2 rounded-2xl border border-sand bg-cream px-3 py-2 focus-within:border-clay transition-colors">
                 <label htmlFor="ask" className="sr-only">Message Claude</label>
-                <textarea id="ask" ref={ta} rows={1} value={input} placeholder="Ask about a strategy, a stock, a formula…"
+                <textarea id="ask" ref={ta} rows={1} value={input} placeholder="Ask anything about FLOW…"
                   onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${Math.min(160, e.target.scrollHeight)}px`; }}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(input); } }}
                   className="flex-1 resize-none bg-transparent outline-none focus-visible:outline-none py-1.5 text-[16px] placeholder:text-faint max-h-40" />

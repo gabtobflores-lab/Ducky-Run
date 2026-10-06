@@ -29,7 +29,7 @@ export function Equity({ data, a = "s", b = "b", aLabel = "Strategy", bLabel = "
           <YAxis scale="log" domain={["auto", "auto"]} allowDataOverflow tick={AX} tickLine={false} axisLine={false} width={52} tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v >= 10 ? v.toFixed(0) : v.toFixed(1))} />
           <Tooltip {...TT} formatter={((v: number, n: string) => [`$${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, n === a ? aLabel : bLabel]) as never} />
           <Line type="monotone" dataKey={b} stroke="#b9ab98" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-          <Line type="monotone" dataKey={a} stroke="#c6613f" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey={a} stroke="#c6613f" strokeWidth={2} dot={false} animationDuration={900} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -61,7 +61,7 @@ export function Bars({ data, k, label, h = 220, fmt = (v: number) => `${v}%`, re
           <YAxis tick={AX} tickLine={false} axisLine={false} width={52} tickFormatter={fmt} />
           {ref0 && <ReferenceLine y={0} stroke="#93877c" />}
           <Tooltip {...TT} cursor={{ fill: "#ebe3d5", opacity: 0.5 }} formatter={((v: number) => [fmt(v), label]) as never} />
-          <Bar dataKey={k} radius={[3, 3, 0, 0]} maxBarSize={44} isAnimationActive={false}>
+          <Bar dataKey={k} radius={[6, 6, 0, 0]} maxBarSize={44} animationDuration={700} animationEasing="ease-out">
             {data.map((d, i) => <Cell key={i} fill={(d[k] as number) < 0 ? "#b0453a" : d.name === highlight ? "#c6613f" : "#d9c3ac"} />)}
           </Bar>
         </BarChart>

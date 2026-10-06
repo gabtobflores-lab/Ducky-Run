@@ -6,4 +6,4 @@
 - **Rejected:** index mean reversion, vol-targeting, CAPE timing, the trend + calm-vol override, and FLOW DIVERGENCE (a new framework that turned out to be trend in disguise).
 - **Top opportunity (risk/reward):** GOOGL, then TSM, AMZN and MSFT.
 - **Portfolio insight:** AGGRESSIVE has about the same scenario-weighted return as ASYMMETRIC (~30%) but a −50% bear case.
-- **Business:** FLOW Edge, a skate-sharpening and gear subscription for youth hockey families.
+- **Business:** Recruit Reel, college-recruiting highlight films for high-school athletes (top of 15 scored ideas).

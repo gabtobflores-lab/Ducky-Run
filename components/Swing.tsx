@@ -35,7 +35,7 @@ export default function Swing() {
         <div className="flex items-center gap-2 flex-wrap"><H3>Strategy experiments</H3><Badge t="BACKTEST" /></div>
         <Note>{sw.data_note} Costs: {sw.cost_assumption}. Split: {sw.split}.</Note>
         <div className="grid lg:grid-cols-[260px_1fr] gap-8">
-          <div role="tablist" aria-label="Swing strategies" className="flex lg:flex-col gap-1 overflow-x-auto scrollbar-none -mx-4 px-4 lg:mx-0 lg:px-0">
+          <div role="tablist" aria-label="Swing strategies" className="flex lg:flex-col gap-1 scroll-x scrollbar-none -mx-4 px-4 lg:mx-0 lg:px-0">
             {sw.strategies.map((x) => { const [vv, cc] = verdict(x.train, x.test); return (
               <button key={x.id} role="tab" aria-selected={id === x.id} onClick={() => setId(x.id)} className={`shrink-0 text-left rounded-lg px-3 py-2.5 transition-colors ${id === x.id ? "bg-ink text-cream" : "hover:bg-beige"}`}>
                 <div className="text-sm font-medium whitespace-nowrap">{x.name}</div><div className={`text-xs ${id === x.id ? "text-sand" : cc}`}>{vv}</div>

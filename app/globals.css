@@ -70,3 +70,58 @@ details[open] .chev { transform: rotate(90deg); }
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .ray, .bloom { display: none; }
 }
+
+/* ---------- Motion system (Apple-style: short, eased, purposeful) ---------- */
+:root { --ease: cubic-bezier(.22,1,.36,1); --spring: cubic-bezier(.34,1.56,.64,1); }
+html { -webkit-tap-highlight-color: transparent; text-rendering: optimizeLegibility; }
+button, a, input, select, textarea { touch-action: manipulation; }
+button { transition: transform .18s var(--ease), background-color .2s, color .2s, box-shadow .2s; }
+button:active:not(:disabled) { transform: scale(.97); }
+
+/* Reveal: content is visible without JS; .js-motion opts in to the entrance */
+.js-motion [data-reveal] { opacity: 0; transform: translate3d(0, 28px, 0); transition: opacity .8s var(--ease), transform .8s var(--ease); transition-delay: var(--d, 0ms); will-change: opacity, transform; }
+.js-motion [data-reveal].is-in { will-change: auto; }
+.js-motion [data-reveal].is-in { opacity: 1; transform: none; }
+
+/* Scroll progress */
+.progress { position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 70; transform-origin: 0 50%; transform: scaleX(var(--p, 0)); background: linear-gradient(90deg, var(--color-coral), var(--color-clay)); }
+
+/* Hero */
+.hero-letter { display: inline-block; animation: rise 1.1s var(--ease) both; animation-delay: calc(var(--i) * 70ms + 80ms); }
+@keyframes rise { from { transform: translateY(0.45em) rotate(4deg); opacity: 0; filter: blur(10px); } to { transform: none; opacity: 1; filter: none; } }
+.fade-up { animation: fade-up .9s var(--ease) both; animation-delay: var(--d, 0ms); }
+@keyframes fade-up { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.spot { background: radial-gradient(600px circle at var(--mx, 70%) var(--my, 30%), rgb(220 138 108 / .22), transparent 60%); transition: background .2s; }
+.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 2.4s var(--ease) .5s forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.float { animation: float 6s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(8deg); } }
+
+/* Disclosure */
+.disc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--ease), opacity .35s; opacity: 0; }
+.disc-body.open { grid-template-rows: 1fr; opacity: 1; }
+.disc-body > div { overflow: hidden; }
+.disc-chev { transition: transform .35s var(--ease); }
+.disc-open .disc-chev { transform: rotate(90deg); }
+
+/* Segmented control */
+.seg-pill { transition: transform .45s var(--ease), width .45s var(--ease); }
+
+/* Cards that respond */
+@media (hover: hover) {
+  .lift { transition: transform .35s var(--ease), box-shadow .35s var(--ease), border-color .2s; }
+  .lift:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -22px rgb(41 35 31 / .35); }
+}
+
+/* iPhone: inputs ≥16px so Safari never zooms; bigger slider thumbs */
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }
+  input[type="range"] { height: 36px; }
+  input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -12px; }
+}
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+
+@media (prefers-reduced-motion: reduce) {
+  .js-motion [data-reveal] { opacity: 1 !important; transform: none !important; filter: none !important; }
+  .hero-letter, .fade-up, .draw, .float { animation: none !important; opacity: 1; stroke-dashoffset: 0; }
+}

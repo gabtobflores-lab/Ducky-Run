@@ -36,7 +36,7 @@ Be a sharp, warm, concise tutor and research partner. Prefer short paragraphs an
 Rules: FLOW is education and simulation only. Never claim to place trades or give personalized financial advice; never help bypass brokerage, age, margin, options or other account restrictions. Be honest about uncertainty: company metrics are approximate mid-2026 knowledge and backtests are historical (past performance does not guarantee future results). If an idea is weak, say why kindly and suggest a better test.
 FLOW DATA (JSON): ${CONTEXT}`;
 
-type Puter = { ai: { chat: (m: unknown, o: unknown) => Promise<AsyncIterable<{ text?: string }>> } };
+type Puter = { ai: { chat: (m: unknown, o: unknown) => Promise<AsyncIterable<{ text?: string }>> }; auth?: { isSignedIn: () => boolean; signIn: () => Promise<unknown> } };
 declare global { interface Window { puter?: Puter } }
 
 let loading: Promise<Puter> | null = null;
@@ -109,4 +109,15 @@ async function streamPuter(msgs: Msg[], model: Model, section: string, onText: (
     }
   }
   throw new Error(errText(lastErr));
+}
+
+/** "host" = native Claude in a claude.ai artifact; "ready" = Puter signed in; "signin" = Puter needs a tap to sign in; "offline" = unreachable. */
+export async function connectionState(): Promise<"host" | "ready" | "signin" | "offline"> {
+  if (await hostSample()) return "host";
+  try { const p = await loadPuter(); return p.auth && !p.auth.isSignedIn() ? "signin" : "ready"; } catch { return "offline"; }
+}
+/** Must run directly inside a tap handler (Safari blocks pop-ups otherwise). */
+export function puterSignIn(): Promise<unknown> {
+  const p = typeof window !== "undefined" ? window.puter : undefined;
+  return p?.auth ? p.auth.signIn() : Promise.reject(new Error("Puter not loaded"));
 }

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import pm from "@/data/portfolio_models.json";
 import { Badge, H3, Section } from "./ui";
 import { Bars } from "./Charts";
+import { Segmented, Tween } from "./Motion";
 import { ppt } from "@/lib/fmt";
 
 const INST = Object.fromEntries(pm.instruments.map((i) => [i.ticker, i]));
@@ -33,13 +34,14 @@ function AllocBar({ rows }: { rows: Row[] }) {
 }
 
 function Metrics({ m }: { m: ReturnType<typeof compute> }) {
-  const cells: [string, string, string?][] = [
-    ["Bear", ppt(m.bear, 1), m.bear < 0 ? "text-neg" : ""], ["Base", ppt(m.base, 1)], ["Bull", ppt(m.bull, 1)], ["Extreme bull", ppt(m.xbull, 1)],
-    ["Scenario-weighted", ppt(m.weighted, 1), "text-clay"], ["Downside (bear)", ppt(m.bear, 0), "text-neg"], ["Concentration", `${m.effN.toFixed(1)} eff. holdings`], ["Risk score", `${m.risk.toFixed(1)} / 10`],
+  const p1 = (v: number) => ppt(v, 1);
+  const cells: [string, number, (v: number) => string, string?][] = [
+    ["Bear", m.bear, p1, m.bear < 0 ? "text-neg" : ""], ["Base", m.base, p1], ["Bull", m.bull, p1], ["Extreme bull", m.xbull, p1],
+    ["Scenario-weighted", m.weighted, p1, "text-clay"], ["Downside (bear)", m.bear, (v) => ppt(v, 0), "text-neg"], ["Concentration", m.effN, (v) => `${v.toFixed(1)} eff. holdings`], ["Risk score", m.risk, (v) => `${v.toFixed(1)} / 10`],
   ];
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line border border-line rounded-xl overflow-hidden">
-      {cells.map(([k, v, c]) => <div key={k} className="bg-paper p-4"><div className="text-xs uppercase tracking-wider text-faint">{k}</div><div className={`num font-serif text-2xl sm:text-3xl mt-1 ${c ?? ""}`}>{v}</div></div>)}
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line border border-line rounded-2xl overflow-hidden">
+      {cells.map(([k, v, f, c]) => <div key={k} className="bg-paper p-4 min-w-0"><div className="text-xs uppercase tracking-wider text-faint">{k}</div><Tween value={v} format={f} className={`block font-serif text-2xl sm:text-3xl mt-1 ${c ?? ""}`} /></div>)}
     </div>
   );
 }
@@ -58,11 +60,7 @@ export default function Portfolio() {
   return (
     <Section id="portfolio" n="05 — Portfolio Lab" title="Three portfolios. Then yours." lede="Percentages, not dollars. Every weight has a reason — and every portfolio has a bear case." tone="paper">
       <div className="flex flex-wrap items-center gap-2 mb-8"><Badge t="SIMULATION" /><span className="text-sm text-muted">3-year scenario returns; weighting {SW.bear * 100}/{SW.base * 100}/{SW.bull * 100}/{SW.xbull * 100} (bear/base/bull/extreme) is an assumption.</span></div>
-      <div role="tablist" aria-label="Model portfolios" className="flex gap-2 overflow-x-auto scrollbar-none">
-        {pm.models.map((m) => (
-          <button key={m.id} role="tab" aria-selected={tab === m.id} onClick={() => setTab(m.id)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${tab === m.id ? "bg-ink text-cream" : "bg-beige text-brown hover:bg-sand"}`}>{m.name}</button>
-        ))}
-      </div>
+      <Segmented label="Model portfolios" value={tab} onChange={setTab} options={pm.models.map((m) => ({ v: m.id, l: m.name.replace("FLOW ", "") }))} />
       <div className="mt-8 grid lg:grid-cols-[1.2fr_1fr] gap-10" role="tabpanel">
         <div>
           <p className="font-serif text-2xl leading-snug">{model.thesis}</p>

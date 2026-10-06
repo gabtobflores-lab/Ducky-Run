@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { FlowMark } from "./ui";
 
 export const SECTIONS = [
   ["home", "Home"], ["market", "Market"], ["investing", "Investing"], ["opportunities", "Opportunities"], ["portfolio", "Portfolio Lab"],
@@ -23,15 +24,15 @@ export default function Nav() {
     if (el && rail.current) rail.current.scrollTo({ left: el.offsetLeft - rail.current.clientWidth / 2 + el.clientWidth / 2, behavior: "smooth" });
   }, [active]);
   return (
-    <header className={`sticky top-0 z-40 transition-colors ${scrolled ? "bg-cream/92 backdrop-blur-md border-b border-line" : "bg-transparent"}`}>
+    <header className={`sticky top-0 z-40 transition-all duration-500 ${scrolled ? "bg-cream/75 backdrop-blur-xl backdrop-saturate-150 border-b border-line/70 shadow-[0_1px_0_rgb(255_255_255/.6)_inset]" : "bg-transparent border-b border-transparent"}`} style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <nav aria-label="Sections" className="mx-auto max-w-6xl flex items-center gap-4 px-4 sm:px-8 h-14">
-        <a href="#home" className="font-serif text-xl font-semibold tracking-[0.12em] text-ink shrink-0">FLOW</a>
+        <a href="#home" aria-label="FLOW home" className="text-ink shrink-0"><FlowMark /></a>
         <div ref={rail} className="scrollbar-none flex-1 overflow-x-auto [mask-image:linear-gradient(90deg,transparent,#000_16px,#000_calc(100%-24px),transparent)]">
           <ul className="flex gap-1 w-max px-3">
             {SECTIONS.slice(1).map(([id, label]) => (
               <li key={id}>
                 <a data-id={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}
-                  className={`block rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors ${active === id ? "bg-ink text-cream" : "text-muted hover:text-ink hover:bg-beige"}`}>{label}</a>
+                  className={`block rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-all duration-300 ${active === id ? "bg-ink text-cream shadow-sm" : "text-muted hover:text-ink hover:bg-beige/80"}`}>{label}</a>
               </li>
             ))}
           </ul>
