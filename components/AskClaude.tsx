@@ -2,9 +2,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Spark } from "./ui";
 import { SECTIONS } from "./Nav";
-
-type Msg = { role: "user" | "assistant"; content: string };
-type Model = "haiku" | "sonnet";
+import { loadPuter, streamChat, type Model, type Msg } from "@/lib/claude";
 const SUGGEST = [
   "Explain why trend following survived out-of-sample",
   "What's the bear case for the #1 opportunity?",
@@ -52,13 +50,15 @@ export default function AskClaude() {
   const btn = useRef<HTMLButtonElement>(null);
   const ta = useRef<HTMLTextAreaElement>(null);
   const list = useRef<HTMLDivElement>(null);
-  const abort = useRef<AbortController | null>(null);
+  const abort = useRef<{ stop: boolean } | null>(null);
+  const [used, setUsed] = useState("");
 
   const doOpen = () => {
     const r = btn.current?.getBoundingClientRect();
     if (r) setOrigin({ x: ((r.left + r.width / 2) / window.innerWidth) * 100, y: ((r.top + r.height / 2) / window.innerHeight) * 100 });
     setSection(currentSection());
     setClosing(false); setOpen(true);
+    loadPuter().catch(() => {});
   };
   const doClose = useCallback(() => { setClosing(true); setTimeout(() => { setOpen(false); setClosing(false); btn.current?.focus(); }, 220); }, []);
 
@@ -78,17 +78,15 @@ export default function AskClaude() {
     const next: Msg[] = [...msgs, { role: "user", content: t }];
     setMsgs([...next, { role: "assistant", content: "" }]); setInput(""); setBusy(true);
     if (ta.current) ta.current.style.height = "auto";
-    const ac = new AbortController(); abort.current = ac;
+    const flag = { stop: false }; abort.current = flag;
     try {
-      const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, model, section }), signal: ac.signal });
-      if (!res.ok || !res.body) { const m = await res.text(); setMsgs([...next, { role: "assistant", content: m || "Something went wrong." }]); return; }
-      const rd = res.body.getReader(), dec = new TextDecoder(); let acc = "";
-      for (;;) { const { done, value } = await rd.read(); if (done) break; acc += dec.decode(value, { stream: true }); setMsgs([...next, { role: "assistant", content: acc }]); }
+      const used = await streamChat(next, model, section, (acc) => setMsgs([...next, { role: "assistant", content: acc }]), () => flag.stop);
+      setUsed(used);
     } catch (e) {
-      if ((e as Error).name !== "AbortError") setMsgs([...next, { role: "assistant", content: "Network error — check your connection and try again." }]);
+      setMsgs([...next, { role: "assistant", content: `Couldn't reach Claude: ${(e as Error).message}\n\nThe free connection runs through Puter — if a sign-in window appeared, finish it (it's free) and try again.` }]);
     } finally { setBusy(false); abort.current = null; }
   };
-  const stop = () => abort.current?.abort();
+  const stop = () => { if (abort.current) abort.current.stop = true; setBusy(false); };
   const last = msgs[msgs.length - 1];
   const waiting = busy && last?.role === "assistant" && !last.content;
 
@@ -122,7 +120,7 @@ export default function AskClaude() {
               <div className="flex-1 min-w-0"><div className="font-medium leading-tight">Claude</div><div className="text-xs text-muted truncate">Viewing: {section}</div></div>
               <div role="radiogroup" aria-label="Model" className="relative grid grid-cols-2 rounded-full bg-beige p-1 text-xs font-medium">
                 <span aria-hidden className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-paper shadow-sm transition-transform duration-300" style={{ transform: model === "sonnet" ? "translateX(100%)" : "none" }} />
-                {(["haiku", "sonnet"] as Model[]).map((m) => <button key={m} role="radio" aria-checked={model === m} onClick={() => setModel(m)} className={`relative px-3 py-1.5 rounded-full transition-colors ${model === m ? "text-ink" : "text-muted"}`}>{m === "haiku" ? "Haiku 4.5" : "Sonnet 5.5"}</button>)}
+                {(["haiku", "sonnet"] as Model[]).map((m) => <button key={m} role="radio" aria-checked={model === m} onClick={() => setModel(m)} className={`relative px-3 py-1.5 rounded-full transition-colors ${model === m ? "text-ink" : "text-muted"}`}>{m === "haiku" ? "Haiku" : "Sonnet"}</button>)}
               </div>
               <button onClick={doClose} aria-label="Close chat" className="h-9 w-9 grid place-items-center rounded-full hover:bg-beige text-muted text-xl">×</button>
             </header>
@@ -166,7 +164,7 @@ export default function AskClaude() {
                   </button>
                 )}
               </div>
-              <div className="mt-2 flex justify-between text-[11px] text-faint px-1"><span>Education only · not financial advice</span>{msgs.length > 0 && <button type="button" onClick={() => setMsgs([])} className="hover:text-ink">New chat</button>}</div>
+              <div className="mt-2 flex justify-between text-[11px] text-faint px-1"><span>Free via Puter · {used || "no API key needed"} · education only</span>{msgs.length > 0 && <button type="button" onClick={() => setMsgs([])} className="hover:text-ink">New chat</button>}</div>
             </form>
           </div>
         </div>

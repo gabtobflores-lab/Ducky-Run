@@ -2,23 +2,20 @@
 
 **Research the edge.** An interactive single-page lab for investing, swing trading, quant strategies, portfolio scenarios and a teen-startable business. It is for education and simulation only. It never executes trades.
 
-## Run it
+## Open it (no install)
+**Live site:** https://gabtobflores-lab.github.io/Ducky-Run/
 
+One-time setup: in the repo, go to **Settings → Pages → Source** and pick **GitHub Actions**. Then merge to `main`. Every later push to `main` redeploys automatically through `.github/workflows/pages.yml`.
+
+## Run it locally
 ```bash
 npm install
 npm run dev            # http://localhost:3000
 ```
+Static build: `npm run build` writes the site to `out/`. `npm start` serves it.
 
-Production: `npm run build && npm start`.
-
-### Ask Claude (optional)
-The bar at the bottom opens a chat with Claude, using **Haiku 4.5** or **Sonnet 5.5**. Claude can see all of FLOW's research data and which section you're viewing. To turn it on:
-
-```bash
-cp .env.example .env.local   # then paste your key: ANTHROPIC_API_KEY=sk-ant-...
-npm run dev
-```
-Shortcut: ⌘K / Ctrl+K.
+### Ask Claude: free, no API key
+The bar at the bottom (or ⌘K / Ctrl+K) opens a chat with **Claude Haiku** or **Claude Sonnet**, served free through [Puter.js](https://docs.puter.com). There's no API key, server or bill for you. The first message may open a one-time Puter sign-in window (free). Claude sees all of FLOW's research and which section you're on. If Puter doesn't offer the newest model name yet, it automatically falls back to the newest one it has. The footer shows which model answered.
 
 ### Refresh research (optional)
 Requires Python 3 + numpy (`pip install numpy`).
