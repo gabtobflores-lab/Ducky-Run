@@ -418,7 +418,7 @@ zone.addEventListener('pointermove', e => { const z = zoneRect(); hover = Math.h
 zone.addEventListener('pointerleave', () => hover = false);
 addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); const z = zoneRect(); doClick(z.cx + rand(-R / 2, R / 2), z.cy + rand(-R / 2, R / 2)); } });
 
-function cookiePath(r) { ctx.beginPath(); for (let a = 0; a <= 6.2832; a += .05) { const rr = r * (.95 + .05 * Math.cos(a * 14)); a ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(rr, 0); } ctx.closePath(); }
+function cookiePath(r) { ctx.beginPath(); for (let a = 0; a <= 6.2832; a += .05) { const rr = r * (.985 + .015 * Math.cos(a * 5 + 1)); a ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(rr, 0); } ctx.closePath(); }
 const RAYS = [1, .82, .95, .74, 1, .86, .78, .97, .84, 1, .76, .92];
 function drawChoc(r, big) {
   cookiePath(r);
