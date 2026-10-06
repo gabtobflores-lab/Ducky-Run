@@ -111,6 +111,20 @@
   #mstat{font-size:12px;color:var(--dim)}
   #fx{position:fixed;inset:0;width:100%;height:100%;z-index:40;display:none;touch-action:none}
   #cinebtn{position:fixed;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:45;display:none;background:#fff6dc;color:#5a3010;border:0;border-radius:99px;padding:12px 28px;font-weight:900;font-size:16px;letter-spacing:.06em;box-shadow:0 8px 30px rgba(255,200,100,.5);animation:fadein 1.5s}
+  #cinebtn{white-space:nowrap;max-width:94vw}
+  @media(max-height:520px){
+    #title,#cname{display:none}
+    #count{font-size:30px}
+    #cps{font-size:12px;margin-top:0}
+    #foot{display:none}
+    #zone{min-height:90px}
+    #codebar{margin-top:4px}
+    #ascend{margin-top:2px;padding:3px 12px;font-size:11px}
+    #buffs{min-height:0;margin-top:2px}
+    #mtitle{font-size:30px}
+    #dimctl{left:25%;bottom:54px;width:min(46vw,320px)}
+    #menu{padding-bottom:16px}
+  }
   @keyframes fadein{from{opacity:0}to{opacity:1}}
   @media(max-width:760px){
     #app{flex-direction:column;padding-top:env(safe-area-inset-top)}
@@ -278,7 +292,7 @@ function beep(f, d = .08, type = 'sine', vol = .05, slide = 0) {
 
 // ---------- UI ----------
 function toast(msg) {
-  const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; const tb = $('#toasts'); tb.appendChild(d); while (tb.children.length > 3) tb.firstChild.remove();
+  const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; const tb = $('#toasts'); tb.appendChild(d); while (tb.children.length > (innerWidth < 760 ? 2 : 3)) tb.firstChild.remove();
   setTimeout(() => d.remove(), 3700);
 }
 const list = $('#list');
@@ -640,7 +654,7 @@ function startCine(kind) {
   const z = zoneRect(); Object.assign(FX, { t: 0, kind, p: [], fired: {}, ox: z.cx, oy: z.cy, R, rings: [], flash: 0, chars: 0, am: 1, sw: [], fire: 0, beat: 0,
     crack: Array.from({ length: 16 }, () => rand(-1, 1)) });
   if (kind === 'angel') dimV = 1;
-  FX.go = 0; $('#cinebtn').textContent = kind === 'sunwarn' ? 'I lowered it. Bring on the sun' : 'Keep baking ✦'; $('#menu').classList.add('hide'); menuOn = false;
+  FX.go = 0; $('#cinebtn').textContent = kind === 'sunwarn' ? 'I lowered it. Bring it on' : 'Keep baking ✦'; $('#menu').classList.add('hide'); menuOn = false;
   S.cine = kind; fx.style.display = 'block'; document.querySelectorAll('.spark').forEach(x => x.remove()); save();
 }
 function endCine() { FX.kind = ''; S.cine = ''; fx.style.display = 'none'; $('#cinebtn').style.display = 'none'; save(); }
