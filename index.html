@@ -108,6 +108,10 @@
   #msub{color:var(--dim);font-size:14px}
   #mplay{margin-top:8px;background:linear-gradient(180deg,var(--ac2),var(--ac));color:#2a0f1e;border:0;border-radius:99px;padding:14px 60px;font-weight:900;font-size:22px;letter-spacing:.22em;animation:glow 2s ease-in-out infinite;box-shadow:0 8px 30px rgba(0,0,0,.4)}
   #mplay:active{transform:scale(.96)}
+  #mskins{display:none;gap:8px;flex-wrap:wrap;justify-content:center}
+  #mskins.on{display:flex}
+  .mchip{background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:99px;padding:7px 16px;font-weight:800;font-size:12px;letter-spacing:.08em}
+  .mchip.on{background:linear-gradient(180deg,var(--ac2),var(--ac));color:#2a0f1e;border-color:transparent}
   #mstat{font-size:12px;color:var(--dim)}
   #fx{position:fixed;inset:0;width:100%;height:100%;z-index:40;display:none;touch-action:none}
   #cinebtn{position:fixed;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:45;display:none;background:#fff6dc;color:#5a3010;border:0;border-radius:99px;padding:12px 28px;font-weight:900;font-size:16px;letter-spacing:.06em;box-shadow:0 8px 30px rgba(255,200,100,.5);animation:fadein 1.5s}
@@ -186,7 +190,7 @@
 </div>
 <div id="glare"></div>
 <div id="dimctl"><span>☀</span><input type="range" id="dim" min="10" max="100" value="100" aria-label="Brightness"><span id="dimv">100%</span></div>
-<div id="menu"><canvas id="mcv"></canvas><div id="mtitle">SPARK CLICKER</div><div id="msub">tap the cookie. fill the world.</div><button id="mplay">BAKE</button><div id="mstat"></div></div>
+<div id="menu"><canvas id="mcv"></canvas><div id="mtitle">SPARK CLICKER</div><div id="msub">tap the cookie. fill the world.</div><div id="mskins"></div><button id="mplay">BAKE</button><div id="mstat"></div></div>
 <canvas id="fx"></canvas>
 <button id="cinebtn">Keep baking ✦</button>
 <div id="flash"></div>
@@ -234,6 +238,8 @@ B.forEach((b, i) => TIERS.forEach(([cnt, mult, adj], k) => U.push({
 let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true, skin: 'logo', codes: {}, ascents: 0, omega: false, inf: false, boss: 0, bossTotal: 0, won: 0, cine: '', boostN: 0, sunDone: 0 };
 try { const d = JSON.parse(localStorage.sparkClicker || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
 if (S.inf) { S.cookies = Infinity; S.total = Infinity; }
+if (S.skin === 'choc' && !S.won && !S.sunDone) S.codes.skin = 1;
+if (S.skin === 'angel' && !S.sunDone) S.skin = 'logo';
 const THEMES = [
   { n: 'Coral', ac: '#ff9a3c', ac2: '#ffd27a', b1: '#1a1022', b2: '#3a1a33', g: ['#f2a583', '#d97757', '#bf5a3a'], rgb: '255,150,60' },
   { n: 'Violet', ac: '#b58cff', ac2: '#e0ccff', b1: '#120d2a', b2: '#2a1a55', g: ['#c9b0ff', '#9b6cf0', '#7448c8'], rgb: '160,120,255' },
@@ -246,6 +252,8 @@ const THEMES = [
 const BOSS = [null, { target: 1e9, K: 100, name: 'THE HOLLOW COOKIE' }, { target: 1e12, K: 400, name: 'THE CHROMATIC ONE' }, { target: 1e15, K: 2000, name: 'THE SUN' }];
 const BOSS1 = { n: 'Hollow', ac: '#ff3355', ac2: '#ff9aa8', b1: '#080000', b2: '#2a0008', g: ['#ff7a8a', '#ff2b45', '#8a0a1c'], rgb: '255,40,60' };
 const BOSS2 = { n: 'Chromatic', ac: '#ff66ff', ac2: '#ffd1ff', b1: '#06000f', b2: '#150033', g: ['#fff', '#c46bff', '#6b2bff'], rgb: '200,100,255' };
+const SKIN_NAMES = { logo: 'Claude', choc: 'Classic', angel: 'Halo' };
+function unlocked() { return ['logo'].concat(S.codes.skin || S.won || S.sunDone ? ['choc'] : [], S.sunDone ? ['angel'] : []); }
 const SAFE = .3, ASCEND_COST = 1e24;
 const SPACE = [['Comet', '☄️'], ['Moon', '🌙'], ['Mercury', '⚪'], ['Venus', '🟠'], ['Earth', '🌍'], ['Mars', '🔴'], ['Jupiter', '🟤'], ['Saturn', '🪐'], ['Uranus', '🔷'], ['Neptune', '🔵']];
 let flareT = 12, dimDrag = false;
@@ -521,7 +529,8 @@ function tryCode(txt) {
   const type = CODES[k];
   if (S.boss || S.cine) { toast('The code bar is sealed...'); beep(120, .3, 'square', .05, -40); return true; }
   if (type === 'skin') {
-    const order = S.sunDone ? ['logo', 'choc', 'angel'] : ['logo', 'choc']; S.skin = order[(order.indexOf(S.skin) + 1) % order.length]; toast({ choc: 'Secret unlocked: chocolate chip cookie!', angel: 'The angel cookie', logo: 'Back to the starburst' }[S.skin]); beep(660, .4, 'sine', .08, 600);
+    const first = !S.codes.skin; S.codes.skin = 1; const u = unlocked(); S.skin = u[(u.indexOf(S.skin) + 1) % u.length];
+    toast(first ? 'Secret unlocked: the classic chocolate chip cookie! You can pick it on the home screen too.' : { choc: 'Classic cookie', angel: 'Halo cookie', logo: 'Claude cookie' }[S.skin]); beep(660, .4, 'sine', .08, 600);
     const z = zoneRect(); burst(z.cx, z.cy, 40, R * 1.2); return true;
   }
   if (type === 'omega') {
@@ -803,21 +812,31 @@ $('#cinebtn').onclick = () => {
 
 // ---------- dimmer, menu, sun scenes ----------
 $('#dim').addEventListener('input', e => { dimV = e.target.value / 100; document.body.style.setProperty('--b', dimV); $('#dimv').textContent = Math.round(dimV * 100) + '%'; });
-let menuOn = false; const MENU = { p: [] };
+let menuOn = false; const MENU = { p: [], pick: 'logo' };
+function renderSkins() {
+  const u = unlocked(), el = $('#mskins'); el.classList.toggle('on', u.length > 1);
+  el.innerHTML = u.map(k => `<button class="mchip${k === MENU.pick ? ' on' : ''}" data-k="${k}">${SKIN_NAMES[k]}</button>`).join('');
+  el.querySelectorAll('button').forEach(b => { b.onclick = e => { e.stopPropagation(); MENU.pick = b.dataset.k; renderSkins(); beep(500, .08, 'triangle', .05); }; });
+}
+$('#menu').addEventListener('pointerdown', e => {
+  const u = unlocked(); if (!menuOn || u.length < 2 || e.target.closest('button') || e.clientY > innerHeight * .55) return;
+  MENU.pick = u[(u.indexOf(MENU.pick) + 1) % u.length]; renderSkins(); beep(500, .08, 'triangle', .05);
+});
 function showMenu(on) {
   menuOn = on; $('#menu').classList.toggle('hide', !on);
+  if (on) { MENU.pick = unlocked().includes(S.skin) ? S.skin : 'logo'; renderSkins(); }
   if (on) $('#mstat').textContent = `ascensions ${S.ascents}   ·   ${fmtBig(S.total)} cookies baked`;
 }
-$('#mplay').onclick = () => { showMenu(false); beep(520, .25, 'triangle', .07, 400); const z = zoneRect(); burst(z.cx, z.cy, 24, R); };
+$('#mplay').onclick = () => { S.skin = MENU.pick; save(); showMenu(false); beep(520, .25, 'triangle', .07, 400); const z = zoneRect(); burst(z.cx, z.cy, 24, R); };
 function drawMenu(dt) {
   const W = innerWidth, H = innerHeight, r = Math.min(W, H) * .22, cx = W / 2, cy = H * .33;
-  ctx = mctx; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const keepSkin = S.skin; S.skin = MENU.pick; ctx = mctx; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
   if (Math.random() < 3 * dt) MENU.p.push({ x: rand(0, W), y: -30, vy: rand(40, 100), rot: rand(0, 6), vr: rand(-1, 1), s: rand(10, 24) });
   MENU.p.forEach(q => { q.y += q.vy * dt; q.rot += q.vr * dt; }); MENU.p = MENU.p.filter(q => q.y < H + 40);
   ctx.globalAlpha = .28; MENU.p.forEach(q => { ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.rot); drawCookie(q.s, false); ctx.restore(); }); ctx.globalAlpha = 1;
   const gg = ctx.createRadialGradient(cx, cy, r * .4, cx, cy, r * 2.2); gg.addColorStop(0, `rgba(${T.rgb},.4)`); gg.addColorStop(1, `rgba(${T.rgb},0)`); ctx.fillStyle = gg; ctx.fillRect(0, 0, W, H);
   const k = 1 + Math.sin(t * 2.2) * .03; ctx.save(); ctx.translate(cx, cy + Math.sin(t * 1.6) * r * .04); ctx.rotate(Math.sin(t * .8) * .09); ctx.scale(k, k); drawCookie(r, true); ctx.restore();
-  ctx = mainCtx;
+  ctx = mainCtx; S.skin = keepSkin;
 }
 
 function feather(L, w) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(w, -L * .25, w * .8, -L * .8, 0, -L); ctx.bezierCurveTo(-w * .8, -L * .8, -w, -L * .25, 0, 0); ctx.closePath(); }
@@ -949,12 +968,12 @@ function drawSpace(z) {
 // ---------- code book ----------
 const CODE_INFO = [
   ['megaspark', 'x99999 on everything for 60s (once)', 'mega'], ['goldenpick', 'pick 1 of 3 free upgrades (once)', 'pick'],
-  ['chocochip', 'switch cookie look', 'skin'], ['cookiegalaxy', '+999QA cookies (once)', 'bank'],
+  ['chocochip', 'unlocks the classic cookie, switches look', 'skin'], ['cookiegalaxy', '+999QA cookies (once)', 'bank'],
   ['omegacookie', 'every upgrade + infinite cookies, lets you ascend', 'omega'],
 ];
 function renderCodes() {
   const el = $('#codelist'), lock = S.boss || S.cine;
-  el.innerHTML = `<h4>SECRET CODES${lock ? '  (sealed by the boss)' : ''}</h4>` + CODE_INFO.map(([c, d, k]) => `<div class="cd" data-c="${c}"><b>${c}</b><span>${d}</span>${S.codes[k] ? '<i>used</i>' : ''}</div>`).join('') + '<div class="cd"><b>↑ ↓ ← →</b><span>swipe/press on the cookie: x999 for this level, stacks, resets on rebirth</span></div>';
+  el.innerHTML = `<h4>SECRET CODES${lock ? '  (sealed by the boss)' : ''}</h4>` + CODE_INFO.map(([c, d, k]) => `<div class="cd" data-c="${c}"><b>${c}</b><span>${d}</span>${S.codes[k] ? `<i>${k === 'skin' ? 'unlocked' : 'used'}</i>` : ''}</div>`).join('') + '<div class="cd"><b>↑ ↓ ← →</b><span>swipe/press on the cookie: x999 for this level, stacks, resets on rebirth</span></div>';
   el.querySelectorAll('.cd[data-c]').forEach(r => r.onclick = () => { $('#codein').value = r.dataset.c; el.classList.remove('open'); });
 }
 $('#codebook').onclick = e => { e.stopPropagation(); const el = $('#codelist'); if (!el.classList.contains('open')) renderCodes(); el.classList.toggle('open'); };
