@@ -3,7 +3,9 @@
 **Research the edge.** An interactive single-page lab for investing, swing trading, quant strategies, portfolio scenarios and a teen-startable business. It is for education and simulation only. It never executes trades.
 
 ## Open it (no install)
-**Live site:** https://gabtobflores-lab.github.io/Ducky-Run/
+**Hosted link (claude.ai):** https://claude.ai/artifact/Kf6rwoY3TRB5hiNHXQCKzU. Ask Claude here uses your own Claude account. To rebuild it: `npm run build && python3 scripts/artifact.py`.
+
+**GitHub Pages:** https://gabtobflores-lab.github.io/Ducky-Run/
 
 One-time setup: in the repo, go to **Settings → Pages → Source** and pick **GitHub Actions**. Then merge to `main`. Every later push to `main` redeploys automatically through `.github/workflows/pages.yml`.
 

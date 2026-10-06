@@ -60,8 +60,36 @@ const errText = (e: unknown) => {
   return typeof o?.error === "string" ? o.error : o?.error?.message ?? o?.message ?? "Unknown error";
 };
 
-/** Streams a reply. Returns the model id actually used. */
+type Sample = ((input: unknown, o: unknown) => Promise<{ text: string }>) | null;
+type ClaudeHost = { use: (n: string) => Promise<unknown> };
+let sampleP: Promise<Sample> | null = null;
+/** Inside a claude.ai Artifact, Claude is reachable natively (viewer's own account) — preferred over Puter. */
+function hostSample(): Promise<Sample> {
+  const host = (window as unknown as { claude?: ClaudeHost }).claude;
+  if (!host?.use) return Promise.resolve(null);
+  sampleP ??= host.use("sample").then((s) => (s as Sample) ?? null).catch(() => null);
+  return sampleP;
+}
+export const warmUp = () => { if (typeof window !== "undefined") hostSample().then((s) => { if (!s) loadPuter().catch(() => {}); }); };
+
+/** Streams a reply. Returns a label for the model actually used. */
 export async function streamChat(msgs: Msg[], model: Model, section: string, onText: (t: string) => void, aborted: () => boolean): Promise<string> {
+  const sample = await hostSample();
+  if (sample) {
+    const turns = [{ role: "user", content: system(section) + "\n\nReply 'Ready.' and then answer the user's messages." }, { role: "assistant", content: "Ready." }, ...msgs.slice(-20)];
+    try {
+      await sample(turns, { cache: false, modelTier: model === "sonnet" ? "default" : "quick", onText: ({ text }: { text: string }) => { if (!aborted()) onText(text); } });
+    } catch (e) {
+      const c = (e as { code?: string; text?: string }).code;
+      if (c === "cancelled") return "Claude";
+      throw new Error(c === "not_granted" ? "Permission to ask Claude was declined. Allow it from the page's Permissions menu." : c === "rate_limited" ? "Too many requests — wait a minute and try again." : errText(e));
+    }
+    return model === "sonnet" ? "Claude · deeper tier (your account)" : "Claude · fast tier (your account)";
+  }
+  return streamPuter(msgs, model, section, onText, aborted);
+}
+
+async function streamPuter(msgs: Msg[], model: Model, section: string, onText: (t: string) => void, aborted: () => boolean): Promise<string> {
   const puter = await loadPuter();
   const payload = [{ role: "system", content: system(section) }, ...msgs.slice(-20)];
   let lastErr: unknown;

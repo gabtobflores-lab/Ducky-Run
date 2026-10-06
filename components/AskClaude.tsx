@@ -2,7 +2,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Spark } from "./ui";
 import { SECTIONS } from "./Nav";
-import { loadPuter, streamChat, type Model, type Msg } from "@/lib/claude";
+import { warmUp, streamChat, type Model, type Msg } from "@/lib/claude";
 const SUGGEST = [
   "Explain why trend following survived out-of-sample",
   "What's the bear case for the #1 opportunity?",
@@ -58,7 +58,7 @@ export default function AskClaude() {
     if (r) setOrigin({ x: ((r.left + r.width / 2) / window.innerWidth) * 100, y: ((r.top + r.height / 2) / window.innerHeight) * 100 });
     setSection(currentSection());
     setClosing(false); setOpen(true);
-    loadPuter().catch(() => {});
+    warmUp();
   };
   const doClose = useCallback(() => { setClosing(true); setTimeout(() => { setOpen(false); setClosing(false); btn.current?.focus(); }, 220); }, []);
 
@@ -95,7 +95,7 @@ export default function AskClaude() {
       {!open && (
         <div className="fixed left-1/2 z-50 bar-in w-[calc(100%-32px)] max-w-md" style={{ bottom: "max(16px, env(safe-area-inset-bottom))" }}>
           <button ref={btn} onClick={doOpen} aria-haspopup="dialog" className="group w-full flex items-center gap-3 rounded-full bg-ink/95 text-cream pl-2 pr-4 py-2 shadow-[0_10px_30px_-8px_rgb(41_35_31/.45)] ring-1 ring-white/10 backdrop-blur hover:bg-ink transition-colors">
-            <span className="grid place-items-center h-9 w-9 rounded-full bg-clay text-paper transition-transform duration-300 group-hover:rotate-45"><Spark className="h-5 w-5" /></span>
+            <span className="grid place-items-center h-9 w-9 rounded-full bg-paper transition-transform duration-300 group-hover:rotate-45"><Spark className="h-5 w-5" /></span>
             <span className="flex-1 text-left text-[15px] text-sand group-hover:text-cream transition-colors">Ask Claude about anything here…</span>
             <span className="hidden sm:inline text-[11px] text-sand/70 border border-white/15 rounded px-1.5 py-0.5">⌘K</span>
           </button>
@@ -116,7 +116,7 @@ export default function AskClaude() {
 
           <div className="panel-up absolute inset-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[min(720px,92vw)] sm:h-[min(760px,88dvh)] flex flex-col bg-paper sm:rounded-3xl shadow-[0_30px_80px_-20px_rgb(41_35_31/.5)] ring-1 ring-line overflow-hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
             <header className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-line">
-              <span className={`grid place-items-center h-9 w-9 rounded-full bg-clay text-paper ${waiting ? "thinking" : ""}`}><Spark className="h-5 w-5" /></span>
+              <span className={`grid place-items-center h-9 w-9 rounded-full bg-cream ring-1 ring-line ${waiting ? "thinking" : ""}`}><Spark className="h-5 w-5" /></span>
               <div className="flex-1 min-w-0"><div className="font-medium leading-tight">Claude</div><div className="text-xs text-muted truncate">Viewing: {section}</div></div>
               <div role="radiogroup" aria-label="Model" className="relative grid grid-cols-2 rounded-full bg-beige p-1 text-xs font-medium">
                 <span aria-hidden className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-paper shadow-sm transition-transform duration-300" style={{ transform: model === "sonnet" ? "translateX(100%)" : "none" }} />
@@ -164,7 +164,7 @@ export default function AskClaude() {
                   </button>
                 )}
               </div>
-              <div className="mt-2 flex justify-between text-[11px] text-faint px-1"><span>Free via Puter · {used || "no API key needed"} · education only</span>{msgs.length > 0 && <button type="button" onClick={() => setMsgs([])} className="hover:text-ink">New chat</button>}</div>
+              <div className="mt-2 flex justify-between text-[11px] text-faint px-1"><span>{used || "Free · no API key needed"} · education only</span>{msgs.length > 0 && <button type="button" onClick={() => setMsgs([])} className="hover:text-ink">New chat</button>}</div>
             </form>
           </div>
         </div>
