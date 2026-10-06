@@ -3,33 +3,153 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Mirror Drop</title>
+<title>Spark Clicker</title>
 <style>
-  html,body{margin:0;height:100%;background:#f4efe6;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-  canvas{display:block;width:100%;height:100%}
+  :root{--bg1:#1a1022;--bg2:#3a1a33;--ac:#ff9a3c;--ac2:#ffd27a;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.12);--tx:#fff4e6;--dim:#c9a9b8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+  body.frenzy{background:linear-gradient(160deg,#2a0f1e,#6a2a10)}
+  canvas#bg{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+  #app{position:relative;display:flex;height:100%}
+  #left{flex:1;display:flex;flex-direction:column;min-width:0;padding:14px 12px 10px}
+  #top{text-align:center}
+  #title{font-weight:900;letter-spacing:.25em;font-size:12px;color:var(--ac2);opacity:.8}
+  #count{font-size:clamp(34px,7vw,58px);font-weight:900;line-height:1.05;text-shadow:0 3px 0 rgba(0,0,0,.3);transition:transform .08s}
+  #count.bump{transform:scale(1.06)}
+  #cname{font-size:15px;color:var(--dim);margin-top:-2px}
+  #cps{font-size:14px;color:var(--ac2);font-weight:700;margin-top:2px}
+  #buffs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;min-height:26px;margin-top:6px}
+  .buff{background:linear-gradient(90deg,#ffb347,#ff6a3c);color:#2a0f1e;font-weight:800;font-size:12px;padding:4px 10px;border-radius:99px;animation:pop .35s cubic-bezier(.3,1.8,.5,1);box-shadow:0 0 14px rgba(255,150,60,.6)}
+  #zone{flex:1;min-height:150px;touch-action:manipulation;cursor:pointer}
+  #foot{display:flex;gap:8px;align-items:center;justify-content:center;font-size:13px;color:var(--dim)}
+  button{font:inherit;color:inherit;cursor:pointer}
+  #foot button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 12px}
+  #right{width:390px;max-width:45vw;display:flex;flex-direction:column;background:rgba(10,4,16,.55);border-left:1px solid var(--line);backdrop-filter:blur(6px)}
+  #bar{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-bottom:1px solid var(--line);align-items:center}
+  .tab{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 6px;font-weight:800;font-size:13px}
+  .tab.on{background:linear-gradient(180deg,var(--ac2),var(--ac));color:#2a0f1e;border-color:transparent}
+  .tab i{font-style:normal;background:#ff4d6d;color:#fff;border-radius:99px;padding:1px 6px;margin-left:4px;font-size:11px}
+  #qty{display:flex;gap:4px;width:100%}
+  #qty button{flex:1;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px;font-size:12px}
+  #qty button.on{border-color:var(--ac);color:var(--ac2)}
+  #list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
+  .row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;transition:transform .12s,background .2s}
+  .row.can{border-color:rgba(255,190,90,.5);background:rgba(255,170,60,.12);cursor:pointer}
+  .row.can:hover{transform:translateX(-3px)}
+  .row:not(.can){opacity:.62}
+  .row.locked{opacity:.4;filter:grayscale(1)}
+  .row.buy{animation:buy .4s}
+  .ico{font-size:28px;width:40px;text-align:center;flex:none}
+  .meta{flex:1;min-width:0}
+  .nm{font-weight:800;font-size:15px}
+  .sub{font-size:12px;color:var(--dim)}
+  .cost{font-size:13px;font-weight:800;color:#ffd27a}
+  .row:not(.can) .cost{color:#ff8a8a}
+  .own{font-size:26px;font-weight:900;opacity:.35;min-width:34px;text-align:right}
+  .ucard .nm{font-size:14px}
+  #toasts{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:9;pointer-events:none;align-items:center}
+  .toast{background:rgba(20,8,30,.92);border:1px solid var(--ac);padding:8px 16px;border-radius:12px;font-weight:700;font-size:14px;animation:toast 3.6s forwards;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+  .spark{position:fixed;width:74px;height:74px;margin:-37px 0 0 -37px;z-index:8;cursor:pointer;animation:sparkIn .5s cubic-bezier(.3,1.8,.5,1),float 3s ease-in-out infinite .5s;filter:drop-shadow(0 0 16px #ffc24a)}
+  .spark.out{animation:sparkOut .3s forwards}
+  @keyframes pop{from{transform:scale(.3)}to{transform:scale(1)}}
+  @keyframes buy{0%{transform:scale(1)}30%{transform:scale(1.04);background:rgba(255,220,120,.3)}100%{transform:scale(1)}}
+  @keyframes toast{0%{opacity:0;transform:translateY(-20px) scale(.9)}10%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+  @keyframes sparkIn{from{transform:scale(0) rotate(-180deg)}to{transform:scale(1)}}
+  @keyframes sparkOut{to{transform:scale(2);opacity:0}}
+  @keyframes float{50%{transform:translateY(-8px) rotate(8deg)}}
+  @media(max-width:760px){
+    #app{flex-direction:column}
+    #left{flex:none;height:46%;padding-bottom:4px}
+    #right{width:100%;max-width:none;flex:1;border-left:0;border-top:1px solid var(--line);min-height:0}
+    #foot{display:none}
+    #count{font-size:34px}
+    #cname,#title{display:none}
+    .toast{font-size:12px;padding:6px 12px}
+  }
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="bg"></canvas>
+<div id="app">
+  <section id="left">
+    <div id="top">
+      <div id="title">SPARK CLICKER</div>
+      <div id="count">0</div>
+      <div id="cname">cookies</div>
+      <div id="cps">per second: 0</div>
+      <div id="buffs"></div>
+    </div>
+    <div id="zone"></div>
+    <div id="foot"><span id="ach"></span><button id="snd">Sound on</button><button id="save">Save</button><button id="reset">Reset</button></div>
+  </section>
+  <section id="right">
+    <div id="bar">
+      <button class="tab on" data-t="b">Buildings</button>
+      <button class="tab" data-t="u">Upgrades<i id="ucount">0</i></button>
+      <div id="qty"><button data-q="1" class="on">Buy 1</button><button data-q="10">Buy 10</button><button data-q="100">Buy 100</button></div>
+    </div>
+    <div id="list"></div>
+  </section>
+</div>
+<div id="toasts"></div>
 <script>
-// Mirror Drop — two balls, one tap. Tap squeezes them together or spreads them apart.
-// Dodge the blocks, catch the gems.
-const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-const W = 480, H = 800, BY = 640;
-const LX = [90, 190, 290, 390];
-let scale = 1, offX = 0, offY = 0;
-function resize() {
-  const d = devicePixelRatio || 1;
-  cv.width = innerWidth * d; cv.height = innerHeight * d;
-  scale = Math.min(cv.width / W, cv.height / H);
-  offX = (cv.width - W * scale) / 2; offY = (cv.height - H * scale) / 2;
-}
-addEventListener('resize', resize); resize();
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
-let best = 0; try { best = +localStorage.mirrorBest || 0; } catch (e) {}
+const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  if (n < 1e3) return n < 10 && n % 1 ? n.toFixed(1) : Math.floor(n).toString();
+  const i = Math.min(SUF.length - 1, Math.floor(Math.log10(n) / 3)), v = n / Math.pow(1000, i);
+  return v.toFixed(v < 10 ? 2 : v < 100 ? 1 : 0) + SUF[i];
+}
+const fmtBig = n => n < 1e6 ? Math.floor(n).toLocaleString() : fmt(n);
 
-let ac;
-function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
+// ---------- data ----------
+const B = [
+  { n: 'Cursor', base: 15, cps: .1, ico: '👆' }, { n: 'Grandma', base: 100, cps: 1, ico: '👵' },
+  { n: 'Farm', base: 1100, cps: 8, ico: '🌾' }, { n: 'Mine', base: 12000, cps: 47, ico: '⛏️' },
+  { n: 'Factory', base: 130000, cps: 260, ico: '🏭' }, { n: 'Bank', base: 1.4e6, cps: 1400, ico: '🏦' },
+  { n: 'Temple', base: 2e7, cps: 7800, ico: '🛕' }, { n: 'Wizard Tower', base: 3.3e8, cps: 44000, ico: '🧙' },
+  { n: 'Portal', base: 5.1e9, cps: 260000, ico: '🌀' }, { n: 'Time Machine', base: 7.5e10, cps: 1.6e6, ico: '⏳' },
+];
+const TIERS = [[1, 10, 'Sturdy'], [5, 50, 'Polished'], [25, 500, 'Enchanted'], [50, 5000, 'Legendary'], [100, 50000, 'Mythic']];
+const U = [];
+B.forEach((b, i) => TIERS.forEach(([cnt, mult, adj], k) => U.push({
+  id: `b${i}_${k}`, name: `${adj} ${b.n}s`, ico: b.ico, cost: b.base * mult,
+  desc: i ? `${b.n}s are twice as efficient. (needs ${cnt} ${b.n}${cnt > 1 ? 's' : ''})` : `Cursors and clicks are twice as efficient. (needs ${cnt})`,
+  req: () => S.owned[i] >= cnt, fx: m => { m.b[i] *= 2; }
+})));
+[['Steady Hand', 100], ['Iron Finger', 500], ['Titanium Tap', 5e3], ['Diamond Digit', 5e4], ['Quantum Poke', 5e6], ['Cosmic Click', 5e8]].forEach(([name, cost], k) =>
+  U.push({ id: 'c' + k, name, ico: '🖱️', cost, desc: 'Clicking is twice as powerful.', req: () => S.total >= cost / 4, fx: m => { m.click *= 2; } }));
+[['Helping Hand', 1e4, .02], ['Mighty Mitt', 5e5, .04], ['Godly Grip', 5e7, .08]].forEach(([name, cost, p], k) =>
+  U.push({ id: 'p' + k, name, ico: '💪', cost, desc: `Each click also gives ${p * 100}% of your cookies per second.`, req: () => S.total >= cost / 4, fx: m => { m.pct += p; } }));
+[['Sparkle Glaze', 5e3], ['Sugar Aura', 5e5], ['Frosting Halo', 5e7], ['Starlight Icing', 5e9], ['Nova Sprinkles', 5e11]].forEach(([name, cost], k) =>
+  U.push({ id: 'g' + k, name, ico: '✨', cost, desc: 'Cookie production +10% for everything.', req: () => S.total >= cost / 4, fx: m => { m.glob += .1; } }));
+[['Lucky Charm', 1e5], ['Four-Leaf Clover', 1e7]].forEach(([name, cost], k) =>
+  U.push({ id: 'l' + k, name, ico: '🍀', cost, desc: 'Golden sparks appear more often and last longer.', req: () => S.total >= cost / 4, fx: m => { m.spark *= .7; m.life *= 1.4; } }));
+
+// ---------- state ----------
+let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true };
+try { const d = JSON.parse(localStorage.sparkClicker || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
+let M, cpsBase = 0, buffs = [], qty = 1, tab = 'b';
+function recalc() {
+  M = { b: B.map(() => 1), click: 1, pct: 0, glob: 0, spark: 1, life: 1 };
+  U.forEach(u => { if (S.upg[u.id]) u.fx(M); });
+  cpsBase = B.reduce((s, b, i) => s + S.owned[i] * b.cps * M.b[i], 0) * (1 + M.glob);
+}
+const cpsMul = () => buffs.reduce((m, b) => m * (b.cps || 1), 1);
+const clickMul = () => buffs.reduce((m, b) => m * (b.click || 1), 1);
+const cps = () => cpsBase * cpsMul();
+const clickVal = () => (M.click * M.b[0] + cps() * M.pct) * clickMul();
+function cost(i, n) { const r = 1.15; return Math.ceil(B[i].base * Math.pow(r, S.owned[i]) * (Math.pow(r, n) - 1) / (r - 1)); }
+recalc();
+{ const away = Math.min((Date.now() - S.last) / 1000, 8 * 3600);
+  if (away > 60 && cpsBase > 0) { const g = cpsBase * away * .5; S.cookies += g; S.total += g; setTimeout(() => toast(`Welcome back! Your bakers made ${fmt(g)} cookies while you were away.`), 400); } }
+
+// ---------- audio ----------
+let ac, lastTick = 0;
+function beep(f, d = .08, type = 'sine', vol = .05, slide = 0) {
+  if (!S.sound) return;
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
     const o = ac.createOscillator(), g = ac.createGain();
@@ -40,135 +160,206 @@ function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
   } catch (e) {}
 }
 
-let state = 'title', t = 0, deadAt = 0, shake = 0;
-let inward, bx, things, parts, floaters, score, combo, speed, nextY, pulse;
-function reset() {
-  inward = false; bx = [LX[0], LX[3]]; things = []; parts = []; floaters = [];
-  score = 0; combo = 1; speed = 360; nextY = -100; pulse = 0;
-  while (nextY > -1000) addRow();
+// ---------- UI ----------
+function toast(msg) {
+  const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; const tb = $('#toasts'); tb.appendChild(d); while (tb.children.length > 3) tb.firstChild.remove();
+  setTimeout(() => d.remove(), 3700);
 }
-// Each row is safe for one state (apart / together). Blocks sit where the other state's balls would be.
-function addRow() {
-  const safeIn = Math.random() < .5;
-  const danger = safeIn ? [0, 3] : [1, 2];
-  const pick = Math.random() < .35 ? [danger[Math.random() < .5 ? 0 : 1]] : danger;
-  pick.forEach(l => things.push({ k: 'b', l, y: nextY, hit: 0 }));
-  const safe = safeIn ? [1, 2] : [0, 3];
-  if (Math.random() < .55) things.push({ k: 'g', l: safe[Math.random() < .5 ? 0 : 1], y: nextY - rand(0, 40), ph: rand(0, 6) });
-  nextY -= rand(210, 270) - Math.min(60, score * .4);
+const list = $('#list');
+const bRows = B.map((b, i) => {
+  const r = document.createElement('div'); r.className = 'row';
+  r.innerHTML = `<div class="ico">${b.ico}</div><div class="meta"><div class="nm"></div><div class="sub"></div><div class="cost"></div></div><div class="own"></div>`;
+  r.onclick = () => buyB(i, r); return r;
+});
+const bBox = document.createElement('div'), uBox = document.createElement('div');
+[bBox, uBox].forEach(x => { x.style.cssText = 'display:flex;flex-direction:column;gap:8px'; });
+bRows.forEach(r => bBox.appendChild(r)); list.append(bBox, uBox); uBox.hidden = true;
+function setTab(t) {
+  tab = t; bBox.hidden = t !== 'b'; uBox.hidden = t !== 'u';
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === t));
+  $('#qty').style.display = t === 'b' ? 'flex' : 'none'; list.scrollTop = 0;
 }
-reset();
-
-function burst(x, y, n, col, sp = 220, life = .6) {
-  for (let i = 0; i < n; i++) { const a = rand(0, 6.283), v = rand(sp * .2, sp); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(life * .5, life), max: life, col, r: rand(2, 5) }); }
+document.querySelectorAll('.tab').forEach(x => x.onclick = () => setTab(x.dataset.t));
+document.querySelectorAll('#qty button').forEach(x => x.onclick = () => {
+  qty = +x.dataset.q; document.querySelectorAll('#qty button').forEach(y => y.classList.toggle('on', y === x));
+});
+function flash(el) { el.classList.remove('buy'); void el.offsetWidth; el.classList.add('buy'); }
+function buyB(i, el) {
+  const c = cost(i, qty);
+  if (S.cookies < c) { beep(150, .1, 'square', .03); return; }
+  S.cookies -= c; S.owned[i] += qty; recalc(); flash(el); beep(500 + i * 40, .15, 'triangle', .06, 300);
+  const z = zoneRect(); burst(z.cx, z.cy, 14, R * .8);
 }
-function float(x, y, txt, col) { floaters.push({ x, y, txt, col, life: 1 }); }
-
-function tap() {
-  if (state === 'title') { state = 'play'; reset(); }
-  else if (state === 'dead') { if (t - deadAt > .5) { state = 'play'; reset(); } return; }
-  inward = !inward; pulse = 1; beep(inward ? 520 : 380, .08, 'triangle', .05, inward ? 120 : -80);
-}
-addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
-addEventListener('keydown', e => { if (!e.repeat && ['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) { e.preventDefault(); tap(); } });
-
-function die(x, y) {
-  state = 'dead'; deadAt = t; shake = 14;
-  burst(bx[0], BY, 24, '#ff6b81', 380, .9); burst(bx[1], BY, 24, '#2ec4d6', 380, .9); burst(x, y, 14, '#2b2d42', 300, .8);
-  beep(190, .45, 'sawtooth', .1, -140);
-  if (score > best) { best = score; try { localStorage.mirrorBest = best; } catch (e) {} }
-}
-
-function update(dt) {
-  t += dt; shake = Math.max(0, shake - dt * 40); pulse = Math.max(0, pulse - dt * 4);
-  parts.forEach(q => { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 500 * dt; q.life -= dt; });
-  parts = parts.filter(q => q.life > 0);
-  floaters.forEach(f => { f.y -= 50 * dt; f.life -= dt * 1.1; }); floaters = floaters.filter(f => f.life > 0);
-  const tx = inward ? [LX[1], LX[2]] : [LX[0], LX[3]];
-  if (state === 'dead') return;
-  bx[0] += (tx[0] - bx[0]) * Math.min(1, dt * 18); bx[1] += (tx[1] - bx[1]) * Math.min(1, dt * 18);
-  if (state === 'title') { if (Math.sin(t * 2) > 0 !== inward) inward = !inward; return; }
-
-  speed = Math.min(820, 360 + score * 4);
-  for (const o of things) {
-    o.y += speed * dt;
-    if (o.k === 'b' && !o.passed && o.y > BY + 40) { o.passed = true; score++; if (score % 10 === 0) { float(W / 2, 300, score + '!', '#ff9f1c'); beep(760, .2, 'triangle', .07, 300); } }
-    const x = LX[o.l];
-    if (Math.abs(o.y - BY) < 44) for (const b of bx) {
-      if (Math.abs(b - x) < (o.k === 'b' ? 46 : 40)) {
-        if (o.k === 'b') return die(x, o.y);
-        if (!o.got) { o.got = true; score += combo; combo = Math.min(8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); burst(x, o.y, 12, '#ff9f1c', 220, .5); float(x, o.y - 20, '+' + (combo - 1 || 1), '#ff9f1c'); }
-      }
-    }
-    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; combo = 1; }
+let uKey = '';
+function renderUpgrades() {
+  const vis = U.filter(u => !S.upg[u.id] && u.req()).sort((a, b) => a.cost - b.cost);
+  const key = vis.map(u => u.id).join();
+  $('#ucount').textContent = vis.filter(u => S.cookies >= u.cost).length; $('#ucount').style.display = vis.some(u => S.cookies >= u.cost) ? '' : 'none';
+  if (key !== uKey) {
+    uKey = key; uBox.innerHTML = '';
+    if (!vis.length) uBox.innerHTML = '<div class="sub" style="text-align:center;padding:24px">No upgrades yet. Keep baking!</div>';
+    vis.forEach(u => {
+      const r = document.createElement('div'); r.className = 'row ucard'; r.dataset.id = u.id;
+      r.innerHTML = `<div class="ico">${u.ico}</div><div class="meta"><div class="nm">${u.name}</div><div class="sub">${u.desc}</div><div class="cost">🍪 ${fmt(u.cost)}</div></div>`;
+      r.onclick = () => { if (S.cookies < u.cost) return beep(150, .1, 'square', .03); S.cookies -= u.cost; S.upg[u.id] = 1; recalc(); beep(700, .25, 'sine', .07, 600); uKey = ''; const z = zoneRect(); burst(z.cx, z.cy, 24, R); toast(`Bought ${u.name}!`); };
+      uBox.appendChild(r);
+    });
   }
-  things = things.filter(o => o.y < H + 80 && !(o.got && o.k === 'g'));
-  while (nextY > -300) { nextY += speed * 0; addRow(); }
-  nextY += speed * dt;
+  uBox.querySelectorAll('.ucard').forEach(r => r.classList.toggle('can', S.cookies >= (U.find(u => u.id === r.dataset.id) || {}).cost));
 }
-
-function txt(s, x, y, size, col = '#2b2d42', al = 'center') {
-  ctx.font = `800 ${size}px system-ui,sans-serif`; ctx.textAlign = al; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = col; ctx.fillText(s, x, y);
-}
-function draw() {
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#f4efe6'; ctx.fillRect(0, 0, cv.width, cv.height);
-  ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * shake * scale, offY + (Math.random() - .5) * shake * scale);
-  ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
-  ctx.fillStyle = '#f4efe6'; ctx.fillRect(-20, -20, W + 40, H + 40);
-  // lanes: left half pink tint, right half teal tint
-  ctx.fillStyle = 'rgba(255,107,129,.10)'; ctx.fillRect(40, 0, 200, H);
-  ctx.fillStyle = 'rgba(46,196,214,.12)'; ctx.fillRect(240, 0, 200, H);
-  ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.fillRect(238, 0, 4, H);
-  const off = (t * speed * .5) % 60;
-  ctx.fillStyle = 'rgba(43,45,66,.07)';
-  LX.forEach(x => { for (let y = -60 + off; y < H; y += 60) ctx.fillRect(x - 2, y, 4, 24); });
-
-  for (const o of things) {
-    const x = LX[o.l];
-    if (o.k === 'b') {
-      ctx.fillStyle = '#2b2d42'; ctx.beginPath(); ctx.roundRect(x - 40, o.y - 22, 80, 44, 12); ctx.fill();
-      ctx.fillStyle = '#ff9f1c'; ctx.fillRect(x - 24, o.y - 4, 48, 8);
-    } else {
-      const s = 1 + Math.sin(t * 6 + o.ph) * .1;
-      ctx.save(); ctx.translate(x, o.y); ctx.rotate(Math.PI / 4 + Math.sin(t * 3 + o.ph) * .2); ctx.scale(s, s);
-      ctx.fillStyle = '#ff9f1c'; ctx.beginPath(); ctx.roundRect(-14, -14, 28, 28, 6); ctx.fill();
-      ctx.fillStyle = '#ffd37a'; ctx.fillRect(-9, -9, 10, 10); ctx.restore();
-    }
-  }
-  // link line between balls
-  ctx.strokeStyle = 'rgba(43,45,66,.25)'; ctx.lineWidth = 4; ctx.setLineDash([2, 10]); ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(bx[0], BY); ctx.lineTo(bx[1], BY); ctx.stroke(); ctx.setLineDash([]);
-  if (state !== 'dead') [['#ff6b81', bx[0]], ['#2ec4d6', bx[1]]].forEach(([c, x]) => {
-    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, BY, 24 + pulse * 5, 0, 7); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(x - 7, BY - 8, 7, 0, 7); ctx.fill();
+function renderUI() {
+  const cEl = $('#count'); cEl.textContent = fmtBig(S.cookies);
+  $('#cname').textContent = Math.floor(S.cookies) === 1 ? 'cookie' : 'cookies';
+  $('#cps').textContent = 'per second: ' + fmt(cps());
+  B.forEach((b, i) => {
+    const r = bRows[i], c = cost(i, qty);
+    if (S.cookies >= b.base * .5 || S.owned[i]) S.seen[i] = 1;
+    const seen = S.seen[i];
+    r.classList.toggle('locked', !seen); r.classList.toggle('can', !!seen && S.cookies >= c);
+    r.querySelector('.nm').textContent = seen ? b.n : '???';
+    r.querySelector('.ico').style.filter = seen ? '' : 'brightness(0)';
+    r.querySelector('.sub').textContent = seen ? `each makes ${fmt(b.cps * M.b[i] * (1 + M.glob))}/s` : 'keep baking to discover';
+    r.querySelector('.cost').textContent = seen ? '🍪 ' + fmt(c) : '';
+    r.querySelector('.own').textContent = S.owned[i] || '';
   });
-  parts.forEach(q => { ctx.globalAlpha = Math.max(0, q.life / q.max); ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 7); ctx.fill(); });
-  ctx.globalAlpha = 1;
-  floaters.forEach(f => { ctx.globalAlpha = f.life; txt(f.txt, f.x, f.y, 26, f.col); }); ctx.globalAlpha = 1;
-
-  if (state !== 'title') {
-    txt(score + '', W / 2, 90, 72, 'rgba(43,45,66,.9)');
-    txt('BEST ' + best, W / 2, 120, 18, 'rgba(43,45,66,.55)');
-    if (combo > 1) txt('x' + combo, W / 2, 160, 28, '#ff9f1c');
-  } else {
-    txt('MIRROR DROP', W / 2, 250, 56);
-    txt('two balls · one tap', W / 2, 292, 22, 'rgba(43,45,66,.7)');
-    txt('squeeze together or spread apart', W / 2, 322, 18, 'rgba(43,45,66,.55)');
-    ctx.globalAlpha = .55 + Math.sin(t * 5) * .45; txt('TAP TO PLAY', W / 2, 440, 34, '#ff6b81'); ctx.globalAlpha = 1;
-    if (best) txt('BEST ' + best, W / 2, 480, 20, 'rgba(43,45,66,.6)');
-  }
-  if (state === 'dead') {
-    ctx.fillStyle = 'rgba(244,239,230,.82)'; ctx.fillRect(0, 0, W, H);
-    txt('CRASH', W / 2, 260, 62, '#ff6b81');
-    txt(score + '', W / 2, 360, 96);
-    txt(score >= best && score > 0 ? 'NEW BEST!' : 'BEST ' + best, W / 2, 405, 26, '#ff9f1c');
-    ctx.globalAlpha = .55 + Math.sin(t * 6) * .45; txt('TAP TO RETRY', W / 2, 520, 34, '#2ec4d6'); ctx.globalAlpha = 1;
-  }
-  ctx.restore();
+  renderUpgrades();
+  const bd = $('#buffs'); bd.innerHTML = buffs.map(b => `<span class="buff">${b.name} ${Math.ceil(b.left)}s</span>`).join('');
+  document.body.classList.toggle('frenzy', buffs.some(b => b.cps > 1));
+  $('#ach').textContent = `🏆 ${Object.keys(S.ach).length}/${A.length}`;
+  document.title = fmtBig(S.cookies) + ' cookies - Spark Clicker';
 }
 
-let last = performance.now();
-(function loop(now) { const dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); })(last);
+// ---------- achievements ----------
+const A = [];
+[1, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e12].forEach(n => A.push({ id: 't' + n, name: `Baked ${fmt(n)} cookies`, ok: () => S.total >= n }));
+[100, 1e3, 1e4, 5e4].forEach(n => A.push({ id: 'k' + n, name: `Clicked ${fmt(n)} times`, ok: () => S.clicks >= n }));
+B.forEach((b, i) => [1, 10, 25, 50, 100].forEach(n => A.push({ id: `o${i}_${n}`, name: `${n} ${b.n}${n > 1 ? 's' : ''}`, ok: () => S.owned[i] >= n })));
+A.push({ id: 'sp1', name: 'Caught a golden spark', ok: () => S.sparks >= 1 }, { id: 'sp2', name: 'Spark collector (13)', ok: () => S.sparks >= 13 });
+function checkAch() { A.forEach(a => { if (!S.ach[a.id] && a.ok()) { S.ach[a.id] = 1; toast('🏆 ' + a.name); beep(880, .3, 'triangle', .06, 500); } }); }
+
+// ---------- golden spark ----------
+let sparkT = rand(30, 60);
+function spawnSpark() {
+  const d = document.createElement('div'); d.className = 'spark';
+  d.innerHTML = '<svg viewBox="-50 -50 100 100" width="74" height="74"><defs><radialGradient id="gs"><stop offset="0" stop-color="#fff6c0"/><stop offset=".6" stop-color="#ffc24a"/><stop offset="1" stop-color="#ff8a1c"/></radialGradient></defs><path d="M0-46 12-14 46-12 18 8 28 44 0 24-28 44-18 8-46-12-12-14Z" fill="url(#gs)" stroke="#fff3b0" stroke-width="3" stroke-linejoin="round"/></svg>';
+  d.style.left = rand(90, innerWidth - 90) + 'px'; d.style.top = rand(120, innerHeight - 120) + 'px';
+  let gone = false; const kill = () => { if (gone) return; gone = true; d.classList.add('out'); setTimeout(() => d.remove(), 300); };
+  d.addEventListener('pointerdown', e => {
+    e.stopPropagation(); if (gone) return; kill(); S.sparks++;
+    burst(e.clientX, e.clientY, 30, 120, '#ffd24a');
+    const r = Math.random();
+    if (r < .45) { buffs.push({ name: 'FRENZY x7', left: 30 * M.life, cps: 7 }); toast('Frenzy! Production x7 for 30s'); }
+    else if (r < .85) { const g = Math.min(S.cookies * .15, cpsBase * 900) + 13; S.cookies += g; S.total += g; toast(`Lucky! +${fmt(g)} cookies`); floatText(e.clientX, e.clientY, '+' + fmt(g), true); }
+    else { buffs.push({ name: 'CLICK FRENZY x10', left: 15 * M.life, click: 10 }); toast('Click frenzy! Clicks x10 for 15s'); }
+    beep(600, .5, 'sine', .08, 900);
+  });
+  document.body.appendChild(d); setTimeout(kill, 12000 * M.life);
+}
+
+// ---------- canvas ----------
+const cv = $('#bg'), ctx = cv.getContext('2d'), zone = $('#zone');
+let dpr = 1, R = 100, t = 0;
+function resize() { dpr = devicePixelRatio || 1; cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; }
+addEventListener('resize', resize); resize();
+function zoneRect() { const r = zone.getBoundingClientRect(); R = Math.max(50, Math.min(r.width, r.height) * .36); return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; }
+let sc = 1, scv = 0, rot = 0, wob = 0, wobv = 0, hover = false, parts = [], floats = [], rain = [], ripples = [];
+const chips = [[-.38, -.3, .13], [.1, -.5, .11], [.42, -.15, .14], [-.1, .02, .12], [.3, .35, .12], [-.45, .25, .11], [.0, .55, .1], [-.2, -.62, .08], [.62, .1, .07]];
+function burst(x, y, n, sp, col) {
+  for (let i = 0; i < n; i++) { const a = rand(0, 6.283), v = rand(sp * .4, sp * 2.2); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: rand(.5, 1), max: 1, r: rand(2, 5), rot: rand(0, 6), col: col || (Math.random() < .5 ? '#b8782f' : '#6b3a14') }); }
+}
+function floatText(x, y, txt, big) { floats.push({ x: x + rand(-14, 14), y, txt, life: 1, big }); }
+function doClick(x, y) {
+  const v = clickVal(); S.cookies += v; S.total += v; S.clicks++;
+  const z = zoneRect(); sc = .9; scv = 2.2; wobv += rand(-2.5, 2.5);
+  burst(x, y, 7, 130); floatText(x, y - 10, '+' + fmt(v));
+  ripples.push({ x: z.cx, y: z.cy, r: R * .9, life: 1 });
+  const now = performance.now(); if (now - lastTick > 40) { lastTick = now; beep(rand(300, 380), .06, 'triangle', .04, 120); }
+  const c = $('#count'); c.classList.add('bump'); setTimeout(() => c.classList.remove('bump'), 70);
+}
+zone.addEventListener('pointerdown', e => {
+  e.preventDefault(); const z = zoneRect();
+  if (Math.hypot(e.clientX - z.cx, e.clientY - z.cy) <= R * 1.08 * sc) doClick(e.clientX, e.clientY);
+});
+zone.addEventListener('pointermove', e => { const z = zoneRect(); hover = Math.hypot(e.clientX - z.cx, e.clientY - z.cy) <= R * 1.08; zone.style.cursor = hover ? 'pointer' : 'default'; });
+zone.addEventListener('pointerleave', () => hover = false);
+addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); const z = zoneRect(); doClick(z.cx + rand(-R / 2, R / 2), z.cy + rand(-R / 2, R / 2)); } });
+
+function cookiePath(r) { ctx.beginPath(); for (let a = 0; a <= 6.2832; a += .05) { const rr = r * (.95 + .05 * Math.cos(a * 14)); a ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(rr, 0); } ctx.closePath(); }
+function drawCookie(r, big) {
+  cookiePath(r);
+  const g = ctx.createRadialGradient(-r * .3, -r * .35, r * .1, 0, 0, r * 1.05);
+  g.addColorStop(0, '#f8c874'); g.addColorStop(.55, '#dc9140'); g.addColorStop(1, '#a85a1c');
+  ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = big ? 5 : 1.5; ctx.strokeStyle = '#7a3d10'; ctx.stroke();
+  if (big) {
+    ctx.beginPath(); ctx.arc(0, 0, r * .84, 0, 7); ctx.strokeStyle = 'rgba(110,55,10,.25)'; ctx.lineWidth = 3; ctx.setLineDash([2, 12]); ctx.lineCap = 'round'; ctx.stroke(); ctx.setLineDash([]);
+  }
+  chips.forEach(([x, y, s]) => {
+    ctx.fillStyle = '#4a2511'; ctx.beginPath(); ctx.ellipse(x * r, y * r, s * r * 1.15, s * r * .9, x * 3, 0, 7); ctx.fill();
+    if (big) { ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.ellipse(x * r - s * r * .3, y * r - s * r * .3, s * r * .35, s * r * .2, 0, 0, 7); ctx.fill(); }
+  });
+  if (big) { ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.ellipse(-r * .35, -r * .6, r * .4, r * .17, -.6, 0, 7); ctx.fill(); }
+}
+function loop(now) {
+  const dt = Math.min(.05, (now - (loop.l || now)) / 1000); loop.l = now; t += dt;
+  const c = cps(); S.cookies += c * dt; S.total += c * dt;
+  buffs.forEach(b => b.left -= dt); buffs = buffs.filter(b => b.left > 0);
+  sparkT -= dt; if (sparkT <= 0) { spawnSpark(); sparkT = rand(60, 130) * M.spark; }
+  const z = zoneRect();
+  // springs
+  scv += ((hover ? 1.045 : 1) - sc) * 260 * dt - scv * 14 * dt; sc += scv * dt;
+  wobv += -wob * 90 * dt - wobv * 7 * dt; wob += wobv * dt; rot += dt * .12;
+  // passive crumbs + rain
+  if (Math.random() < Math.min(14, Math.log10(1 + c) * 3) * dt) { const a = rand(0, 6.283); burst(z.cx + Math.cos(a) * R, z.cy + Math.sin(a) * R, 3, 90); }
+  if (Math.random() < Math.min(14, Math.log10(1 + c) * 2.4) * dt) rain.push({ x: rand(0, innerWidth), y: -40, vy: rand(70, 160), r: rand(10, 26), rot: rand(0, 6), vr: rand(-1.5, 1.5) });
+  rain.forEach(p => { p.y += p.vy * dt; p.rot += p.vr * dt; }); rain = rain.filter(p => p.y < innerHeight + 40);
+  parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 700 * dt; p.rot += dt * 8; p.life -= dt * 1.2; }); parts = parts.filter(p => p.life > 0);
+  floats.forEach(f => { f.y -= (f.big ? 50 : 70) * dt; f.life -= dt * .9; }); floats = floats.filter(f => f.life > 0);
+  ripples.forEach(r => { r.r += 280 * dt; r.life -= dt * 2.2; }); ripples = ripples.filter(r => r.life > 0);
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
+  ctx.globalAlpha = .35;
+  rain.forEach(p => { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); drawCookie(p.r, false); ctx.restore(); });
+  ctx.globalAlpha = 1;
+  // glow
+  const frenzy = buffs.some(b => b.cps > 1), ga = Math.min(.5, .12 + Math.log10(1 + c) * .04) + (frenzy ? .25 : 0) + Math.sin(t * 2) * .03;
+  const gg = ctx.createRadialGradient(z.cx, z.cy, R * .4, z.cx, z.cy, R * 1.9);
+  gg.addColorStop(0, frenzy ? `rgba(255,200,80,${ga})` : `rgba(255,150,60,${ga})`); gg.addColorStop(1, 'rgba(255,150,60,0)');
+  ctx.fillStyle = gg; ctx.fillRect(z.cx - R * 2, z.cy - R * 2, R * 4, R * 4);
+  // rays when frenzy
+  if (frenzy) { ctx.save(); ctx.translate(z.cx, z.cy); ctx.rotate(t * .4); ctx.fillStyle = 'rgba(255,220,120,.07)'; for (let i = 0; i < 12; i++) { ctx.rotate(Math.PI / 6); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(R * 2.4, -R * .22); ctx.lineTo(R * 2.4, R * .22); ctx.fill(); } ctx.restore(); }
+  ripples.forEach(r => { ctx.strokeStyle = `rgba(255,220,150,${r.life * .6})`; ctx.lineWidth = 4 * r.life; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, 7); ctx.stroke(); });
+  // cookie
+  ctx.save(); ctx.translate(z.cx, z.cy + Math.sin(t * 1.6) * R * .02);
+  ctx.save(); ctx.translate(R * .05, R * .1); ctx.scale(sc, sc * .98); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(0, R * .08, R, R * .96, 0, 0, 7); ctx.fill(); ctx.restore();
+  ctx.rotate(rot * .1 + wob); ctx.scale(sc, sc); drawCookie(R, true); ctx.restore();
+  // cursors ring
+  const nc = Math.min(S.owned[0], 60);
+  for (let i = 0; i < nc; i++) {
+    const a = i / nc * 6.2832 + t * .25, rr = R * 1.3 + Math.max(0, Math.sin(t * 2.2 + i * 1.7)) * R * -.12;
+    ctx.save(); ctx.translate(z.cx + Math.cos(a) * rr, z.cy + Math.sin(a) * rr); ctx.rotate(a + Math.PI / 2 + Math.PI);
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; const s = Math.max(6, R * .09);
+    ctx.beginPath(); ctx.moveTo(0, -s * 1.6); ctx.lineTo(s, s); ctx.lineTo(0, s * .4); ctx.lineTo(-s, s); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  parts.forEach(p => { ctx.globalAlpha = Math.min(1, p.life * 1.5); ctx.fillStyle = p.col; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.r, -p.r * .7, p.r * 2, p.r * 1.4); ctx.restore(); });
+  ctx.globalAlpha = 1; ctx.textAlign = 'center';
+  floats.forEach(f => { ctx.globalAlpha = Math.min(1, f.life * 1.6); ctx.font = `900 ${f.big ? 30 : 22}px system-ui,sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(40,10,20,.8)'; ctx.strokeText(f.txt, f.x, f.y); ctx.fillStyle = f.big ? '#ffd24a' : '#fff4e6'; ctx.fillText(f.txt, f.x, f.y); });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(loop);
+}
+
+// ---------- save / misc ----------
+function save() { S.last = Date.now(); try { localStorage.sparkClicker = JSON.stringify(S); } catch (e) {} }
+$('#save').onclick = () => { save(); toast('Game saved'); };
+let sure = 0;
+$('#reset').onclick = e => {
+  if (!sure) { sure = 1; e.target.textContent = 'Really?'; setTimeout(() => { sure = 0; e.target.textContent = 'Reset'; }, 3000); return; }
+  try { localStorage.removeItem('sparkClicker'); } catch (err) {} S.last = Date.now(); location.reload();
+};
+$('#snd').onclick = e => { S.sound = !S.sound; e.target.textContent = S.sound ? 'Sound on' : 'Sound off'; };
+$('#snd').textContent = S.sound ? 'Sound on' : 'Sound off';
+setInterval(save, 10000); addEventListener('beforeunload', save);
+setInterval(renderUI, 100); setInterval(checkAch, 700);
+setTab('b'); renderUI(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>
