@@ -63,6 +63,14 @@
   #modal{position:fixed;inset:0;z-index:20;background:rgba(10,4,16,.75);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
   #modal .box{max-width:420px;width:100%;display:flex;flex-direction:column;gap:10px;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
   #modal h2{margin:0 0 4px;text-align:center;color:var(--ac2);font-size:20px}
+  #ascend{margin-top:6px;background:linear-gradient(90deg,var(--ac2),var(--ac));color:#2a0f1e;border:0;border-radius:99px;padding:6px 18px;font-weight:900;font-size:13px;letter-spacing:.1em;animation:glow 2s ease-in-out infinite}
+  @keyframes glow{50%{box-shadow:0 0 22px var(--ac)}}
+  #flash{position:fixed;inset:0;background:#fff;z-index:30;pointer-events:none;opacity:0}
+  #flash.go{animation:flash 1.2s}
+  @keyframes flash{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+  #modal .btns{display:flex;gap:8px}
+  #modal .btns button{flex:1;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:10px;font-weight:800}
+  #modal .btns button.go{background:linear-gradient(180deg,var(--ac2),var(--ac));color:#2a0f1e;border:0}
   @keyframes pop{from{transform:scale(.3)}to{transform:scale(1)}}
   @keyframes buy{0%{transform:scale(1)}30%{transform:scale(1.04);background:rgba(255,220,120,.3)}100%{transform:scale(1)}}
   @keyframes toast{0%{opacity:0;transform:translateY(-20px) scale(.9)}10%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
@@ -90,6 +98,7 @@
       <div id="cname">cookies</div>
       <div id="cps">per second: 0</div>
       <div id="buffs"></div>
+      <button id="ascend" style="display:none">✦ ASCEND</button>
     </div>
     <div id="zone"></div>
     <div id="foot"><span id="ach"></span><button id="snd">Sound on</button><button id="save">Save</button><button id="reset">Reset</button></div>
@@ -104,6 +113,7 @@
     <div id="list"></div>
   </section>
 </div>
+<div id="flash"></div>
 <div id="toasts"></div>
 <div id="modal"><div class="box" id="mbox"></div></div>
 <script>
@@ -112,6 +122,7 @@ const $ = s => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const SUF = ['', 'K', 'M', 'B', 'T', 'QA', 'QI', 'SX', 'SP', 'OC', 'NO', 'DC', 'UD', 'DD', 'TD'];
 function fmt(n) {
+  if (!isFinite(n)) return '∞';
   if (n < 1e3) return n < 10 && n % 1 ? n.toFixed(1) : Math.floor(n).toString();
   const i = Math.min(SUF.length - 1, Math.floor(Math.log10(n) / 3)), v = n / Math.pow(1000, i);
   return v.toFixed(v < 10 ? 2 : v < 100 ? 1 : 0) + SUF[i];
@@ -143,12 +154,29 @@ B.forEach((b, i) => TIERS.forEach(([cnt, mult, adj], k) => U.push({
   U.push({ id: 'l' + k, name, ico: '🍀', cost, desc: 'Golden sparks appear more often and last longer.', req: () => S.total >= cost / 4, fx: m => { m.spark *= .7; m.life *= 1.4; } }));
 
 // ---------- state ----------
-let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true, skin: 'logo', codes: {} };
+let S = { cookies: 0, total: 0, clicks: 0, owned: B.map(() => 0), upg: {}, ach: {}, seen: {}, last: Date.now(), sparks: 0, sound: true, skin: 'logo', codes: {}, ascents: 0, omega: false, inf: false };
 try { const d = JSON.parse(localStorage.sparkClicker || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
+if (S.inf) { S.cookies = Infinity; S.total = Infinity; }
+const THEMES = [
+  { n: 'Coral', ac: '#ff9a3c', ac2: '#ffd27a', b1: '#1a1022', b2: '#3a1a33', g: ['#f2a583', '#d97757', '#bf5a3a'], rgb: '255,150,60' },
+  { n: 'Violet', ac: '#b58cff', ac2: '#e0ccff', b1: '#120d2a', b2: '#2a1a55', g: ['#c9b0ff', '#9b6cf0', '#7448c8'], rgb: '160,120,255' },
+  { n: 'Teal', ac: '#2ee6c4', ac2: '#a8fff0', b1: '#0a1f26', b2: '#12403f', g: ['#8ff5e0', '#27c9a8', '#14917a'], rgb: '46,230,196' },
+  { n: 'Rose', ac: '#ff6fa8', ac2: '#ffc2da', b1: '#240e1a', b2: '#4a1a36', g: ['#ffb0cf', '#f0568f', '#c43068'], rgb: '255,110,170' },
+  { n: 'Gold', ac: '#ffc233', ac2: '#ffe89a', b1: '#1e1a0a', b2: '#3d3210', g: ['#ffe38a', '#f2b01e', '#c98400'], rgb: '255,194,51' },
+  { n: 'Ice', ac: '#5cc8ff', ac2: '#bfe9ff', b1: '#0b1830', b2: '#12315a', g: ['#b5e6ff', '#4fb4f0', '#2c82c4'], rgb: '90,200,255' },
+  { n: 'Lime', ac: '#a6e64a', ac2: '#dcffa0', b1: '#101c0e', b2: '#25401a', g: ['#d4f58f', '#8fd23a', '#5a9a1e'], rgb: '166,230,74' },
+];
+let T = THEMES[0];
+function applyTheme() {
+  T = THEMES[S.ascents % THEMES.length]; const st = document.documentElement.style;
+  st.setProperty('--ac', T.ac); st.setProperty('--ac2', T.ac2); st.setProperty('--bg1', T.b1); st.setProperty('--bg2', T.b2);
+}
+applyTheme();
 let M, cpsBase = 0, buffs = [], qty = 1, tab = 'b';
 function recalc() {
   M = { b: B.map(() => 1), click: 1, pct: 0, glob: 0, spark: 1, life: 1 };
   U.forEach(u => { if (S.upg[u.id]) u.fx(M); });
+  M.glob += S.ascents * .1;
   cpsBase = B.reduce((s, b, i) => s + S.owned[i] * b.cps * M.b[i], 0) * (1 + M.glob);
 }
 const cpsMul = () => buffs.reduce((m, b) => m * (b.cps || 1), 1);
@@ -236,6 +264,7 @@ function renderUI() {
     r.querySelector('.cost').textContent = seen ? '🍪 ' + fmt(c) : '';
     r.querySelector('.own').textContent = S.owned[i] || '';
   });
+  $('#ascend').style.display = S.omega ? '' : 'none';
   renderUpgrades();
   const bd = $('#buffs'); bd.innerHTML = buffs.map(b => `<span class="buff">${b.name} ${Math.ceil(b.left)}s</span>`).join('');
   document.body.classList.toggle('frenzy', buffs.some(b => b.cps > 1));
@@ -279,7 +308,7 @@ function zoneRect() { const r = zone.getBoundingClientRect(); R = Math.max(50, M
 let sc = 1, scv = 0, rot = 0, wob = 0, wobv = 0, hover = false, parts = [], floats = [], rain = [], ripples = [];
 const chips = [[-.38, -.3, .13], [.1, -.5, .11], [.42, -.15, .14], [-.1, .02, .12], [.3, .35, .12], [-.45, .25, .11], [.0, .55, .1], [-.2, -.62, .08], [.62, .1, .07]];
 function burst(x, y, n, sp, col) {
-  for (let i = 0; i < n; i++) { const a = rand(0, 6.283), v = rand(sp * .4, sp * 2.2); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: rand(.5, 1), max: 1, r: rand(2, 5), rot: rand(0, 6), col: col || (S.skin === 'choc' ? (Math.random() < .5 ? '#b8782f' : '#6b3a14') : (Math.random() < .5 ? '#d97757' : '#f2a583')) }); }
+  for (let i = 0; i < n; i++) { const a = rand(0, 6.283), v = rand(sp * .4, sp * 2.2); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: rand(.5, 1), max: 1, r: rand(2, 5), rot: rand(0, 6), col: col || (S.skin === 'choc' ? (Math.random() < .5 ? '#b8782f' : '#6b3a14') : (Math.random() < .5 ? T.g[1] : T.g[0])) }); }
 }
 function floatText(x, y, txt, big) { floats.push({ x: x + rand(-14, 14), y, txt, life: 1, big }); }
 function doClick(x, y) {
@@ -314,7 +343,7 @@ function drawChoc(r, big) {
 function drawCookie(r, big) {
   if (S.skin === 'choc') return drawChoc(r, big);
   const g = ctx.createRadialGradient(-r * .3, -r * .35, r * .05, 0, 0, r * 1.05);
-  g.addColorStop(0, '#f2a583'); g.addColorStop(.55, '#d97757'); g.addColorStop(1, '#bf5a3a');
+  g.addColorStop(0, T.g[0]); g.addColorStop(.55, T.g[1]); g.addColorStop(1, T.g[2]);
   ctx.strokeStyle = g; ctx.fillStyle = g; ctx.lineCap = 'round';
   const w = r * .135;
   for (let i = 0; i < 12; i++) {
@@ -348,7 +377,7 @@ function loop(now) {
   // glow
   const frenzy = buffs.some(b => b.cps > 1), ga = Math.min(.5, .12 + Math.log10(1 + c) * .04) + (frenzy ? .25 : 0) + Math.sin(t * 2) * .03;
   const gg = ctx.createRadialGradient(z.cx, z.cy, R * .4, z.cx, z.cy, R * 1.9);
-  gg.addColorStop(0, frenzy ? `rgba(255,200,80,${ga})` : `rgba(255,150,60,${ga})`); gg.addColorStop(1, 'rgba(255,150,60,0)');
+  gg.addColorStop(0, frenzy ? `rgba(255,200,80,${ga})` : `rgba(${T.rgb},${ga})`); gg.addColorStop(1, `rgba(${T.rgb},0)`);
   ctx.fillStyle = gg; ctx.fillRect(z.cx - R * 2, z.cy - R * 2, R * 4, R * 4);
   // rays when frenzy
   if (frenzy) { ctx.save(); ctx.translate(z.cx, z.cy); ctx.rotate(t * .4); ctx.fillStyle = 'rgba(255,220,120,.07)'; for (let i = 0; i < 12; i++) { ctx.rotate(Math.PI / 6); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(R * 2.4, -R * .22); ctx.lineTo(R * 2.4, R * .22); ctx.fill(); } ctx.restore(); }
@@ -373,7 +402,7 @@ function loop(now) {
 }
 
 // ---------- secret codes ----------
-const CODES = { megaspark: 'mega', goldenpick: 'pick', chocochip: 'skin', cookiegalaxy: 'bank' };
+const CODES = { megaspark: 'mega', goldenpick: 'pick', chocochip: 'skin', cookiegalaxy: 'bank', omegacookie: 'omega' };
 function modal(html) { $('#mbox').innerHTML = html; $('#modal').style.display = 'flex'; }
 function tryCode(txt) {
   const k = Object.keys(CODES).find(c => txt.endsWith(c)); if (!k) return false;
@@ -381,6 +410,11 @@ function tryCode(txt) {
   if (type === 'skin') {
     S.skin = S.skin === 'choc' ? 'logo' : 'choc'; toast(S.skin === 'choc' ? 'Secret unlocked: chocolate chip cookie!' : 'Back to the starburst'); beep(660, .4, 'sine', .08, 600);
     const z = zoneRect(); burst(z.cx, z.cy, 40, R * 1.2); return true;
+  }
+  if (type === 'omega') {
+    S.omega = true; S.inf = true; S.cookies = Infinity; S.total = Infinity; U.forEach(u => { S.upg[u.id] = 1; }); recalc(); uKey = '';
+    toast('MEGA SECRET! Every upgrade, infinite cookies. You can now ASCEND.'); beep(150, 1.5, 'sawtooth', .08, 1800);
+    const z = zoneRect(); burst(z.cx, z.cy, 120, R * 2.2, '#fff'); return true;
   }
   if (S.codes[type]) { toast('You already used that code'); return true; }
   S.codes[type] = 1;
@@ -415,8 +449,22 @@ $('#codebar').addEventListener('submit', e => {
   if (ok) inp.blur();
 });
 
+// ---------- ascend ----------
+$('#ascend').onclick = () => {
+  const nx = THEMES[(S.ascents + 1) % THEMES.length];
+  modal(`<h2>Ascend to the ${nx.n} realm?</h2><div class="sub" style="text-align:center">You start over with 0 cookies, buildings and upgrades. The world changes color, and every ascension gives +10% production forever.<br>Ascensions so far: ${S.ascents}</div><div class="btns"><button id="mno">Not yet</button><button class="go" id="myes">Ascend</button></div>`);
+  $('#mno').onclick = () => { $('#modal').style.display = 'none'; };
+  $('#myes').onclick = () => {
+    $('#modal').style.display = 'none';
+    S.ascents++; S.cookies = 0; S.total = 0; S.clicks = 0; S.owned = B.map(() => 0); S.upg = {}; S.seen = {}; S.inf = false; buffs = []; uKey = '';
+    recalc(); applyTheme(); const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+    const z = zoneRect(); burst(z.cx, z.cy, 100, R * 2, T.g[0]); beep(300, 1, 'sine', .09, 1200); toast(`Ascended! Welcome to the ${T.n} realm (+${S.ascents * 10}% production)`);
+    setTab('b'); save();
+  };
+};
+
 // ---------- save / misc ----------
-function save() { S.last = Date.now(); try { localStorage.sparkClicker = JSON.stringify(S); } catch (e) {} }
+function save() { S.last = Date.now(); try { const o = Object.assign({}, S); if (S.inf) { o.cookies = 0; o.total = 0; } localStorage.sparkClicker = JSON.stringify(o); } catch (e) {} }
 $('#save').onclick = () => { save(); toast('Game saved'); };
 let sure = 0;
 $('#reset').onclick = e => {
