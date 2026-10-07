@@ -116,20 +116,33 @@ let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, l
 function reset() {
   const p = params();
   pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; scored = new Set(); things = []; parts = []; floaters = [];
-  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
+  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   while (nextY > -1000) addRow();
 }
 // Three ball positions: outer (columns 0+5), middle (1+4), inner (2+3). Each row is safe for exactly one position.
 let lastSafe = 0, rowId = 0, scored = new Set();
+// Taps needed to reach `target` from position p heading in direction d (balls bounce at the edges).
+function tapsTo(p, d, target) {
+  let n = 0; while (p !== target && n < 6) { if (p + d > per - 1 || p + d < 0) d = -d; p += d; n++; }
+  return [n, p, d];
+}
+let genDir = -1;
 function addRow() {
-  let sp = lastSafe;
-  if (Math.random() < params().flip) { const o = Array.from({ length: per }, (_, i) => i).filter(v => v !== lastSafe); sp = o[(Math.random() * o.length) | 0]; }
-  const jump = Math.abs(sp - lastSafe); lastSafe = sp; const row = rowId++;
+  // The generator follows the tap path a player would take, prefers rows that need one tap,
+  // and gives extra room when a row needs two or three taps.
+  let sp = lastSafe, cost = 0;
+  if (Math.random() < params().flip) {
+    const opts = Array.from({ length: per }, (_, i) => i).filter(v => v !== lastSafe).map(v => [v, tapsTo(lastSafe, genDir, v)[0]]);
+    const w = opts.map(([, c]) => c === 1 ? 1 : c === 2 ? .15 + .25 * diff : .05 + .1 * diff), tot = w.reduce((a, b) => a + b, 0);
+    let r = Math.random() * tot, i = 0; while (r > w[i]) { r -= w[i]; i++; }
+    sp = opts[i][0];
+  }
+  const [taps, , nd] = tapsTo(lastSafe, genDir, sp); cost = taps; genDir = nd; lastSafe = sp; const row = rowId++;
   Array.from({ length: per }, (_, i) => i).filter(q => q !== sp).forEach(q => {
     (Math.random() < .3 ? [q, N - 1 - q] : [Math.random() < .5 ? q : N - 1 - q]).forEach(l => things.push({ k: 'b', l, y: nextY, row }));
   });
   if (Math.random() < .55) things.push({ k: 'g', l: Math.random() < .5 ? sp : N - 1 - sp, y: nextY - rand(0, 40), ph: rand(0, 6), row });
-  nextY -= rowGap() * (jump >= 2 ? 1.4 : 1); // a two-step move needs two taps, so give it more room
+  nextY -= rowGap() * (per === 3 ? 1.12 : 1) * (1 + .6 * Math.max(0, cost - 1));
 }
 reset();
 
@@ -187,7 +200,7 @@ function update(dt) {
   floaters.forEach(f => { f.y -= 50 * dt; f.life -= dt * 1.1; }); floaters = floaters.filter(f => f.life > 0);
   if (state === 'dead') return;
   const tx = [LX[pos], LX[N - 1 - pos]];
-  bx[0] += (tx[0] - bx[0]) * Math.min(1, dt * 22); bx[1] += (tx[1] - bx[1]) * Math.min(1, dt * 22);
+  bx[0] += (tx[0] - bx[0]) * Math.min(1, dt * 30); bx[1] += (tx[1] - bx[1]) * Math.min(1, dt * 30);
 
   if (state === 'menu') { // decorative demo behind the menu: no collisions
     demoT += dt; if (demoT > 1.2) { demoT = 0; if (pos + dirv > per - 1 || pos + dirv < 0) dirv = -dirv; pos += dirv; }
