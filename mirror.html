@@ -120,7 +120,7 @@ function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
 
 // ---------- state ----------
 let state = 'menu', t = 0, shake = 0, demoT = 0;
-let fog = 0, resumeT = 0;
+let fog = 0, resumeT = 0; const bv = [0, 0], trail = [[], []];
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 function reset() {
   const p = params();
@@ -225,7 +225,12 @@ function update(dt) {
   floaters.forEach(f => { f.y -= 50 * dt; f.life -= dt * 1.1; }); floaters = floaters.filter(f => f.life > 0);
   if (state === 'dead') return;
   const tx = [LX[pos], LX[N - 1 - pos]];
-  bx[0] += (tx[0] - bx[0]) * Math.min(1, dt * 30); bx[1] += (tx[1] - bx[1]) * Math.min(1, dt * 30);
+  for (let i = 0; i < 2; i++) {
+    const ox = bx[i]; bx[i] += (tx[i] - bx[i]) * Math.min(1, dt * 30); bv[i] = (bx[i] - ox) / Math.max(dt, .001);
+    // faint trail while sliding between columns
+    if (Math.abs(bv[i]) > 60) trail[i].push(ox); else if (trail[i].length) trail[i].shift();
+    if (trail[i].length > 4) trail[i].shift();
+  }
 
   if (state === 'menu') { // decorative demo behind the menu: no collisions
     demoT += dt; if (demoT > 1.2) { demoT = 0; if (pos + dirv > per - 1 || pos + dirv < 0) dirv = -dirv; pos += dirv; }
@@ -290,9 +295,13 @@ function draw() {
   }
   ctx.strokeStyle = 'rgba(43,45,66,.25)'; ctx.lineWidth = 4; ctx.setLineDash([2, 10]); ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(bx[0], BY); ctx.lineTo(bx[1], BY); ctx.stroke(); ctx.setLineDash([]);
-  if (state !== 'dead') [['#ff6b81', bx[0]], ['#2ec4d6', bx[1]]].forEach(([c, x]) => {
-    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, BY, 20 + pulse * 4, 0, 7); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(x - 6, BY - 7, 6, 0, 7); ctx.fill();
+  if (state !== 'dead') [['#ff6b81', bx[0]], ['#2ec4d6', bx[1]]].forEach(([c, x], i) => {
+    trail[i].forEach((tx, k) => { ctx.globalAlpha = .07 * (k + 1); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(tx, BY, 16 + k, 0, 7); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    const st = Math.min(.18, Math.abs(bv[i]) / 4000); // gentle stretch along the move
+    ctx.save(); ctx.translate(x, BY); ctx.scale(1 + st, 1 - st * .7);
+    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(0, 0, 20 + pulse * 2, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(-6, -7, 6, 0, 7); ctx.fill(); ctx.restore();
     if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv, sx = (x < W / 2 ? 1 : -1) * nd; ctx.fillStyle = 'rgba(43,45,66,.35)'; ctx.beginPath(); ctx.moveTo(x + sx * 40, BY); ctx.lineTo(x + sx * 30, BY - 7); ctx.lineTo(x + sx * 30, BY + 7); ctx.fill(); }
     if (fxA > 0) { ctx.strokeStyle = `rgba(255,159,28,${fxA})`; ctx.lineWidth = 5 * fxA; ctx.beginPath(); ctx.arc(x, BY, 20 + (1 - fxA) * 90, 0, 7); ctx.stroke(); }
   });
