@@ -360,11 +360,12 @@ addEventListener('keydown', e => {
 function die(x, y, bi = 0, blk = null) {
   state = 'dead'; shake = 0; fx.freeze = .03; fx.dead = 0; // tiny hit-stop; the shatter itself starts on the impact frame
   crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null;
-  crash.ball[bi] = { at: 0, burst: false, elec: !!(blk && blk.elec) }; if (blk) blk.hitAt = 0; wxHide();
+  crash.ball[bi] = { at: 0, burst: false, elec: !!(blk && blk.elec) }; if (blk) blk.hitAt = 0; wxHide(); crash.first = bi;
   // the twin ball: if it is meeting its own block at (nearly) the same moment, both shatter together as a mirror pair
   const j = 1 - bi;
   for (const o of things) if (o.k === 'b' && o !== blk && Math.abs(o.y - BY) < 52 && Math.abs(bx[j] - bxOf(o)) < 38) { crash.ball[j] = { at: 0, burst: false, elec: !!o.elec }; o.hitAt = 0; break; }
-  for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (!c) continue; if (c.elec) c.at = .12; else { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // normal: burst instantly; electrified: a short electrocution flash first
+  if (!crash.ball[j]) crash.ball[j] = { at: (crash.ball[bi].elec ? .12 : 0) + .11, burst: false, elec: crash.ball[bi].elec, chain: true }; // linked twin: shatters a beat later
+  for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (!c) continue; if (c.chain) continue; if (c.elec) c.at = .12; else { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // normal: burst instantly; electrified: a short electrocution flash first
   beep(190, .45, 'sawtooth', .1, -140);
   if (score > bestNow()) { bests[bkey()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
   setTimeout(showOver, 750);
@@ -386,12 +387,8 @@ function update(dt) {
   updateCrash(dt);
   if (state === 'dead') {
     fx.dead += dt;
-    if (fx.dead < .7) { // visual only: no scoring, no rules, just lets the surviving ball meet its actual block
-      const k = 1 - clamp01((fx.dead - .45) / .25);
-      for (const o of things) o.y += speed * dt * k;
-      for (let j = 0; j < 2; j++) if (!crash.ball[j]) for (const o of things)
-        if (o.k === 'b' && Math.abs(o.y - BY) < 44 && Math.abs(bx[j] - bxOf(o)) < 38) { crash.ball[j] = { at: fx.dead + (o.elec ? .12 : 0), burst: false, elec: !!o.elec }; o.hitAt = fx.dead; break; }
-    }
+    const drift = Math.max(0, 1 - fx.dead / .35); // the world glides to a stop instead of carrying on
+    for (const o of things) o.y += speed * dt * .3 * drift;
     for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY, c.elec); } }
     return;
   }
@@ -437,7 +434,7 @@ function update(dt) {
       }
     }
     if (Math.abs(o.y - BY) < 44) for (let bi = 0; bi < 2; bi++) {
-      if (Math.abs(bx[bi] - x) < (o.k === 'b' ? 38 : 34)) {
+      if (Math.abs(bx[bi] - x) < (o.k === 'b' ? 30 : 34)) {
         if (o.k === 'b') return die(x, o.y, bi, o);
         if (!o.got) {
           o.got = true; score += combo; combo = Math.min(8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400);
@@ -836,7 +833,14 @@ function draw() {
 
   // mirror link between the pair
   ctx.strokeStyle = `rgba(43,45,66,${.16 + pulse * .1})`; ctx.lineWidth = 3; ctx.setLineDash([1, 9]); ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(bx[0], BY); ctx.lineTo(bx[1], BY); ctx.stroke(); ctx.setLineDash([]);
+  if (state !== 'dead') { ctx.beginPath(); ctx.moveTo(bx[0], BY); ctx.lineTo(bx[1], BY); ctx.stroke(); }
+  ctx.setLineDash([]);
+  if (state === 'dead') { const tw = crash.ball[1 - (crash.first || 0)];
+    if (tw && tw.chain && !tw.burst) { // a bright pulse races along the link to the twin
+      const a0 = bx[crash.first || 0], a1 = bx[1 - (crash.first || 0)], p = clamp01(fx.dead / Math.max(.01, tw.at)), xp = a0 + (a1 - a0) * p;
+      const lg = ctx.createLinearGradient(a0, 0, xp, 0); lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(1, tw.elec ? 'rgba(190,225,255,.95)' : 'rgba(255,255,255,.95)');
+      ctx.strokeStyle = lg; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(a0, BY); ctx.lineTo(xp, BY); ctx.stroke();
+    } }
 
   // the balls: identical size, timing, glow and squash; highlight mirrored
   const glow = Math.min(1, .15 + Math.min(.35, Math.abs(bv[0]) / 3000) + fx.gem * .5 + fx.near * .45 + fx.squash * .35 + fxA * .3);
@@ -852,6 +856,7 @@ function draw() {
     }
     const c = state === 'dead' ? crash.ball[i] : null;
     if (!c) drawBall(x, BY, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8);
+    else if (c.chain && !c.burst && !c.elec) { const q = clamp01(fx.dead / c.at); drawBall(x, BY, r * (1 + .12 * q), P, i ? 1 : -1, 1 + .06 * q, 1 - .05 * q, .6 + q * .4, q * .9); } // charging as the pulse arrives
     else if (c.elec && !c.burst) { // electrocution: blue-white flash wrapped in small arcs, then it bursts
       drawBall(x, BY, r * (1 + .06 * Math.random()), ELEC, i ? 1 : -1, 1, 1, 1, .85);
       const eg = ctx.createRadialGradient(x, BY, 10, x, BY, 54); eg.addColorStop(0, 'rgba(190,225,255,.55)'); eg.addColorStop(1, 'rgba(190,225,255,0)');
