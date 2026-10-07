@@ -476,34 +476,23 @@ const PAL = [
   { base: '#2ec4d6', hi: '#8fe7f1', lo: '#169eb2', deep: '#0b7a8c', core: '222,250,255', rgb: '46,196,214' },
 ];
 const ease = x => 1 - Math.pow(1 - clamp01(x), 3);
-function drawGate() { // the finish: a gate of light across the whole track, pillars of light at both sides, light pouring upward, a glowing chequered band; it pulses gently and the world warms as it nears
-  if (!gate || gate.y < -360 || gate.y > H + 160) return;
-  const y = gate.y, intro = smooth(gate.t / .8), k = won ? fx.dead : 0, fade = won ? Math.max(0, 1 - k / 1.4) : 1, hit = won ? Math.max(0, 1 - k / .6) : 0;
-  if (fade < .01) return;
-  const pulse = .85 + .15 * Math.sin(gate.t * 4.2), near = smooth(1 - (BY - y) / 700), I = intro * fade * pulse + hit * .6;
-  ctx.save();
-  ctx.globalAlpha = intro * fade * near * .16; ctx.fillStyle = '#ffd98a'; ctx.fillRect(-20, -20, W + 40, H + 40); // the whole scene warms as you close in
-  ctx.globalAlpha = 1;
-  let g = ctx.createLinearGradient(0, y - 340, 0, y); g.addColorStop(0, 'rgba(255,200,90,0)'); g.addColorStop(.7, `rgba(255,205,105,${.2 * I})`); g.addColorStop(1, `rgba(255,214,130,${.55 * I})`);
-  ctx.fillStyle = g; ctx.fillRect(-20, y - 340, W + 40, 340); // light pouring upward from the line
-  for (let i = 0; i < 12; i++) { const sd = SEEDS[i], x = sd.x * W, w = 6 + sd.k * 16, hh = 180 + sd.k * 160, al = .18 * I * (.5 + .5 * Math.sin(gate.t * (1.5 + sd.k) + sd.s));
-    g = ctx.createLinearGradient(0, y - hh, 0, y); g.addColorStop(0, 'rgba(255,240,200,0)'); g.addColorStop(1, `rgba(255,244,214,${al})`); ctx.fillStyle = g; ctx.fillRect(x - w / 2, y - hh, w, hh); } // shafts of light rising
-  for (const px of [0, W]) { g = ctx.createLinearGradient(0, y - 420, 0, y + 12); g.addColorStop(0, 'rgba(255,214,120,0)'); g.addColorStop(1, `rgba(255,214,120,${.7 * I})`); // pillars at both edges
-    ctx.fillStyle = g; ctx.fillRect(px - 22, y - 420, 44, 432); ctx.fillStyle = `rgba(255,250,230,${.9 * I})`; ctx.fillRect(px - 2.5, y - 300, 5, 312); }
-  g = ctx.createLinearGradient(0, y - 46, 0, y + 46); g.addColorStop(0, 'rgba(255,200,90,0)'); g.addColorStop(.5, `rgba(255,205,100,${.55 * I})`); g.addColorStop(1, 'rgba(255,200,90,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 46, W + 40, 92); // bloom around the band
-  const half = (side) => { // after the crossing each half swings away from the centre and falls
-    const sw = won ? smooth(k / .9) : 0, piv = side < 0 ? 0 : W; ctx.save(); ctx.translate(piv, y); ctx.rotate(side * -sw * 1.1); ctx.translate(-piv, -y);
-    const x0 = side < 0 ? -4 : W / 2 + sw * 18, x1 = side < 0 ? W / 2 - sw * 18 : W + 4; ctx.globalAlpha = intro * fade;
-    const bg = ctx.createLinearGradient(0, y - 11, 0, y + 11); bg.addColorStop(0, '#fff6dc'); bg.addColorStop(.5, '#ffd774'); bg.addColorStop(1, '#f5b443');
-    ctx.fillStyle = bg; ctx.fillRect(x0, y - 11, x1 - x0, 22); // the band itself, warm gold
-    ctx.save(); ctx.beginPath(); ctx.rect(x0, y - 11, x1 - x0, 22); ctx.clip(); for (let cx = Math.floor(x0 / 11) * 11, n = 0; cx < x1; cx += 11, n++) { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(cx, (n % 2) ? y - 11 : y, 11, 11); } // a soft white chequer: unmistakably the finish
-    const sx = ((gate.t * 300) % (W + 300)) - 150, sg = ctx.createLinearGradient(sx - 90, 0, sx + 90, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.85)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 90, y - 12, 180, 24); ctx.restore();
-    ctx.fillStyle = `rgba(255,255,255,${.95 * pulse})`; ctx.fillRect(x0, y - 11, x1 - x0, 1.5); ctx.fillRect(x0, y + 9.5, x1 - x0, 1.5); // white-hot edges
-    ctx.restore();
-  };
-  half(-1); half(1);
-  for (let i = 0; i < 22; i++) { const sd = SEEDS[i % 24], ph = (gate.t * (.45 + sd.k * .35) + sd.s) % 1, x = ((sd.x + i * .37) % 1) * W + Math.sin(ph * 6 + i) * 6; // sparks lifting off
-    ctx.globalAlpha = intro * fade * (1 - ph); ctx.fillStyle = i % 3 ? '#ffe39a' : '#ffffff'; ctx.beginPath(); ctx.arc(x, y - 12 - ph * 220, 1 + sd.k * 1.1, 0, 7); ctx.fill(); }
+function drawGate() { // the finish line: a luminous gold ribbon with light rising off it, a shimmer running along it, motes drifting up
+  if (!gate || gate.y < -220 || gate.y > H + 120) return;
+  const y = gate.y, hit = won ? Math.max(0, 1 - fx.dead / .9) : 0, fade = won ? Math.max(0, 1 - fx.dead / 1.6) : 1, br = (1 + hit * 1.2) * fade, intro = smooth(gate.t / .6);
+  if (br < .01) return;
+  ctx.save(); ctx.globalAlpha = intro;
+  const lg = ctx.createLinearGradient(0, y - 190, 0, y); lg.addColorStop(0, 'rgba(255,214,120,0)'); lg.addColorStop(1, `rgba(255,212,120,${Math.min(.6, .26 * br)})`);
+  ctx.fillStyle = lg; ctx.fillRect(-20, y - 190, W + 40, 190); // a curtain of warm light standing on the line
+  ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = intro * Math.min(1, .75 * br); ctx.drawImage(softBlob('255,200,100'), -W * .15, y - 46, W * 1.3, 92);
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = intro * Math.min(1, fade + hit);
+  const bg = ctx.createLinearGradient(0, 0, W, 0); bg.addColorStop(0, '#ffcf5a'); bg.addColorStop(.5, '#fff0b8'); bg.addColorStop(1, '#ffcf5a');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(6, y - 3, W - 12, 6, 3); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.roundRect(6, y - 3, W - 12, 6, 3); ctx.clip(); const sx = ((gate.t * 260) % (W + 240)) - 120, sg = ctx.createLinearGradient(sx - 70, 0, sx + 70, 0);
+  sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.95)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 70, y - 4, 140, 8); ctx.restore();
+  for (let k = 0; k < 16; k++) { const sd = SEEDS[k], ph = (gate.t * (.45 + sd.k * .3) + sd.s) % 1, x = sd.x * W + Math.sin(ph * 6 + k) * 6; // motes of light drifting up
+    ctx.globalAlpha = intro * (1 - ph) * Math.min(1, br) * .9; ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.arc(x, y - 4 - ph * 130, .9 + sd.k * .9, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = intro * Math.min(1, fade); if ('letterSpacing' in ctx) ctx.letterSpacing = '4px';
+  txt('FINISH', W / 2 + 2, y - 16, 12, 'rgba(214,150,30,.95)', 'center', 900); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
   ctx.restore();
 }
 function drawWinLight() { // crossing the line: gold rings ripple out from both balls, a warm band of light rises up the screen, the scene glows
@@ -620,7 +609,9 @@ function updateWeather(dt) {
   }
   const on = wx.phase === 'on' ? 1 : 0; wx.a += (on - wx.a) * Math.min(1, dt * (wx.kind === 'sun' || wx.kind === 'wind' ? 4 : 1.5));
   for (const h of hailHits) h.t += dt; while (hailHits.length && hailHits[0].t > .4) hailHits.shift();
-  wx.flash = Math.max(0, wx.flash - dt * 3); if (wx.bolt) { wx.bolt.t += dt; if (wx.bolt.t > wx.bolt.dur) wx.bolt = null; }
+  wx.flash = Math.max(0, wx.flash - dt * 3);
+  { const b = wx.bolt; if (b && b.o && b.o.zap && b.t >= b.pre + b.lead) { const o = b.o; o.zap = false; o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l]; } } // the strike lands: now the block is charged
+  if (wx.bolt) { wx.bolt.t += dt; if (wx.bolt.t > wx.bolt.dur) wx.bolt = null; }
   for (const g of wx.glows) g.t += dt; wx.glows = wx.glows.filter(g => g.t < g.dur);
   if (wx.kind === 'storm' && wx.phase === 'on' && (wx.nextGlow -= dt) <= 0) { wx.nextGlow = .7 + Math.random() * 1.8; cloudGlow(); }
   if (wx.kind === 'storm' && wx.phase === 'on' && (wx.nextBolt -= dt) <= 0) { wx.nextBolt = 2.4 + Math.random() * 3.2; lightning(); }
@@ -1099,9 +1090,9 @@ function strokes() { // real flashes: one bright return stroke, then a few dimme
   for (let i = 0; i < n; i++) st.push({ t: st[st.length - 1].t + .045 + Math.random() * .09, k: .45 + Math.random() * .4 });
   return st;
 }
-const blocked = (pts, skip) => { // does this channel cross a block (where it will be over the next moments) or a ball?
+const blocked = (pts, skip, ahead = 0) => { // does this channel cross a block (where that block will be while the bolt is visible) or a ball?
   const hw = bw() / 2 + 8;
-  for (const o of things) { if (o.k !== 'b' || o === skip) continue; const x = bxOf(o), y0 = o.y - 30, y1 = o.y + 30 + speed * .35;
+  for (const o of things) { if (o.k !== 'b' || o === skip) continue; const x = bxOf(o), y0 = o.y + speed * ahead - 26, y1 = o.y + speed * (ahead + .22) + 26;
     for (const [px, py] of pts) if (Math.abs(px - x) < hw && py > y0 && py < y1) return true; }
   for (let i = 0; i < 2; i++) for (const [px, py] of pts) if (Math.hypot(px - bx[i], py - BY) < 34) return true;
   return false;
@@ -1126,20 +1117,20 @@ function cloudGlow() { // lightning inside the cloud: mostly a crawler racing si
   if (Math.random() < .5) thunder(.5 + Math.random() * .9, .035 + Math.random() * .03, 2.6);
 }
 function lightning() { // a strike from the cloud base: threads between the blocks to the floor; only now and then does one find a block
-  const cand = things.filter(o => o.k === 'b' && !o.elec && o.y > 40 && (BY - o.y) / speed > 1.9); // only blocks still far from the balls, so it stays fair
-  const y0 = -30, st = strokes(), lead = .16 + Math.random() * .12, pre = .3 + Math.random() * .35; // born up inside the cloud deck: it brightens first, then the leader steps down
+  const y0 = -30, st = strokes(), lead = .16 + Math.random() * .12, pre = .3 + Math.random() * .35, ahead = pre + lead; // born up inside the cloud deck: it brightens first, then the leader steps down
+  const cand = things.filter(o => o.k === 'b' && !o.elec && !o.zap && o.y > 40 && (BY - o.y) / speed > 1.9 + ahead); // only blocks still far from the balls when it lands, so it stays fair
   let bolt = null;
   if (cand.length && Math.random() < .22) {
     const o = cand[(Math.random() * cand.length) | 0];
-    for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(o.ex ?? LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y - 22); if (!blocked(pts, o)) bolt = { o, pts }; }
-    if (bolt) { o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l]; bolt.pts[0][0] = bolt.pts[0][0]; }
+    for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y + speed * ahead - 22); if (!blocked(pts, o, ahead)) bolt = { o, pts }; } // aimed at where the block will be
+    if (bolt) o.zap = true; // it becomes electrified the moment the bolt lands
   }
-  for (let i = 0; i < 60 && !bolt; i++) { // find a channel that misses every block and both balls
-    const xe = W * (.1 + Math.random() * .8), x0 = Math.min(W * .94, Math.max(W * .06, xe + (Math.random() - .5) * W * .5)), pts = boltPts(x0, y0, xe, H + 60); // runs right off the bottom, to the ground below the screen
-    if (!blocked(pts) && pts.every(([x]) => x > 6 && x < W - 6)) bolt = { pts }; // stays on screen the whole way down
+  for (let i = 0; i < 120 && !bolt; i++) { // find a channel that misses every block and both balls; later tries run straighter
+    const xe = W * (.1 + Math.random() * .8), x0 = Math.min(W * .94, Math.max(W * .06, xe + (Math.random() - .5) * W * (i < 60 ? .5 : .15))), pts = boltPts(x0, y0, xe, H + 60, i < 60 ? .32 : .16); // runs right off the bottom, to the ground below the screen
+    if (!blocked(pts, null, ahead) && pts.every(([x]) => x > 6 && x < W - 6)) bolt = { pts }; // stays on screen the whole way down
   }
-  if (!bolt) { cloudGlow(); return; } // nowhere clear to land: it stays in the cloud this time
-  Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o)), t: 0, pre, lead, st, dur: pre + lead + st[st.length - 1].t + .55 });
+  if (!bolt) { cloudGlow(); wx.nextBolt = .6 + Math.random() * .6; return; } // nowhere clear to land: it stays in the cloud this time, and tries again shortly
+  Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o, ahead)), t: 0, pre, lead, st, dur: pre + lead + st[st.length - 1].t + .55 });
   wx.bolt = bolt; wx.flash = 1;
   const at = pre + lead; if (bolt.o) { setTimeout(() => beep(1500, .12, 'square', .03, -1100), at * 1000); thunder(at + .05, .1, 2.4); } else thunder(at + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
 }
