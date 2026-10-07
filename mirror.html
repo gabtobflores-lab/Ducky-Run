@@ -776,8 +776,9 @@ function nightSky(a, starA) { // stars with a slow twinkle on top of the cached 
     ctx.globalAlpha = a * tw * .25; ctx.fillRect(sd.x * W - 3, sd.y * H * .7 + .3, 7.6, 1); ctx.fillRect(sd.x * W + .3, sd.y * H * .7 - 3, 1, 7.6); }
   ctx.globalAlpha = 1;
 }
-const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' ? wx.a : wx.kind === 'eclipse' ? eclipseState().dark : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'hail' ? wx.a * .6 : 0;
-const hudInk = al => { const k = clamp01(nightK() * 1.3); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .25})`; };
+const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' ? wx.a : wx.kind === 'eclipse' ? eclipseState().dark : wx.kind === 'storm' ? wx.a * .85 : 0;
+const uiNight = () => smooth((nightK() - .3) / .3); // 0 = the Wind (day) style, 1 = the Aurora (night) style
+const hudInk = al => { const k = uiNight(); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .25})`; };
 const SPR = {};
 const vignette = () => sprite('vig', 256, 512, (g, w, h) => { const r = g.createRadialGradient(w / 2, h * .45, h * .22, w / 2, h * .5, h * .72); r.addColorStop(0, 'rgba(4,6,18,0)'); r.addColorStop(1, 'rgba(4,6,18,.75)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
 function sprite(key, w, h, draw) { // offscreen textures rendered once and reused, so weather costs a few drawImage calls per frame
@@ -987,7 +988,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   }
 }
 function drawFrontWeather() { // light and glass in front of the scene
-  rimA = Math.max({ meteor: .5, eclipse: .45, heat: .5, sun: .5, hail: .55 }[wx.kind] * wx.a || 0, nightK() * .8, wx.kind === 'eclipse' ? eclipseState().dark : 0);
+  rimA = Math.max(uiNight() * .8, wx.kind === 'eclipse' ? eclipseState().dark : 0);
   sunX = -999;
   if (wx.kind === 'sun' && wx.a > .01) { // the sun breaks through and slides along the top of the frame: soft rays, a long anamorphic streak, faint lens ghosts
     const q = clamp01(wx.t / WX.sun.dur), a = wx.a, sx = -40 + q * (W + 80), sy = H * .1 - Math.sin(q * Math.PI) * H * .04;
@@ -1422,7 +1423,7 @@ function draw() {
 
   drawGate();
   // mirror link between the pair
-  ctx.strokeStyle = nightK() > .3 ? `rgba(235,240,255,${.3 + pulse * .1})` : `rgba(43,45,66,${.16 + pulse * .1})`; ctx.lineWidth = 3; ctx.setLineDash([1, 9]); ctx.lineCap = 'round';
+  ctx.strokeStyle = uiNight() > .5 ? `rgba(235,240,255,${.3 + pulse * .1})` : `rgba(43,45,66,${.16 + pulse * .1})`; ctx.lineWidth = 3; ctx.setLineDash([1, 9]); ctx.lineCap = 'round';
   if (state !== 'dead') { ctx.beginPath(); ctx.moveTo(bx[0], BY); ctx.lineTo(bx[1], BY); ctx.stroke(); }
   ctx.setLineDash([]);
   if (state === 'dead') { const tw = crash.ball[1 - (crash.first || 0)];
