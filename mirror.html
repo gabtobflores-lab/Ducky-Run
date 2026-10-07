@@ -164,7 +164,7 @@ document.documentElement.style.setProperty('--gaps', [1, 2, 3, 4, 5].map(k => `l
 // per = ball positions per side (2 or 3). Columns N = per * 2; the two balls always mirror each other.
 let per = 3; try { per = +localStorage.mirrorPer === 2 ? 2 : 3; } catch (e) {}
 let mode = 'normal'; try { mode = localStorage.mirrorMode === 'infinite' ? 'infinite' : 'normal'; } catch (e) {}
-const GOAL = 1000; let won = false; // Normal mode ends the run at 1000 points
+const GOAL = 1000; let won = false, gate = null; // Normal mode ends the run at 1000 points
 let W = 520, N = 6, LX = [];
 let H = 800, BY = 640; // H grows on tall phones so the field fills the screen
 function layout() { W = per === 2 ? 480 : 520; N = per * 2; LX = Array.from({ length: N }, (_, i) => (i + .5) * W / N); resize(); }
@@ -254,6 +254,7 @@ const WX = {
   hail: { dur: 12, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 4.5, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
   heat: { dur: 14, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.2, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
   aurora: { dur: 16, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] }, eclipse: { dur: 14, p: 1 / 600, warn: 1.2, note: ['Eclipse', 'The sky is going dark'] },
+  meteor: { dur: 18, p: 1 / 320, warn: 1.2, note: ['Meteor shower', 'Look up'] },
 };
 const HAIL = Array.from({ length: 56 }, () => ({ x: Math.random(), y: Math.random(), r: 2 + Math.random() * Math.random() * 4.5, s: .75 + Math.random() * .6 })), hailHits = [];
 const wx = { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 };
@@ -265,7 +266,7 @@ function reset() {
   const p = params();
   pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
   fog = 0; resumeT = 0; fogT = 0;
-  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false;
+  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false; gate = null;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
   Object.assign(wx, { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 }); if (typeof wxHide === 'function') wxHide();
   Object.assign(fx, { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 });
@@ -366,11 +367,12 @@ addEventListener('keydown', e => {
   }
 });
 
-function finish() { // Normal mode: reaching the goal ends the run cleanly, no crash
+function finish() { // Normal mode: the balls cross the finish line; light washes up the screen and the world eases to a stop
   state = 'dead'; won = true; shake = 0; fx.freeze = 0; fx.dead = 0; crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null; wxHide();
-  beep(660, .18, 'triangle', .07, 200); setTimeout(() => beep(990, .3, 'triangle', .07, 300), 140);
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .5, 'sine', .06, 0), i * 90)); // a soft rising chord
+  for (let i = 0; i < 2; i++) { burst(bx[i], BY, 16, '#ffd36b', 260, .9, 120, 1.1); burst(bx[i], BY, 6, '#ffffff', 180, .6, 60, .9); }
   if (score > bestNow()) { bests[bkey()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
-  setTimeout(showOver, 750);
+  setTimeout(showOver, 1900);
 }
 function die(x, y, bi = 0, blk = null) {
   state = 'dead'; shake = 0; fx.freeze = .03; fx.dead = 0; // tiny hit-stop; the shatter itself starts on the impact frame
@@ -390,7 +392,6 @@ function die(x, y, bi = 0, blk = null) {
 function update(dt) {
   $('#pbtn').style.display = state === 'play' && resumeT <= 0 ? 'flex' : 'none';
   if (state === 'paused') return;
-  if (state === 'play' && mode === 'normal' && score >= GOAL) finish();
   if (state === 'play' && resumeT <= 0) fogT = Math.max(0, fogT - dt);
   if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
   if (state === 'dead' && fx.freeze > 0) { fx.freeze -= dt; updateCrash(dt); return; } // hit-stop: hold the impact frame
@@ -403,8 +404,8 @@ function update(dt) {
   updateCrash(dt);
   if (state === 'dead') {
     fx.dead += dt;
-    const drift = Math.max(0, 1 - fx.dead / .35); // the world glides to a stop instead of carrying on
-    for (const o of things) o.y += speed * dt * .3 * drift;
+    const drift = won ? Math.max(0, 1 - fx.dead / 1.6) ** 2 : Math.max(0, 1 - fx.dead / .35); // the world glides to a stop instead of carrying on
+    const mv = speed * dt * (won ? 1 : .3) * drift; for (const o of things) o.y += mv; if (gate) gate.y += mv;
     for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY, c.elec); } }
     return;
   }
@@ -462,8 +463,10 @@ function update(dt) {
     if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; combo = 1; }
   }
   things = things.filter(o => o.y < H + 80 && !(o.got && o.k === 'g'));
+  if (mode === 'normal' && !gate && score >= GOAL) { gate = { y: Math.min(nextY + 40, -80), t: 0 }; banner = 'FINAL STRETCH'; fxA = 1; beep(520, .5, 'sine', .06, 260); } // no new rows: the finish line comes down behind the last one
+  if (gate) { gate.y += speed * dt; gate.t += dt; if (gate.y >= BY) return finish(); }
   nextY += speed * dt;
-  while (nextY > -300) addRow();
+  if (!gate) while (nextY > -300) addRow();
 }
 
 // ---------- draw: shared components ----------
@@ -472,6 +475,33 @@ const PAL = [
   { base: '#2ec4d6', hi: '#8fe7f1', lo: '#169eb2', deep: '#0b7a8c', core: '222,250,255', rgb: '46,196,214' },
 ];
 const ease = x => 1 - Math.pow(1 - clamp01(x), 3);
+function drawGate() { // the finish line: a luminous gold ribbon with light rising off it, a shimmer running along it, motes drifting up
+  if (!gate || gate.y < -220 || gate.y > H + 120) return;
+  const y = gate.y, hit = won ? Math.max(0, 1 - fx.dead / .9) : 0, fade = won ? Math.max(0, 1 - fx.dead / 1.6) : 1, br = (1 + hit * 1.2) * fade, intro = smooth(gate.t / .6);
+  if (br < .01) return;
+  ctx.save(); ctx.globalAlpha = intro;
+  const lg = ctx.createLinearGradient(0, y - 190, 0, y); lg.addColorStop(0, 'rgba(255,214,120,0)'); lg.addColorStop(1, `rgba(255,212,120,${Math.min(.6, .26 * br)})`);
+  ctx.fillStyle = lg; ctx.fillRect(-20, y - 190, W + 40, 190); // a curtain of warm light standing on the line
+  ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = intro * Math.min(1, .75 * br); ctx.drawImage(softBlob('255,200,100'), -W * .15, y - 46, W * 1.3, 92);
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = intro * Math.min(1, fade + hit);
+  const bg = ctx.createLinearGradient(0, 0, W, 0); bg.addColorStop(0, '#ffcf5a'); bg.addColorStop(.5, '#fff0b8'); bg.addColorStop(1, '#ffcf5a');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(6, y - 3, W - 12, 6, 3); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.roundRect(6, y - 3, W - 12, 6, 3); ctx.clip(); const sx = ((gate.t * 260) % (W + 240)) - 120, sg = ctx.createLinearGradient(sx - 70, 0, sx + 70, 0);
+  sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.95)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 70, y - 4, 140, 8); ctx.restore();
+  for (let k = 0; k < 16; k++) { const sd = SEEDS[k], ph = (gate.t * (.45 + sd.k * .3) + sd.s) % 1, x = sd.x * W + Math.sin(ph * 6 + k) * 6; // motes of light drifting up
+    ctx.globalAlpha = intro * (1 - ph) * Math.min(1, br) * .9; ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.arc(x, y - 4 - ph * 130, .9 + sd.k * .9, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = intro * Math.min(1, fade); if ('letterSpacing' in ctx) ctx.letterSpacing = '4px';
+  txt('FINISH', W / 2 + 2, y - 16, 12, 'rgba(214,150,30,.95)', 'center', 900); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+  ctx.restore();
+}
+function drawWinLight() { // crossing the line: a band of gold light sweeps up the screen and a warm glow blooms around the balls
+  const k = fx.dead, y = BY - k * 760, a = Math.max(0, 1 - k / 1.7);
+  ctx.save(); ctx.globalCompositeOperation = 'screen';
+  if (a > 0) { const g = ctx.createLinearGradient(0, y - 140, 0, y + 140); g.addColorStop(0, 'rgba(255,214,120,0)'); g.addColorStop(.5, `rgba(255,222,150,${.75 * a})`); g.addColorStop(1, 'rgba(255,214,120,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 140, W + 40, 280); }
+  ctx.globalAlpha = .22 * Math.min(1, k / .2) * Math.max(0, 1 - k / 1.9); ctx.drawImage(softBlob('255,236,190'), -W * .4, -H * .2, W * 1.8, H * 1.4); // the whole scene warms for a moment
+  const gl = Math.min(1, k / .25) * Math.max(.35, 1 - k / 2.5); ctx.globalAlpha = .8 * gl; ctx.drawImage(softBlob('255,210,120'), W / 2 - W * .6, BY - 120, W * 1.2, 240);
+  ctx.restore();
+}
 function txt(s, x, y, size, col = '#2b2d42', al = 'center', w = 800) {
   ctx.font = `${w} ${size}px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif`; ctx.textAlign = al; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = col; ctx.fillText(s, x, y);
 }
@@ -552,6 +582,7 @@ const WXICON = { // small line symbols in the same weight as the pause glyph
   heat: '<path d="M10 14.5V5a2 2 0 0 1 4 0v9.5a3.5 3.5 0 1 1-4 0zM12 9v7"/>',
   sun: '<circle cx="12" cy="12" r="3.6"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
   aurora: '<path d="M3 15c3-6 5-6 7-1s4 5 7-1 3-4 4-3"/><path d="M3 19c3-4 6-4 9-1s5 2 9-2" opacity=".55"/>',
+  meteor: '<path d="M4 4l10 10M9 4l7 7M4 9l7 7" opacity=".55"/><circle cx="17" cy="17" r="3"/>',
   eclipse: '<circle cx="12" cy="12" r="5"/><path d="M12 3.5v1.5M12 19v1.5M3.5 12H5M19 12h1.5M6 6l1 1M17 17l1 1M6 18l1-1M17 7l1-1" opacity=".55"/>',
 };
 function wxNote(kind) {
@@ -622,26 +653,69 @@ const SKY = {
   hail: g => { skyGrad(g, [[0, '70,86,112'], [.5, '128,144,166'], [1, '182,194,208']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
   fog: g => { skyGrad(g, [[0, '204,209,218'], [.5, '220,223,229'], [1, '232,233,236']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, '246,247,249', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .5, H * .2, .5); } },
   heat: g => { skyGrad(g, [[0, '255,186,112'], [.35, '255,212,160'], [.75, '255,200,150'], [1, '255,160,110']]); glow(g, '255,248,225', W * .82, H * .07, W * .7, W * .7, .9); glow(g, '255,150,90', W * .2, H * 1.02, W * .9, H * .2, .5); },
+  meteor: g => { // a clear, moonlit night with the Milky Way arching across
+    skyGrad(g, [[0, '2,4,12'], [.55, '5,9,24'], [.85, '10,16,40'], [1, '22,26,58']]);
+    g.globalCompositeOperation = 'lighter'; for (let k = 0; k < 7; k++) { const q = k / 6; glow(g, k % 2 ? '90,80,140' : '120,110,160', W * (-.1 + q * 1.2), H * (.62 - q * .5) + Math.sin(k * 2.1) * 20, W * .3, H * .07, .32); }
+    glow(g, '40,60,120', W * .8, H * .15, W * .5, H * .25, .35); g.globalCompositeOperation = 'source-over';
+  },
   wind: g => { skyGrad(g, [[0, '196,214,234'], [.6, '226,232,238'], [1, '238,232,222']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 13], x = ((sd.x * W * 2 + t * (160 + sd.k * 120)) % (W * 2)) - W * .5; glow(g, '255,255,255', windDir > 0 ? x : W - x, H * sd.y, W * .4, H * .08, .45); } },
   sun: g => { skyGrad(g, [[0, '255,236,204'], [1, '255,246,236']]); },
   aurora: g => { // after Apple's aurora wallpaper: deep navy, tall luminous curtains, a bright cyan heart and an indigo glow underneath
     skyGrad(g, [[0, '3,9,26'], [.45, '6,22,44'], [.8, '14,30,78'], [1, '34,40,112']]);
     glow(g, '20,90,110', W * .7, H * .25, W * .7, H * .35, .55); glow(g, '50,60,170', W * .45, H * .98, W * .9, H * .28, .7);
     g.globalCompositeOperation = 'lighter';
-    const C = [[.5, .62, '30,150,150', '90,235,255', 0], [.66, .5, '20,110,160', '80,190,255', 2.1], [.38, .45, '30,140,120', '120,255,220', 4.3]];
+    const C = AUR;
     for (const [base, hgt, mid, core, ph] of C) {
       for (let x = -16; x <= W + 16; x += 8) {
-        const by = H * base + nz(x * .004 + t * .07, ph) * H * .09 + Math.sin(x * .009 + t * .22 + ph) * H * .035;
+        const by = auroraY(x, base, ph);
         const ray = Math.pow(nz(x * .045 + t * .3, ph * 3) * .5 + .5, 1.6), fold = nz(x * .007 - t * .09, ph) * .5 + .5, hh = H * hgt * (.6 + ray * .6);
         const lg = g.createLinearGradient(0, by - hh, 0, by + 20); lg.addColorStop(0, `rgba(${mid},0)`); lg.addColorStop(.6, `rgba(${mid},${.35 * fold})`); lg.addColorStop(.92, `rgba(${core},${.9 * fold})`); lg.addColorStop(1, `rgba(${core},0)`);
         g.globalAlpha = .25 + ray * .75; g.fillStyle = lg; g.fillRect(x, by - hh, 9, hh + 20);
       }
     }
     g.globalAlpha = 1; glow(g, '90,230,255', W * (.5 + nz(t * .05, 1) * .15), H * .6, W * .35, H * .16, .45);
+    glow(g, '190,80,200', W * (.35 + nz(t * .04, 3) * .2), H * .2, W * .7, H * .1, .22); glow(g, '120,90,230', W * .75, H * .3, W * .5, H * .12, .18); // a magenta-violet fringe high up
     g.globalCompositeOperation = 'source-over';
   },
 };
-const nightK = () => wx.kind === 'aurora' ? wx.a : wx.kind === 'eclipse' ? eclipseState().dark : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'hail' ? wx.a * .6 : 0;
+const AUR = [[.5, .62, '30,150,150', '90,235,255', 0], [.66, .5, '20,110,160', '80,190,255', 2.1], [.38, .45, '30,140,120', '120,255,220', 4.3]];
+const auroraY = (x, base, ph) => H * base + nz(x * .004 + t * .07, ph) * H * .09 + Math.sin(x * .009 + t * .22 + ph) * H * .035;
+const STARS = () => sprite('stars', 512, 1024, (g, w, h) => { // a deep star field, rendered once: mostly faint pinpoints, a few bright ones with a soft halo, a hint of colour
+  for (let i = 0; i < 380; i++) { const x = Math.random() * w, y = Math.random() * h, m = Math.random() ** 4, r = .45 + m * 1.3, c = Math.random();
+    const col = c < .08 ? '255,214,180' : c < .16 ? '190,210,255' : '255,255,255'; g.fillStyle = `rgba(${col},${.25 + m * .75})`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+    if (m > .6) { const rg = g.createRadialGradient(x, y, 0, x, y, r * 4); rg.addColorStop(0, `rgba(${col},.22)`); rg.addColorStop(1, `rgba(${col},0)`); g.fillStyle = rg; g.fillRect(x - r * 4, y - r * 4, r * 8, r * 8); } }
+});
+const MOON = () => sprite('moon', 256, 256, (g) => { // a gibbous moon: soft limb darkening, faint maria, a gentle terminator
+  const c = 128, R = 92; g.save(); g.beginPath(); g.arc(c, c, R, 0, 7); g.clip();
+  let rg = g.createRadialGradient(c - 22, c - 26, 10, c, c, R); rg.addColorStop(0, '#fbf8f0'); rg.addColorStop(.75, '#e8e4da'); rg.addColorStop(1, '#c9c4b8'); g.fillStyle = rg; g.fillRect(0, 0, 256, 256);
+  for (const [x, y, r, al] of [[-30, -20, 30, .16], [12, -36, 20, .12], [26, 10, 34, .14], [-8, 34, 18, .1], [-44, 22, 14, .1], [40, -12, 10, .08]]) { rg = g.createRadialGradient(c + x, c + y, 0, c + x, c + y, r); rg.addColorStop(0, `rgba(120,118,130,${al})`); rg.addColorStop(1, 'rgba(120,118,130,0)'); g.fillStyle = rg; g.beginPath(); g.arc(c + x, c + y, r, 0, 7); g.fill(); }
+  rg = g.createLinearGradient(c + R * .2, 0, c + R, 0); rg.addColorStop(0, 'rgba(10,14,30,0)'); rg.addColorStop(1, 'rgba(10,14,30,.75)'); g.fillStyle = rg; g.fillRect(0, 0, 256, 256); g.restore();
+});
+const MET = []; let metT = 0;
+function meteors(rate, a) { // shooting stars: a hot head trailing a tapering tail, now and then a fireball that breaks apart
+  const dt = Math.min(.05, Math.max(0, t - metT)); metT = t;
+  if (a > .2 && MET.length < 8 && Math.random() < dt * rate * (.5 + (nz(t * .35, 7) * .5 + .5))) {
+    const fire = Math.random() < .09, an = .5 + Math.random() * .35, sp = (700 + Math.random() * 600) * (fire ? .7 : 1);
+    MET.push({ x: W * (-.15 + Math.random()), y: H * (-.12 + Math.random() * .45), vx: Math.cos(an) * sp, vy: Math.sin(an) * sp, len: (100 + Math.random() * 150) * (fire ? 1.7 : 1), w: fire ? 3.6 : 1.4 + Math.random(), life: 0, max: .45 + Math.random() * .5 + (fire ? .4 : 0), fire, col: fire ? (Math.random() < .5 ? '170,255,200' : '255,214,160') : Math.random() < .2 ? '200,220,255' : '255,255,255' });
+  }
+  for (let i = MET.length - 1; i >= 0; i--) { const m = MET[i]; m.x += m.vx * dt; m.y += m.vy * dt; m.life += dt;
+    if (m.fire && !m.split && m.life > m.max * .7) { m.split = true; for (let k = 0; k < 3; k++) MET.push({ ...m, fire: false, split: true, w: 1.2, len: m.len * .35, life: 0, max: .35 + Math.random() * .2, vx: m.vx * (.9 + Math.random() * .2) + (Math.random() - .5) * 140, vy: m.vy * (.9 + Math.random() * .2) + (Math.random() - .5) * 140 }); }
+    if (m.life > m.max) MET.splice(i, 1); }
+  ctx.save(); ctx.globalCompositeOperation = 'screen';
+  for (const m of MET) { const k = smooth(m.life / .08) * (1 - smooth((m.life - m.max * .55) / (m.max * .45))) * a; if (k < .01) continue;
+    const sp = Math.hypot(m.vx, m.vy), ux = m.vx / sp, uy = m.vy / sp, L = m.len * Math.min(1, m.life / .18), tx = m.x - ux * L, ty = m.y - uy * L, nx = -uy * m.w / 2, ny = ux * m.w / 2;
+    const g = ctx.createLinearGradient(tx, ty, m.x, m.y); g.addColorStop(0, `rgba(${m.col},0)`); g.addColorStop(.75, `rgba(${m.col},${.45 * k})`); g.addColorStop(1, `rgba(255,255,255,${.95 * k})`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.x + nx, m.y + ny); ctx.lineTo(m.x - nx, m.y - ny); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = k * (m.fire ? .9 : .6); const R = m.w * (m.fire ? 10 : 6); ctx.drawImage(softBlob(m.col), m.x - R, m.y - R, R * 2, R * 2); ctx.globalAlpha = 1; }
+  ctx.restore();
+}
+function nightSky(a, starA) { // stars with a slow twinkle on top of the cached field
+  ctx.globalAlpha = starA * a; ctx.drawImage(STARS(), 0, 0, W, H); ctx.globalAlpha = 1;
+  for (let k = 0; k < 14; k++) { const sd = SEEDS[k], tw = nz(t * (1.2 + sd.k), sd.s) * .5 + .5; ctx.globalAlpha = a * tw * .9; ctx.fillStyle = '#fff'; ctx.fillRect(sd.x * W, sd.y * H * .7, 1.6, 1.6);
+    ctx.globalAlpha = a * tw * .25; ctx.fillRect(sd.x * W - 3, sd.y * H * .7 + .3, 7.6, 1); ctx.fillRect(sd.x * W + .3, sd.y * H * .7 - 3, 1, 7.6); }
+  ctx.globalAlpha = 1;
+}
+const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' ? wx.a : wx.kind === 'eclipse' ? eclipseState().dark : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'hail' ? wx.a * .6 : 0;
 const hudInk = al => { const k = clamp01(nightK() * 1.3); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .25})`; };
 const SPR = {};
 function sprite(key, w, h, draw) { // offscreen textures rendered once and reused, so weather costs a few drawImage calls per frame
@@ -719,9 +793,17 @@ function auroraRays(a, mul) { // curtains built from faint vertical rays, foldin
   }
   ctx.globalAlpha = 1;
 }
+function auroraRays2(a) { // fine rays and travelling pulses of light running along each curtain, at half resolution
+  for (let i = 0; i < AUR.length; i++) { const [base, hgt, , core, ph] = AUR[i], h = H * hgt, g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, `rgba(${core},0)`); g.addColorStop(.7, `rgba(${core},.35)`); g.addColorStop(.97, 'rgba(235,255,255,.9)'); g.addColorStop(1, `rgba(${core},0)`); ctx.fillStyle = g;
+    for (let x = -6; x <= W + 6; x += 7) { const by = auroraY(x, base, ph), ray = Math.pow(nz(x * .11 + t * .6, ph * 5) * .5 + .5, 3), wave = .5 + .5 * Math.sin(x * .021 - t * 1.7 + i * 2.3);
+      const hh = h * (.3 + ray * .6); ctx.globalAlpha = Math.min(1, a * (.05 + ray * .55) * (.4 + wave * .8)); ctx.translate(0, by - hh); ctx.fillRect(x, 0, 2.2, hh); ctx.translate(0, hh - by); }
+  }
+  ctx.globalAlpha = 1;
+}
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
-  const SA = { storm: .8, hail: .65, fog: .55, heat: .6, wind: .4, aurora: 1 }[wx.kind];
+  const SA = { storm: .8, hail: .65, fog: .55, heat: .6, wind: .4, aurora: 1, meteor: 1 }[wx.kind];
   if (SA) skyField(SA * a * a * (3 - 2 * a), SKY[wx.kind]);
   if (wx.kind === 'eclipse') { // the moon actually crosses the sun: partial phase, diamond ring, totality with corona and stars, then out again
     const E = eclipseState(), cx = E.cx, cy = E.cy, R = E.R;
@@ -730,7 +812,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
       dk.addColorStop(0, `rgba(10,13,28,${.8 * D})`); dk.addColorStop(.55, `rgba(20,24,42,${.62 * D})`); dk.addColorStop(1, `rgba(46,38,52,${.48 * D})`); ctx.fillStyle = dk; ctx.fillRect(-20, -20, W + 40, H + 40);
       atmos('255,150,90', .2 * D * E.c, { n: 6, y0: .84, y1: 1.08, sp: 2, off: 5 }); // a sunset glow all around the horizon at totality
     });
-    if (E.tot > 0) for (let k = 0; k < 24; k++) { const sd = SEEDS[k]; ctx.globalAlpha = E.tot * a * (.45 + .35 * (nz(t * 1.6, sd.s) * .5 + .5)); ctx.fillStyle = '#fff'; ctx.fillRect(sd.x * W, sd.y * H * .75, 1.4, 1.4); }
+    if (E.tot > 0) nightSky(E.tot * a, .7);
     ctx.globalAlpha = 1;
     const sunA = a * (1 - E.tot);
     if (sunA > .01) { // the sun itself, blooming
@@ -756,7 +838,16 @@ function drawBackWeather() { // events that live behind the blocks and balls
     }
     ctx.strokeStyle = `rgba(255,240,215,${.55 * a * E.tot})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R + .6, 0, 7); ctx.stroke(); // chromosphere edge
   }
-  if (wx.kind === 'aurora') for (let k = 0; k < 18; k++) { const sd = SEEDS[k]; ctx.globalAlpha = a * (.35 + .3 * (nz(t * 1.3, sd.s) * .5 + .5)); ctx.fillStyle = '#fff'; ctx.fillRect(sd.x * W, sd.y * H * .5, 1.2, 1.2); ctx.globalAlpha = 1; }
+  if (wx.kind === 'meteor') { nightSky(a, .9);
+    const mx = W * .78, my = H * .13, R = W * .085; ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .55 * a; ctx.drawImage(softBlob('200,215,255'), mx - R * 5, my - R * 5, R * 10, R * 10); // moon halo
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a; ctx.drawImage(MOON(), mx - R * 1.39, my - R * 1.39, R * 2.78, R * 2.78); ctx.globalAlpha = 1;
+    meteors(wx.phase === 'on' ? 2.6 : .6, a); }
+  if (wx.kind === 'aurora') { nightSky(a, .3); meteors(.12, a);
+    ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a)); ctx.globalCompositeOperation = 'source-over';
+    const RY = H * .84; if (skyC) { ctx.save(); ctx.beginPath(); ctx.rect(-20, RY, W + 40, H - RY + 20); ctx.clip(); // the sky mirrored in still water, broken by a slow ripple
+      for (let y = RY; y < H + 20; y += 20) { const ox = Math.sin(y * .06 + t * 1.4) * 3 * (1 + (y - RY) / 80); ctx.save(); ctx.beginPath(); ctx.rect(-20, y, W + 40, 20); ctx.clip(); ctx.translate(ox, RY); ctx.scale(1, -.3); ctx.translate(0, -RY); ctx.globalAlpha = .5 * a; ctx.drawImage(skyC, 0, 0, skyC.width * 8, skyC.height * 8); ctx.restore(); }
+      ctx.restore(); const hl = ctx.createLinearGradient(0, RY - 2, 0, RY + 3); hl.addColorStop(0, 'rgba(140,230,255,0)'); hl.addColorStop(.5, `rgba(140,230,255,${.35 * a})`); hl.addColorStop(1, 'rgba(140,230,255,0)'); ctx.fillStyle = hl; ctx.fillRect(-20, RY - 2, W + 40, 5); }
+  }
   if (wx.kind === 'heat') { // a white-hot sun high in the corner, slow light rays, warm air pooling low; the shimmer comes from real refraction below
     const sx = W * .82, sy = H * .07;
     ctx.save(); ctx.translate(sx, sy); ctx.rotate(t * .025); ctx.globalCompositeOperation = 'screen'; // god rays, barely there and slowly turning
@@ -1231,6 +1322,7 @@ function draw() {
     ctx.restore();
   }
 
+  drawGate();
   // mirror link between the pair
   ctx.strokeStyle = nightK() > .3 ? `rgba(235,240,255,${.3 + pulse * .1})` : `rgba(43,45,66,${.16 + pulse * .1})`; ctx.lineWidth = 3; ctx.setLineDash([1, 9]); ctx.lineCap = 'round';
   if (state !== 'dead') { ctx.beginPath(); ctx.moveTo(bx[0], BY); ctx.lineTo(bx[1], BY); ctx.stroke(); }
@@ -1341,6 +1433,7 @@ function draw() {
     ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${k * .55})`; ctx.fillRect(-20, -20, W + 40, H + 40); ctx.restore();
     ctx.fillStyle = `rgba(43,45,66,${k * .1})`; ctx.fillRect(-20, -20, W + 40, H + 40);
   }
+  if (state === 'dead' && won) drawWinLight();
   if (crash.shards.length || crash.waves.length) drawCrash();
 
   if (state === 'play' || state === 'paused') {
