@@ -24,6 +24,8 @@
   .dl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;letter-spacing:.14em;font-weight:800}
   .dname{font-size:18px;letter-spacing:.04em;color:var(--teal)}
   .drange{width:100%;accent-color:var(--teal);height:28px;margin:0}
+  .dticks span:nth-child(2){margin-left:auto;margin-right:9%}
+  .dticks span:nth-child(3){color:#e63946;opacity:1}
   .dticks{display:flex;justify-content:space-between;font-size:11px;opacity:.55;font-weight:700}
   .seg{display:flex;gap:8px}
   .seg button{flex:1;border:0;border-radius:12px;padding:10px 6px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;background:rgba(43,45,66,.08);color:var(--ink)}
@@ -37,7 +39,7 @@
 <div class="screen" id="menu">
   <h1><i>MIRROR</i> <u>DROP</u></h1>
   <div class="sub">two balls. one tap.</div>
-  <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="100" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Insane</span></div></div>
+  <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Insane</span><span>Impossible</span></div></div>
   <div class="diff"><div class="dl"><span>COLUMNS</span><b id="pername">6 columns</b></div><div class="seg"><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div></div>
   <button class="btn" id="play">PLAY</button>
   <div class="small" id="mbest"></div>
@@ -49,7 +51,7 @@
   <h1><i>CRASH</i></h1>
   <div class="big" id="oscore">0</div>
   <div class="small" id="obest"></div>
-  <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="100" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Insane</span></div></div>
+  <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Insane</span><span>Impossible</span></div></div>
   <button class="btn" id="retry">TRY AGAIN</button>
   <button class="btn alt" id="tomenu">RETURN TO MENU</button>
 </div>
@@ -77,24 +79,24 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const clamp01 = x => Math.min(1, Math.max(0, x));
 
 // ---------- difficulty ----------
-const NAMES = ['Chill', 'Easy', 'Normal', 'Hard', 'Insane'];
+const NAMES = ['Chill', 'Easy', 'Normal', 'Hard', 'Insane', 'Impossible'];
 let diff = .5, bests = {};
-try { const d = parseFloat(localStorage.mirrorDiff); if (d >= 0 && d <= 1) diff = d; bests = JSON.parse(localStorage.mirrorBests || '{}'); } catch (e) {}
-const bucket = () => Math.min(4, Math.floor(diff * 5));
+try { const d = parseFloat(localStorage.mirrorDiff); if (d >= 0 && d <= 1.2) diff = d; bests = JSON.parse(localStorage.mirrorBests || '{}'); } catch (e) {}
+const bucket = () => diff > 1 ? 5 : Math.min(4, Math.floor(diff * 5)); // Impossible sits past the end of the scale (diff 1.2)
 // Difficulty 0..1. Each 5s level adds `step` speed and tightens the row gap, down to a floor of `minTime` seconds between rows.
 const params = () => ({ start: 270 + 230 * diff, step: 12 + 34 * diff, max: 540 + 380 * diff, gap: 280 - 70 * diff, shrink: 2 + 6 * diff, minTime: .46 - .20 * diff, flip: .5 + .4 * diff });
 const rowGap = () => { const p = params(); return Math.max(p.gap - level * p.shrink, speed * p.minTime); };
 const bkey = () => per + '_' + bucket();
 const bestNow = () => bests[bkey()] || 0;
 function syncDiffUI() {
-  document.querySelectorAll('.drange').forEach(r => { r.value = Math.round(diff * 100); });
-  document.querySelectorAll('.dname').forEach(n => { n.textContent = NAMES[bucket()]; });
+  document.querySelectorAll('.drange').forEach(r => { r.value = diff > 1 ? 120 : Math.round(diff * 100); });
+  document.querySelectorAll('.dname').forEach(n => { n.textContent = NAMES[bucket()]; n.style.color = bucket() === 5 ? '#e63946' : ''; });
   $('#mbest').textContent = bestNow() ? `best on ${NAMES[bucket()]}, ${N} columns: ${bestNow()}` : 'no score yet on this setup';
   $('#obest').textContent = `best on ${NAMES[bucket()]}, ${N} columns: ${bestNow()}`;
   document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', +b.dataset.per === per)); $('#pername').textContent = N + ' columns';
 }
 document.querySelectorAll('.drange').forEach(r => r.addEventListener('input', () => {
-  diff = r.value / 100; try { localStorage.mirrorDiff = diff; } catch (e) {} syncDiffUI(); if (state === 'menu') reset();
+  diff = r.value > 100 ? 1.2 : r.value / 100; try { localStorage.mirrorDiff = diff; } catch (e) {} syncDiffUI(); if (state === 'menu') reset();
 }));
 
 // ---------- audio ----------
