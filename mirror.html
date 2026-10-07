@@ -476,36 +476,34 @@ const PAL = [
   { base: '#2ec4d6', hi: '#8fe7f1', lo: '#169eb2', deep: '#0b7a8c', core: '222,250,255', rgb: '46,196,214' },
 ];
 const ease = x => 1 - Math.pow(1 - clamp01(x), 3);
-function drawGate() { // the finish: a frosted-glass ribbon with a gold core, a pill label like the game's UI; it parts in the middle when the balls go through
-  if (!gate || gate.y < -220 || gate.y > H + 140) return;
-  const y = gate.y, intro = smooth(gate.t / .7), k = won ? fx.dead : 0, fade = won ? Math.max(0, 1 - k / 1.4) : 1, hit = won ? Math.max(0, 1 - k / .6) : 0;
+function drawGate() { // the finish: a gate of light across the whole track, pillars of light at both sides, light pouring upward, a glowing chequered band; it pulses gently and the world warms as it nears
+  if (!gate || gate.y < -360 || gate.y > H + 160) return;
+  const y = gate.y, intro = smooth(gate.t / .8), k = won ? fx.dead : 0, fade = won ? Math.max(0, 1 - k / 1.4) : 1, hit = won ? Math.max(0, 1 - k / .6) : 0;
   if (fade < .01) return;
-  ctx.save(); ctx.globalAlpha = intro;
-  const lg = ctx.createLinearGradient(0, y - 220, 0, y); lg.addColorStop(0, 'rgba(255,214,140,0)'); lg.addColorStop(1, `rgba(255,214,150,${.22 * fade + .2 * hit})`);
-  ctx.fillStyle = lg; ctx.fillRect(-20, y - 220, W + 40, 220); // warm light standing on the line
-  ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = intro * (.55 * fade + .5 * hit); ctx.drawImage(softBlob('255,206,120'), -W * .2, y - 50, W * 1.4, 100); ctx.globalCompositeOperation = 'source-over';
-  const half = (side) => { // one half of the ribbon; after the crossing each half swings away from the centre and falls
+  const pulse = .85 + .15 * Math.sin(gate.t * 4.2), near = smooth(1 - (BY - y) / 700), I = intro * fade * pulse + hit * .6;
+  ctx.save();
+  ctx.globalAlpha = intro * fade * near * .16; ctx.fillStyle = '#ffd98a'; ctx.fillRect(-20, -20, W + 40, H + 40); // the whole scene warms as you close in
+  ctx.globalAlpha = 1;
+  let g = ctx.createLinearGradient(0, y - 340, 0, y); g.addColorStop(0, 'rgba(255,200,90,0)'); g.addColorStop(.7, `rgba(255,205,105,${.2 * I})`); g.addColorStop(1, `rgba(255,214,130,${.55 * I})`);
+  ctx.fillStyle = g; ctx.fillRect(-20, y - 340, W + 40, 340); // light pouring upward from the line
+  for (let i = 0; i < 12; i++) { const sd = SEEDS[i], x = sd.x * W, w = 6 + sd.k * 16, hh = 180 + sd.k * 160, al = .18 * I * (.5 + .5 * Math.sin(gate.t * (1.5 + sd.k) + sd.s));
+    g = ctx.createLinearGradient(0, y - hh, 0, y); g.addColorStop(0, 'rgba(255,240,200,0)'); g.addColorStop(1, `rgba(255,244,214,${al})`); ctx.fillStyle = g; ctx.fillRect(x - w / 2, y - hh, w, hh); } // shafts of light rising
+  for (const px of [0, W]) { g = ctx.createLinearGradient(0, y - 420, 0, y + 12); g.addColorStop(0, 'rgba(255,214,120,0)'); g.addColorStop(1, `rgba(255,214,120,${.7 * I})`); // pillars at both edges
+    ctx.fillStyle = g; ctx.fillRect(px - 22, y - 420, 44, 432); ctx.fillStyle = `rgba(255,250,230,${.9 * I})`; ctx.fillRect(px - 2.5, y - 300, 5, 312); }
+  g = ctx.createLinearGradient(0, y - 46, 0, y + 46); g.addColorStop(0, 'rgba(255,200,90,0)'); g.addColorStop(.5, `rgba(255,205,100,${.55 * I})`); g.addColorStop(1, 'rgba(255,200,90,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 46, W + 40, 92); // bloom around the band
+  const half = (side) => { // after the crossing each half swings away from the centre and falls
     const sw = won ? smooth(k / .9) : 0, piv = side < 0 ? 0 : W; ctx.save(); ctx.translate(piv, y); ctx.rotate(side * -sw * 1.1); ctx.translate(-piv, -y);
-    const x0 = side < 0 ? 4 : W / 2 + sw * 18, x1 = side < 0 ? W / 2 - sw * 18 : W - 4; ctx.globalAlpha = intro * fade;
-    ctx.fillStyle = 'rgba(43,45,66,.1)'; ctx.beginPath(); ctx.roundRect(x0 + 2, y - 4, x1 - x0 - 4, 18, 9); ctx.fill(); // soft shadow under the ribbon
-    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.beginPath(); ctx.roundRect(x0, y - 9, x1 - x0, 18, 9); ctx.fill(); // frosted glass body
-    ctx.save(); ctx.clip(); for (let cx = x0 + 8, n = 0; cx < x1 - 8; cx += 7, n++) { ctx.fillStyle = 'rgba(232,170,60,.32)'; ctx.fillRect(cx, n % 2 ? y - 6 : y, 7, 6); } ctx.restore(); // a faint chequer, the finish-line motif
-    const cg = ctx.createLinearGradient(0, 0, W, 0); cg.addColorStop(0, '#f2b43c'); cg.addColorStop(.5, '#ffe2a0'); cg.addColorStop(1, '#f2b43c');
-    ctx.strokeStyle = cg; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.roundRect(x0 + .8, y - 8.2, x1 - x0 - 1.6, 16.4, 8.2); ctx.stroke(); // gold edge
-    ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + 9, y - 7.3); ctx.lineTo(x1 - 9, y - 7.3); ctx.stroke(); // highlight along the top
-    ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y - 9, x1 - x0, 18, 9); ctx.clip(); const sx = ((gate.t * 240) % (W + 260)) - 130, sg = ctx.createLinearGradient(sx - 80, 0, sx + 80, 0);
-    sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.9)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 80, y - 10, 160, 20); ctx.restore(); // a sheen gliding along
+    const x0 = side < 0 ? -4 : W / 2 + sw * 18, x1 = side < 0 ? W / 2 - sw * 18 : W + 4; ctx.globalAlpha = intro * fade;
+    const bg = ctx.createLinearGradient(0, y - 11, 0, y + 11); bg.addColorStop(0, '#fff6dc'); bg.addColorStop(.5, '#ffd774'); bg.addColorStop(1, '#f5b443');
+    ctx.fillStyle = bg; ctx.fillRect(x0, y - 11, x1 - x0, 22); // the band itself, warm gold
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y - 11, x1 - x0, 22); ctx.clip(); for (let cx = Math.floor(x0 / 11) * 11, n = 0; cx < x1; cx += 11, n++) { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(cx, (n % 2) ? y - 11 : y, 11, 11); } // a soft white chequer: unmistakably the finish
+    const sx = ((gate.t * 300) % (W + 300)) - 150, sg = ctx.createLinearGradient(sx - 90, 0, sx + 90, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.85)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 90, y - 12, 180, 24); ctx.restore();
+    ctx.fillStyle = `rgba(255,255,255,${.95 * pulse})`; ctx.fillRect(x0, y - 11, x1 - x0, 1.5); ctx.fillRect(x0, y + 9.5, x1 - x0, 1.5); // white-hot edges
     ctx.restore();
   };
   half(-1); half(1);
-  for (let i = 0; i < 18; i++) { const sd = SEEDS[i % 24], ph = (gate.t * (.4 + sd.k * .3) + sd.s) % 1, x = ((sd.x + i * .37) % 1) * W + Math.sin(ph * 6 + i) * 5; // motes of light rising
-    ctx.globalAlpha = intro * fade * (1 - ph) * .8; ctx.fillStyle = i % 3 ? '#ffe7a6' : '#ffffff'; ctx.beginPath(); ctx.arc(x, y - 8 - ph * 150, .8 + sd.k * .8, 0, 7); ctx.fill(); }
-  if (!won) { // the label: a small glass pill, the same material as the game's buttons
-    ctx.globalAlpha = intro; const pw = 92, ph2 = 26, px = W / 2 - pw / 2, py = y - 40;
-    ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.beginPath(); ctx.roundRect(px, py + 3, pw, ph2, 12); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.86)'; ctx.beginPath(); ctx.roundRect(px, py, pw, ph2, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,1)'; ctx.stroke();
-    if ('letterSpacing' in ctx) ctx.letterSpacing = '3px'; txt('FINISH', W / 2 + 1.5, py + 17.5, 11.5, '#d99a2b', 'center', 900); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
-  }
+  for (let i = 0; i < 22; i++) { const sd = SEEDS[i % 24], ph = (gate.t * (.45 + sd.k * .35) + sd.s) % 1, x = ((sd.x + i * .37) % 1) * W + Math.sin(ph * 6 + i) * 6; // sparks lifting off
+    ctx.globalAlpha = intro * fade * (1 - ph); ctx.fillStyle = i % 3 ? '#ffe39a' : '#ffffff'; ctx.beginPath(); ctx.arc(x, y - 12 - ph * 220, 1 + sd.k * 1.1, 0, 7); ctx.fill(); }
   ctx.restore();
 }
 function drawWinLight() { // crossing the line: gold rings ripple out from both balls, a warm band of light rises up the screen, the scene glows
@@ -652,6 +650,7 @@ function lowres(fn) {
   const prev = ctx; ctx = lrX; try { fn(); } finally { ctx = prev; }
   ctx.imageSmoothingQuality = 'high'; ctx.drawImage(lrC, 0, 0, w / LR, h / LR);
 }
+const RM = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })(); // honour iOS Reduce Motion
 let skyC = null, skyX = null;
 function skyField(alpha, paint) {
   if (alpha < .005) return;
@@ -790,6 +789,24 @@ const softBlob = rgb => sprite('blob' + rgb, 128, 128, (g, w) => { // smooth, ne
   [[0, 1], [.2, .86], [.4, .58], [.6, .3], [.8, .1], [1, 0]].forEach(([o, v]) => r.addColorStop(o, `rgba(${rgb},${v})`));
   g.fillStyle = r; g.fillRect(0, 0, w, w);
 });
+function cloudTex(key, dark, lit, o = {}) { // real cloud texture: fractal noise that wraps sideways, lit from above with soft self-shadowing, a billowed base
+  return sprite(key, 512, 256, (g, W2, H2) => {
+    const w = 256, h = 128, img = new ImageData(w, h), d = img.data, seed = o.seed || 1, P0 = o.p || 4;
+    const hs = (i, j) => { const v = Math.sin(i * 127.1 + j * 311.7 + seed * 74.7) * 43758.5453; return v - Math.floor(v); };
+    const vn = (x, y, per) => { const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy), a0 = ((xi % per) + per) % per, a1 = (a0 + 1) % per;
+      return (hs(a0, yi) * (1 - sx) + hs(a1, yi) * sx) * (1 - sy) + (hs(a0, yi + 1) * (1 - sx) + hs(a1, yi + 1) * sx) * sy; };
+    const fbm = (u, v) => { let s2 = 0, amp = .5, f = 1; for (let k = 0; k < 5; k++) { const per = P0 * f; s2 += amp * vn(u * per, v * per * (o.squash || 2.2), per); amp *= .5; f *= 2; } return s2; };
+    const cover = o.cover ?? .55, base = o.base ?? .75, top = o.top ?? .05, D = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const u = x / w, v = y / h, prof = smooth((v - top) / .2) * (1 - smooth((v - base) / (1 - base + .001)));
+      D[y * w + x] = clamp01((fbm(u, v) - (1 - cover)) * (o.sharp || 3.2)) * prof; }
+    const dk = dark.split(',').map(Number), lt = lit.split(',').map(Number);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, den = D[i]; let occ = 0; for (let k = 1; k <= 4; k++) occ += D[Math.max(0, y - k * 3) * w + x]; // light coming down from the top
+      const sh = Math.exp(-occ * (o.shadow || .9)) * (1 - .35 * y / h), q = i * 4;
+      d[q] = dk[0] + (lt[0] - dk[0]) * sh; d[q + 1] = dk[1] + (lt[1] - dk[1]) * sh; d[q + 2] = dk[2] + (lt[2] - dk[2]) * sh; d[q + 3] = 255 * Math.min(1, den * (o.alpha || 1.15)); }
+    const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').putImageData(img, 0, 0);
+    g.imageSmoothingQuality = 'high'; if ('filter' in g) g.filter = 'blur(1px)'; g.drawImage(c, -W2, 0, W2, H2); g.drawImage(c, 0, 0, W2, H2); g.drawImage(c, W2, 0, W2, H2);
+  });
+}
 function sheet(key, w, h, rgb, n, opt = {}) { // a seamless horizontal strip of overlapping soft puffs, blurred once, with soft holes cut through it
   return sprite(key, w, h, (g) => {
     const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h; const c = tmp.getContext('2d'), blob = softBlob(rgb);
@@ -910,7 +927,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     meteors(wx.phase === 'on' ? 3.4 : wx.phase === 'warn' ? 0 : .6, a); }
   if (wx.kind === 'aurora') { nightSky(a, .3); meteors(.12, a);
     ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a)); ctx.globalCompositeOperation = 'source-over';
-    lowres(() => drawSheet(sheet('wisp', 512, 160, '10,18,40', 14, { y0: .3, yr: .4, lit: '30,50,90', blur: 7, holes: 4 }), H * .3 + nz(t * .05, 2) * 20, H * .22, 7, .45 * a, 2.2)); // thin dark cloud drifting in front of the lights
+    lowres(() => drawSheet(cloudTex('wisp3', '6,12,28', '40,80,110', { seed: 21, cover: .36, base: .7, top: .25, alpha: .8, squash: 3, p: 3 }), H * .3 + nz(t * .05, 2) * 20, H * .2, 7, .3 * a, 2.2)); // thin dark cloud drifting in front of the lights
     const RY = H * .84; if (skyC) { ctx.save(); ctx.beginPath(); ctx.rect(-20, RY, W + 40, H - RY + 20); ctx.clip(); // the sky mirrored in still water, broken by a slow ripple
       for (let y = RY; y < H + 20; y += 20) { const ox = Math.sin(y * .06 + t * 1.4) * 3 * (1 + (y - RY) / 80); ctx.save(); ctx.beginPath(); ctx.rect(-20, y, W + 40, 20); ctx.clip(); ctx.translate(ox, RY); ctx.scale(1, -.3); ctx.translate(0, -RY); ctx.globalAlpha = .5 * a; ctx.drawImage(skyC, 0, 0, skyC.width * 8, skyC.height * 8); ctx.restore(); }
       ctx.restore(); const hl = ctx.createLinearGradient(0, RY - 2, 0, RY + 3); hl.addColorStop(0, 'rgba(140,230,255,0)'); hl.addColorStop(.5, `rgba(140,230,255,${.35 * a})`); hl.addColorStop(1, 'rgba(140,230,255,0)'); ctx.fillStyle = hl; ctx.fillRect(-20, RY - 2, W + 40, 5); }
@@ -929,7 +946,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.fillStyle = mg; ctx.fillRect(-20, H * .82, W + 40, H * .18); // mirage sheen on the hot floor
   }
   if (wx.kind === 'wind') lowres(() => { // cumulus racing across a bright sky, nearer layers faster
-    [[.02, .3, 70, 2.2, .7], [.2, .28, 130, 1.8, .6], [.42, .26, 210, 1.6, .45]].forEach(([y, h, sp, sc, al], i) => drawSheet(sheet('cum2' + i, 512, 200, '168,184,208', 18, { y0: .25, yr: .4, lit: '255,255,255', blur: 5, holes: 3 }), H * y + nz(t * .2, i) * 10, H * h, sp * windDir, Math.min(1, al * 1.4) * a, sc));
+    [[.02, .3, 70, 2.2, .7], [.2, .28, 130, 1.8, .6], [.42, .26, 210, 1.6, .45]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('cu3' + i, '168,184,212', '255,255,255', { seed: 11 + i, cover: .46, base: .82, top: .12, sharp: 4.5, shadow: .75, squash: 1.1, p: 2 + i }), H * y + nz(t * .2, i) * 10, H * h, sp * windDir, Math.min(1, al * 1.4) * a, sc));
   });
   if (wx.kind === 'wind') { // air currents drawn as fine silk ribbons: a bright gust front races along each one, its tail dissolving behind
     const gust = .6 + .4 * (nz(t * 1.4, 2) * .5 + .5); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -983,7 +1000,7 @@ function drawFrontWeather() { // light and glass in front of the scene
 // ---------- raindrops on the glass: a handful of real little lenses that refract the scene (upside down, like real drops) ----------
 const DROPS = Array.from({ length: 12 }, () => ({ on: false })), BEADS = Array.from({ length: 48 }, () => ({ on: false })); let glassT = 0, snapC = null, glassWet = 0;
 function bead(x, y, r, max) { const b = BEADS.find(q => !q.on); if (b) Object.assign(b, { on: true, x, y, r, life: 0, max }); }
-function drawGlass() { // rain on the glass: lots of tiny beads, a few real drops that magnify the scene upside down, some sliding away in teardrops
+function drawGlass() { if (RM) return; // rain on the glass: lots of tiny beads, a few real drops that magnify the scene upside down, some sliding away in teardrops
   const dt = Math.min(.05, Math.max(0, t - glassT)); glassT = t;
   const raining = wx.kind === 'storm' && wx.phase !== 'warn' && wx.a > .3, A = wx.kind === 'storm' ? wx.a : 0;
   if (raining) {
@@ -1218,7 +1235,7 @@ function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lig
   const C = [['52,60,84', '96,106,132', -.75, 1.25, -3, 2.4, .97], ['92,104,130', '150,160,182', -.3, .95, 5, 2.1, .8], ['64,74,100', '120,132,158', -.05, .85, -8, 1.7, .85], ['44,52,76', '96,106,132', .2, .7, 12, 1.5, .9]];
   lowres(() => {
   C.forEach(([col, lit, y, h, sp, sc, al], i) => {
-    const img = sheet('cloud' + i, 512, 160, col, i ? 18 : 26, { y0: .15, yr: .45, lit, blur: 5, holes: i ? 2 : 0, top: .02 });
+    const img = cloudTex('ct' + i, col, lit, { seed: i + 3, cover: i ? .58 : .8, base: i ? .78 : .9, top: i ? .08 : 0, shadow: .8, p: 3 + i });
     drawSheet(img, ch * y + nz(t * .1, i) * 6, ch * (h + .5), sp, al * e, sc);
   });
   const g = softBlob('205,222,255'); ctx.globalCompositeOperation = 'screen';
@@ -1361,7 +1378,7 @@ let heatC = null;
 function draw() {
   ctx = mainCtx;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height);
-  ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * shake * scale, offY + (Math.random() - .5) * shake * scale);
+  const sk = RM ? 0 : shake; ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * sk * scale, offY + (Math.random() - .5) * sk * scale);
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   const playing = state !== 'menu';
   drawBackground(fxA * fxA);
