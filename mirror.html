@@ -653,20 +653,40 @@ function draw() {
     ctx.restore();
   }
 
-  // pause fog: mirrored mist (pink side, cyan side) that drifts toward the centre
+  // pause fog: a frosted liquid-glass sheet with a glossy lip; pink and cyan tints mirror each other
   const fogVis = resumeT > 0 || state === 'paused' ? 1 : clamp01(fogT / .8);
   if (fog > 0 && fogVis > 0) {
     ctx.save(); ctx.globalAlpha = fogVis;
-    const fy = Math.min(BY - 110, (BY - 60) * Math.min(.88, .3 * fog + .15));
-    [[0, '238,226,226'], [1, '224,236,238']].forEach(([side, c]) => {
-      const g = ctx.createLinearGradient(0, 0, 0, fy + 90); g.addColorStop(0, `rgba(${c},1)`); g.addColorStop(fy / (fy + 90), `rgba(${c},1)`); g.addColorStop(1, `rgba(${c},0)`);
-      ctx.fillStyle = g; ctx.fillRect(side ? W / 2 : -20, -20, W / 2 + 20, fy + 110);
+    const fy = Math.min(BY - 110, (BY - 60) * Math.min(.88, .3 * fog + .15)), fade = 120;
+    // the wavy lower edge, symmetric about the centre line
+    const edge = x => fy + Math.sin((Math.abs(x - W / 2) / W) * 9 - t * 1.1) * 7 + Math.sin(t * .7) * 3;
+    const sheet = () => { ctx.beginPath(); ctx.moveTo(-20, -20); ctx.lineTo(W + 20, -20); for (let x = W + 20; x >= -20; x -= 10) ctx.lineTo(x, edge(x)); ctx.closePath(); };
+    // soft falloff below the lip so blocks emerge gradually
+    const fg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); fg.addColorStop(0, 'rgba(248,245,241,.92)'); fg.addColorStop(1, 'rgba(248,245,241,0)');
+    ctx.fillStyle = fg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
+    // frosted body: fully opaque so nothing behind it can be read
+    const body = ctx.createLinearGradient(0, 0, 0, fy); body.addColorStop(0, '#fbf9f6'); body.addColorStop(1, '#f3efea');
+    ctx.fillStyle = body; sheet(); ctx.fill();
+    ctx.save(); sheet(); ctx.clip();
+    [[0, '255,107,129'], [1, '46,196,214']].forEach(([sd, c]) => { // mirrored tint pools
+      const x = sd ? W * .82 : W * .18, y = fy * .55, rg = ctx.createRadialGradient(x, y, 0, x, y, W * .55);
+      rg.addColorStop(0, `rgba(${c},.13)`); rg.addColorStop(1, `rgba(${c},0)`); ctx.fillStyle = rg; ctx.fillRect(-20, -20, W + 40, fy + 40);
     });
-    for (let i = 0; i < 4; i++) for (let s = 0; s < 2; s++) {
-      const d = ((i * 61 + t * 16) % (W / 2 + 80)) - 40, x = s ? W - d : d;
-      ctx.fillStyle = s ? 'rgba(224,236,238,.75)' : 'rgba(238,226,226,.75)';
-      ctx.beginPath(); ctx.arc(x, fy + 28 + Math.sin(t * .9 + i) * 10, 44 + (i % 3) * 14, 0, 7); ctx.fill();
+    for (let i = 0; i < 3; i++) for (let sd = 0; sd < 2; sd++) { // slow soft billows drifting toward the centre
+      const d = ((i * 83 + t * 12) % (W / 2 + 60)) - 30, x = sd ? W - d : d, y = fy - 26 + Math.sin(t * .8 + i * 2) * 8, R = 54 + (i % 2) * 18;
+      const pg = ctx.createRadialGradient(x, y, 0, x, y, R); pg.addColorStop(0, 'rgba(255,255,255,.5)'); pg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
     }
+    const sx = ((t * 60) % (W + 400)) - 200, sh = ctx.createLinearGradient(sx - 90, 0, sx + 90, fy); // slow glass sheen
+    sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(.5, 'rgba(255,255,255,.35)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sh; ctx.fillRect(-20, -20, W + 40, fy + 40);
+    ctx.restore();
+    // glossy lip: soft shadow under a bright highlight line
+    const lip = () => { ctx.beginPath(); for (let x = -20; x <= W + 20; x += 10) x === -20 ? ctx.moveTo(x, edge(x)) : ctx.lineTo(x, edge(x)); };
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.save(); ctx.translate(0, 4); ctx.strokeStyle = 'rgba(43,45,66,.06)'; ctx.lineWidth = 8; lip(); ctx.stroke(); ctx.restore();
+    const lg = ctx.createLinearGradient(0, 0, W, 0); lg.addColorStop(0, 'rgba(255,107,129,.55)'); lg.addColorStop(.5, 'rgba(255,255,255,.95)'); lg.addColorStop(1, 'rgba(46,196,214,.55)');
+    ctx.strokeStyle = lg; ctx.lineWidth = 2; lip(); ctx.stroke();
     ctx.restore();
   }
   if (state === 'play' && resumeT > 0) { // clean ring countdown
