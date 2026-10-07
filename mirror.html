@@ -200,29 +200,33 @@ function burst(x, y, n, col, sp = 220, life = .6) {
 function float(x, y, txt, col) { floaters.push({ x, y, txt, col, life: 1 }); }
 
 // ---------- screens ----------
-const show = (id, on) => $(id).classList.toggle('on', on);
+let shownAt = 0;
+const show = (id, on) => { $(id).classList.toggle('on', on); if (on) shownAt = performance.now(); };
+const fresh = () => performance.now() - shownAt < 350;
 function startGame() { show('#menu', false); show('#over', false); state = 'play'; reset(); beep(520, .15, 'triangle', .06, 300); }
-function pauseGame() {
+let freePause = false;
+function pauseGame(away) {
   if (state !== 'play' || resumeT > 0) return;
-  state = 'paused'; $('#pfog').textContent = fog ? `Fog level ${fog}. Resuming brings thicker fog for 5 seconds.` : 'Careful: resuming brings in fog for 5 seconds.'; show('#pause', true);
+  freePause = !!away;
+  state = 'paused'; $('#pfog').textContent = away ? 'Paused while you were away. No fog this time.' : fog ? `Fog level ${fog}. Resuming brings thicker fog for 5 seconds.` : 'Careful: resuming brings in fog for 5 seconds.'; show('#pause', true);
 }
 function resumeGame() {
   if (state !== 'paused') return;
-  show('#pause', false); fog++; resumeT = 3; fogT = 5; state = 'play'; beep(300, .3, 'sine', .06, -100); // fog lingers 5s after the countdown, thicker with every pause
+  show('#pause', false); if (!freePause) { fog++; fogT = 5; } resumeT = 3; state = 'play'; beep(300, .3, 'sine', .06, -100); // fog lingers 5s after the countdown, thicker with every pause
 }
-$('#pbtn').onclick = pauseGame; $('#resume').onclick = resumeGame;
-$('#pmenu').onclick = () => { show('#pause', false); goMenu(); };
+$('#pbtn').onclick = () => pauseGame(); $('#resume').onclick = () => { if (!fresh()) resumeGame(); };
+$('#pmenu').onclick = () => { if (fresh()) return; show('#pause', false); goMenu(); };
 function goMenu() { show('#over', false); state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
 function showOver() {
   if (state !== 'dead') return;
   $('#oscore').textContent = score; $('#onew').textContent = newBest ? '★ NEW BEST ★' : ''; syncDiffUI(); show('#over', true);
 }
 document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { per = +b.dataset.per; try { localStorage.mirrorPer = per; } catch (e) {} layout(); reset(); syncDiffUI(); });
-$('#play').onclick = startGame; $('#retry').onclick = startGame; $('#tomenu').onclick = goMenu;
+$('#play').onclick = () => { if (!fresh()) startGame(); }; $('#retry').onclick = () => { if (!fresh()) startGame(); }; $('#tomenu').onclick = () => { if (!fresh()) goMenu(); };
 
 let flashA = 0, flashLane = 0;
 function setPos(np, lane) {
-  if (state !== 'play') return;
+  if (state !== 'play' || resumeT > 0) return;
   np = Math.max(0, Math.min(per - 1, np)); flashA = 1; flashLane = lane === undefined ? np : lane;
   if (np === pos) beep(300, .04, 'triangle', .03);
   else { const d = np - pos; pos = np; pulse = 1; beep(380 + pos * 90, .08, 'triangle', .05, d * 80); }
@@ -233,10 +237,11 @@ function cycle() { if (pos + dirv > per - 1 || pos + dirv < 0) dirv = -dirv; mov
 // tap anywhere: the balls step one column; at the edge they turn around
 cv.addEventListener('pointerdown', e => { e.preventDefault(); cycle(); });
 addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' && ['Space', 'Enter'].includes(e.code)) return;
+  if (e.repeat && state !== 'play') return;
   const act = ['Space', 'Enter'].includes(e.code);
   if (state === 'menu' && act) { e.preventDefault(); startGame(); }
-  else if (state === 'play' && ['KeyP', 'Escape'].includes(e.code)) { e.preventDefault(); pauseGame(); }
+  else if (state === 'play' && !e.repeat && ['KeyP', 'Escape'].includes(e.code)) { e.preventDefault(); pauseGame(); }
   else if (state === 'paused' && (act || ['KeyP', 'Escape'].includes(e.code))) { e.preventDefault(); resumeGame(); }
   else if (state === 'dead' && act && $('#over').classList.contains('on')) { e.preventDefault(); startGame(); }
   else if (state === 'play' && !e.repeat) {
@@ -254,7 +259,7 @@ function die(x, y) {
 
 // ---------- update ----------
 function update(dt) {
-  $('#pbtn').style.display = state === 'play' ? 'flex' : 'none';
+  $('#pbtn').style.display = state === 'play' && resumeT <= 0 ? 'flex' : 'none';
   if (state === 'paused') return;
   if (state === 'play' && resumeT <= 0) fogT = Math.max(0, fogT - dt);
   if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
@@ -398,7 +403,7 @@ function draw() {
 let last = performance.now();
 (function loop(now) { const dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); })(last);
 syncDiffUI(); show('#menu', true);
-document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(); fog = Math.max(0, fog - 1); } }); // leaving the app: pause, but the resume fog cancels out
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(true); } }); // leaving the app pauses without the fog penalty
 </script>
 </body>
 </html>
