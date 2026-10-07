@@ -651,7 +651,7 @@ function skyField(alpha, paint) {
   if (!skyC || skyC.width !== fw || skyC.height !== fh) { skyC = document.createElement('canvas'); skyC.width = fw; skyC.height = fh; skyX = skyC.getContext('2d'); }
   skyX.setTransform(1, 0, 0, 1, 0, 0); skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = 1; skyX.clearRect(0, 0, fw, fh); skyX.setTransform(1 / 8, 0, 0, 1 / 8, 0, 0);
   paint(skyX); if (LIGHTS[wx.kind]) LIGHTS[wx.kind](skyX);
-  const vk = { storm: .55, hail: .4, aurora: .6, meteor: .65 }[wx.kind]; if (vk) { skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = vk; skyX.drawImage(vignette(), 0, 0, W, H); skyX.globalAlpha = 1; } // the sky falls off into shadow at the edges, like a lens
+  const vk = { storm: .55, hail: .4, aurora: .6, meteor: .65, eclipse: .5 }[wx.kind]; if (vk) { skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = vk; skyX.drawImage(vignette(), 0, 0, W, H); skyX.globalAlpha = 1; } // the sky falls off into shadow at the edges, like a lens
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = alpha; ctx.drawImage(skyC, 0, 0, fw * 8, fh * 8); ctx.globalAlpha = 1; // one smooth upscale straight to the screen
 }
 function light(g, x, y, r, stops, op = 'source-over') { // an off-centre radial light, the way scattered light really pools in a sky
@@ -957,7 +957,6 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'eclipse') { // the moon actually crosses the sun: partial phase, diamond ring, totality with corona and stars, then out again
     const E = eclipseState(), cx = E.cx, cy = E.cy, R = E.R;
     if (E.tot > 0) nightSky(E.tot * a, .7);
-    horizon(a * (.4 + .6 * E.c), E.c > .5 ? '40,30,40' : '60,80,90');
     ctx.globalAlpha = 1;
     const sunA = a * (1 - E.tot);
     if (sunA > .01) { // the sun: its glare shrinks as less of it shows; the disc is limb-darkened and the moon's edge cuts it softly
@@ -969,8 +968,8 @@ function drawBackWeather() { // events that live behind the blocks and balls
     if (E.c > .6) { // the corona appears as the last light goes: pearl glow, fine streamers, a pink chromosphere
       const k = smooth((E.c - .6) / .4) * a;
       ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * .004); ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = k * .55; ctx.drawImage(CORONA_OLD(), -R * 4, -R * 4, R * 8, R * 8); // fine plasma streamers
-      ctx.globalAlpha = k; ctx.drawImage(CORONA(), -R * 4, -R * 4, R * 8, R * 8); ctx.restore(); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+      ctx.globalAlpha = k * .5; ctx.drawImage(CORONA_OLD(), -R * 5, -R * 5, R * 10, R * 10); // fine plasma streamers
+      ctx.globalAlpha = k; ctx.drawImage(CORONA(), -R * 5, -R * 5, R * 10, R * 10); ctx.globalAlpha = .35 * k; ctx.drawImage(softBlob('210,220,255'), -R * 9, -R * 9, R * 18, R * 18); /* and the faint glow it throws across the sky */ ctx.restore(); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     }
     if (E.c > 0) { // the moon: a soft-edged dark disc, faintly lit by the Earth
       ctx.save(); if (E.tot < .98) { ctx.beginPath(); ctx.arc(cx, cy, R * 1.04, 0, 7); ctx.clip(); }
@@ -982,14 +981,19 @@ function drawBackWeather() { // events that live behind the blocks and balls
       ctx.drawImage(softBlob('255,255,255'), bx - R * .35, by - R * .35, R * .7, R * .7); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     }
     ctx.strokeStyle = `rgba(255,140,160,${.5 * a * E.tot})`; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, R + .7, 0, 7); ctx.stroke(); // the thin pink chromosphere at totality
+    lowres(() => { const lit = E.c > .6 ? '210,215,235' : '255,236,210'; // thin cloud drifting across the sun, lit from behind
+      drawSheet(cloudTex(E.c > .6 ? 'ecn' : 'ecd', E.c > .6 ? '10,12,26' : '120,140,180', lit, { seed: 51, cover: .38, base: .7, top: .25, alpha: .85, squash: 3, p: 3 }), cy - R * 1.4 + nz(t * .05, 3) * 10, R * 3.2, 9, .55 * a, 2.6);
+      ctx.globalAlpha = (.35 + .35 * E.c) * a; ctx.drawImage(softBlob(E.c > .5 ? '255,140,90' : '255,220,190'), -W * .4, H * .8, W * 1.8, H * .4); ctx.globalAlpha = 1; }); // haze glowing all around the horizon
   }
   if (wx.kind === 'meteor') { // the sky clears to a deep night: Milky Way, a fine field of stars, a crescent moon, then the shower
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a; ctx.drawImage(NIGHT(), 0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
     nightSky(a, 0);
-    lowres(() => [[.22, .2, 5, 2.2, .55], [.58, .22, -4, 2.6, .45]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('nc' + i, '14,26,58', '120,140,186', { seed: 31 + i, cover: .34, base: .75, top: .2, alpha: .85, squash: 2.6, p: 3 }), H * y + nz(t * .05, i) * 12, H * h, sp, al * a, sc))); // thin moonlit clouds drifting past
-    const R = W * .26, mx = W - R * .32, my = R * .36; // a big moon, tucked into the corner and partly off the edge ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('200,210,240'), mx - R * 5, my - R * 5, R * 10, R * 10); ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('230,235,250'), mx - R * 1.6, my - R * 1.6, R * 3.2, R * 3.2); // atmospheric glow around the moon
+    lowres(() => [[.2, .22, 5, 2.2, .65], [.5, .22, -4, 2.6, .5]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('nc' + i, '14,26,58', '120,140,186', { seed: 31 + i, cover: .34, base: .75, top: .2, alpha: .85, squash: 2.6, p: 3 }), H * y + nz(t * .05, i) * 12, H * h, sp, al * a, sc))); // thin moonlit clouds drifting past
+    const R = W * .26, mx = W - R * .32, my = R * .36; /* a big moon, tucked into the corner and partly off the edge */ ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('200,210,240'), mx - R * 5, my - R * 5, R * 10, R * 10); ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('230,235,250'), mx - R * 1.6, my - R * 1.6, R * 3.2, R * 3.2); // atmospheric glow around the moon
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a; ctx.drawImage(MOON(), mx - R * 1.085, my - R * 1.085, R * 2.17, R * 2.17); ctx.globalAlpha = 1;
-    meteors(wx.phase === 'on' ? 3.4 : wx.phase === 'warn' ? 0 : .6, a); horizon(a, '18,24,44'); }
+    meteors(wx.phase === 'on' ? 3.4 : wx.phase === 'warn' ? 0 : .6, a);
+    lowres(() => { drawSheet(cloudTex('ncf', '8,16,40', '150,170,215', { seed: 41, cover: .4, base: .78, top: .15, alpha: .9, squash: 2.4, p: 3 }), H * .74 + nz(t * .04, 7) * 10, H * .3, 3, .75 * a, 2.4); // a low cloud bank, moonlit along its top
+      ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('60,84,140'), -W * .4, H * .78, W * 1.8, H * .4); ctx.globalAlpha = 1; }); } // haze glowing near the horizon
   if (wx.kind === 'aurora') { nightSky(a, .3); meteors(.12, a);
     ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a)); ctx.globalCompositeOperation = 'source-over';
     lowres(() => drawSheet(cloudTex('wisp3', '6,12,28', '40,80,110', { seed: 21, cover: .36, base: .7, top: .25, alpha: .8, squash: 3, p: 3 }), H * .3 + nz(t * .05, 2) * 20, H * .2, 7, .3 * a, 2.2)); // thin dark cloud drifting in front of the lights
@@ -1027,7 +1031,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'hail') { // ice beads of uneven size and speed, drifting slightly, with occasional splashes
     for (const d of HAIL) {
       const sway = nz(t * .8, d.x * 40) * 14, x = ((d.x * (W + 40) + t * 40 * d.s) % (W + 40)) - 20 + sway, y = ((d.y * (H + 60) + t * 600 * d.s) % (H + 60)) - 30;
-      ctx.globalAlpha = .4 * a; ctx.drawImage(hailWake(), x - d.r * .9, y - d.r * 12, d.r * 1.8, d.r * 12.5); // a soft wake through the air ctx.globalAlpha = .8 * a; ctx.drawImage(ICE(), x - d.r * 1.3, y - d.r * 1.4, d.r * 2.6, d.r * 2.85); ctx.globalAlpha = 1; // slightly stretched along the fall
+      ctx.globalAlpha = .4 * a; ctx.drawImage(hailWake(), x - d.r * .9, y - d.r * 12, d.r * 1.8, d.r * 12.5); /* a soft wake through the air */ ctx.globalAlpha = .8 * a; ctx.drawImage(ICE(), x - d.r * 1.3, y - d.r * 1.4, d.r * 2.6, d.r * 2.85); ctx.globalAlpha = 1; // slightly stretched along the fall
       if (y > BY + 55 && y < BY + 70 && Math.random() < .3 && hailHits.length < 16) hailHits.push({ x, y, t: 0, s: .6 + Math.random() * .8, vx: (Math.random() - .5) * 60, r: d.r });
       if (hailHits.length < 16 && Math.random() < .35) for (const o of things) if (o.k === 'b' && Math.abs(x - bxOf(o)) < bw() / 2 - 4 && y > o.y - 30 && y < o.y - 18) { hailHits.push({ x, y: o.y - 22, t: 0, s: .5 + Math.random() * .6, vx: (Math.random() - .5) * 90, r: d.r * .8 }); break; } // stones bounce off the blocks
     }
@@ -1048,7 +1052,7 @@ function drawFrontWeather() { // light and glass in front of the scene
       const x = sx + (cx - sx) * f, y = sy + (cy - sy) * f, g = ctx.createRadialGradient(x, y, R * .2, x, y, R); g.addColorStop(0, `rgba(${c},${al * .4 * a})`); g.addColorStop(.8, `rgba(${c},${al * a})`); g.addColorStop(1, `rgba(${c},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill(); }));
     ctx.restore();
   }
-  if (wx.kind === 'fog' && wx.a > .01) { ctx.globalAlpha = .55 * wx.a * wx.a; ctx.drawImage(mistEdge(), -10, -10, W + 20, H + 20); ctx.globalAlpha = 1; } // soft breath-like mist at the edges of the glass
+  if (wx.kind === 'fog' && wx.a > .01) { const f = frost(); ctx.globalAlpha = .32 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1; } // the original condensation at the corners, lighter
   if (wx.kind === 'hail' && wx.a > .01) { // cold frost gathering in the corners of the glass
     const f = frost(); ctx.globalAlpha = .62 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
   }
@@ -1278,7 +1282,7 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
   if (wx.kind !== 'fog' || wx.a < .01) return;
   const a = wx.a, e = a * a * (3 - 2 * a); // eased in and out
   lowres(() => {
-  const L = [[-.02, .42, 7, 1.9, 1], [.2, .4, -11, 1.6, .95], [.44, .38, 9, 2.2, .9], [.66, .4, -15, 1.7, .8]];
+  const L = [[-.02, .42, 7, 1.9, .72], [.2, .4, -11, 1.6, .66], [.44, .38, 9, 2.2, .6], [.66, .4, -15, 1.7, .52]]; // thinner banks than before
   L.forEach(([y, h, sp, sc, al], i) => {
     const img = sheet('fog' + i, 512, 180, '206,211,222', 20, { holes: 4, blur: 8, sc: 1.25, y0: .2, yr: .5, lit: '250,251,253' }); // shaded bellies, bright crowns: reads as volume
     const breath = .78 + .22 * nz(t * .13, i * 5), yy = H * y + nz(t * .07, i * 3) * 18;
