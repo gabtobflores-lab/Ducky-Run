@@ -227,11 +227,13 @@ let fog = 0, resumeT = 0, fogT = 0; const bv = [0, 0], trail = [[], []], SPRING 
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 // visual-only feedback timers (they never affect the rules)
 const fx = { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 };
+const crash = { ball: [null, null], shards: [], waves: [], tmpl: null };
 function reset() {
   const p = params();
   pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
   fog = 0; resumeT = 0; fogT = 0;
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
+  crash.ball = [null, null]; crash.shards = []; crash.waves = [];
   Object.assign(fx, { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 });
   while (nextY > -1000) addRow();
 }
@@ -328,9 +330,13 @@ addEventListener('keydown', e => {
   }
 });
 
-function die(x, y) {
-  state = 'dead'; shake = 6; fx.freeze = .12; fx.dead = 0; // brief hit-stop, then a small shake
-  burst(bx[0], BY, 14, '#ff6b81', 300, .7, 380); burst(bx[1], BY, 14, '#2ec4d6', 300, .7, 380); burst(x, y, 8, '#3a3d58', 240, .6, 420);
+function die(x, y, bi = 0, blk = null) {
+  state = 'dead'; shake = 0; fx.freeze = .1; fx.dead = 0; // brief hit-stop holding the squashed impact frame
+  crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null;
+  crash.ball[bi] = { at: 0, burst: false }; if (blk) blk.hitAt = 0;
+  // the twin ball: if it is meeting its own block at (nearly) the same moment, both shatter together as a mirror pair
+  const j = 1 - bi;
+  for (const o of things) if (o.k === 'b' && o !== blk && Math.abs(o.y - BY) < 52 && Math.abs(bx[j] - LX[o.l]) < 38) { crash.ball[j] = { at: 0, burst: false }; o.hitAt = 0; break; }
   beep(190, .45, 'sawtooth', .1, -140);
   if (score > bestNow()) { bests[bkey()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
   setTimeout(showOver, 750);
@@ -349,7 +355,18 @@ function update(dt) {
   parts.forEach(q => { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += q.g * dt; q.life -= dt; });
   parts = parts.filter(q => q.life > 0);
   floaters.forEach(f => { f.y -= 50 * dt; f.life -= dt * 1.1; }); floaters = floaters.filter(f => f.life > 0);
-  if (state === 'dead') { fx.dead += dt; return; }
+  updateCrash(dt);
+  if (state === 'dead') {
+    fx.dead += dt;
+    if (fx.dead < .7) { // visual only: no scoring, no rules, just lets the surviving ball meet its actual block
+      const k = 1 - clamp01((fx.dead - .45) / .25);
+      for (const o of things) o.y += speed * dt * k;
+      for (let j = 0; j < 2; j++) if (!crash.ball[j]) for (const o of things)
+        if (o.k === 'b' && Math.abs(o.y - BY) < 44 && Math.abs(bx[j] - LX[o.l]) < 38) { crash.ball[j] = { at: fx.dead + .05, burst: false }; o.hitAt = fx.dead; break; }
+    }
+    for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY); } }
+    return;
+  }
   const tx = [LX[pos], LX[N - 1 - pos]];
   for (let i = 0; i < 2; i++) {
     // critically damped spring, integrated in small steps so every frame shows real in-between motion
@@ -390,9 +407,9 @@ function update(dt) {
         fx.near = 1; fx.nearCool = .9; burst(bx[i], BY, 4, i ? '#2ec4d6' : '#ff6b81', 120, .35, 0, .8);
       }
     }
-    if (Math.abs(o.y - BY) < 44) for (const b of bx) {
-      if (Math.abs(b - x) < (o.k === 'b' ? 38 : 34)) {
-        if (o.k === 'b') return die(x, o.y);
+    if (Math.abs(o.y - BY) < 44) for (let bi = 0; bi < 2; bi++) {
+      if (Math.abs(bx[bi] - x) < (o.k === 'b' ? 38 : 34)) {
+        if (o.k === 'b') return die(x, o.y, bi, o);
         if (!o.got) {
           o.got = true; score += combo; combo = Math.min(8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400);
           fx.gem = 1; fx.combo = 1; fx.maxCombo = Math.max(fx.maxCombo, combo); // visual feedback only
@@ -409,32 +426,118 @@ function update(dt) {
 
 // ---------- draw: shared components ----------
 const PAL = [
-  { base: '#ff6b81', hi: '#ffa6b3', lo: '#e2496a', rgb: '255,107,129' },
-  { base: '#2ec4d6', hi: '#8fe7f1', lo: '#169eb2', rgb: '46,196,214' },
+  { base: '#ff6b81', hi: '#ffa6b3', lo: '#e2496a', deep: '#b8304f', core: '255,228,234', rgb: '255,107,129' },
+  { base: '#2ec4d6', hi: '#8fe7f1', lo: '#169eb2', deep: '#0b7a8c', core: '222,250,255', rgb: '46,196,214' },
 ];
 const ease = x => 1 - Math.pow(1 - clamp01(x), 3);
 function txt(s, x, y, size, col = '#2b2d42', al = 'center', w = 800) {
   ctx.font = `${w} ${size}px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif`; ctx.textAlign = al; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = col; ctx.fillText(s, x, y);
 }
 // The ball: one renderer for the home preview and gameplay. side -1 = left (light from upper-left), +1 = right (mirrored).
+// A glossy glass shell around a softly pulsing energy core: inner depth, a slow internal swirl, a rim light and a specular highlight.
 function drawBall(x, y, r, P, side, sx = 1, sy = 1, glow = .2, bright = 0, a = 1) {
   ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y);
-  const gr = r * (2 + glow * .5), g = ctx.createRadialGradient(0, 0, r * .7, 0, 0, gr);
-  g.addColorStop(0, `rgba(${P.rgb},${.16 + glow * .3})`); g.addColorStop(1, `rgba(${P.rgb},0)`);
+  const gr = r * (2 + glow * .55), g = ctx.createRadialGradient(0, 0, r * .7, 0, 0, gr);
+  g.addColorStop(0, `rgba(${P.rgb},${.18 + glow * .32})`); g.addColorStop(1, `rgba(${P.rgb},0)`);
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, gr, 0, 7); ctx.fill();
   ctx.fillStyle = 'rgba(43,45,66,.09)'; ctx.beginPath(); ctx.ellipse(0, r * .98, r * .72 * sx, r * .2, 0, 0, 7); ctx.fill();
   ctx.scale(sx, sy);
-  const body = ctx.createRadialGradient(side * r * .32, -r * .38, r * .08, 0, r * .1, r * 1.05);
-  body.addColorStop(0, P.hi); body.addColorStop(.5, P.base); body.addColorStop(1, P.lo);
+  // shell
+  const body = ctx.createRadialGradient(side * r * .3, -r * .36, r * .06, 0, r * .08, r * 1.04);
+  body.addColorStop(0, P.hi); body.addColorStop(.42, P.base); body.addColorStop(.82, P.lo); body.addColorStop(1, P.deep);
   ctx.fillStyle = body; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
-  if (bright > 0) { ctx.fillStyle = `rgba(255,255,255,${bright * .4})`; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); }
-  // soft curved specular highlight, mirrored for the right ball
+  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.clip();
+  // energy core: a brighter heart sitting a little low and behind, breathing slowly (same beat for both balls)
+  const beat = .82 + .18 * Math.sin(t * 2.6), cx = -side * r * .08, cy = r * .14;
+  const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * .66);
+  core.addColorStop(0, `rgba(${P.core},${.62 * beat})`); core.addColorStop(.45, `rgba(${P.rgb},${.28 * beat})`); core.addColorStop(1, `rgba(${P.rgb},0)`);
+  ctx.fillStyle = core; ctx.beginPath(); ctx.arc(cx, cy, r * .66, 0, 7); ctx.fill();
+  // slow internal swirl, mirrored direction for the right ball
+  ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = r * .07; ctx.lineCap = 'round';
+  const sw = t * 1.3 * -side;
+  ctx.beginPath(); ctx.arc(cx, cy, r * .5, sw, sw + 1.1); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, r * .32, sw + 3.3, sw + 4.1); ctx.stroke();
+  // caustic: light pooling inside the lower glass
+  const cg = ctx.createRadialGradient(-side * r * .2, r * .62, 0, -side * r * .2, r * .62, r * .48);
+  cg.addColorStop(0, 'rgba(255,255,255,.30)'); cg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.ellipse(-side * r * .2, r * .62, r * .5, r * .2, 0, 0, 7); ctx.fill();
+  ctx.restore();
+  if (bright > 0) { ctx.fillStyle = `rgba(255,255,255,${bright * .55})`; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); }
+  // glass edge: a thin fresnel ring plus a rim light on the side away from the highlight
+  ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(0, 0, r - .7, 0, 7); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = r * .09; ctx.lineCap = 'round';
+  const ra = side < 0 ? Math.PI * .18 : Math.PI * .82; ctx.beginPath(); ctx.arc(0, 0, r * .86, ra - .5, ra + .5); ctx.stroke();
+  // specular highlight: soft curved oval plus a tiny sharp glint
   ctx.save(); ctx.translate(side * r * .36, -r * .44); ctx.rotate(side * .65); ctx.scale(1, .55);
-  const h = ctx.createRadialGradient(0, 0, 0, 0, 0, r * .4);
-  h.addColorStop(0, 'rgba(255,255,255,.72)'); h.addColorStop(.6, 'rgba(255,255,255,.22)'); h.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = h; ctx.beginPath(); ctx.arc(0, 0, r * .4, 0, 7); ctx.fill(); ctx.restore();
+  const h = ctx.createRadialGradient(0, 0, 0, 0, 0, r * .42);
+  h.addColorStop(0, 'rgba(255,255,255,.85)'); h.addColorStop(.55, 'rgba(255,255,255,.25)'); h.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = h; ctx.beginPath(); ctx.arc(0, 0, r * .42, 0, 7); ctx.fill(); ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(side * r * .5, -r * .5, r * .065, 0, 7); ctx.fill();
   ctx.restore();
 }
+
+// ---------- crash: the glass core shatters ----------
+// One fragment pattern per crash, built for the left ball and mirrored for the right, so the two bursts read as reflections.
+function crashTemplate() {
+  const out = [];
+  for (let i = 0; i < 14; i++) { // larger curved glass shards
+    const a = i < 10 ? rand(-.25, Math.PI + .25) : rand(Math.PI + .3, Math.PI * 2 - .3), sz = rand(7, 14);
+    const n = Math.random() < .5 ? 3 : 4, verts = [];
+    for (let k = 0; k < n; k++) { const va = k / n * 6.283 + rand(-.4, .4), vr = sz * rand(.55, 1); verts.push([Math.cos(va) * vr, Math.sin(va) * vr]); }
+    out.push({ kind: 's', a, v: rand(170, 430), spin: rand(-11, 11), life: rand(.5, .8), verts, sz, tint: Math.random() });
+  }
+  for (let i = 0; i < 26; i++) // small liquid droplets
+    out.push({ kind: 'd', a: rand(0, 6.283), v: rand(140, 560), life: rand(.3, .6), sz: rand(1.4, 3.4), white: Math.random() < .3 });
+  return out;
+}
+function shatter(i, x, y) {
+  const tmpl = crash.tmpl || (crash.tmpl = crashTemplate()), m = i === 0 ? 1 : -1;
+  for (const f of tmpl) {
+    const vx = Math.cos(f.a) * f.v * m, vy = Math.sin(f.a) * f.v;
+    crash.shards.push({ ...f, x: x + vx * .018, y: y + vy * .018, vx, vy, rot: 0, spin: (f.spin || 0) * m, max: f.life, i, m });
+  }
+  crash.waves.push({ x, y: y - 12, t: 0, i });
+  shake = Math.max(shake, 3.5); // very small, synced with the burst
+  beep(i ? 980 : 880, .18, 'triangle', .05, -500);
+}
+function updateCrash(dt) {
+  for (const f of crash.shards) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += (f.kind === 's' ? 620 : 480) * dt; const d = 1 - 1.6 * dt; f.vx *= d; f.vy *= d; f.rot += (f.spin || 0) * dt; f.life -= dt; }
+  crash.shards = crash.shards.filter(f => f.life > 0);
+  for (const w of crash.waves) w.t += dt; crash.waves = crash.waves.filter(w => w.t < .5);
+}
+function drawCrash() {
+  for (const w of crash.waves) { // translucent shockwave + a glossy refraction glint sweeping around it
+    const k = w.t / .5, e = ease(k), R = 18 + e * 120, P = PAL[w.i];
+    const fg = ctx.createRadialGradient(w.x, w.y, R * .55, w.x, w.y, R);
+    fg.addColorStop(0, 'rgba(255,255,255,0)'); fg.addColorStop(.85, `rgba(255,255,255,${.16 * (1 - k)})`); fg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(w.x, w.y, R, 0, 7); ctx.fill();
+    ctx.strokeStyle = `rgba(${P.rgb},${.35 * (1 - k)})`; ctx.lineWidth = 7 * (1 - k); ctx.beginPath(); ctx.arc(w.x, w.y, R * .92, 0, 7); ctx.stroke();
+    ctx.strokeStyle = `rgba(255,255,255,${.8 * (1 - k)})`; ctx.lineWidth = 2.4 * (1 - k) + .4; ctx.beginPath(); ctx.arc(w.x, w.y, R, 0, 7); ctx.stroke();
+    const ga = (w.i ? Math.PI - 1.2 : -1.2) + (w.i ? -1 : 1) * k * 5;
+    ctx.strokeStyle = `rgba(255,255,255,${.7 * (1 - k)})`; ctx.lineWidth = 5 * (1 - k); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(w.x, w.y, R * .78, ga, ga + .8); ctx.stroke();
+    if (w.t < .12) { const fk = 1 - w.t / .12; const fl = ctx.createRadialGradient(w.x, w.y + 12, 0, w.x, w.y + 12, 46); fl.addColorStop(0, `rgba(255,255,255,${fk})`); fl.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(w.x, w.y + 12, 46, 0, 7); ctx.fill(); }
+  }
+  for (const f of crash.shards) {
+    const P = PAL[f.i], al = clamp01(f.life / f.max * 1.5);
+    ctx.save(); ctx.globalAlpha = al; ctx.translate(f.x, f.y);
+    if (f.kind === 's') { // curved glass shard with a lit edge
+      ctx.rotate(f.rot); ctx.scale(f.m, 1);
+      const v = f.verts, gg = ctx.createLinearGradient(-f.sz, -f.sz, f.sz, f.sz);
+      gg.addColorStop(0, f.tint < .5 ? P.hi : 'rgba(255,255,255,.9)'); gg.addColorStop(.5, P.base); gg.addColorStop(1, P.lo);
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.moveTo(v[0][0], v[0][1]);
+      for (let k = 1; k <= v.length; k++) { const p0 = v[k - 1], p1 = v[k % v.length]; ctx.quadraticCurveTo((p0[0] + p1[0]) * .62, (p0[1] + p1[1]) * .62, p1[0], p1[1]); }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(v[0][0], v[0][1]); ctx.lineTo(v[1][0], v[1][1]); ctx.stroke();
+    } else { // droplet stretched along its motion
+      const sp = Math.hypot(f.vx, f.vy), len = f.sz * (1 + sp / 260);
+      ctx.rotate(Math.atan2(f.vy, f.vx)); ctx.fillStyle = f.white ? 'rgba(255,255,255,.95)' : P.base;
+      ctx.beginPath(); ctx.ellipse(0, 0, len, f.sz, 0, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
 function drawBlock(x, y, w, h, motion) {
   const r = 12, x0 = x - w / 2, y0 = y - h / 2;
   if (motion > 0) { ctx.fillStyle = `rgba(43,45,66,${.05 * motion})`; ctx.beginPath(); ctx.roundRect(x0 + 4, y0 - 26 * motion, w - 8, h, r); ctx.fill(); }
@@ -497,7 +600,15 @@ function draw() {
   LX.forEach(x => { for (let y = -64 + off; y < H; y += 64) { ctx.beginPath(); ctx.roundRect(x - 1.5, y, 3, 22, 1.5); ctx.fill(); } });
 
   const motion = clamp01((speed - 450) / 500);
-  for (const o of things) { const x = LX[o.l]; if (o.k === 'b') drawBlock(x, o.y, bw(), 44, motion); else drawGem(x, o.y, o.ph); }
+  for (const o of things) {
+    const x = LX[o.l];
+    if (o.k !== 'b') { drawGem(x, o.y, o.ph); continue; }
+    if (o.hitAt !== undefined && state === 'dead') { // the block takes the hit: a short jolt and squash
+      const k = Math.max(0, fx.dead - o.hitAt), dmp = Math.max(0, 1 - k / .3), sq = Math.max(0, 1 - k / .18);
+      ctx.save(); ctx.translate(x + Math.sin(k * 75) * 3.2 * dmp, o.y - 3 * sq); ctx.scale(1 + .07 * sq, 1 - .13 * sq);
+      drawBlock(0, 0, bw(), 44, 0); ctx.restore();
+    } else drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion);
+  }
 
   // mirror link between the pair
   ctx.strokeStyle = `rgba(43,45,66,${.16 + pulse * .1})`; ctx.lineWidth = 3; ctx.setLineDash([1, 9]); ctx.lineCap = 'round';
@@ -508,7 +619,6 @@ function draw() {
   const st = Math.min(.16, Math.abs(bv[0]) / 4500);
   const sx = (1 + st) * (1 - .12 * fx.squash), sy = (1 - st * .7) * (1 + .09 * fx.squash);
   const r = 20 * (1 + pulse * .04 + fx.gem * .08);
-  const deadA = state === 'dead' ? 1 - clamp01((fx.dead - .05) / .35) : 1, deadS = state === 'dead' ? 1 + fx.dead * .7 : 1;
   for (let i = 0; i < 2; i++) {
     const x = bx[i], P = PAL[i];
     if (trail[i].length && state !== 'dead') { // short motion trail
@@ -516,9 +626,11 @@ function draw() {
       ctx.globalAlpha = .12; ctx.lineWidth = 28; ctx.beginPath(); ctx.moveTo(trail[i][0], BY); ctx.lineTo(x, BY); ctx.stroke();
       ctx.globalAlpha = .2; ctx.lineWidth = 36; ctx.beginPath(); ctx.moveTo(trail[i][trail[i].length >> 1], BY); ctx.lineTo(x, BY); ctx.stroke(); ctx.globalAlpha = 1;
     }
-    if (deadA > 0) drawBall(x, BY, r * deadS, P, i ? 1 : -1, sx, sy, state === 'dead' ? 1 : glow, state === 'dead' ? 1 - clamp01(fx.dead / .3) : fx.gem * .8, deadA);
-    if (state === 'dead' && fx.dead < .4) { // impact ring
-      const k = fx.dead / .4; ctx.strokeStyle = `rgba(255,255,255,${(1 - k) * .9})`; ctx.lineWidth = 4 * (1 - k); ctx.beginPath(); ctx.arc(x, BY, 22 + k * 50, 0, 7); ctx.stroke();
+    const c = state === 'dead' ? crash.ball[i] : null;
+    if (!c) drawBall(x, BY, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8);
+    else if (!c.burst) { // impact: squashed flat by the block, flaring white just before it shatters
+      const k = clamp01(1 - (c.at - fx.dead) / .05);
+      drawBall(x, BY + 3, r, P, i ? 1 : -1, 1.3 + .08 * k, .7 - .06 * k, 1, .75 + .25 * k);
     }
     if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv; drawArrow(x, BY, (x < W / 2 ? 1 : -1) * nd, .32 + fx.arrow * .4, ease(fx.arrow)); }
   }
@@ -573,6 +685,7 @@ function draw() {
     ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${k * .55})`; ctx.fillRect(-20, -20, W + 40, H + 40); ctx.restore();
     ctx.fillStyle = `rgba(43,45,66,${k * .1})`; ctx.fillRect(-20, -20, W + 40, H + 40);
   }
+  if (crash.shards.length || crash.waves.length) drawCrash();
 
   if (state === 'play' || state === 'paused') {
     if (score !== shownScore) { if (score > shownScore) fx.score = 1; shownScore = score; }
