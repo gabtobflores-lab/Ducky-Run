@@ -28,6 +28,7 @@
   .seg{display:flex;gap:8px}
   .seg button{flex:1;border:0;border-radius:12px;padding:10px 6px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;background:rgba(43,45,66,.08);color:var(--ink)}
   .seg button.on{background:var(--teal);color:#fff}
+  #pbtn{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(43,45,66,.12);color:var(--ink);font-size:16px;font-weight:900;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:5}
   .small{font-size:13px;opacity:.65}
 </style>
 </head>
@@ -44,6 +45,13 @@
   <div class="small">tap to move the balls one step. at the edge they turn around</div>
 </div>
 
+<button id="pbtn" aria-label="Pause">❚❚</button>
+<div class="screen" id="pause">
+  <h1><u>PAUSED</u></h1>
+  <div class="small" id="pfog">Careful: every pause brings in more fog.</div>
+  <button class="btn" id="resume">RESUME</button>
+  <button class="btn alt" id="pmenu">RETURN TO MENU</button>
+</div>
 <div class="screen" id="over">
   <div class="tag" id="onew"></div>
   <h1><i>CRASH</i></h1>
@@ -112,10 +120,12 @@ function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
 
 // ---------- state ----------
 let state = 'menu', t = 0, shake = 0, demoT = 0;
+let fog = 0, resumeT = 0;
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 function reset() {
   const p = params();
   pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; scored = new Set(); things = []; parts = []; floaters = [];
+  fog = 0; resumeT = 0;
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   while (nextY > -1000) addRow();
 }
@@ -154,6 +164,16 @@ function float(x, y, txt, col) { floaters.push({ x, y, txt, col, life: 1 }); }
 // ---------- screens ----------
 const show = (id, on) => $(id).classList.toggle('on', on);
 function startGame() { show('#menu', false); show('#over', false); state = 'play'; reset(); beep(520, .15, 'triangle', .06, 300); }
+function pauseGame() {
+  if (state !== 'play' || resumeT > 0) return;
+  state = 'paused'; $('#pfog').textContent = fog ? `Fog level ${fog}. Resuming makes it thicker.` : 'Careful: resuming brings in fog.'; show('#pause', true);
+}
+function resumeGame() {
+  if (state !== 'paused') return;
+  show('#pause', false); fog++; resumeT = 3; state = 'play'; beep(300, .3, 'sine', .06, -100);
+}
+$('#pbtn').onclick = pauseGame; $('#resume').onclick = resumeGame;
+$('#pmenu').onclick = () => { show('#pause', false); goMenu(); };
 function goMenu() { show('#over', false); state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
 function showOver() {
   if (state !== 'dead') return;
@@ -178,6 +198,8 @@ addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const act = ['Space', 'Enter'].includes(e.code);
   if (state === 'menu' && act) { e.preventDefault(); startGame(); }
+  else if (state === 'play' && ['KeyP', 'Escape'].includes(e.code)) { e.preventDefault(); pauseGame(); }
+  else if (state === 'paused' && (act || ['KeyP', 'Escape'].includes(e.code))) { e.preventDefault(); resumeGame(); }
   else if (state === 'dead' && act && $('#over').classList.contains('on')) { e.preventDefault(); startGame(); }
   else if (state === 'play' && !e.repeat) {
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) { e.preventDefault(); cycle(); }
@@ -194,6 +216,9 @@ function die(x, y) {
 
 // ---------- update ----------
 function update(dt) {
+  $('#pbtn').style.display = state === 'play' ? 'flex' : 'none';
+  if (state === 'paused') return;
+  if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
   t += dt; flashA = Math.max(0, flashA - dt * 3.5); shake = Math.max(0, shake - dt * 40); pulse = Math.max(0, pulse - dt * 4); fxA = Math.max(0, fxA - dt / 1.2);
   parts.forEach(q => { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 500 * dt; q.life -= dt; });
   parts = parts.filter(q => q.life > 0);
@@ -288,6 +313,15 @@ function draw() {
     ctx.save(); ctx.translate(W / 2, 250); ctx.scale(k, k); ctx.globalAlpha = clamp01(fxA * 2.2);
     txt(banner, 0, 0, 54, '#ff9f1c'); txt(`LEVEL ${level + 1}`, 0, 34, 22, '#2b2d42'); ctx.restore(); ctx.globalAlpha = 1;
   }
+  if (fog > 0 && state !== 'menu') {
+    // punishment fog: hides the top of the field, thicker with every pause
+    const fy = Math.min(BY - 130, (BY - 120) * Math.min(.75, .22 * fog + .08)), fg = ctx.createLinearGradient(0, 0, 0, fy + 140);
+    fg.addColorStop(0, 'rgba(232,226,216,1)'); fg.addColorStop(fy / (fy + 140), 'rgba(232,226,216,.97)'); fg.addColorStop(1, 'rgba(232,226,216,0)');
+    ctx.fillStyle = fg; ctx.fillRect(-20, -20, W + 40, fy + 160);
+    ctx.fillStyle = 'rgba(232,226,216,.55)';
+    for (let i = 0; i < 7; i++) { const x = ((i * 97 + t * 18) % (W + 160)) - 80; ctx.beginPath(); ctx.arc(x, fy + 30 + Math.sin(t + i) * 12, 46 + (i % 3) * 14, 0, 7); ctx.fill(); }
+  }
+  if (state === 'play' && resumeT > 0) { ctx.fillStyle = 'rgba(244,239,230,.35)'; ctx.fillRect(0, 0, W, H); txt(Math.ceil(resumeT) + '', W / 2, H * .45, 120, '#ff6b81'); txt('get ready', W / 2, H * .45 + 44, 22, 'rgba(43,45,66,.6)'); }
   floaters.forEach(f => { ctx.globalAlpha = f.life; txt(f.txt, f.x, f.y, 26, f.col); }); ctx.globalAlpha = 1;
 
   if (state === 'play') {
@@ -304,6 +338,7 @@ function draw() {
 let last = performance.now();
 (function loop(now) { const dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); })(last);
 syncDiffUI(); show('#menu', true);
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(); fog = Math.max(0, fog - 1); } }); // leaving the app: pause, but the resume fog cancels out
 </script>
 </body>
 </html>
