@@ -939,9 +939,9 @@ function lightning() { // a strike from the cloud base: threads between the bloc
     for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(o.ex ?? LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y - 22); if (!blocked(pts, o)) bolt = { o, pts }; }
     if (bolt) { o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l]; bolt.pts[0][0] = bolt.pts[0][0]; }
   }
-  for (let i = 0; i < 24 && !bolt; i++) { // find a channel that misses every block and both balls
+  for (let i = 0; i < 60 && !bolt; i++) { // find a channel that misses every block and both balls
     const xe = W * (.1 + Math.random() * .8), x0 = Math.min(W * .94, Math.max(W * .06, xe + (Math.random() - .5) * W * .5)), pts = boltPts(x0, y0, xe, H + 60); // runs right off the bottom, to the ground below the screen
-    if (!blocked(pts) && pts.every(([x]) => x > 12 && x < W - 12)) bolt = { pts }; // stays on screen the whole way down
+    if (!blocked(pts) && pts.every(([x]) => x > 6 && x < W - 6)) bolt = { pts }; // stays on screen the whole way down
   }
   if (!bolt) { cloudGlow(); return; } // nowhere clear to land: it stays in the cloud this time
   Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o)), t: 0, pre, lead, st, dur: pre + lead + st[st.length - 1].t + .55 });
