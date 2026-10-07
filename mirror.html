@@ -257,7 +257,7 @@ const WX = {
   meteor: { dur: 18, p: 1 / 320, warn: 1.2, note: ['Meteor shower', 'Look up'] },
 };
 const HAIL = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1.8 + Math.random() * Math.random() * 3.6, s: .75 + Math.random() * .6 })), hailHits = [];
-const wx = { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 };
+const wx = { kind: '', phase: '', t: 0, p: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 };
 const RAIN = Array.from({ length: 90 }, () => { const z = .25 + .75 * Math.random() ** 1.3; return { x: Math.random(), y: Math.random(), z, l: 16 + z * 64 + Math.random() * 26, s: .55 + z * .9 + Math.random() * .15, v: Math.random() }; }).sort((p, q) => p.z - q.z);
 const windHead = []; let windT = 0;
 let windDir = 1, rimA = 0, sunX = -999;
@@ -606,9 +606,10 @@ function updateWeather(dt) {
     wx.t += dt;
     if (wx.phase === 'warn' && wx.t >= WX[wx.kind].warn) { wx.phase = 'on'; wx.t = 0; wx.nextBolt = 2 + Math.random() * 2.5; wx.nextGlow = .6; } // warning always comes first
     else if (wx.phase === 'on' && wx.t >= WX[wx.kind].dur) { wx.phase = 'out'; wx.t = 0; }
-    else if (wx.phase === 'out' && wx.t >= 1.8) { wx.kind = ''; wx.phase = ''; wx.cool = 30 + Math.random() * 30; } // long quiet spell before the next one
+    else if (wx.phase === 'out' && wx.p <= 0) { wx.kind = ''; wx.phase = ''; wx.cool = 30 + Math.random() * 30; } // long quiet spell before the next one
   }
-  const on = wx.phase === 'on' ? 1 : 0; wx.a += (on - wx.a) * Math.min(1, dt * (wx.kind === 'sun' || wx.kind === 'wind' ? 4 : 1.5));
+  { const quick = wx.kind === 'sun' || wx.kind === 'wind', fin = quick ? .7 : 3.2, fout = quick ? .8 : 2.6; // seconds to fade in and out
+    wx.p = wx.phase === 'on' ? Math.min(1, wx.p + dt / fin) : Math.max(0, wx.p - dt / fout); const p = wx.p; wx.a = p * p * p * (p * (p * 6 - 15) + 10); } // smootherstep: starts and settles gently, no pop
   for (const h of hailHits) h.t += dt; while (hailHits.length && hailHits[0].t > .4) hailHits.shift();
   wx.flash = Math.max(0, wx.flash - dt * 3);
   { const b = wx.bolt; if (b && b.o && b.o.zap && b.t >= b.pre + b.lead) { const o = b.o; o.zap = false; o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l]; } } // the strike lands: now the block is charged
@@ -661,7 +662,7 @@ const LIGHTS = { // per event: where the light comes from, and where the sky fal
   sun: g => { const q = clamp01(wx.t / WX.sun.dur); light(g, -40 + q * (W + 80), H * .08, H * .8, [[0, '255,250,236,.6'], [.35, '255,236,200,.18'], [1, '255,236,200,0']], 'lighter'); light(g, W * .5, H * .3, H * 1.1, [[.55, '8,30,90,0'], [1, '8,30,90,.3']]); },
   wind: g => { light(g, W * .9, -H * .05, H * .8, [[0, '255,252,240,.45'], [1, '255,252,240,0']], 'lighter'); light(g, W * .1, H * .9, H * .7, [[0, '40,70,120,.18'], [1, '40,70,120,0']]); },
   hail: g => { light(g, W * .22, -H * .1, H * .85, [[0, '240,244,250,.4'], [1, '240,244,250,0']], 'lighter'); light(g, W * .5, H * .45, H * .95, [[.5, '18,24,38,0'], [1, '18,24,38,.4']]); },
-  meteor: g => { light(g, W * .92, H * .05, H * .7, [[0, '150,175,230,.35'], [1, '150,175,230,0']], 'lighter'); light(g, W * .2, H * .9, H * .8, [[0, '0,4,14,.45'], [1, '0,4,14,0']]); },
+  meteor: g => { light(g, W * .92, H * .05, H * .55, [[0, '150,175,230,.2'], [1, '150,175,230,0']], 'lighter'); light(g, W * .2, H * .9, H * .8, [[0, '0,4,14,.45'], [1, '0,4,14,0']]); },
 };
 function skyGrad(g, stops) { const lg = g.createLinearGradient(0, 0, 0, H); stops.forEach(([o, c]) => lg.addColorStop(o, `rgb(${c})`)); g.fillStyle = lg; g.fillRect(0, 0, W, H); }
 function glow(g, rgb, x, y, rx, ry, al) { const b = softBlob(rgb); g.globalAlpha = al; g.drawImage(b, x - rx, y - ry, rx * 2, ry * 2); g.globalAlpha = 1; }
@@ -669,13 +670,13 @@ function glow(g, rgb, x, y, rx, ry, al) { const b = softBlob(rgb); g.globalAlpha
 const SKY = {
   storm: g => { skyGrad(g, [[0, '34,40,56'], [.4, '66,74,94'], [.8, '112,120,138'], [1, '140,146,162']]); for (let k = 0; k < 5; k++) { const sd = SEEDS[k]; glow(g, '30,36,52', ((sd.x * W * 1.6 + t * 9 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .16, .7); } glow(g, '170,185,210', W * .5, H * .95, W * .9, H * .25, .35); },
   hail: g => { skyGrad(g, [[0, '92,104,126'], [.45, '150,160,178'], [1, '210,216,226']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
-  fog: g => { skyGrad(g, [[0, '170,180,196'], [.5, '196,203,214'], [1, '218,222,229']]); glow(g, '250,246,236', W * .28, H * .13, W * .6, W * .6, .5); /* a cool grey-blue morning, brightest where the sun sits behind the fog */ for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, '246,247,249', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .5, H * .2, .5); } },
+  fog: g => { skyGrad(g, [[0, '170,180,196'], [.5, '196,203,214'], [1, '218,222,229']]); /* a cool grey-blue morning */ for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, '246,247,249', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .5, H * .2, .5); } },
   heat: g => { // a blazing clear day: deep cobalt overhead, bleaching to a white-hot haze along the ground
     skyGrad(g, [[0, '26,88,190'], [.32, '74,146,222'], [.58, '176,200,226'], [.78, '246,222,190'], [1, '255,190,140']]); // hotter and hazier toward the ground
     glow(g, '255,244,226', W * .5, H * 1.02, W * 1.2, H * .22, .7); },
   meteor: g => { // a clear late-summer night: deep blue overhead, a cool glow along the horizon
-    skyGrad(g, [[0, '3,8,24'], [.45, '8,22,54'], [.8, '20,44,88'], [.93, '40,70,116'], [1, '62,92,128']]); // Apple's clear night: deep, rich blue, never black
-    glow(g, '120,150,210', W * .78, H * .13, W * .7, H * .35, .35); glow(g, '70,100,160', W * .5, H * 1.02, W * 1.1, H * .18, .45); glow(g, '90,140,120', W * .3, H * 1.0, W * .9, H * .1, .16); // faint natural airglow just above the horizon
+    skyGrad(g, [[0, '3,5,20'], [.4, '9,16,52'], [.72, '26,36,104'], [.9, '62,58,142'], [1, '112,80,164']]); // deep indigo into a soft violet horizon // Apple's clear night: deep, rich blue, never black
+    glow(g, '120,150,210', W * .78, H * .13, W * .7, H * .35, .35); glow(g, '150,100,210', W * .5, H * 1.03, W * 1.2, H * .16, .4);
   },
   wind: g => { skyGrad(g, [[0, '92,150,214'], [.5, '160,196,232'], [1, '226,232,238']]); }, // a bright, blustery day
   sun: g => { skyGrad(g, [[0, '30,100,206'], [.4, '84,152,230'], [.75, '170,208,242'], [1, '236,240,244']]); },
@@ -692,7 +693,7 @@ const SKY = {
         g.globalAlpha = (.22 + ray * .7) * (.6 + .4 * (nz(t * .13 + x * .002, ph * 7) * .5 + .5)); g.fillStyle = lg; g.fillRect(x, by - hh, 9, hh + 20); // each curtain slowly breathes
       }
     }
-    g.globalAlpha = 1; glow(g, '90,230,255', W * (.5 + nz(t * .05, 1) * .15), H * .6, W * .35, H * .16, .45);
+    g.globalAlpha = 1; glow(g, '90,230,255', W * (.5 + nz(t * .05, 1) * .15), H * .62, W * .8, H * .07, .3); // a soft glow along the base of the curtains
     glow(g, '190,80,200', W * (.35 + nz(t * .04, 3) * .2), H * .2, W * .7, H * .1, .22); glow(g, '120,90,230', W * .75, H * .3, W * .5, H * .12, .18); // the pink-magenta fringe up high // a magenta-violet fringe high up
     g.globalCompositeOperation = 'source-over';
   },
@@ -719,7 +720,7 @@ const MILKY = () => sprite('milky', 512, 1024, (g, w, h) => { // the Milky Way: 
   for (let i = 0; i < 1200; i++) { const q = Math.random(), [x, y] = P(q), off = (Math.random() + Math.random() - 1) * 90; c.fillStyle = `rgba(255,255,255,${.15 + Math.random() * .45})`; c.fillRect(x + off * .5, y + off, .9, .9); }
   if ('filter' in g) g.filter = 'blur(.5px)'; g.drawImage(tmp, 0, 0);
 });
-const NIGHT = () => sprite('night3', 512, 1024, (g, w, h) => { g.globalCompositeOperation = 'lighter'; g.globalAlpha = .46; g.drawImage(MILKY(), 0, 0); g.globalAlpha = .9; g.drawImage(STARS2(), 0, 0); g.globalAlpha = .75; g.drawImage(STARS(), 0, 0); }); // the whole night sky baked into one layer
+const NIGHT = () => sprite('night4', 512, 1024, (g, w, h) => { g.globalCompositeOperation = 'lighter'; g.globalAlpha = .12; g.drawImage(MILKY(), 0, 0); g.globalAlpha = .9; g.drawImage(STARS2(), 0, 0); g.globalAlpha = .75; g.drawImage(STARS(), 0, 0); }); // the whole night sky baked into one layer
 const MOON = () => sprite('moon7', 512, 512, (g) => { // a waxing gibbous moon built like the real one: albedo from maria and noise, a height field of craters with raised rims, lit as lunar soil scatters light
   const N = 512, R = 236, c = N / 2, img = g.createImageData(N, N), d = img.data, hgt = new Float32Array(N * N), alb = new Float32Array(N * N);
   const hs = (i, j, s0) => { const v = Math.sin(i * 127.1 + j * 311.7 + s0 * 17.3) * 43758.5453; return v - Math.floor(v); };
@@ -742,36 +743,30 @@ const MOON = () => sprite('moon7', 512, 512, (g) => { // a waxing gibbous moon b
   g.putImageData(img, 0, 0);
 });
 const MET = [], TRAINS = []; let metT = 0, metFlash = 0;
-function meteors(rate, a) { // a real shower: every meteor streams away from one radiant point; most are faint, a few are bright and leave a glowing train behind
-  const dt = Math.min(.05, Math.max(0, t - metT)); metT = t; metFlash = Math.max(0, metFlash - dt * 2.5);
+function meteors(rate, a) { // Apple-style shower: meteors glide from one radiant, each a luminous streak with a soft bloom; bright ones leave a glow that slowly fades
+  const dt = Math.min(.05, Math.max(0, t - metT)); metT = t; metFlash = Math.max(0, metFlash - dt * 1.2);
   const rx = W * .12, ry = -H * .06;
-  if (a > .2 && MET.length < 7 && Math.random() < dt * rate * (.35 + 1.3 * (nz(t * .3, 7) * .5 + .5))) {
-    const roll = Math.random(), kind = roll < .07 ? 2 : roll < .32 ? 1 : 0, an = .35 + Math.random() * .95, d0 = 60 + Math.random() * H * .45, sp = 650 + Math.random() * 700;
-    MET.push({ x: rx + Math.cos(an) * d0, y: ry + Math.sin(an) * d0, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp, len: [95, 175, 260][kind] * (.7 + Math.random() * .6), w: [.7, 1.1, 1.8][kind], life: 0, max: [.35, .6, 1][kind] * (.8 + Math.random() * .5), kind,
-      col: kind === 2 ? (Math.random() < .55 ? '196,255,214' : '255,222,178') : Math.random() < .35 ? '214,226,255' : '255,250,240', s: Math.random() * 99 }); // white with a faint tint; fireballs burn a soft green or gold
+  if (a > .3 && MET.length < 4 && Math.random() < dt * rate * (.5 + nz(t * .25, 7) * .5 + .5)) {
+    const roll = Math.random(), kind = roll < .08 ? 2 : roll < .4 ? 1 : 0, an = .5 + Math.random() * .7, d0 = 60 + Math.random() * H * .6, sp = 420 + Math.random() * 260;
+    MET.push({ x: rx + Math.cos(an) * d0, y: ry + Math.sin(an) * d0, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp, len: [190, 300, 440][kind] * (.8 + Math.random() * .4), w: [.9, 1.3, 1.9][kind], life: 0, max: [.65, .95, 1.45][kind] * (.85 + Math.random() * .3), kind,
+      col: kind === 2 ? '170,225,255' : ['205,222,255', '228,222,255', '255,255,255'][Math.random() * 3 | 0] }); // icy white, a hint of lavender
   }
-  for (let i = MET.length - 1; i >= 0; i--) { const m = MET[i]; m.x += m.vx * dt; m.y += m.vy * dt; m.life += dt; if (m.kind === 2) metFlash = Math.max(metFlash, .5 * Math.sin(Math.min(1, m.life / m.max) * Math.PI));
-    if (m.life > m.max) { if (m.kind) { const sp = Math.hypot(m.vx, m.vy); TRAINS.push({ x0: m.x - m.vx / sp * m.len * .9, y0: m.y - m.vy / sp * m.len * .9, x1: m.x, y1: m.y, life: 0, max: m.kind === 2 ? 3.2 : 1.8, col: m.kind === 2 ? m.col : '190,215,240', w: m.w, dx: (Math.random() - .5) * 14, dy: 6 + Math.random() * 8, s: Math.random() * 9 }); } MET.splice(i, 1); } }
+  for (let i = MET.length - 1; i >= 0; i--) { const m = MET[i]; m.x += m.vx * dt; m.y += m.vy * dt; m.life += dt; if (m.kind === 2) metFlash = Math.max(metFlash, .35 * Math.sin(Math.min(1, m.life / m.max) * Math.PI));
+    if (m.life > m.max) { if (m.kind) { const sp = Math.hypot(m.vx, m.vy), L = m.len * .85; TRAINS.push({ x0: m.x - m.vx / sp * L, y0: m.y - m.vy / sp * L, x1: m.x - m.vx / sp * L * .1, y1: m.y - m.vy / sp * L * .1, life: 0, max: m.kind === 2 ? 2.4 : 1.3, col: m.col, w: m.w }); } MET.splice(i, 1); } }
   for (let i = TRAINS.length - 1; i >= 0; i--) { TRAINS[i].life += dt; if (TRAINS[i].life > TRAINS[i].max) TRAINS.splice(i, 1); }
   ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.lineCap = 'round';
-  if (metFlash > .01) { ctx.globalAlpha = metFlash * a * .22; ctx.drawImage(softBlob('190,215,255'), -W * .2, -H * .1, W * 1.4, H * .9); } // a fireball briefly lights the whole sky
-  for (const tr of TRAINS) { const q = tr.life / tr.max, k = (1 - q) * (1 - q) * a; // the ionised train lingers as glowing smoke: it drifts, twists and spreads as it fades
-    ctx.globalAlpha = 1; ctx.lineWidth = tr.w * (1.6 + q * 6);
-    const g2 = ctx.createLinearGradient(tr.x0, tr.y0, tr.x1, tr.y1); g2.addColorStop(0, `rgba(${tr.col},0)`); g2.addColorStop(.6, `rgba(${tr.col},${.13 * k})`); g2.addColorStop(1, `rgba(${tr.col},${.05 * k})`); ctx.strokeStyle = g2; ctx.beginPath();
-    for (let n = 0; n <= 8; n++) { const f = n / 8, wob = nz(f * 4 + tr.life * .8, tr.s) * (4 + tr.life * 9); ctx[n ? 'lineTo' : 'moveTo'](tr.x0 + (tr.x1 - tr.x0) * f + tr.dx * tr.life + wob, tr.y0 + (tr.y1 - tr.y0) * f + tr.dy * tr.life + wob * .4); }
-    ctx.stroke(); }
-  for (const m of MET) { const q = m.life / m.max, flare = m.kind ? 1 + .7 * Math.exp(-((q - .55) ** 2) / .01) : 1; // bright meteors flare as they break up
-    const fl = .82 + .18 * nz(t * 38, m.s || 1); // ablation makes the light flicker
-    const k = Math.min(1.3, smooth(m.life / .06) * (1 - smooth((m.life - m.max * .55) / (m.max * .45))) * a * [.7, .9, 1][m.kind] * flare * fl); if (k < .01) continue;
-    if (m.kind && !m.c0) m.c0 = m.col; if (m.kind) { const hot = smooth(q * 1.6), c0 = [255, 255, 255], c1 = m.c0.split(','); m.col = c0.map((v, i) => Math.round(v + (+c1[i] - v) * hot)).join(','); } // white-hot at entry, burning to its colour
-    if (m.kind === 2 && !m.frag && q > .55) { m.frag = 1; for (let f = 0; f < 3 + (Math.random() * 3 | 0); f++) { const da = (Math.random() - .5) * .06, cs = Math.cos(da), sn = Math.sin(da), v = .9 + Math.random() * .15; // it breaks up: fragments carry on along the same path, slightly spread
-      MET.push({ x: m.x, y: m.y, vx: (m.vx * cs - m.vy * sn) * v, vy: (m.vx * sn + m.vy * cs) * v, len: 30 + Math.random() * 40, w: .5 + Math.random() * .4, life: .04, max: .18 + Math.random() * .2, kind: 0, col: m.c0, s: Math.random() * 99 }); } }
-    const sp = Math.hypot(m.vx, m.vy), ux = m.vx / sp, uy = m.vy / sp, L = m.len * Math.min(1, m.life / .18), tx = m.x - ux * L, ty = m.y - uy * L, nx = -uy, ny = ux;
-    let g = ctx.createLinearGradient(tx, ty, m.x, m.y); g.addColorStop(0, `rgba(${m.col},0)`); g.addColorStop(1, `rgba(${m.col},${.16 * k})`);
-    ctx.globalAlpha = 1; ctx.strokeStyle = g; ctx.lineWidth = m.w * 2.6; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.x, m.y); ctx.stroke(); // the faint glow of the air around it
-    const hw = Math.max(.55, m.w * .62); g = ctx.createLinearGradient(tx, ty, m.x, m.y); g.addColorStop(0, `rgba(${m.col},0)`); g.addColorStop(.7, `rgba(${m.col},${.55 * k})`); g.addColorStop(1, `rgba(255,255,255,${Math.min(1, k)})`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.x + nx * hw, m.y + ny * hw); ctx.lineTo(m.x + ux * hw, m.y + uy * hw); ctx.lineTo(m.x - nx * hw, m.y - ny * hw); ctx.closePath(); ctx.fill(); // hair-thin, tapering to nothing behind
-    if (m.kind) { const R = m.w * (m.kind === 2 ? 4.5 : 2.2); ctx.globalAlpha = Math.min(1, k) * (m.kind === 2 ? .55 : .35); ctx.drawImage(softBlob(m.col), m.x - R, m.y - R, R * 2, R * 2); } } // only the bright ones show a small glow at the head
+  if (metFlash > .01) { ctx.globalAlpha = metFlash * a * .3; ctx.drawImage(softBlob('150,170,255'), -W * .3, -H * .15, W * 1.6, H * .9); } // a bright one gently lifts the whole sky
+  for (const tr of TRAINS) { const q = tr.life / tr.max, k = (1 - smooth(q)) * a; // its glow lingers along the path, softening as it fades
+    for (const [lw, al] of [[tr.w * (5 + q * 8), .07], [tr.w * 1.6, .16]]) { const g2 = ctx.createLinearGradient(tr.x0, tr.y0, tr.x1, tr.y1); g2.addColorStop(0, `rgba(${tr.col},0)`); g2.addColorStop(.75, `rgba(${tr.col},${al * k})`); g2.addColorStop(1, `rgba(${tr.col},0)`);
+      ctx.strokeStyle = g2; ctx.lineWidth = lw; ctx.globalAlpha = 1; ctx.beginPath(); ctx.moveTo(tr.x0, tr.y0 + tr.life * 3); ctx.lineTo(tr.x1, tr.y1 + tr.life * 3); ctx.stroke(); } }
+  for (const m of MET) {
+    const k = smooth(m.life / .14) * (1 - smooth((m.life - m.max * .55) / (m.max * .45))) * a * [.75, .92, 1][m.kind]; if (k < .01) continue; // eases in and out, no flicker
+    const sp = Math.hypot(m.vx, m.vy), ux = m.vx / sp, uy = m.vy / sp, L = m.len * smooth(Math.min(1, m.life / .3)), tx = m.x - ux * L, ty = m.y - uy * L, nx = -uy, ny = ux;
+    for (const [lw, al] of [[m.w * 11, .05], [m.w * 3.4, .2]]) { const g = ctx.createLinearGradient(tx, ty, m.x, m.y); g.addColorStop(0, `rgba(${m.col},0)`); g.addColorStop(1, `rgba(${m.col},${al * k})`); // a wide bloom, then a tighter glow
+      ctx.strokeStyle = g; ctx.lineWidth = lw; ctx.globalAlpha = 1; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.x, m.y); ctx.stroke(); }
+    const hw = m.w * .75, g = ctx.createLinearGradient(tx, ty, m.x, m.y); g.addColorStop(0, `rgba(${m.col},0)`); g.addColorStop(.65, `rgba(${m.col},${.5 * k})`); g.addColorStop(1, `rgba(255,255,255,${k})`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.x + nx * hw, m.y + ny * hw); ctx.arc(m.x, m.y, hw, Math.atan2(ny, nx), Math.atan2(-ny, -nx)); ctx.closePath(); ctx.fill(); // a fine core tapering away behind
+    const R = m.w * (m.kind === 2 ? 9 : 5); ctx.globalAlpha = .55 * k; ctx.drawImage(softBlob(m.col), m.x - R, m.y - R, R * 2, R * 2); ctx.globalAlpha = k; ctx.drawImage(softBlob('255,255,255'), m.x - R * .35, m.y - R * .35, R * .7, R * .7); } // a soft, bright head
   ctx.restore();
 }
 function nightSky(a, starA) { // stars with a slow twinkle on top of the cached field
@@ -867,7 +862,7 @@ function atmos(rgb, al, o = {}) { lowres(() => {
 const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
 let paneC = null;
 function glassPane() { // a pane of frosted glass between the sky and the game: what lies behind is softly blurred and lifted; a hairline edge catches the light
-  const k = { meteor: .18, heat: .6, sun: .55, hail: .7 }[wx.kind]; if (!k || wx.a < .02) return; const A = k * wx.a * wx.a * (3 - 2 * wx.a);
+  const k = { meteor: .06, heat: .6, sun: .55, hail: .7 }[wx.kind]; if (!k || wx.a < .02) return; const A = k * wx.a * wx.a * (3 - 2 * wx.a);
   const w = Math.max(1, cv.width >> 3), h = Math.max(1, cv.height >> 3); if (!paneC || paneC.width !== w || paneC.height !== h) { paneC = document.createElement('canvas'); paneC.width = w; paneC.height = h; }
   const px = paneC.getContext('2d'); px.imageSmoothingQuality = 'high'; px.drawImage(cv, 0, 0, w, h);
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = A; ctx.drawImage(paneC, 0, 0, cv.width, cv.height); ctx.restore(); // frosted: the scene behind goes soft
@@ -918,9 +913,9 @@ function auroraRays(a, mul) { // curtains built from faint vertical rays, foldin
 let auroraBoost = 0;
 function auroraRays2(a) { auroraBoost += ((combo - 1) / 7 - auroraBoost) * .03; a *= 1 + auroraBoost * .6; // the lights swell gently with your combo // fine rays and travelling pulses of light running along each curtain, at half resolution
   for (let i = 0; i < AUR.length; i++) { const [base, hgt, , core, ph] = AUR[i], h = H * hgt, g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, `rgba(${core},0)`); g.addColorStop(.7, `rgba(${core},.35)`); g.addColorStop(.97, 'rgba(235,255,255,.9)'); g.addColorStop(1, `rgba(${core},0)`); ctx.fillStyle = g;
-    for (let x = -6; x <= W + 6; x += 7) { const by = auroraY(x, base, ph), ray = Math.pow(nz(x * .11 + t * .6, ph * 5) * .5 + .5, 3), wave = .5 + .5 * Math.sin(x * .021 - t * 1.7 + i * 2.3);
-      const hh = h * (.3 + ray * .6); ctx.globalAlpha = Math.min(1, a * (.05 + ray * .55) * (.4 + wave * .8)); ctx.translate(0, by - hh); ctx.fillRect(x, 0, 2.2, hh); ctx.translate(0, hh - by); }
+    g.addColorStop(0, 'rgba(255,110,200,0)'); g.addColorStop(.3, 'rgba(255,120,205,.16)'); g.addColorStop(.62, `rgba(${core},.3)`); g.addColorStop(.95, 'rgba(235,255,255,.75)'); g.addColorStop(1, `rgba(${core},0)`); ctx.fillStyle = g; // pink-magenta tips, cyan body, a bright lower hem
+    for (let x = -6; x <= W + 6; x += 6) { const by = auroraY(x, base, ph), ray = Math.pow(nz(x * .11 + t * .45, ph * 5) * .5 + .5, 2.4), wave = .5 + .5 * Math.sin(x * .017 - t * 1.1 + i * 2.3);
+      const hh = h * (.3 + ray * .6); ctx.globalAlpha = Math.min(1, a * (.05 + ray * .45) * (.45 + wave * .7)); ctx.translate(0, by - hh); ctx.fillRect(x, 0, 3.6, hh); ctx.translate(0, hh - by); }
   }
   ctx.globalAlpha = 1;
 }
@@ -931,15 +926,15 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'meteor') { // the sky clears to a deep night: Milky Way, a fine field of stars, a crescent moon, then the shower
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a; ctx.drawImage(NIGHT(), 0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
     nightSky(a, 0);
-    lowres(() => [[.2, .22, 5, 2.2, .65], [.5, .22, -4, 2.6, .5]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('nc' + i, '14,26,58', '120,140,186', { seed: 31 + i, cover: .34, base: .75, top: .2, alpha: .85, squash: 2.6, p: 3 }), H * y + nz(t * .05, i) * 12, H * h, sp, al * a, sc))); // thin moonlit clouds drifting past
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.translate(W * .45, H * .5); ctx.rotate(-1.05); // the Milky Way as one smooth, luminous band
+    ctx.globalAlpha = .2 * a; ctx.drawImage(softBlob('110,110,200'), -H * .8, -W * .45, H * 1.6, W * .9); ctx.globalAlpha = .1 * a; ctx.drawImage(softBlob('200,190,255'), -H * .6, -W * .18, H * 1.2, W * .36); ctx.restore();
     const R = W * .26, mx = W - R * .32, my = R * .36; /* a big moon, tucked into the corner and partly off the edge */ ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('200,210,240'), mx - R * 5, my - R * 5, R * 10, R * 10); ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('230,235,250'), mx - R * 1.6, my - R * 1.6, R * 3.2, R * 3.2); // atmospheric glow around the moon
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a; ctx.drawImage(MOON(), mx - R * 1.085, my - R * 1.085, R * 2.17, R * 2.17); ctx.globalAlpha = 1;
-    meteors(wx.phase === 'on' ? 2.6 : wx.phase === 'warn' ? 0 : .6, a);
-    lowres(() => { drawSheet(cloudTex('ncf', '8,16,40', '150,170,215', { seed: 41, cover: .4, base: .78, top: .15, alpha: .9, squash: 2.4, p: 3 }), H * .74 + nz(t * .04, 7) * 10, H * .3, 3, .75 * a, 2.4); // a low cloud bank, moonlit along its top
-      ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('60,84,140'), -W * .4, H * .78, W * 1.8, H * .4); ctx.globalAlpha = 1; }); } // haze glowing near the horizon
+    meteors(wx.phase === 'on' ? 1.7 : wx.phase === 'warn' ? 0 : .6, a);
+    ctx.globalAlpha = .55 * a; ctx.drawImage(softBlob('120,96,200'), -W * .4, H * .8, W * 1.8, H * .4); ctx.globalAlpha = 1; } // a violet glow along the horizon
   if (wx.kind === 'aurora') { nightSky(a, .3); meteors(.12, a);
     ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a)); ctx.globalCompositeOperation = 'source-over';
-    lowres(() => drawSheet(cloudTex('wisp3', '6,12,28', '40,80,110', { seed: 21, cover: .36, base: .7, top: .25, alpha: .8, squash: 3, p: 3 }), H * .3 + nz(t * .05, 2) * 20, H * .2, 7, .3 * a, 2.2)); // thin dark cloud drifting in front of the lights
+    lowres(() => drawSheet(cloudTex('wisp3', '6,12,28', '40,80,110', { seed: 21, cover: .36, base: .7, top: .25, alpha: .8, squash: 3, p: 3 }), H * .3 + nz(t * .05, 2) * 20, H * .2, 7, .18 * a, 2.2)); // thin dark cloud drifting in front of the lights
     const RY = H * .84; if (skyC) { ctx.save(); ctx.beginPath(); ctx.rect(-20, RY, W + 40, H - RY + 20); ctx.clip(); // the sky mirrored in still water, broken by a slow ripple
       for (let y = RY; y < H + 20; y += 20) { const ox = Math.sin(y * .06 + t * 1.4) * 3 * (1 + (y - RY) / 80); ctx.save(); ctx.beginPath(); ctx.rect(-20, y, W + 40, 20); ctx.clip(); ctx.translate(ox, RY); ctx.scale(1, -.3); ctx.translate(0, -RY); ctx.globalAlpha = .5 * a; ctx.drawImage(skyC, 0, 0, skyC.width * 8, skyC.height * 8); ctx.restore(); }
       ctx.restore(); const hl = ctx.createLinearGradient(0, RY - 2, 0, RY + 3); hl.addColorStop(0, 'rgba(140,230,255,0)'); hl.addColorStop(.5, `rgba(140,230,255,${.35 * a})`); hl.addColorStop(1, 'rgba(140,230,255,0)'); ctx.fillStyle = hl; ctx.fillRect(-20, RY - 2, W + 40, 5); }
@@ -1230,7 +1225,6 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
     const img = sheet('fogx' + i, 512, 180, '222,226,234', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '252,252,254' }); // shaded bellies, bright crowns: reads as volume
     const breath = .78 + .22 * nz(t * .13, i * 5), yy = H * y + nz(t * .07, i * 3) * 18;
     drawSheet(img, yy, H * h * (1 + .06 * nz(t * .1, i)), sp, al * e * breath, sc);
-    if (i === 0) { const sx = W * .28, sy = H * .13, R = W * .075; ctx.globalAlpha = .75 * e; ctx.drawImage(softBlob('255,252,242'), sx - R * 3, sy - R * 3, R * 6, R * 6); ctx.globalAlpha = .55 * e; ctx.fillStyle = '#fffdf6'; ctx.beginPath(); ctx.arc(sx, sy, R, 0, 7); ctx.fill(); ctx.globalAlpha = 1; } // the sun, a pale white disc seen through the fog
   });
   atmos('236,238,243', .1 * e, { n: 4, y0: .1, y1: .9, sp: 3, off: 13 }); // faint ambient veil that ties the layers together
   });
@@ -1242,7 +1236,8 @@ function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lig
   lowres(() => {
   C.forEach(([col, lit, y, h, sp, sc, al], i) => {
     const img = cloudTex((HL ? 'hct' : 'ct') + i, col, lit, { seed: i + 3, cover: i ? .58 : .8, base: i ? .78 : .9, top: i ? .08 : 0, shadow: .8, p: 3 + i });
-    drawSheet(img, ch * y + nz(t * .1, i) * 6, ch * (h + .5), sp, al * e, sc);
+    const roll = nz(t * .07, i * 7), billow = 1 + .1 * nz(t * .09 + 3, i * 3); // each layer drifts faster, bobs and swells on its own slow rhythm
+    drawSheet(img, ch * y + roll * 16 + nz(t * .21, i + 11) * 4, ch * (h + .5) * billow, sp * 2.4 + nz(t * .05, i + 20) * 6, al * e * (.88 + .12 * nz(t * .11, i + 5)), sc * (1 + .05 * roll));
   });
   const g = softBlob('205,222,255'); ctx.globalCompositeOperation = 'screen';
   for (const gl of wx.glows) { // light inside the cloud deck: blooms along a crawler's path as it races through, or one hidden glow
