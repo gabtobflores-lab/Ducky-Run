@@ -82,6 +82,12 @@
   #pbtn i{display:block;width:4px;height:14px;border-radius:2px;background:var(--ink-2)}
   #pbtn:active{transform:scale(.9)}
 
+  /* weather notification */
+  #wxnote{position:fixed;left:50%;top:calc(max(14px,env(safe-area-inset-top)) + 112px);transform:translate(-50%,-8px) scale(.96);opacity:0;padding:9px 18px;border-radius:99px;font-weight:900;font-size:12px;letter-spacing:.2em;white-space:nowrap;pointer-events:none;z-index:4;color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:opacity .3s var(--ease),transform .4s var(--spring)}
+  #wxnote.show{opacity:1;transform:translate(-50%,0) scale(1)}
+  #wxnote.fog{background:linear-gradient(180deg,rgba(138,142,156,.86),rgba(108,112,126,.86));box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 6px 18px rgba(43,45,66,.18)}
+  #wxnote.storm{background:linear-gradient(180deg,rgba(104,160,255,.94),rgba(46,98,214,.94));box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 0 0 1px rgba(255,255,255,.25) inset,0 6px 22px rgba(60,120,255,.42),0 0 26px rgba(120,175,255,.55);animation:stormglow 1.3s ease-in-out infinite alternate}
+  @keyframes stormglow{to{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 0 0 1px rgba(255,255,255,.35) inset,0 6px 26px rgba(60,120,255,.55),0 0 40px rgba(150,195,255,.8)}}
   /* best score card */
   .best{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 18px 11px}
   .best span{font-size:11px;font-weight:900;letter-spacing:.2em;background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -119,6 +125,7 @@
 </div>
 
 <button id="pbtn" aria-label="Pause"><i></i><i></i></button>
+<div id="wxnote" role="status" aria-live="polite"></div>
 <div class="screen" id="pause">
   <h1 class="logo"><span class="c">PAUSED</span></h1>
   <div class="hint" id="pfog">Careful: every pause brings in more fog.</div>
@@ -228,12 +235,19 @@ let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, l
 // visual-only feedback timers (they never affect the rules)
 const fx = { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 };
 const crash = { ball: [null, null], shards: [], waves: [], tmpl: null };
+// weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
+const WX = { fog: { dur: 15 }, storm: { dur: 22 } }, P_FOG = 1 / 40, P_STORM = 1 / 380; // per-second chances once the cooldown has passed
+const wx = { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null };
+const RAIN = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), l: 12 + Math.random() * 14, s: .85 + Math.random() * .4 }));
+const ELEC = { base: '#7cc4ff', hi: '#ffffff', lo: '#3b82f6', deep: '#1f56c9', core: '238,248,255', rgb: '124,196,255' };
+const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks slide, so collisions use where they are drawn
 function reset() {
   const p = params();
   pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
   fog = 0; resumeT = 0; fogT = 0;
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
+  Object.assign(wx, { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null }); if (typeof wxHide === 'function') wxHide();
   Object.assign(fx, { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 });
   while (nextY > -1000) addRow();
 }
@@ -282,7 +296,7 @@ let freePause = false;
 function pauseGame(away) {
   if (state !== 'play' || resumeT > 0) return;
   freePause = !!away;
-  state = 'paused'; $('#pfog').textContent = away ? 'Paused while you were away. No fog this time.' : fog ? `Fog level ${fog}. Resuming brings thicker fog for 5 seconds.` : 'Careful: resuming brings in fog for 5 seconds.'; show('#pause', true);
+  wxHide(); state = 'paused'; $('#pfog').textContent = away ? 'Paused while you were away. No fog this time.' : fog ? `Fog level ${fog}. Resuming brings thicker fog for 5 seconds.` : 'Careful: resuming brings in fog for 5 seconds.'; show('#pause', true);
 }
 function resumeGame() {
   if (state !== 'paused') return;
@@ -290,7 +304,7 @@ function resumeGame() {
 }
 $('#pbtn').onclick = () => pauseGame(); $('#resume').onclick = () => { if (!fresh()) resumeGame(); };
 $('#pmenu').onclick = () => { if (fresh()) return; show('#pause', false); goMenu(); };
-function goMenu() { show('#over', false); state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
+function goMenu() { wxHide(); show('#over', false); state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
 function showOver() {
   if (state !== 'dead') return;
   $('#onew').textContent = newBest ? 'NEW BEST' : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo x${fx.maxCombo}` : '';
@@ -333,11 +347,11 @@ addEventListener('keydown', e => {
 function die(x, y, bi = 0, blk = null) {
   state = 'dead'; shake = 0; fx.freeze = .03; fx.dead = 0; // tiny hit-stop; the shatter itself starts on the impact frame
   crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null;
-  crash.ball[bi] = { at: 0, burst: false }; if (blk) blk.hitAt = 0;
+  crash.ball[bi] = { at: 0, burst: false, elec: !!(blk && blk.elec) }; if (blk) blk.hitAt = 0; wxHide();
   // the twin ball: if it is meeting its own block at (nearly) the same moment, both shatter together as a mirror pair
   const j = 1 - bi;
-  for (const o of things) if (o.k === 'b' && o !== blk && Math.abs(o.y - BY) < 52 && Math.abs(bx[j] - LX[o.l]) < 38) { crash.ball[j] = { at: 0, burst: false }; o.hitAt = 0; break; }
-  for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (c) { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // burst instantly
+  for (const o of things) if (o.k === 'b' && o !== blk && Math.abs(o.y - BY) < 52 && Math.abs(bx[j] - bxOf(o)) < 38) { crash.ball[j] = { at: 0, burst: false, elec: !!o.elec }; o.hitAt = 0; break; }
+  for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (!c) continue; if (c.elec) c.at = .12; else { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // normal: burst instantly; electrified: a short electrocution flash first
   beep(190, .45, 'sawtooth', .1, -140);
   if (score > bestNow()) { bests[bkey()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
   setTimeout(showOver, 750);
@@ -363,9 +377,9 @@ function update(dt) {
       const k = 1 - clamp01((fx.dead - .45) / .25);
       for (const o of things) o.y += speed * dt * k;
       for (let j = 0; j < 2; j++) if (!crash.ball[j]) for (const o of things)
-        if (o.k === 'b' && Math.abs(o.y - BY) < 44 && Math.abs(bx[j] - LX[o.l]) < 38) { crash.ball[j] = { at: fx.dead, burst: false }; o.hitAt = fx.dead; break; }
+        if (o.k === 'b' && Math.abs(o.y - BY) < 44 && Math.abs(bx[j] - bxOf(o)) < 38) { crash.ball[j] = { at: fx.dead + (o.elec ? .12 : 0), burst: false, elec: !!o.elec }; o.hitAt = fx.dead; break; }
     }
-    for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY); } }
+    for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY, c.elec); } }
     return;
   }
   const tx = [LX[pos], LX[N - 1 - pos]];
@@ -395,12 +409,13 @@ function update(dt) {
     banner = capped ? 'MAX SPEED' : 'SPEED UP!'; beep(380 + Math.min(level, 12) * 35, .4, 'triangle', .08, 280);
   }
   speed += (targetSpeed(level) - speed) * Math.min(1, dt * 2.5);
+  updateWeather(dt);
 
   const lane = W / N;
   for (const o of things) {
     o.y += speed * dt;
     if (o.k === 'b' && o.y > BY + 40 && !scored.has(o.row)) { scored.add(o.row); score++; if (score % 10 === 0) { float(W / 2, 300, score + '!', '#e9a23b'); beep(760, .2, 'triangle', .07, 300); } }
-    const x = LX[o.l];
+    const x = bxOf(o);
     // near miss (visual only): a block slides past right beside a ball that just dodged
     if (o.k === 'b' && !o.nm && o.y > BY) {
       o.nm = true;
@@ -491,15 +506,110 @@ function crashTemplate() {
     out.push({ kind: 'd', a: rand(0, 6.283), v: rand(140, 560), life: rand(.3, .6), sz: rand(1.4, 3.4), white: Math.random() < .3 });
   return out;
 }
-function shatter(i, x, y) {
+function shatter(i, x, y, el = false) {
   const tmpl = crash.tmpl || (crash.tmpl = crashTemplate()), m = i === 0 ? 1 : -1;
   for (const f of tmpl) {
-    const vx = Math.cos(f.a) * f.v * m, vy = Math.sin(f.a) * f.v;
-    crash.shards.push({ ...f, x: x + vx * .018, y: y + vy * .018, vx, vy, rot: 0, spin: (f.spin || 0) * m, max: f.life, i, m });
+    const vx = Math.cos(f.a) * f.v * m * (el ? 1.15 : 1), vy = Math.sin(f.a) * f.v * (el ? 1.15 : 1);
+    crash.shards.push({ ...f, x: x + vx * .018, y: y + vy * .018, vx, vy, rot: 0, spin: (f.spin || 0) * m, max: f.life, i, m, el, white: f.white || (el && Math.random() < .35) });
   }
-  crash.waves.push({ x, y: y - 12, t: 0, i });
-  shake = Math.max(shake, 3.5); // very small, synced with the burst
-  beep(i ? 980 : 880, .18, 'triangle', .05, -500);
+  if (el) for (let k = 0; k < 10; k++) { const a = Math.random() * 6.283, v = 220 + Math.random() * 380; crash.shards.push({ kind: 'z', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: .28, max: .28, i, m, el, sz: 6 + Math.random() * 6, a }); }
+  crash.waves.push({ x, y: y - 12, t: 0, i, el });
+  shake = Math.max(shake, el ? 4.5 : 3.5); // very small, synced with the burst
+  beep(el ? 1300 : i ? 980 : 880, .18, el ? 'square' : 'triangle', .05, -800);
+}
+function wxNote(kind) {
+  const n = $('#wxnote'); n.className = kind; n.textContent = kind === 'fog' ? 'FOG INCOMING' : 'IT\u2019S STORMING\u2026';
+  void n.offsetWidth; n.classList.add('show'); clearTimeout(wxNote.h); wxNote.h = setTimeout(() => n.classList.remove('show'), 2600);
+}
+function wxHide() { $('#wxnote').classList.remove('show'); clearTimeout(wxNote.h); }
+function updateWeather(dt) {
+  if (!wx.kind) {
+    wx.cool -= dt;
+    if (wx.cool <= 0 && (wx.roll += dt) >= 1) { // one luck roll per second; storms are far rarer than fog
+      wx.roll -= 1; const r = Math.random(), k = r < P_STORM ? 'storm' : r < P_STORM + P_FOG ? 'fog' : '';
+      if (k) { wx.kind = k; wx.phase = 'warn'; wx.t = 0; wxNote(k); }
+    }
+  } else {
+    wx.t += dt;
+    if (wx.phase === 'warn' && wx.t >= 2.2) { wx.phase = 'on'; wx.t = 0; wx.nextBolt = 1.5 + Math.random() * 2.5; } // warning always comes first
+    else if (wx.phase === 'on' && wx.t >= WX[wx.kind].dur) { wx.phase = 'out'; wx.t = 0; }
+    else if (wx.phase === 'out' && wx.t >= 1.8) { wx.kind = ''; wx.phase = ''; wx.cool = 30 + Math.random() * 30; } // long quiet spell before the next one
+  }
+  const on = wx.phase === 'on' ? 1 : 0; wx.a += (on - wx.a) * Math.min(1, dt * 1.5);
+  wx.flash = Math.max(0, wx.flash - dt * 3); if (wx.bolt) { wx.bolt.t += dt; if (wx.bolt.t > .24) wx.bolt = null; }
+  if (wx.kind === 'storm' && wx.phase === 'on' && (wx.nextBolt -= dt) <= 0) { wx.nextBolt = 2.2 + Math.random() * 4.5; lightning(); }
+  // electrified blocks: two readable side switches (to the mirror column and back), finished long before they reach the balls
+  for (const o of things) if (o.elec) {
+    o.et += dt; const A = LX[o.l0], B = LX[N - 1 - o.l0], sm = q => q * q * (3 - 2 * q);
+    const p1 = sm(clamp01((o.et - .45) / .38)), p2 = sm(clamp01((o.et - 1.15) / .38));
+    o.ex = A + (B - A) * (p1 - p2); o.l = Math.abs(o.ex - A) <= Math.abs(o.ex - B) ? o.l0 : N - 1 - o.l0;
+  }
+}
+const cloudH = () => H * .19;
+function boltPts(x0, y0, x1, y1) {
+  const pts = [[x0, y0]], n = 7;
+  for (let k = 1; k < n; k++) { const q = k / n; pts.push([x0 + (x1 - x0) * q + (Math.random() - .5) * 26, y0 + (y1 - y0) * q]); }
+  pts.push([x1, y1]); return pts;
+}
+function lightning() {
+  wx.flash = 1; beep(70, .6, 'sawtooth', .035, -30);
+  // only strike blocks that are still far away (at least ~1.9s from the balls) so the side switches stay fair
+  const cand = things.filter(o => o.k === 'b' && !o.elec && o.y > 10 && (BY - o.y) / speed > 1.9);
+  if (cand.length && Math.random() < .45) {
+    const o = cand[(Math.random() * cand.length) | 0]; o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l];
+    wx.bolt = { o, pts: boltPts(o.ex + (Math.random() - .5) * 80, cloudH() * .35, o.ex, o.y - 22), t: 0 };
+    beep(1500, .12, 'square', .03, -1100);
+  } else { const x = W * (.15 + Math.random() * .7); wx.bolt = { pts: boltPts(x, cloudH() * .2, x + (Math.random() - .5) * 60, cloudH() * .85), t: 0 }; }
+}
+function drawArcs(x, y, rw, rh, n, a) { // small flickering electric arcs around a shape
+  ctx.save(); ctx.strokeStyle = `rgba(200,232,255,${a})`; ctx.lineWidth = 1.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (let k = 0; k < n; k++) {
+    const ang = Math.random() * 6.283, sx = x + Math.cos(ang) * rw, sy = y + Math.sin(ang) * rh, len = 8 + Math.random() * 10, d = ang + (Math.random() - .5);
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + Math.cos(d) * len * .5 + (Math.random() - .5) * 6, sy + Math.sin(d) * len * .5 + (Math.random() - .5) * 6); ctx.lineTo(sx + Math.cos(d) * len, sy + Math.sin(d) * len); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawRain() { // faint, thin, behind blocks and balls; a touch brighter while lightning lights it
+  if (wx.kind !== 'storm' || wx.a < .01) return;
+  ctx.strokeStyle = `rgba(110,140,185,${wx.a * (.11 + wx.flash * .16)})`; ctx.lineWidth = 1.1; ctx.lineCap = 'round'; ctx.beginPath();
+  for (const d of RAIN) { const x = ((d.x * (W + 60) + t * 70) % (W + 60)) - 30, y = ((d.y * (H + 80) + t * 760 * d.s) % (H + 80)) - 40; ctx.moveTo(x, y); ctx.lineTo(x - d.l * .2, y + d.l); }
+  ctx.stroke();
+}
+function drawHaze() { // weather fog: a translucent haze that keeps blocks readable; the balls are drawn crisp above it
+  if (wx.kind !== 'fog' || wx.a < .01) return;
+  const a = wx.a, g = ctx.createLinearGradient(0, 0, 0, BY);
+  g.addColorStop(0, `rgba(222,224,231,${.46 * a})`); g.addColorStop(.6, `rgba(226,228,234,${.3 * a})`); g.addColorStop(1, `rgba(230,232,238,${.14 * a})`);
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+  for (let i = 0; i < 4; i++) for (let sd = 0; sd < 2; sd++) { // slow drifting haze banks, mirrored
+    const d = ((i * 97 + t * 10) % (W / 2 + 120)) - 60, x = sd ? W - d : d, y = H * (.22 + i * .16) + Math.sin(t * .5 + i) * 18, R = 110 + (i % 2) * 40;
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(240,241,245,${.22 * a})`); rg.addColorStop(1, 'rgba(240,241,245,0)');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
+  }
+}
+function drawStorm() { // dark storm-cloud band across the top only, glowing blue from lightning
+  if (wx.kind !== 'storm' || wx.a < .01) return;
+  const a = wx.a, ch = cloudH(), g = ctx.createLinearGradient(0, -20, 0, ch * 1.25);
+  g.addColorStop(0, `rgba(38,46,70,${.92 * a})`); g.addColorStop(.55, `rgba(58,68,96,${.7 * a})`); g.addColorStop(1, 'rgba(70,80,110,0)');
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, ch * 1.25 + 20);
+  for (let i = 0; i < 5; i++) for (let sd = 0; sd < 2; sd++) { // billowing underside, mirrored
+    const d = ((i * 71 + t * 9) % (W / 2 + 90)) - 45, x = sd ? W - d : d, y = ch * .78 + Math.sin(t * .6 + i * 1.7) * 7, R = 48 + (i % 3) * 16;
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(54,63,90,${.55 * a})`); rg.addColorStop(1, 'rgba(54,63,90,0)');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
+  }
+  if (wx.flash > 0) { // the cloud lights up from inside, and the scene catches a faint blue reflection
+    const bx0 = wx.bolt ? wx.bolt.pts[0][0] : W / 2, lg = ctx.createRadialGradient(bx0, ch * .45, 0, bx0, ch * .45, W * .7);
+    lg.addColorStop(0, `rgba(205,228,255,${.75 * wx.flash * a})`); lg.addColorStop(1, 'rgba(150,190,255,0)');
+    ctx.fillStyle = lg; ctx.fillRect(-20, -20, W + 40, ch * 1.3);
+    ctx.fillStyle = `rgba(170,205,255,${.07 * wx.flash * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
+  }
+  if (wx.bolt) {
+    const k = 1 - wx.bolt.t / .24, pts = wx.bolt.pts.slice();
+    if (wx.bolt.o) { const o = wx.bolt.o; pts[pts.length - 1] = [bxOf(o), o.y - 22]; }
+    const path = () => { ctx.beginPath(); pts.forEach(([x, y], n) => n ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); };
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = `rgba(120,175,255,${.45 * k})`; ctx.lineWidth = 8; path(); ctx.stroke();
+    ctx.strokeStyle = `rgba(240,248,255,${.95 * k})`; ctx.lineWidth = 2.2; path(); ctx.stroke();
+  }
 }
 function updateCrash(dt) {
   for (const f of crash.shards) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += (f.kind === 's' ? 620 : 480) * dt; const d = 1 - 1.6 * dt; f.vx *= d; f.vy *= d; f.rot += (f.spin || 0) * dt; f.life -= dt; }
@@ -508,7 +618,7 @@ function updateCrash(dt) {
 }
 function drawCrash() {
   for (const w of crash.waves) { // translucent shockwave + a glossy refraction glint sweeping around it
-    const k = w.t / .5, e = ease(k), R = 18 + e * 120, P = PAL[w.i];
+    const k = w.t / .5, e = ease(k), R = 18 + e * 120, P = w.el ? ELEC : PAL[w.i];
     const fg = ctx.createRadialGradient(w.x, w.y, R * .55, w.x, w.y, R);
     fg.addColorStop(0, 'rgba(255,255,255,0)'); fg.addColorStop(.85, `rgba(255,255,255,${.16 * (1 - k)})`); fg.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(w.x, w.y, R, 0, 7); ctx.fill();
@@ -520,7 +630,7 @@ function drawCrash() {
     if (w.t < .12) { const fk = 1 - w.t / .12; const fl = ctx.createRadialGradient(w.x, w.y + 12, 0, w.x, w.y + 12, 46); fl.addColorStop(0, `rgba(255,255,255,${fk})`); fl.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(w.x, w.y + 12, 46, 0, 7); ctx.fill(); }
   }
   for (const f of crash.shards) {
-    const P = PAL[f.i], al = clamp01(f.life / f.max * 1.5);
+    const P = f.el ? ELEC : PAL[f.i], al = clamp01(f.life / f.max * 1.5);
     ctx.save(); ctx.globalAlpha = al; ctx.translate(f.x, f.y);
     if (f.kind === 's') { // curved glass shard with a lit edge
       ctx.rotate(f.rot); ctx.scale(f.m, 1);
@@ -530,6 +640,9 @@ function drawCrash() {
       for (let k = 1; k <= v.length; k++) { const p0 = v[k - 1], p1 = v[k % v.length]; ctx.quadraticCurveTo((p0[0] + p1[0]) * .62, (p0[1] + p1[1]) * .62, p1[0], p1[1]); }
       ctx.closePath(); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(v[0][0], v[0][1]); ctx.lineTo(v[1][0], v[1][1]); ctx.stroke();
+    } else if (f.kind === 'z') { // electric spark streak
+      ctx.rotate(Math.atan2(f.vy, f.vx)); ctx.strokeStyle = 'rgba(220,240,255,.95)'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-f.sz, 0); ctx.lineTo(-f.sz * .3, 2.5); ctx.lineTo(f.sz * .3, -2.5); ctx.lineTo(f.sz, 0); ctx.stroke();
     } else { // droplet stretched along its motion
       const sp = Math.hypot(f.vx, f.vy), len = f.sz * (1 + sp / 260);
       ctx.rotate(Math.atan2(f.vy, f.vx)); ctx.fillStyle = f.white ? 'rgba(255,255,255,.95)' : P.base;
@@ -539,13 +652,22 @@ function drawCrash() {
   }
 }
 
-function drawBlock(x, y, w, h, motion) {
+function drawBlock(x, y, w, h, motion, elec = false) {
   const r = 12, x0 = x - w / 2, y0 = y - h / 2;
   if (motion > 0) { ctx.fillStyle = `rgba(43,45,66,${.05 * motion})`; ctx.beginPath(); ctx.roundRect(x0 + 4, y0 - 26 * motion, w - 8, h, r); ctx.fill(); }
   ctx.fillStyle = 'rgba(43,45,66,.13)'; ctx.beginPath(); ctx.roundRect(x0 + 2, y0 + 6, w - 4, h, r); ctx.fill();
   const g = ctx.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, '#41445f'); g.addColorStop(1, '#25273b');
   ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, r); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.beginPath(); ctx.roundRect(x0 + 6, y0 + 3, w - 12, 3, 2); ctx.fill();
+  if (elec) { // lightning-struck: blue charge, bright rim, flickering arcs
+    const eg = ctx.createRadialGradient(x, y, 10, x, y, w * .95); eg.addColorStop(0, 'rgba(110,175,255,.38)'); eg.addColorStop(1, 'rgba(110,175,255,0)');
+    ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(x, y, w * .95, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(70,140,255,.38)'; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, r); ctx.fill();
+    ctx.strokeStyle = `rgba(190,225,255,${.75 + Math.random() * .25})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x0 + 1, y0 + 1, w - 2, h - 2, r); ctx.stroke();
+    const sg = ctx.createLinearGradient(0, y - 4, 0, y + 4); sg.addColorStop(0, '#ffffff'); sg.addColorStop(1, '#8cc8ff');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.roundRect(x - w * .29, y - 3.5, w * .58, 7, 3.5); ctx.fill();
+    drawArcs(x, y, w * .55, h * .6, 3, .85); return;
+  }
   const ag = ctx.createLinearGradient(0, y - 4, 0, y + 4); ag.addColorStop(0, '#ffc867'); ag.addColorStop(1, '#f08f1c');
   ctx.fillStyle = ag; ctx.beginPath(); ctx.roundRect(x - w * .29, y - 3.5, w * .58, 7, 3.5); ctx.fill();
 }
@@ -600,16 +722,18 @@ function draw() {
   ctx.fillStyle = 'rgba(43,45,66,.045)';
   LX.forEach(x => { for (let y = -64 + off; y < H; y += 64) { ctx.beginPath(); ctx.roundRect(x - 1.5, y, 3, 22, 1.5); ctx.fill(); } });
 
+  drawRain();
   const motion = clamp01((speed - 450) / 500);
   for (const o of things) {
-    const x = LX[o.l];
+    const x = bxOf(o);
     if (o.k !== 'b') { drawGem(x, o.y, o.ph); continue; }
     if (o.hitAt !== undefined && state === 'dead') { // the block takes the hit: a short jolt and squash
       const k = Math.max(0, fx.dead - o.hitAt), dmp = Math.max(0, 1 - k / .3), sq = Math.max(0, 1 - k / .18);
       ctx.save(); ctx.translate(x + Math.sin(k * 75) * 3.2 * dmp, o.y - 3 * sq); ctx.scale(1 + .07 * sq, 1 - .13 * sq);
-      drawBlock(0, 0, bw(), 44, 0); ctx.restore();
-    } else drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion);
+      drawBlock(0, 0, bw(), 44, 0, o.elec); ctx.restore();
+    } else drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec);
   }
+  drawHaze();
 
   // mirror link between the pair
   ctx.strokeStyle = `rgba(43,45,66,${.16 + pulse * .1})`; ctx.lineWidth = 3; ctx.setLineDash([1, 9]); ctx.lineCap = 'round';
@@ -629,14 +753,20 @@ function draw() {
     }
     const c = state === 'dead' ? crash.ball[i] : null;
     if (!c) drawBall(x, BY, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8);
+    else if (c.elec && !c.burst) { // electrocution: blue-white flash wrapped in small arcs, then it bursts
+      drawBall(x, BY, r * (1 + .06 * Math.random()), ELEC, i ? 1 : -1, 1, 1, 1, .85);
+      const eg = ctx.createRadialGradient(x, BY, 10, x, BY, 54); eg.addColorStop(0, 'rgba(190,225,255,.55)'); eg.addColorStop(1, 'rgba(190,225,255,0)');
+      ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(x, BY, 54, 0, 7); ctx.fill(); drawArcs(x, BY, 24, 24, 6, .95);
+    }
     else { // impact frame: the ball squashes flat and flares white as it bursts, gone within ~60ms
       const k = clamp01((fx.dead - (c.bt || 0)) / .06);
-      if (k < 1) drawBall(x, BY + 3, r, P, i ? 1 : -1, 1.32 + .25 * k, .7 - .3 * k, 1, 1, 1 - k);
+      if (k < 1) drawBall(x, BY + 3, r, c.elec ? ELEC : P, i ? 1 : -1, 1.32 + .25 * k, .7 - .3 * k, 1, 1, 1 - k);
     }
     if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv; drawArrow(x, BY, (x < W / 2 ? 1 : -1) * nd, .32 + fx.arrow * .4, ease(fx.arrow)); }
   }
   parts.forEach(q => { ctx.globalAlpha = Math.max(0, q.life / q.max); ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 7); ctx.fill(); });
   ctx.globalAlpha = 1;
+  drawStorm();
 
   // speed-up: soft streaks, background pulse handled above, banner slides in and out quickly
   if (fxA > 0 && state === 'play') {
