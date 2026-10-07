@@ -25,6 +25,9 @@
   .dname{font-size:18px;letter-spacing:.04em;color:var(--teal)}
   .drange{width:100%;accent-color:var(--teal);height:28px;margin:0}
   .dticks{display:flex;justify-content:space-between;font-size:11px;opacity:.55;font-weight:700}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;border:0;border-radius:12px;padding:10px 6px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;background:rgba(43,45,66,.08);color:var(--ink)}
+  .seg button.on{background:var(--teal);color:#fff}
   .small{font-size:13px;opacity:.65}
 </style>
 </head>
@@ -35,6 +38,7 @@
   <h1><i>MIRROR</i> <u>DROP</u></h1>
   <div class="sub">two balls. one tap.</div>
   <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="100" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Insane</span></div></div>
+  <div class="diff"><div class="dl"><span>COLUMNS</span><b id="pername">6 columns</b></div><div class="seg"><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div></div>
   <button class="btn" id="play">PLAY</button>
   <div class="small" id="mbest"></div>
   <div class="small">tap a column to send the balls there</div>
@@ -55,16 +59,20 @@
 // Dodge the blocks, catch the gems. Every 5 seconds the world speeds up by a fixed step.
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const $ = s => document.querySelector(s);
-const W = 520, H = 800, BY = 640;
-const LX = [43, 129, 215, 301, 387, 473]; // 6 columns: 3 per side, balls mirror each other
+// per = ball positions per side (2 or 3). Columns N = per * 2; the two balls always mirror each other.
+let per = 3; try { per = +localStorage.mirrorPer === 2 ? 2 : 3; } catch (e) {}
+let W = 520, N = 6, LX = [];
+let H = 800, BY = 640; // H grows on tall phones so the field fills the screen
+function layout() { W = per === 2 ? 480 : 520; N = per * 2; LX = Array.from({ length: N }, (_, i) => (i + .5) * W / N); resize(); }
+const bw = () => Math.min(70, W / N * .82);
 let scale = 1, offX = 0, offY = 0, dpr = 1;
 function resize() {
-  dpr = Math.min(devicePixelRatio || 1, 2);
+  dpr = Math.min(devicePixelRatio || 1, 2); H = Math.max(800, W * innerHeight / innerWidth); BY = H - 160;
   cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
   scale = Math.min(cv.width / W, cv.height / H);
   offX = (cv.width - W * scale) / 2; offY = (cv.height - H * scale) / 2;
 }
-addEventListener('resize', resize); resize();
+addEventListener('resize', resize); layout();
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp01 = x => Math.min(1, Math.max(0, x));
 
@@ -76,12 +84,14 @@ const bucket = () => Math.min(4, Math.floor(diff * 5));
 // Difficulty 0..1. Each 5s level adds `step` speed and tightens the row gap, down to a floor of `minTime` seconds between rows.
 const params = () => ({ start: 270 + 230 * diff, step: 12 + 34 * diff, max: 540 + 380 * diff, gap: 280 - 70 * diff, shrink: 2 + 6 * diff, minTime: .46 - .20 * diff, flip: .5 + .4 * diff });
 const rowGap = () => { const p = params(); return Math.max(p.gap - level * p.shrink, speed * p.minTime); };
-const bestNow = () => bests[bucket()] || 0;
+const bkey = () => per + '_' + bucket();
+const bestNow = () => bests[bkey()] || 0;
 function syncDiffUI() {
   document.querySelectorAll('.drange').forEach(r => { r.value = Math.round(diff * 100); });
   document.querySelectorAll('.dname').forEach(n => { n.textContent = NAMES[bucket()]; });
-  $('#mbest').textContent = bestNow() ? `best on ${NAMES[bucket()]}: ${bestNow()}` : 'no score yet on this difficulty';
-  $('#obest').textContent = `best on ${NAMES[bucket()]}: ${bestNow()}`;
+  $('#mbest').textContent = bestNow() ? `best on ${NAMES[bucket()]}, ${N} columns: ${bestNow()}` : 'no score yet on this setup';
+  $('#obest').textContent = `best on ${NAMES[bucket()]}, ${N} columns: ${bestNow()}`;
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', +b.dataset.per === per)); $('#pername').textContent = N + ' columns';
 }
 document.querySelectorAll('.drange').forEach(r => r.addEventListener('input', () => {
   diff = r.value / 100; try { localStorage.mirrorDiff = diff; } catch (e) {} syncDiffUI(); if (state === 'menu') reset();
@@ -105,7 +115,7 @@ let state = 'menu', t = 0, shake = 0, demoT = 0;
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 function reset() {
   const p = params();
-  pos = 0; dirv = 1; bx = [LX[0], LX[5]]; scored = new Set(); things = []; parts = []; floaters = [];
+  pos = 0; dirv = 1; bx = [LX[0], LX[N - 1]]; scored = new Set(); things = []; parts = []; floaters = [];
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = 0; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   while (nextY > -1000) addRow();
 }
@@ -113,13 +123,13 @@ function reset() {
 let lastSafe = 0, rowId = 0, scored = new Set();
 function addRow() {
   let sp = lastSafe;
-  if (Math.random() < params().flip) { const o = [0, 1, 2].filter(v => v !== lastSafe); sp = o[(Math.random() * 2) | 0]; }
+  if (Math.random() < params().flip) { const o = Array.from({ length: per }, (_, i) => i).filter(v => v !== lastSafe); sp = o[(Math.random() * o.length) | 0]; }
   const jump = Math.abs(sp - lastSafe); lastSafe = sp; const row = rowId++;
-  [0, 1, 2].filter(q => q !== sp).forEach(q => {
-    (Math.random() < .3 ? [q, 5 - q] : [Math.random() < .5 ? q : 5 - q]).forEach(l => things.push({ k: 'b', l, y: nextY, row }));
+  Array.from({ length: per }, (_, i) => i).filter(q => q !== sp).forEach(q => {
+    (Math.random() < .3 ? [q, N - 1 - q] : [Math.random() < .5 ? q : N - 1 - q]).forEach(l => things.push({ k: 'b', l, y: nextY, row }));
   });
-  if (Math.random() < .55) things.push({ k: 'g', l: Math.random() < .5 ? sp : 5 - sp, y: nextY - rand(0, 40), ph: rand(0, 6), row });
-  nextY -= rowGap() * (jump === 2 ? 1.4 : 1); // a two-step move needs two taps, so give it more room
+  if (Math.random() < .55) things.push({ k: 'g', l: Math.random() < .5 ? sp : N - 1 - sp, y: nextY - rand(0, 40), ph: rand(0, 6), row });
+  nextY -= rowGap() * (jump >= 2 ? 1.4 : 1); // a two-step move needs two taps, so give it more room
 }
 reset();
 
@@ -136,21 +146,26 @@ function showOver() {
   if (state !== 'dead') return;
   $('#oscore').textContent = score; $('#onew').textContent = newBest ? '★ NEW BEST ★' : ''; syncDiffUI(); show('#over', true);
 }
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { per = +b.dataset.per; try { localStorage.mirrorPer = per; } catch (e) {} layout(); reset(); syncDiffUI(); });
 $('#play').onclick = startGame; $('#retry').onclick = startGame; $('#tomenu').onclick = goMenu;
 
 let flashA = 0, flashLane = 0;
 function setPos(np, lane) {
   if (state !== 'play') return;
-  np = Math.max(0, Math.min(2, np)); flashA = 1; flashLane = lane === undefined ? np : lane;
-  if (np !== pos) { const d = np - pos; pos = np; pulse = 1; beep(380 + pos * 90, .08, 'triangle', .05, d * 80); }
+  np = Math.max(0, Math.min(per - 1, np)); flashA = 1; flashLane = lane === undefined ? np : lane;
+  if (np === pos) beep(300, .04, 'triangle', .03);
+  else { const d = np - pos; pos = np; pulse = 1; beep(380 + pos * 90, .08, 'triangle', .05, d * 80); }
 }
 const move = d => setPos(pos + d);
-function cycle() { if (pos + dirv > 2 || pos + dirv < 0) dirv = -dirv; move(dirv); }
+function cycle() { if (pos + dirv > per - 1 || pos + dirv < 0) dirv = -dirv; move(dirv); }
 // tap a column and the balls go there (the other ball mirrors it on the opposite side)
-cv.addEventListener('pointerdown', e => {
-  e.preventDefault(); const gx = (e.clientX * dpr - offX) / scale, lane = Math.max(0, Math.min(5, Math.floor(gx / (W / 6))));
-  setPos(Math.min(lane, 5 - lane), lane);
-});
+let pressing = false;
+const colFromX = cx => Math.max(0, Math.min(N - 1, Math.floor(((cx * dpr - offX) / scale) / (W / N))));
+function press(e) { const lane = colFromX(e.clientX); setPos(Math.min(lane, N - 1 - lane), lane); }
+cv.addEventListener('pointerdown', e => { e.preventDefault(); pressing = true; press(e); });
+cv.addEventListener('pointermove', e => { if (pressing) press(e); }); // slide a finger across columns
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => cv.addEventListener(ev, () => { pressing = false; }));
+addEventListener('blur', () => { pressing = false; });
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const act = ['Space', 'Enter'].includes(e.code);
@@ -167,7 +182,7 @@ function die(x, y) {
   state = 'dead'; shake = 14;
   burst(bx[0], BY, 24, '#ff6b81', 380, .9); burst(bx[1], BY, 24, '#2ec4d6', 380, .9); burst(x, y, 14, '#2b2d42', 300, .8);
   beep(190, .45, 'sawtooth', .1, -140);
-  if (score > bestNow()) { bests[bucket()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
+  if (score > bestNow()) { bests[bkey()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
   setTimeout(showOver, 750);
 }
 
@@ -178,11 +193,11 @@ function update(dt) {
   parts = parts.filter(q => q.life > 0);
   floaters.forEach(f => { f.y -= 50 * dt; f.life -= dt * 1.1; }); floaters = floaters.filter(f => f.life > 0);
   if (state === 'dead') return;
-  const tx = [LX[pos], LX[5 - pos]];
+  const tx = [LX[pos], LX[N - 1 - pos]];
   bx[0] += (tx[0] - bx[0]) * Math.min(1, dt * 22); bx[1] += (tx[1] - bx[1]) * Math.min(1, dt * 22);
 
   if (state === 'menu') { // decorative demo behind the menu: no collisions
-    demoT += dt; if (demoT > 1.2) { demoT = 0; if (pos + dirv > 2 || pos + dirv < 0) dirv = -dirv; pos += dirv; }
+    demoT += dt; if (demoT > 1.2) { demoT = 0; if (pos + dirv > per - 1 || pos + dirv < 0) dirv = -dirv; pos += dirv; }
     things.forEach(o => { o.y += speed * dt; }); nextY += speed * dt; things = things.filter(o => o.y < H + 80);
     while (nextY > -300) addRow();
     return;
@@ -226,7 +241,7 @@ function draw() {
   ctx.fillStyle = 'rgba(255,107,129,.10)'; ctx.fillRect(0, 0, W / 2, H);
   ctx.fillStyle = 'rgba(46,196,214,.12)'; ctx.fillRect(W / 2, 0, W / 2, H);
   ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.fillRect(W / 2 - 2, 0, 4, H);
-  if (flashA > 0 && state === 'play') { [flashLane, 5 - flashLane].forEach(l => { ctx.fillStyle = `rgba(255,159,28,${.22 * flashA})`; ctx.fillRect(l * W / 6, 0, W / 6, H); }); }
+  if (flashA > 0 && state === 'play') { [flashLane, N - 1 - flashLane].forEach(l => { ctx.fillStyle = `rgba(255,159,28,${.22 * flashA})`; ctx.fillRect(l * W / N, 0, W / N, H); }); }
   const off = (t * speed * .5) % 60;
   ctx.fillStyle = 'rgba(43,45,66,.07)';
   LX.forEach(x => { for (let y = -60 + off; y < H; y += 60) ctx.fillRect(x - 2, y, 4, 24); });
@@ -234,8 +249,8 @@ function draw() {
   for (const o of things) {
     const x = LX[o.l];
     if (o.k === 'b') {
-      ctx.fillStyle = '#2b2d42'; ctx.beginPath(); ctx.roundRect(x - 35, o.y - 22, 70, 44, 12); ctx.fill();
-      ctx.fillStyle = '#ff9f1c'; ctx.fillRect(x - 20, o.y - 4, 40, 8);
+      ctx.fillStyle = '#2b2d42'; ctx.beginPath(); ctx.roundRect(x - bw() / 2, o.y - 22, bw(), 44, 12); ctx.fill();
+      ctx.fillStyle = '#ff9f1c'; ctx.fillRect(x - bw() * .29, o.y - 4, bw() * .58, 8);
     } else {
       const s = 1 + Math.sin(t * 6 + o.ph) * .1;
       ctx.save(); ctx.translate(x, o.y); ctx.rotate(Math.PI / 4 + Math.sin(t * 3 + o.ph) * .2); ctx.scale(s, s);
