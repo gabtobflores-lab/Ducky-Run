@@ -75,7 +75,7 @@ function layout() { W = per === 2 ? 480 : 520; N = per * 2; LX = Array.from({ le
 const bw = () => Math.min(70, W / N * .82);
 let scale = 1, offX = 0, offY = 0, dpr = 1;
 function resize() {
-  dpr = Math.min(devicePixelRatio || 1, 2); H = Math.max(800, W * innerHeight / innerWidth); BY = H - 160;
+  dpr = Math.min(devicePixelRatio || 1, 2); H = Math.max(800, W * innerHeight / innerWidth); BY = H - 250; // keep the balls above where a thumb rests
   cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
   scale = Math.min(cv.width / W, cv.height / H);
   offX = (cv.width - W * scale) / 2; offY = (cv.height - H * scale) / 2;
