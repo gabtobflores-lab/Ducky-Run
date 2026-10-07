@@ -257,7 +257,7 @@ const WX = {
 };
 const HAIL = Array.from({ length: 56 }, () => ({ x: Math.random(), y: Math.random(), r: 2 + Math.random() * Math.random() * 4.5, s: .75 + Math.random() * .6 })), hailHits = [];
 const wx = { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 };
-const RAIN = Array.from({ length: 110 }, () => { const z = .25 + .75 * Math.random() ** 1.3; return { x: Math.random(), y: Math.random(), z, l: 7 + z * 34 + Math.random() * 8, s: .55 + z * .9 + Math.random() * .15, v: Math.random() }; }).sort((p, q) => p.z - q.z);
+const RAIN = Array.from({ length: 110 }, () => { const z = .25 + .75 * Math.random() ** 1.3; return { x: Math.random(), y: Math.random(), z, l: 10 + z * 46 + Math.random() * 10, s: .55 + z * .9 + Math.random() * .15, v: Math.random() }; }).sort((p, q) => p.z - q.z);
 let windDir = 1, rimA = 0, sunX = -999;
 const ELEC = { base: '#7cc4ff', hi: '#ffffff', lo: '#3b82f6', deep: '#1f56c9', core: '238,248,255', rgb: '124,196,255' };
 const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks slide, so collisions use where they are drawn
@@ -867,19 +867,33 @@ const frost = () => sprite('frost', 200, 400, (g, w, h) => { // fine condensatio
   if ('filter' in g) g.filter = 'blur(.6px)'; g.drawImage(tmp, 0, 0);
 });
 const sunGlint = (x, y) => sunX < -500 ? 0 : Math.max(0, 1 - Math.abs(x + y * .35 - sunX) / 90) * wx.a;
-function boltPts(x0, y0, x1, y1, rough = .32) { // midpoint displacement: jagged at every scale, like real lightning
+function boltPts(x0, y0, x1, y1, rough = .32) { // midpoint displacement perpendicular to the channel: jagged at every scale, like real lightning
   let pts = [[x0, y0], [x1, y1]];
   for (let it = 0; it < 5; it++) { const nx = [];
-    for (let k = 0; k < pts.length - 1; k++) { const [ax, ay] = pts[k], [bx2, by2] = pts[k + 1], L = Math.hypot(bx2 - ax, by2 - ay); nx.push([ax, ay], [(ax + bx2) / 2 + (Math.random() - .5) * L * rough, (ay + by2) / 2 + (Math.random() - .5) * L * rough * .25]); }
+    for (let k = 0; k < pts.length - 1; k++) { const [ax, ay] = pts[k], [bx2, by2] = pts[k + 1], L = Math.hypot(bx2 - ax, by2 - ay) || 1, d = (Math.random() - .5) * L * rough, al = (Math.random() - .5) * L * .12;
+      nx.push([ax, ay], [(ax + bx2) / 2 - (by2 - ay) / L * d + (bx2 - ax) / L * al, (ay + by2) / 2 + (bx2 - ax) / L * d + (by2 - ay) / L * al]); }
     nx.push(pts[pts.length - 1]); pts = nx; }
   return pts;
 }
-function forks(main, n) { // a few thinner branches peeling off downward
+function forks(main, n, horiz) { // thinner branches peeling away from the channel (downward for strikes, sideways inside the cloud)
   const out = [];
-  for (let k = 0; k < n; k++) { const i = 4 + ((Math.random() * (main.length * .6)) | 0), [x, y] = main[Math.min(i, main.length - 2)], dir = Math.random() < .5 ? -1 : 1, L = 50 + Math.random() * 110;
-    out.push(boltPts(x, y, x + dir * L * (.5 + Math.random() * .6), y + L, .45).slice(0, 12 + ((Math.random() * 20) | 0))); }
+  for (let k = 0; k < n; k++) { const i0 = 3 + ((Math.random() * (main.length * .7)) | 0), [x, y] = main[Math.min(i0, main.length - 2)], L = 40 + Math.random() * 100, dir = Math.random() < .5 ? -1 : 1;
+    const ex = horiz ? x + (main[main.length - 1][0] > main[0][0] ? 1 : -1) * L : x + dir * L * (.4 + Math.random() * .6), ey = horiz ? y + dir * L * .35 : y + L;
+    out.push({ i0, pts: boltPts(x, y, ex, ey, .5).slice(0, 10 + ((Math.random() * 22) | 0)) }); }
   return out;
 }
+function strokes() { // real flashes: one bright return stroke, then a few dimmer re-strikes down the same channel
+  const st = [{ t: 0, k: 1 }], n = Math.random() < .25 ? 0 : 1 + ((Math.random() * 3) | 0);
+  for (let i = 0; i < n; i++) st.push({ t: st[st.length - 1].t + .045 + Math.random() * .09, k: .45 + Math.random() * .4 });
+  return st;
+}
+const blocked = (pts, skip) => { // does this channel cross a block (where it will be over the next moments) or a ball?
+  const hw = bw() / 2 + 8;
+  for (const o of things) { if (o.k !== 'b' || o === skip) continue; const x = bxOf(o), y0 = o.y - 30, y1 = o.y + 30 + speed * .35;
+    for (const [px, py] of pts) if (Math.abs(px - x) < hw && py > y0 && py < y1) return true; }
+  for (let i = 0; i < 2; i++) for (const [px, py] of pts) if (Math.hypot(px - bx[i], py - BY) < 34) return true;
+  return false;
+};
 function thunder(delay, vol, len = 2.2) { // soft low rumble: filtered noise swelling then rolling away
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const n = ac.sampleRate * len | 0;
@@ -890,39 +904,58 @@ function thunder(delay, vol, len = 2.2) { // soft low rumble: filtered noise swe
     src.connect(lp); lp.connect(g); g.connect(ac.destination); src.start(t0); src.stop(t0 + len);
   } catch (e) {}
 }
-function cloudGlow() { // lightning hidden inside the cloud: a few quick blue pulses lighting it from within, sometimes a distant rumble
-  const pulses = [0]; for (let k = 0, n = 1 + ((Math.random() * 3) | 0); k < n; k++) pulses.push(pulses[pulses.length - 1] + .06 + Math.random() * .14);
-  wx.glows.push({ x: W * (.1 + Math.random() * .8), y: cloudH() * (.25 + Math.random() * .4), t: 0, dur: pulses[pulses.length - 1] + .35, pulses, r: .7 + Math.random() * .6 });
-  if (Math.random() < .45) thunder(.5 + Math.random() * .9, .035 + Math.random() * .03, 2.6);
+function cloudGlow() { // lightning inside the cloud: mostly a crawler racing sideways through the deck, lighting the cloud along its path; sometimes just a hidden glow
+  const ch = cloudH(), st = strokes();
+  if (Math.random() < .7) {
+    const x0 = W * (.05 + Math.random() * .4), dir = Math.random() < .5 ? 1 : -1, xs = dir > 0 ? x0 : W - x0, xe = xs + dir * W * (.35 + Math.random() * .45), y0 = ch * (.3 + Math.random() * .35);
+    const pts = boltPts(xs, y0, xe, y0 + (Math.random() - .5) * ch * .35, .38);
+    wx.glows.push({ pts, br: forks(pts, 2 + ((Math.random() * 3) | 0), true), t: 0, lead: .14 + Math.random() * .16, st, dur: .14 + .16 + st[st.length - 1].t + .5 });
+  } else wx.glows.push({ x: W * (.1 + Math.random() * .8), y: ch * (.25 + Math.random() * .4), t: 0, lead: 0, st, dur: st[st.length - 1].t + .5, r: .7 + Math.random() * .6 });
+  if (Math.random() < .5) thunder(.5 + Math.random() * .9, .035 + Math.random() * .03, 2.6);
 }
-function lightning() { // a full strike from the cloud base down across the screen; only now and then does one find a block
+function lightning() { // a strike from the cloud base: threads between the blocks to the floor; only now and then does one find a block
   const cand = things.filter(o => o.k === 'b' && !o.elec && o.y > 40 && (BY - o.y) / speed > 1.9); // only blocks still far from the balls, so it stays fair
-  const x0 = W * (.08 + Math.random() * .84), y0 = cloudH() * (.5 + Math.random() * .25), restrike = [0]; if (Math.random() < .6) restrike.push(.09 + Math.random() * .08); if (Math.random() < .3) restrike.push(restrike[restrike.length - 1] + .1);
+  const y0 = cloudH() * (.55 + Math.random() * .2), st = strokes(), lead = .07 + Math.random() * .08;
+  let bolt = null;
   if (cand.length && Math.random() < .22) {
-    const o = cand[(Math.random() * cand.length) | 0]; o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l];
-    const pts = boltPts(o.ex + (Math.random() - .5) * 120, y0, o.ex, o.y - 22);
-    wx.bolt = { o, pts, br: forks(pts, 1), t: 0, dur: restrike[restrike.length - 1] + .3, restrike };
-    beep(1500, .12, 'square', .03, -1100); thunder(.08, .1, 2.4);
-  } else {
-    const pts = boltPts(x0, y0, x0 + (Math.random() - .5) * W * .5, H * (.86 + Math.random() * .1));
-    wx.bolt = { pts, br: forks(pts, 2 + ((Math.random() * 2) | 0)), t: 0, dur: restrike[restrike.length - 1] + .3, restrike };
-    thunder(.15 + Math.random() * .4, .08 + Math.random() * .03, 2.6);
+    const o = cand[(Math.random() * cand.length) | 0];
+    for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(o.ex ?? LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y - 22); if (!blocked(pts, o)) bolt = { o, pts }; }
+    if (bolt) { o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l]; bolt.pts[0][0] = bolt.pts[0][0]; }
   }
-  wx.flash = 1;
+  for (let i = 0; i < 14 && !bolt; i++) { // find a channel that misses every block and both balls
+    const xe = W * (.04 + Math.random() * .92), x0 = xe + (Math.random() - .5) * W * .5, pts = boltPts(x0, y0, xe, H * (.88 + Math.random() * .08));
+    if (!blocked(pts)) bolt = { pts };
+  }
+  if (!bolt) { cloudGlow(); return; } // nowhere clear to land: it stays in the cloud this time
+  Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o)), t: 0, lead, st, dur: lead + st[st.length - 1].t + .55 });
+  wx.bolt = bolt; wx.flash = 1;
+  if (bolt.o) { setTimeout(() => beep(1500, .12, 'square', .03, -1100), lead * 1000); thunder(lead + .05, .1, 2.4); } else thunder(lead + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
 }
-function boltK() { // brightness of the current bolt: sharp flash on each return stroke, fast decay between
-  if (!wx.bolt) return 0; let k = 0; for (const r of wx.bolt.restrike) if (wx.bolt.t >= r) k = Math.max(k, Math.exp(-(wx.bolt.t - r) * 9)); return k;
+function flashK(b) { // brightness after the leader: each stroke flares and decays fast
+  if (!b || b.t < b.lead) return 0; const tt = b.t - b.lead; let k = 0;
+  for (const s2 of b.st) if (tt >= s2.t) k = Math.max(k, s2.k * Math.exp(-(tt - s2.t) * 13));
+  return k;
 }
-function drawBolt() { // a soft glow, a hot white core and finer branches
-  if (!wx.bolt) return; const k = boltK(); if (k < .02) return;
-  const pts = wx.bolt.pts.slice(); if (wx.bolt.o) { const o = wx.bolt.o; pts[pts.length - 1] = [bxOf(o), o.y - 22]; }
-  const line = (P) => { ctx.beginPath(); P.forEach(([x, y], n) => n ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); };
-  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalCompositeOperation = 'screen';
-  ctx.strokeStyle = `rgba(120,160,255,${.25 * k})`; ctx.lineWidth = 14; line(pts); ctx.stroke();
-  ctx.strokeStyle = `rgba(170,200,255,${.5 * k})`; ctx.lineWidth = 5; line(pts); ctx.stroke();
-  for (const b of wx.bolt.br) { ctx.strokeStyle = `rgba(170,200,255,${.35 * k})`; ctx.lineWidth = 3; line(b); ctx.stroke(); ctx.strokeStyle = `rgba(240,246,255,${.6 * k})`; ctx.lineWidth = 1; line(b); ctx.stroke(); }
-  ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = `rgba(250,252,255,${.95 * k})`; ctx.lineWidth = 2.6; line(pts); ctx.stroke();
-  if (wx.bolt.o) { const o = wx.bolt.o, x = bxOf(o); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .8 * k; ctx.drawImage(softBlob('190,215,255'), x - 60, o.y - 70, 120, 80); ctx.globalAlpha = 1; } // contact flare on the block
+const boltK = () => flashK(wx.bolt);
+function channel(b, k, wGlow, inCloud) { // the stepped leader creeps out faintly, then the return stroke lights the whole channel
+  const lead = b.t < b.lead, p = lead ? b.t / b.lead : 1, n = Math.max(2, Math.floor(b.pts.length * p)), main = b.pts.slice(0, n);
+  if (b.o && !lead) { const o = b.o; main[main.length - 1] = [bxOf(o), o.y - 22]; }
+  const line = P => { ctx.beginPath(); P.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); };
+  const tt = Math.max(0, b.t - b.lead), after = lead ? 0 : .22 * Math.exp(-tt * 5); // the channel lingers faintly a moment after the flash
+  const I = lead ? .22 : Math.max(k, after);
+  if (I < .02) return;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalCompositeOperation = 'screen';
+  ctx.strokeStyle = `rgba(140,150,255,${.22 * I})`; ctx.lineWidth = wGlow * 2.2; line(main); ctx.stroke();
+  ctx.strokeStyle = `rgba(185,200,255,${.45 * I})`; ctx.lineWidth = wGlow; line(main); ctx.stroke();
+  for (const f of b.br) { if (f.i0 > n) continue; const m = lead ? Math.max(2, Math.floor(f.pts.length * Math.min(1, (n - f.i0) / (b.pts.length * .25)))) : f.pts.length, P = f.pts.slice(0, m);
+    ctx.strokeStyle = `rgba(180,195,255,${.3 * I})`; ctx.lineWidth = wGlow * .45; line(P); ctx.stroke(); ctx.strokeStyle = `rgba(245,248,255,${.55 * I})`; ctx.lineWidth = .9; line(P); ctx.stroke(); }
+  ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = `rgba(252,253,255,${(inCloud ? .75 : .97) * I})`; ctx.lineWidth = lead ? 1 : 2.2; line(main); ctx.stroke();
+}
+function drawBolt() { // the strike, in front of the cloud: leader, return stroke, re-strikes, a glow where it lands
+  const b = wx.bolt; if (!b) return; const k = flashK(b);
+  ctx.save(); channel(b, k, 7, false);
+  if (k > .02) { const [ex, ey] = b.o ? [bxOf(b.o), b.o.y - 22] : b.pts[b.pts.length - 1]; ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = Math.min(1, k);
+    ctx.drawImage(softBlob('200,215,255'), ex - 80, ey - 40, 160, 80); ctx.globalAlpha = 1; } // contact glow on the floor or the block
   ctx.restore();
 }
 function drawArcs(x, y, rw, rh, n, a) { // small flickering electric arcs around a shape
@@ -942,23 +975,30 @@ function drawRain() { // storm, behind the gameplay: cool uneven sky, two scroll
       const T = 192 * sc, ox = (t * sp * .17 + li * 71) % T, oy = (t * sp + li * 53) % T; ctx.globalAlpha = al * e * lit;
       for (let x = -T + ox; x < W; x += T) for (let y = -T + oy; y < H; y += T) ctx.drawImage(tile, x, y, T, T);
     });
+    for (let k = 0; k < 3; k++) { const sd = SEEDS[k + 17], x = ((sd.x * W * 1.8 + t * (40 + sd.k * 30)) % (W * 1.8)) - W * .4; // sheets of heavier rain sweeping through
+      ctx.save(); ctx.translate(x, 0); ctx.transform(1, 0, -.18, 1, 0, 0); ctx.globalAlpha = .16 * e * (.6 + .4 * nz(t * .3, sd.s)); ctx.drawImage(softBlob('205,215,232'), -W * .15, -H * .1, W * .3, H * 1.2); ctx.restore(); }
+    ctx.globalAlpha = .22 * e; ctx.drawImage(softBlob('190,200,215'), -W * .3, H * .82, W * 1.6, H * .3); // spray and mist where the rain hits the floor
     ctx.globalAlpha = 1;
   });
   { const bk = boltK(); if (bk > 0) { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .28 * bk * e; ctx.drawImage(softBlob('200,215,255'), -W * .3, -H * .1, W * 1.6, H * 1.2); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; } }
-  ctx.lineCap = 'round';
-  for (let b = 0; b < 4; b++) { // foreground streaks in four depth bands
-    const z0 = .25 + b * .1875, z1 = z0 + .1875, zc = (z0 + z1) / 2, al = e * (.14 + zc * .4) * (.88 + .12 * nz(t * 1.3 + b, 8)) * lit;
-    ctx.strokeStyle = `rgba(${178 - zc * 30},${198 - zc * 18},228,${al})`; ctx.lineWidth = .55 + zc * 1.05; ctx.beginPath();
-    for (const d of RAIN) { if (d.z < z0 || d.z >= z1) continue;
-      const s2 = sl + (d.v - .5) * .05, sp = 560 + d.z * 900, x = ((d.x * (W + 80) + t * sp * s2 * d.s) % (W + 80)) - 40, y = ((d.y * (H + 80) + t * sp * d.s) % (H + 80)) - 40;
-      ctx.moveTo(x, y); ctx.lineTo(x - d.l * s2, y - d.l); }
-    ctx.stroke();
+  // individual drops: motion-blurred streaks that fade in from the tail to a brighter head, scaled by depth (near = longer, wider, faster)
+  const q = Math.max(0, Math.min(6, Math.round((sl - .08) / .035))), spr = rainStreak(q), slq = .08 + q * .035;
+  for (const d of RAIN) {
+    const sp = 600 + d.z * 950, x = ((d.x * (W + 80) + t * sp * slq * d.s) % (W + 80)) - 40, y = ((d.y * (H + 80) + t * sp * d.s) % (H + 80)) - 40, L = d.l;
+    ctx.globalAlpha = Math.min(1, e * (.18 + d.z * .5) * (.6 + .4 * d.v) * lit); ctx.drawImage(spr, x - spr.width * L / 64 + 2, y - L, spr.width * L / 64, L);
   }
-  ctx.strokeStyle = `rgba(175,195,220,${e * .45})`; ctx.lineWidth = .9; // a few soft splashes on the floor
-  for (let k = 0; k < 10; k++) { const sd = SEEDS[(k + 3) % 24], ph = (t * (2 + sd.k) + sd.s) % 1, cyc = Math.floor(t * (2 + sd.k) + sd.s), x = (sd.x * W + cyc * 131 * (k + 1)) % W, y = BY + 60 + ((sd.y + cyc * .37) % 1) * 90;
-    ctx.globalAlpha = (1 - ph) * (1 - ph); ctx.beginPath(); ctx.ellipse(x, y, 1.5 + ph * 7, .6 + ph * 1.8, 0, Math.PI, 0); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = `rgba(185,200,222,${e * .5})`; ctx.fillStyle = `rgba(200,212,230,${e * .6})`; ctx.lineWidth = .8; // splashes: a tiny ring and a crown of droplets
+  for (let k = 0; k < 14; k++) { const sd = SEEDS[(k + 3) % 24], rate = 2.2 + sd.k, ph = (t * rate + sd.s) % 1, cyc = Math.floor(t * rate + sd.s), x = (sd.x * W + cyc * 131 * (k + 1)) % W, y = BY + 50 + ((sd.y + cyc * .37) % 1) * 110, f = (1 - ph) * (1 - ph);
+    ctx.globalAlpha = f; ctx.beginPath(); ctx.ellipse(x, y, 1.5 + ph * 8, .5 + ph * 2, 0, 0, 7); ctx.stroke();
+    if (ph < .5) { const u = ph / .5; for (const dx of [-1, 1, -.4, .5]) { ctx.beginPath(); ctx.arc(x + dx * (2 + u * 7), y - Math.sin(u * Math.PI) * (5 + Math.abs(dx) * 3), .8, 0, 7); ctx.fill(); } } }
   ctx.globalAlpha = 1;
 }
+const rainStreak = q => sprite('rs' + q, Math.ceil(6 + 64 * (.08 + q * .035)), 64, (g, w, h) => { // one cached streak per wind angle
+  const sl = .08 + q * .035, x0 = w - 3, lg = g.createLinearGradient(x0 - 64 * sl, 0, x0, h);
+  lg.addColorStop(0, 'rgba(210,222,240,0)'); lg.addColorStop(.7, 'rgba(210,222,240,.55)'); lg.addColorStop(1, 'rgba(235,242,252,.95)');
+  g.strokeStyle = lg; g.lineCap = 'round'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(x0 - 64 * sl, 1); g.lineTo(x0, h - 2); g.stroke();
+});
 function drawHaze() { // fog: four big, blurred mist layers, each with its own height, scale, speed and direction, overlapping for depth
   if (wx.kind !== 'fog' || wx.a < .01) return;
   const a = wx.a, e = a * a * (3 - 2 * a); // eased in and out
@@ -982,14 +1022,16 @@ function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lig
     drawSheet(img, ch * y + nz(t * .1, i) * 6, ch * (h + .5), sp, al * e, sc);
   });
   const g = softBlob('205,222,255'); ctx.globalCompositeOperation = 'screen';
-  for (const gl of wx.glows) { // pulses of light inside the cloud deck
-    let k = 0; for (const p of gl.pulses) if (gl.t >= p) k = Math.max(k, Math.exp(-(gl.t - p) * 7)); k *= e * (.75 + .25 * Math.sin(gl.t * 70));
-    const R = W * .42 * gl.r; ctx.globalAlpha = Math.min(1, 1.1 * k); ctx.drawImage(g, gl.x - R * 1.5, gl.y - R * .55, R * 3, R * 1.1);
-    ctx.globalAlpha = Math.min(1, .8 * k); ctx.drawImage(softBlob('235,242,255'), gl.x - R * .6, gl.y - R * .22, R * 1.2, R * .44);
+  for (const gl of wx.glows) { // light inside the cloud deck: blooms along a crawler's path as it races through, or one hidden glow
+    const k = gl.pts ? Math.max(flashK(gl), gl.t < gl.lead ? .25 : 0) : flashK(gl), kk = k * e; if (kk < .02) continue;
+    if (gl.pts) { const n = gl.t < gl.lead ? Math.floor(gl.pts.length * gl.t / gl.lead) : gl.pts.length;
+      for (let i = 0; i < n; i += 5) { const [x, y] = gl.pts[i], R = 46 + (i * 37 % 30); ctx.globalAlpha = Math.min(1, .5 * kk); ctx.drawImage(g, x - R * 1.6, y - R * .8, R * 3.2, R * 1.6); } }
+    else { const R = W * .42 * gl.r; ctx.globalAlpha = Math.min(1, 1.1 * kk); ctx.drawImage(g, gl.x - R * 1.5, gl.y - R * .55, R * 3, R * 1.1); ctx.globalAlpha = Math.min(1, .8 * kk); ctx.drawImage(softBlob('235,242,255'), gl.x - R * .6, gl.y - R * .22, R * 1.2, R * .44); }
   }
   const bk = boltK(); if (bk > 0) { const bx0 = wx.bolt.pts[0][0], R = W * .6; ctx.globalAlpha = Math.min(1, bk * e); ctx.drawImage(g, bx0 - R * 1.4, ch * .45 - R * .6, R * 2.8, R * 1.2); }
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   });
+  ctx.save(); for (const gl of wx.glows) if (gl.pts) channel(gl, flashK(gl) * e, 5, true); ctx.restore(); // crawler channels, softened by the cloud
   drawBolt(); // the strike leaves the cloud in front of it
 }
 function updateCrash(dt) {
