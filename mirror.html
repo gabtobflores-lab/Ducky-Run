@@ -729,7 +729,11 @@ const MOON = () => sprite('moon2', 384, 384, (g) => { // a waxing gibbous moon: 
   rg = g.createLinearGradient(c + R * .45, 0, c + R * 1.02, 0); rg.addColorStop(0, 'rgba(6,8,18,0)'); rg.addColorStop(.55, 'rgba(6,8,18,.55)'); rg.addColorStop(1, 'rgba(6,8,18,.92)'); g.fillStyle = rg; g.fillRect(0, 0, 384, 384); // the terminator
   g.restore();
 });
-const CORONA = () => sprite('corona2', 512, 512, (g) => { // disc radius 64 at the centre: inner glow, long equatorial streamers, fine polar plumes, a few pink prominences
+const CORONA = () => sprite('corona3', 512, 512, (g) => { // velvety corona: layered pearl glows, a little wider at the equator, no spikes
+  const c = 256; for (const [sx, sy, r, al] of [[1, 1, 70, .9], [1.25, 1, 110, .5], [1.6, 1.05, 170, .22], [2.1, 1.1, 240, .1]]) { g.save(); g.translate(c, c); g.scale(sx, sy); const rg = g.createRadialGradient(0, 0, 60, 0, 0, r); rg.addColorStop(0, `rgba(250,248,255,${al})`); rg.addColorStop(.5, `rgba(232,236,255,${al * .4})`); rg.addColorStop(1, 'rgba(225,230,255,0)'); g.fillStyle = rg; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill(); g.restore(); }
+  for (const [an, s] of [[.6, 4], [2.4, 3], [4.1, 3.5]]) { const px = c + Math.cos(an) * 64, py = c + Math.sin(an) * 64, rg = g.createRadialGradient(px, py, 0, px, py, s * 2); rg.addColorStop(0, 'rgba(255,110,140,.7)'); rg.addColorStop(1, 'rgba(255,110,140,0)'); g.fillStyle = rg; g.beginPath(); g.arc(px, py, s * 2, 0, 7); g.fill(); }
+});
+const CORONA_OLD = () => sprite('corona2', 512, 512, (g) => { // disc radius 64 at the centre: inner glow, long equatorial streamers, fine polar plumes, a few pink prominences
   const c = 256, R0 = 64, tmp = document.createElement('canvas'); tmp.width = tmp.height = 512; const x = tmp.getContext('2d');
   let rg = x.createRadialGradient(c, c, R0 * .98, c, c, R0 * 3.8); rg.addColorStop(0, 'rgba(255,255,255,.95)'); rg.addColorStop(.06, 'rgba(244,246,255,.6)'); rg.addColorStop(.22, 'rgba(225,232,255,.22)'); rg.addColorStop(.5, 'rgba(210,220,255,.06)'); rg.addColorStop(1, 'rgba(210,220,255,0)');
   x.fillStyle = rg; x.fillRect(0, 0, 512, 512); x.lineCap = 'round';
@@ -746,7 +750,7 @@ function meteors(rate, a) { // a real shower: every meteor streams away from one
   const rx = W * .12, ry = -H * .06;
   if (a > .2 && MET.length < 7 && Math.random() < dt * rate * (.35 + 1.3 * (nz(t * .3, 7) * .5 + .5))) {
     const roll = Math.random(), kind = roll < .07 ? 2 : roll < .32 ? 1 : 0, an = .35 + Math.random() * .95, d0 = 60 + Math.random() * H * .45, sp = 650 + Math.random() * 700;
-    MET.push({ x: rx + Math.cos(an) * d0, y: ry + Math.sin(an) * d0, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp, len: [95, 175, 260][kind] * (.7 + Math.random() * .6), w: [1.3, 2.1, 3.2][kind], life: 0, max: [.35, .6, 1][kind] * (.8 + Math.random() * .5), kind,
+    MET.push({ x: rx + Math.cos(an) * d0, y: ry + Math.sin(an) * d0, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp, len: [95, 175, 260][kind] * (.7 + Math.random() * .6), w: [.7, 1.1, 1.8][kind], life: 0, max: [.35, .6, 1][kind] * (.8 + Math.random() * .5), kind,
       col: kind === 2 ? (Math.random() < .55 ? '150,255,190' : '255,200,140') : Math.random() < .3 ? '200,220,255' : '255,252,246' }); // blue-white; fireballs burn green or gold
   }
   for (let i = MET.length - 1; i >= 0; i--) { const m = MET[i]; m.x += m.vx * dt; m.y += m.vy * dt; m.life += dt; if (m.kind === 2) metFlash = Math.max(metFlash, .5 * Math.sin(Math.min(1, m.life / m.max) * Math.PI));
@@ -763,7 +767,7 @@ function meteors(rate, a) { // a real shower: every meteor streams away from one
     ctx.globalAlpha = 1; ctx.strokeStyle = g; ctx.lineWidth = m.w * 3; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.x, m.y); ctx.stroke(); // soft glow around the streak
     g = ctx.createLinearGradient(tx, ty, m.x, m.y); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, `rgba(255,255,255,${k})`);
     ctx.strokeStyle = g; ctx.lineWidth = Math.max(.8, m.w * .7); ctx.beginPath(); ctx.moveTo(tx + ux * L * .3, ty + uy * L * .3); ctx.lineTo(m.x, m.y); ctx.stroke(); // hot white core
-    const R = m.w * (m.kind === 2 ? 14 : 7); ctx.globalAlpha = k * .8; ctx.drawImage(softBlob(m.col), m.x - R, m.y - R, R * 2, R * 2); }
+    const R = m.w * (m.kind === 2 ? 10 : 5); ctx.globalAlpha = k * .7; ctx.drawImage(softBlob(m.col), m.x - R, m.y - R, R * 2, R * 2); }
   ctx.restore();
 }
 function nightSky(a, starA) { // stars with a slow twinkle on top of the cached field
@@ -852,6 +856,17 @@ function atmos(rgb, al, o = {}) { lowres(() => {
   ctx.globalAlpha = 1;
 }); }
 const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+let paneC = null;
+function glassPane() { // a pane of frosted glass between the sky and the game: what lies behind is softly blurred and lifted; a hairline edge catches the light
+  const k = { meteor: .5, eclipse: .45, heat: .6, sun: .55, hail: .7 }[wx.kind]; if (!k || wx.a < .02) return; const A = k * wx.a * wx.a * (3 - 2 * wx.a);
+  const w = Math.max(1, cv.width >> 3), h = Math.max(1, cv.height >> 3); if (!paneC || paneC.width !== w || paneC.height !== h) { paneC = document.createElement('canvas'); paneC.width = w; paneC.height = h; }
+  const px = paneC.getContext('2d'); px.imageSmoothingQuality = 'high'; px.drawImage(cv, 0, 0, w, h);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = A; ctx.drawImage(paneC, 0, 0, cv.width, cv.height); ctx.restore(); // frosted: the scene behind goes soft
+  ctx.save(); ctx.fillStyle = `rgba(255,255,255,${.07 * A})`; ctx.fillRect(-20, -20, W + 40, H + 40);
+  const g = ctx.createLinearGradient(0, 0, W * .6, H * .5); g.addColorStop(0, `rgba(255,255,255,${.12 * A})`); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40); // a broad sheen across the glass
+  ctx.strokeStyle = `rgba(255,255,255,${.45 * A})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(6.5, 6.5, W - 13, H - 13, 28); ctx.stroke(); // hairline edge of the pane
+  ctx.restore();
+}
 function sunGlow(x, y, k, rays) { // the sun as a camera sees it on a clear day: a white core melting into warm light, a wide soft bloom, a faint halo ring, slow soft rays
   if (k < .01) return;
   ctx.save(); ctx.globalCompositeOperation = 'screen';
@@ -859,7 +874,8 @@ function sunGlow(x, y, k, rays) { // the sun as a camera sees it on a clear day:
     ctx.globalAlpha = .55 * k; ctx.drawImage(softBlob('255,236,200'), x - W * .95, y - W * .95, W * 1.9, W * 1.9);
     ctx.globalAlpha = .8 * k; ctx.drawImage(softBlob('255,244,220'), x - W * .32, y - W * .32, W * .64, W * .64);
     ctx.globalAlpha = .1 * k; ctx.strokeStyle = '#fff'; ctx.lineWidth = 16; ctx.beginPath(); ctx.arc(x, y, W * .36, 0, 7); ctx.stroke(); // a 22-degree halo, barely there
-    if (rays) { ctx.translate(x, y); ctx.rotate(t * .02); for (let i = 0; i < 12; i++) { const an = i / 12 * 6.283 + nz(i, 3) * .2, L = H * (.4 + .3 * (nz(t * .12 + i, i) * .5 + .5)), wd = .035 + .02 * (i % 3);
+    for (const [r, c, al] of [[.11, '255,226,206', .22], [.15, '214,236,255', .16], [.2, '238,220,255', .1]]) { ctx.globalAlpha = al * k; ctx.strokeStyle = `rgb(${c})`; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(x, y, W * r, 0, 7); ctx.stroke(); } // pearly diffraction rings
+    if (false) { ctx.translate(x, y); ctx.rotate(t * .02); for (let i = 0; i < 12; i++) { const an = i / 12 * 6.283 + nz(i, 3) * .2, L = H * (.4 + .3 * (nz(t * .12 + i, i) * .5 + .5)), wd = .035 + .02 * (i % 3);
       const g = ctx.createLinearGradient(0, 0, Math.cos(an) * L, Math.sin(an) * L); g.addColorStop(0, `rgba(255,248,230,${.22 * k * rays})`); g.addColorStop(1, 'rgba(255,248,230,0)');
       ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, L, an - wd, an + wd); ctx.closePath(); ctx.fill(); } }
   });
@@ -917,7 +933,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     if (E.ring > .01) { // diamond ring: the last bead of sunlight at the limb
       const L = Math.hypot(E.dx, E.dy) || 1, bx = cx - E.dx / L * R, by = cy - E.dy / L * R;
       ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = E.ring * a; ctx.drawImage(softBlob('255,250,240'), bx - R * .7, by - R * .7, R * 1.4, R * 1.4);
-      ctx.drawImage(sparkle(), bx - R * 1.1, by - R * 1.1, R * 2.2, R * 2.2); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+      ctx.drawImage(softBlob('255,255,255'), bx - R * .35, by - R * .35, R * .7, R * .7); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     }
     ctx.strokeStyle = `rgba(255,240,215,${.55 * a * E.tot})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R + .6, 0, 7); ctx.stroke(); // chromosphere edge
   }
@@ -958,10 +974,12 @@ function drawBackWeather() { // events that live behind the blocks and balls
     for (let k = 0; k < 12; k++) { const sd = SEEDS[k + 6 & 15], x = ((sd.x * (W + 100) + t * (300 + sd.k * 260)) % (W + 100)) - 50, X = windDir > 0 ? x : W - x, y = ((sd.y + k * .29) % 1) * H + nz(t * 1.5 + k, sd.s) * 30;
       ctx.beginPath(); ctx.ellipse(X, y, 1.3 + sd.k, .8, t * 4 + k, 0, 7); ctx.fill(); }
   }
+  if (wx.kind === 'hail') lowres(() => { for (let k = 0; k < 70; k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
+    ctx.globalAlpha = (.18 + .3 * (1 - z)) * a; ctx.drawImage(softBlob('240,246,255'), x - r, y - r, r * 2, r * 2); } ctx.globalAlpha = 1; }); // layers of out-of-focus ice drifting in the air
   if (wx.kind === 'hail') { // ice beads of uneven size and speed, drifting slightly, with occasional splashes
     for (const d of HAIL) {
       const sway = nz(t * .8, d.x * 40) * 14, x = ((d.x * (W + 40) + t * 40 * d.s) % (W + 40)) - 20 + sway, y = ((d.y * (H + 60) + t * 600 * d.s) % (H + 60)) - 30;
-      ctx.globalAlpha = .45 * a; ctx.drawImage(hailTrail(), x - d.r * .45, y - d.r * 11, d.r * .9, d.r * 11); ctx.globalAlpha = a; ctx.drawImage(ICE(), x - d.r * 1.3, y - d.r * 1.4, d.r * 2.6, d.r * 2.85); ctx.globalAlpha = 1; // slightly stretched along the fall
+      ctx.globalAlpha = .45 * a; ctx.drawImage(hailTrail(), x - d.r * .45, y - d.r * 11, d.r * .9, d.r * 11); ctx.globalAlpha = .8 * a; ctx.drawImage(ICE(), x - d.r * 1.3, y - d.r * 1.4, d.r * 2.6, d.r * 2.85); ctx.globalAlpha = 1; // slightly stretched along the fall
       if (y > BY + 55 && y < BY + 70 && Math.random() < .3 && hailHits.length < 16) hailHits.push({ x, y, t: 0, s: .6 + Math.random() * .8, vx: (Math.random() - .5) * 60, r: d.r });
       if (hailHits.length < 16 && Math.random() < .35) for (const o of things) if (o.k === 'b' && Math.abs(x - bxOf(o)) < bw() / 2 - 4 && y > o.y - 30 && y < o.y - 18) { hailHits.push({ x, y: o.y - 22, t: 0, s: .5 + Math.random() * .6, vx: (Math.random() - .5) * 90, r: d.r * .8 }); break; } // stones bounce off the blocks
     }
@@ -969,7 +987,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   }
 }
 function drawFrontWeather() { // light and glass in front of the scene
-  rimA = Math.max(nightK() * .8, wx.kind === 'eclipse' ? eclipseState().dark : 0);
+  rimA = Math.max({ meteor: .5, eclipse: .45, heat: .5, sun: .5, hail: .55 }[wx.kind] * wx.a || 0, nightK() * .8, wx.kind === 'eclipse' ? eclipseState().dark : 0);
   sunX = -999;
   if (wx.kind === 'sun' && wx.a > .01) { // the sun breaks through and slides along the top of the frame: soft rays, a long anamorphic streak, faint lens ghosts
     const q = clamp01(wx.t / WX.sun.dur), a = wx.a, sx = -40 + q * (W + 80), sy = H * .1 - Math.sin(q * Math.PI) * H * .04;
@@ -1382,6 +1400,7 @@ function draw() {
 
   drawBackWeather();
   drawRain();
+  glassPane();
   const motion = clamp01((speed - 450) / 500), wetA = wx.kind === 'storm' && wx.phase !== 'warn' ? wx.a * wx.a * (3 - 2 * wx.a) : 0;
   for (const o of things) {
     const x = bxOf(o);
@@ -1397,7 +1416,7 @@ function draw() {
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const hgt = Math.round(16 * dpr);
     if (!heatC || heatC.width !== cv.width || heatC.height !== cv.height) { heatC = document.createElement('canvas'); heatC.width = cv.width; heatC.height = cv.height; }
     const hx = heatC.getContext('2d'); hx.clearRect(0, 0, cv.width, cv.height); hx.drawImage(cv, 0, 0);
-    for (let y = Math.floor(cv.height * .35); y < cv.height; y += hgt) { const dep = clamp01((y / cv.height - .35) / .65), off = (Math.sin(y * .021 / dpr + t * 3.4) * .7 + Math.sin(y * .047 / dpr - t * 2.1) * .3) * 5 * dpr * wx.a * dep * dep; if (Math.abs(off) > .3) ctx.drawImage(heatC, 0, y, cv.width, hgt, off, y, cv.width, hgt); } // stronger near the hot ground
+    for (let y = Math.floor(cv.height * .35); y < cv.height; y += hgt) { const dep = Math.max(.25 * clamp01((y / cv.height - .35) / .65), 1 - Math.abs(y / cv.height - .82) / .12), off = (Math.sin(y * .021 / dpr + t * 3.4) * .7 + Math.sin(y * .047 / dpr - t * 2.1) * .3) * 5 * dpr * wx.a * dep * dep; if (Math.abs(off) > .3) ctx.drawImage(heatC, 0, y, cv.width, hgt, off, y, cv.width, hgt); } // stronger near the hot ground
     ctx.restore();
   }
 
