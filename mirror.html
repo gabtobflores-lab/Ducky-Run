@@ -668,12 +668,12 @@ function skyGrad(g, stops) { const lg = g.createLinearGradient(0, 0, 0, H); stop
 function glow(g, rgb, x, y, rx, ry, al) { const b = softBlob(rgb); g.globalAlpha = al; g.drawImage(b, x - rx, y - ry, rx * 2, ry * 2); g.globalAlpha = 1; }
 // each event's sky: an Apple-Weather-style colour field with slow luminous masses moving inside it
 const SKY = {
-  storm: g => { skyGrad(g, [[0, '34,40,56'], [.4, '66,74,94'], [.8, '112,120,138'], [1, '140,146,162']]); for (let k = 0; k < 5; k++) { const sd = SEEDS[k]; glow(g, '30,36,52', ((sd.x * W * 1.6 + t * 9 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .16, .7); } glow(g, '170,185,210', W * .5, H * .95, W * .9, H * .25, .35); },
-  hail: g => { skyGrad(g, [[0, '88,106,138'], [.45, '128,148,180'], [1, '168,184,210']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
+  storm: g => { skyGrad(g, [[0, '60,72,94'], [.4, '80,94,116'], [.8, '98,112,134'], [1, '110,124,144']]); /* Apple's rain: slate blue-grey */ for (let k = 0; k < 5; k++) { const sd = SEEDS[k]; glow(g, '30,36,52', ((sd.x * W * 1.6 + t * 9 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .16, .7); } glow(g, '170,185,210', W * .5, H * .95, W * .9, H * .25, .35); },
+  hail: g => { skyGrad(g, [[0, '94,112,144'], [.45, '116,136,168'], [1, '134,154,186']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
   fog: g => { skyGrad(g, [[0, '102,110,126'], [.5, '116,124,140'], [1, '128,136,150']]); /* Apple's fog: smoky blue-grey */ for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, k % 2 ? '86,94,112' : '146,154,170', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .55, H * .22, .55); } }, // soft darker and lighter patches drifting
   heat: g => { // a blazing clear day: deep cobalt overhead, bleaching to a white-hot haze along the ground
-    skyGrad(g, [[0, '26,88,190'], [.32, '74,146,222'], [.58, '176,200,226'], [.78, '246,222,190'], [1, '255,190,140']]); // hotter and hazier toward the ground
-    glow(g, '255,244,226', W * .5, H * 1.02, W * 1.2, H * .22, .7); },
+    skyGrad(g, [[0, '36,90,174'], [.4, '64,126,204'], [.74, '112,162,220'], [.92, '196,190,196'], [1, '232,198,168']]); // Apple's rich blue, warming only near the ground
+    glow(g, '255,236,214', W * .5, H * 1.02, W * 1.2, H * .18, .35); },
   meteor: g => { // a clear late-summer night: deep blue overhead, a cool glow along the horizon
     skyGrad(g, [[0, '12,10,38'], [.35, '34,26,82'], [.68, '78,52,132'], [.88, '132,84,156'], [1, '176,112,166']]); // a violet night warming to pink at the horizon // Apple's clear night: deep, rich blue, never black
     glow(g, '120,150,210', W * .78, H * .13, W * .7, H * .35, .35); glow(g, '220,130,190', W * .5, H * 1.03, W * 1.2, H * .18, .4);
@@ -865,7 +865,7 @@ function atmos(rgb, al, o = {}) { lowres(() => {
 const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
 let paneC = null;
 function glassPane() { // a pane of frosted glass between the sky and the game: what lies behind is softly blurred and lifted; a hairline edge catches the light
-  const k = { meteor: .06, heat: .6, sun: .55, hail: .7 }[wx.kind]; if (!k || wx.a < .02) return; const A = k * wx.a * wx.a * (3 - 2 * wx.a);
+  const k = { meteor: .06, heat: .6, sun: .55, hail: .3 }[wx.kind]; if (!k || wx.a < .02) return; const A = k * wx.a * wx.a * (3 - 2 * wx.a);
   const w = Math.max(1, cv.width >> 3), h = Math.max(1, cv.height >> 3); if (!paneC || paneC.width !== w || paneC.height !== h) { paneC = document.createElement('canvas'); paneC.width = w; paneC.height = h; }
   const px = paneC.getContext('2d'); px.imageSmoothingQuality = 'high'; px.drawImage(cv, 0, 0, w, h);
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = A; ctx.drawImage(paneC, 0, 0, cv.width, cv.height); ctx.restore(); // frosted: the scene behind goes soft
@@ -952,7 +952,7 @@ function drawWindRibbons() { // drawn after the air warp so the ribbons stay per
 }
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
-  const SA = { storm: .8, hail: .82, fog: .92, heat: .9, wind: .95, sun: .85, aurora: 1, meteor: 1 }[wx.kind];
+  const SA = { storm: .95, hail: .95, fog: .92, heat: .9, wind: .95, sun: .85, aurora: 1, meteor: 1 }[wx.kind];
   if (SA) skyField(SA * a * a * (3 - 2 * a), SKY[wx.kind]);
   if (wx.kind === 'meteor') { // the sky clears to a deep night: Milky Way, a fine field of stars, a crescent moon, then the shower
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a; ctx.drawImage(NIGHT(), 0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
@@ -970,7 +970,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   }
   if (wx.kind === 'heat') { // the sun high in a cobalt sky with soft rays; heat haze pooling on the ground; the shimmer is real refraction
     sunGlow(W * .78, H * .09, a, .55);
-    lowres(() => { for (let k = 0; k < 3; k++) { const y = H * (.78 + k * .07) + Math.sin(t * .6 + k) * 6; const g = ctx.createLinearGradient(0, y - 40, 0, y + 40); g.addColorStop(0, 'rgba(255,240,222,0)'); g.addColorStop(.5, `rgba(255,232,206,${.36 * a})`); g.addColorStop(1, 'rgba(255,240,222,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 40, W + 40, 80); } }); // layers of heat haze near the ground
+    lowres(() => { for (let k = 0; k < 3; k++) { const y = H * (.78 + k * .07) + Math.sin(t * .6 + k) * 6; const g = ctx.createLinearGradient(0, y - 40, 0, y + 40); g.addColorStop(0, 'rgba(255,240,222,0)'); g.addColorStop(.5, `rgba(255,232,206,${.16 * a})`); g.addColorStop(1, 'rgba(255,240,222,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 40, W + 40, 80); } }); // layers of heat haze near the ground
   }
   if (wx.kind === 'wind') lowres(() => { // cumulus racing across a bright sky, nearer layers faster
     [[-.14, .62, 60, 2.2, 1.3], [.12, .38, 120, 1.8, .9], [.36, .26, 200, 1.5, .5]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('cu5' + i, '150,170,206', '255,255,255', { seed: 11 + i, cover: i ? .56 : .72, base: .82, top: .12, sharp: 4.5, shadow: .75, squash: 1.1, p: 2 + i }), H * y + nz(t * .2, i) * 10, H * h, sp * windDir, Math.min(1, al * 1.4) * a, sc));
@@ -1001,7 +1001,7 @@ function drawFrontWeather() { // light and glass in front of the scene
   }
   if (wx.kind === 'fog' && wx.a > .01) { const f = frost(); ctx.globalAlpha = .12 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1; } // the original condensation at the corners, lighter
   if (wx.kind === 'hail' && wx.a > .01) { // cold frost gathering in the corners of the glass
-    const f = frost(); ctx.globalAlpha = .62 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
+    const f = frost(); ctx.globalAlpha = .3 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
   }
   drawGlass();
 }
@@ -1246,10 +1246,10 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
 function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lightning glows through it softly (screen blend), never a white flash
   if ((wx.kind !== 'storm' && wx.kind !== 'hail') || wx.a < .01) return; // hail shares the storm's cloud deck
   const a = wx.a, e = a * a * (3 - 2 * a), ch = cloudH();
-  const HL = wx.kind === 'hail', C = HL ? [['92,100,118', '196,202,214', -.75, 1.25, -3, 2.4, .97], ['120,128,146', '222,226,234', -.3, .95, 5, 2.1, .8], ['104,112,130', '206,212,222', -.05, .85, -8, 1.7, .85], ['86,94,112', '180,188,202', .2, .7, 12, 1.5, .9]] : [['52,60,84', '96,106,132', -.75, 1.25, -3, 2.4, .97], ['92,104,130', '150,160,182', -.3, .95, 5, 2.1, .8], ['64,74,100', '120,132,158', -.05, .85, -8, 1.7, .85], ['44,52,76', '96,106,132', .2, .7, 12, 1.5, .9]];
+  const HL = wx.kind === 'hail', C = HL ? [['94,110,138', '198,210,228', -.75, 1.25, -3, 2.4, .97], ['118,134,162', '222,230,242', -.3, .95, 5, 2.1, .8], ['104,120,148', '208,218,234', -.05, .85, -8, 1.7, .85], ['88,104,132', '184,196,218', .2, .7, 12, 1.5, .9]] : [['70,82,104', '146,158,178', -.75, 1.25, -3, 2.4, .97], ['100,112,134', '184,194,210', -.3, .95, 5, 2.1, .8], ['84,96,118', '164,176,194', -.05, .85, -8, 1.7, .85], ['66,78,100', '136,148,168', .2, .7, 12, 1.5, .9]]; // Apple's palettes: slate rain clouds with light tops; cool blue snow clouds
   lowres(() => {
   C.forEach(([col, lit, y, h, sp, sc, al], i) => {
-    const img = cloudTex((HL ? 'hct' : 'ct') + i, col, lit, { seed: i + 3, cover: i ? .58 : .8, base: i ? .78 : .9, top: i ? .08 : 0, shadow: .8, p: 3 + i });
+    const img = cloudTex((HL ? 'hcu' : 'cu') + 'x' + i, col, lit, { seed: i + 3, cover: i ? .58 : .8, base: i ? .78 : .9, top: i ? .08 : 0, shadow: .8, p: 3 + i });
     const roll = nz(t * .07, i * 7), billow = 1 + .1 * nz(t * .09 + 3, i * 3); // each layer drifts faster, bobs and swells on its own slow rhythm
     drawSheet(img, ch * y + roll * 16 + nz(t * .21, i + 11) * 4, ch * (h + .5) * billow, sp * 2.4 + nz(t * .05, i + 20) * 6, al * e * (.88 + .12 * nz(t * .11, i + 5)), sc * (1 + .05 * roll));
   });
