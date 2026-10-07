@@ -83,16 +83,22 @@
   #pbtn:active{transform:scale(.9)}
 
   /* weather notification */
-  #wxnote{position:fixed;left:50%;top:calc(max(14px,env(safe-area-inset-top)) + 112px);transform:translate(-50%,-8px) scale(.96);opacity:0;padding:9px 18px;border-radius:99px;font-weight:900;font-size:12px;letter-spacing:.2em;white-space:nowrap;pointer-events:none;z-index:4;color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:opacity .3s var(--ease),transform .4s var(--spring)}
-  #wxnote.show{opacity:1;transform:translate(-50%,0) scale(1)}
-  #wxnote.fog{background:linear-gradient(180deg,rgba(138,142,156,.86),rgba(108,112,126,.86));box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 6px 18px rgba(43,45,66,.18)}
-  #wxnote.storm{background:linear-gradient(180deg,rgba(104,160,255,.94),rgba(46,98,214,.94));box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 0 0 1px rgba(255,255,255,.25) inset,0 6px 22px rgba(60,120,255,.42),0 0 26px rgba(120,175,255,.55);animation:stormglow 1.3s ease-in-out infinite alternate}
-  @keyframes stormglow{to{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 0 0 1px rgba(255,255,255,.35) inset,0 6px 26px rgba(60,120,255,.55),0 0 40px rgba(150,195,255,.8)}}
-  #wxnote.wind,#wxnote.hail{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(236,242,248,.78));color:#45607a;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 0 0 1px rgba(120,150,180,.18) inset,0 6px 18px rgba(43,45,66,.12)}
-  #wxnote.aurora{background:linear-gradient(100deg,rgba(120,220,210,.82),rgba(150,140,240,.82),rgba(255,150,190,.82));box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 6px 22px rgba(140,140,240,.3)}
-  #wxnote.heat{background:linear-gradient(180deg,rgba(255,190,130,.88),rgba(240,140,90,.88));box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 6px 18px rgba(240,140,90,.3)}
-  #wxnote.eclipse{background:linear-gradient(180deg,rgba(40,44,64,.9),rgba(20,22,36,.9));box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 0 0 1px rgba(255,230,190,.25) inset,0 0 26px rgba(255,214,160,.35)}
-  #wxnote.sun{background:linear-gradient(180deg,rgba(255,236,190,.9),rgba(255,206,130,.9));color:#7a4b10;box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 6px 20px rgba(255,190,90,.35)}
+  #wxnote{position:fixed;left:50%;top:calc(max(14px,env(safe-area-inset-top)) + 108px);transform:translate(-50%,-14px) scale(.94);opacity:0;display:flex;align-items:center;gap:10px;padding:9px 16px 9px 11px;border-radius:22px;white-space:nowrap;pointer-events:none;z-index:4;color:#1d1d1f;background:rgba(250,250,252,.72);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:0 0 0 .5px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.7) inset,0 10px 30px rgba(30,32,50,.16);transition:opacity .35s var(--ease),transform .55s var(--spring),filter .35s var(--ease);filter:blur(4px)}
+  #wxnote.show{opacity:1;transform:translate(-50%,0) scale(1);filter:none}
+  #wxnote .dot{width:26px;height:26px;border-radius:50%;flex:none;box-shadow:0 0 0 .5px rgba(0,0,0,.06) inset}
+  #wxnote .tx{display:flex;flex-direction:column;line-height:1.15}
+  #wxnote b{font-size:14px;font-weight:600;letter-spacing:-.01em}
+  #wxnote small{font-size:11.5px;font-weight:500;color:rgba(60,60,67,.6);letter-spacing:0}
+  #wxnote.dark{color:#f5f5f7;background:rgba(36,38,48,.62);box-shadow:0 0 0 .5px rgba(255,255,255,.12),0 1px 0 rgba(255,255,255,.12) inset,0 10px 30px rgba(0,0,0,.25)}
+  #wxnote.dark small{color:rgba(235,235,245,.6)}
+  #wxnote.fog .dot{background:radial-gradient(circle at 35% 30%,#fff,#c9ccd6 70%)}
+  #wxnote.storm .dot{background:radial-gradient(circle at 35% 30%,#a9c6ff,#3d5a8f 75%)}
+  #wxnote.hail .dot{background:radial-gradient(circle at 35% 30%,#fff,#a8c4dc 75%)}
+  #wxnote.wind .dot{background:radial-gradient(circle at 35% 30%,#f4efe6,#b9ab94 75%)}
+  #wxnote.heat .dot{background:radial-gradient(circle at 35% 30%,#ffe2b8,#f08a4b 75%)}
+  #wxnote.sun .dot{background:radial-gradient(circle at 35% 30%,#fff7df,#ffc65a 75%)}
+  #wxnote.aurora .dot{background:conic-gradient(from 200deg,#5fffb0,#8fd9ff,#c79bff,#ff8fc8,#5fffb0)}
+  #wxnote.eclipse .dot{background:radial-gradient(circle,#1b1d2a 55%,#ffd9a0 62%,rgba(255,217,160,0) 76%)}
   /* best score card */
   .best{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 18px 11px}
   .best span{font-size:11px;font-weight:900;letter-spacing:.2em;background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -243,14 +249,14 @@ const crash = { ball: [null, null], shards: [], waves: [], tmpl: null };
 // weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
 // per-second chances once the cooldown has passed; warn = seconds of notice before it starts (longer for events that affect play)
 const WX = {
-  fog: { dur: 15, p: 1 / 40, warn: 2.2, note: 'FOG INCOMING' }, storm: { dur: 22, p: 1 / 380, warn: 2.2, note: 'IT\u2019S STORMING\u2026' },
-  hail: { dur: 12, p: 1 / 90, warn: 1.6, note: 'HAIL INCOMING' }, wind: { dur: 4.5, p: 1 / 110, warn: 2.2, note: 'WIND BURST' },
-  heat: { dur: 14, p: 1 / 140, warn: .8, note: 'HEAT WAVE' }, sun: { dur: 3.2, p: 1 / 200, warn: .5, note: 'SUN FLASH' },
-  aurora: { dur: 16, p: 1 / 220, warn: .8, note: 'AURORA' }, eclipse: { dur: 14, p: 1 / 600, warn: 1.2, note: 'ECLIPSE' },
+  fog: { dur: 15, p: 1 / 40, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 22, p: 1 / 380, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
+  hail: { dur: 12, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 4.5, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
+  heat: { dur: 14, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.2, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
+  aurora: { dur: 16, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] }, eclipse: { dur: 14, p: 1 / 600, warn: 1.2, note: ['Eclipse', 'The sky is going dark'] },
 };
 const HAIL = Array.from({ length: 110 }, () => ({ x: Math.random(), y: Math.random(), r: 2 + Math.random() * Math.random() * 4.5, s: .75 + Math.random() * .6 })), hailHits = [];
 const wx = { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null };
-const RAIN = Array.from({ length: 230 }, () => ({ x: Math.random(), y: Math.random(), l: 18 + Math.random() * 22, s: .85 + Math.random() * .4 }));
+const RAIN = Array.from({ length: 320 }, () => { const z = Math.random() ** 1.6; return { x: Math.random(), y: Math.random(), z, l: 7 + z * 34 + Math.random() * 8, s: .55 + z * .9 + Math.random() * .15, v: Math.random() }; }).sort((p, q) => p.z - q.z);
 let windDir = 1, rimA = 0, sunX = -999;
 const ELEC = { base: '#7cc4ff', hi: '#ffffff', lo: '#3b82f6', deep: '#1f56c9', core: '238,248,255', rgb: '124,196,255' };
 const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks slide, so collisions use where they are drawn
@@ -529,7 +535,7 @@ function shatter(i, x, y, el = false) {
   beep(el ? 1300 : i ? 980 : 880, .18, el ? 'square' : 'triangle', .05, -800);
 }
 function wxNote(kind) {
-  const n = $('#wxnote'); n.className = kind; n.textContent = WX[kind].note;
+  const n = $('#wxnote'), [ti, su] = WX[kind].note; n.className = kind + (['storm', 'aurora', 'eclipse'].includes(kind) ? ' dark' : ''); n.innerHTML = `<span class="dot"></span><span class="tx"><b>${ti}</b><small>${su}</small></span>`;
   void n.offsetWidth; n.classList.add('show'); clearTimeout(wxNote.h); wxNote.h = setTimeout(() => n.classList.remove('show'), 2600);
 }
 function wxHide() { $('#wxnote').classList.remove('show'); clearTimeout(wxNote.h); }
@@ -566,10 +572,24 @@ const cloudH = () => H * .26;
 // smooth pseudo-noise from incommensurate sines: gives drifting, uneven variation instead of perfect repetition
 const nz = (x, s = 0) => (Math.sin(x * 1.13 + s) + Math.sin(x * 2.37 + s * 1.7) * .55 + Math.sin(x * 4.71 + s * 2.9) * .25) / 1.8;
 const SEEDS = Array.from({ length: 24 }, () => ({ x: Math.random(), y: Math.random(), s: Math.random() * 99, k: .6 + Math.random() * .8 }));
+// uneven, drifting atmosphere: many large soft patches instead of one flat tint, so the scene changes like real air
+function atmos(rgb, al, o = {}) {
+  const n = o.n || 9, y0 = o.y0 ?? -.1, y1 = o.y1 ?? .9, sp = o.sp ?? 6, dir = o.dir || 1, sc = o.sc || 1, off = o.off || 0;
+  for (let k = 0; k < n; k++) {
+    const sd = SEEDS[(k + off) % 24], span = W + 500, x0 = ((sd.x * span + t * sp * (.5 + sd.k)) % span) - 250, x = dir > 0 ? x0 : W - x0;
+    const y = H * (y0 + (y1 - y0) * ((sd.y + k * .41) % 1)) + nz(t * .15, sd.s) * 30, R = W * (.42 + sd.k * .38) * sc;
+    const d = al * Math.max(0, nz(t * .11 + k * 2.3, sd.s) * .45 + .7); if (d < .004) continue;
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R); g.addColorStop(0, `rgba(${rgb},${d})`); g.addColorStop(.55, `rgba(${rgb},${d * .55})`); g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.save(); ctx.translate(x, y); ctx.scale(1.5, .8 + .25 * nz(k, 3)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fill(); ctx.restore();
+  }
+}
+const FOG = Array.from({ length: 30 }, (_, i) => ({ L: i % 3, x: Math.random(), y: Math.random(), s: Math.random() * 99, puffs: Array.from({ length: 6 }, () => ({ dx: (Math.random() - .5) * 2.4, dy: (Math.random() - .5) * .8, r: .45 + Math.random() * .7 })) }));
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
   if (wx.kind === 'eclipse') {
-    ctx.fillStyle = `rgba(14,18,32,${.62 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
+    { const cx0 = W / 2, cy0 = H * .33, dk = ctx.createRadialGradient(cx0, cy0, W * .2, cx0, cy0, H * .95); // sky darkens around the sun; a sunset glow rings the horizon
+      dk.addColorStop(0, `rgba(12,15,30,${.72 * a})`); dk.addColorStop(.6, `rgba(22,26,44,${.55 * a})`); dk.addColorStop(1, `rgba(40,36,48,${.42 * a})`); ctx.fillStyle = dk; ctx.fillRect(-20, -20, W + 40, H + 40);
+      atmos('255,150,90', .14 * a, { n: 6, y0: .82, y1: 1.05, sp: 3, off: 5 }); atmos('20,24,44', .2 * a, { n: 6, y0: 0, y1: .7, sp: 3, off: 11 }); }
     for (let k = 0; k < 24; k++) { const sd = SEEDS[k]; ctx.fillStyle = `rgba(255,255,255,${a * .5 * (nz(t * 2, sd.s) * .3 + .7)})`; ctx.fillRect(sd.x * W, sd.y * H * .7, 1.4, 1.4); }
     const cx = W / 2 + nz(t * .05, 3) * 6, cy = H * .33, R = W * .3, fl = 1 + nz(t * .7, 1) * .08;
     const co = ctx.createRadialGradient(cx, cy, R * .9, cx, cy, R * 1.9 * fl); co.addColorStop(0, `rgba(255,226,180,${.42 * a})`); co.addColorStop(.25, `rgba(255,200,150,${.13 * a})`); co.addColorStop(1, 'rgba(255,200,150,0)');
@@ -582,7 +602,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.fillStyle = `rgba(12,14,26,${.45 * a})`; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
     ctx.strokeStyle = `rgba(255,236,205,${.6 * a})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 7); ctx.stroke();
   }
-  if (wx.kind === 'aurora') { { const sg = ctx.createLinearGradient(0, 0, 0, H * .6); sg.addColorStop(0, `rgba(8,16,38,${.6 * a})`); sg.addColorStop(.3, `rgba(10,22,46,${.85 * a})`); sg.addColorStop(.6, `rgba(16,34,60,${.72 * a})`); sg.addColorStop(1, `rgba(26,48,72,${.55 * a})`); ctx.fillStyle = sg; ctx.fillRect(-20, -20, W + 40, H + 40);
+  if (wx.kind === 'aurora') { { atmos('10,20,44', .5 * a, { n: 14, y0: -.1, y1: .8, sp: 2, sc: 1.3 }); atmos('22,44,70', .32 * a, { n: 8, y0: .5, y1: 1.1, sp: 2, off: 9 });
     for (let k = 0; k < 24; k++) { const sd = SEEDS[k]; ctx.fillStyle = `rgba(255,255,255,${a * .6 * (nz(t * 2, sd.s) * .3 + .7)})`; ctx.fillRect(sd.x * W, sd.y * H * .8, 1.5, 1.5); } }
   } if (wx.kind === 'aurora') { // soft curtains built from thousands of faint vertical rays, folding slowly like the real thing
     for (let c = 0; c < 2; c++) {
@@ -601,7 +621,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.fillStyle = gl; ctx.fillRect(-20, H * .25, W + 40, H * .45); // the glow it casts on the haze below
   }
   if (wx.kind === 'heat') { // irregular shimmer: uneven spacing, thickness and strength
-    { const hg = ctx.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(255,180,110,${.26 * a})`); hg.addColorStop(.55, `rgba(255,205,150,${.08 * a})`); hg.addColorStop(1, `rgba(255,160,100,${.22 * a})`); ctx.fillStyle = hg; ctx.fillRect(-20, -20, W + 40, H + 40);
+    { atmos('255,185,120', .2 * a, { n: 8, y0: -.1, y1: .5, sp: 4 }); atmos('255,165,105', .2 * a, { n: 7, y0: .75, y1: 1.1, sp: 5, off: 6 }); // hot air pooling near the ground
       const sg = ctx.createRadialGradient(W * .8, H * .08, 0, W * .8, H * .08, W * .6); sg.addColorStop(0, `rgba(255,245,210,${.75 * a})`); sg.addColorStop(.15, `rgba(255,210,140,${.45 * a})`); sg.addColorStop(1, 'rgba(255,190,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-20, -20, W + 40, H); }
     for (let k = 0; k < 11; k++) {
       const sd = SEEDS[k], y = H - ((t * (28 + sd.k * 22) + sd.y * H) % H), al = .14 * a * (nz(t * .9, sd.s) * .5 + .5);
@@ -610,7 +630,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
       ctx.stroke();
     }
   }
-  if (wx.kind === 'wind') { ctx.fillStyle = `rgba(200,190,175,${.12 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40); }
+  if (wx.kind === 'wind') atmos('205,190,165', .16 * a, { n: 7, sp: 260, dir: windDir, sc: .8 }); // dust clouds racing through
   if (wx.kind === 'wind') { // gusty, uneven airflow wisps
     const gust = .6 + .4 * (nz(t * 1.6, 2) * .5 + .5); ctx.lineCap = 'round';
     for (let k = 0; k < 40; k++) {
@@ -624,7 +644,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     const sd = SEEDS[k % 24], x = ((sd.x * (W + 100) + t * (260 + sd.k * 260)) % (W + 100)) - 50, X = windDir > 0 ? x : W - x, y = sd.y * H + nz(t * 1.5 + k, sd.s) * 30;
     ctx.fillStyle = `rgba(160,145,120,${.45 * a})`; ctx.beginPath(); ctx.ellipse(X, y, 1.4 + sd.k * 1.2, .9, t * (3 + sd.k * 4) + k, 0, 7); ctx.fill();
   }
-  if (wx.kind === 'hail') { const hg = ctx.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(78,92,118,${.5 * a})`); hg.addColorStop(.5, `rgba(130,145,168,${.22 * a})`); hg.addColorStop(1, `rgba(150,165,185,${.12 * a})`); ctx.fillStyle = hg; ctx.fillRect(-20, -20, W + 40, H + 40); }
+  if (wx.kind === 'hail') { atmos('84,98,124', .34 * a, { n: 10, y0: -.15, y1: .45, sp: 10 }); atmos('150,165,188', .16 * a, { n: 6, y0: .4, y1: 1, sp: 8, off: 7 }); }
   if (wx.kind === 'hail') { // ice beads of uneven size and speed, drifting slightly, with occasional splashes
     for (const d of HAIL) {
       const sway = nz(t * .8, d.x * 40) * 14, x = ((d.x * (W + 40) + t * 40 * d.s) % (W + 40)) - 20 + sway, y = ((d.y * (H + 60) + t * 600 * d.s) % (H + 60)) - 30;
@@ -642,7 +662,6 @@ function drawFrontWeather() { // light passing over the scene
     const q = clamp01(wx.t / WX.sun.dur); sunX = -160 + q * (W + 320); // diagonal band position at y=0
     const g = ctx.createLinearGradient(sunX - 120, 0, sunX + 120, 60); g.addColorStop(0, 'rgba(255,230,180,0)'); g.addColorStop(.42, `rgba(255,236,200,${.45 * wx.a})`); g.addColorStop(.55, `rgba(255,248,225,${(.7 + nz(t * 3, 1) * .06) * wx.a})`); g.addColorStop(1, 'rgba(255,230,180,0)');
     ctx.save(); ctx.transform(1, 0, -.35, 1, 0, 0); ctx.fillStyle = g; ctx.fillRect(sunX - 140, -20, 280, H + 40); ctx.restore();
-    ctx.fillStyle = `rgba(255,225,170,${.18 * wx.a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
     const sx = sunX, sy = H * .18; // lens flare ghosts
     [[0, 90, .8], [.35, 28, .4], [.6, 46, .3], [.9, 18, .45]].forEach(([f, R, al]) => { const x = sx + (W / 2 - sx) * f * 2, y = sy + (H * .6 - sy) * f;
       const fg = ctx.createRadialGradient(x, y, 0, x, y, R); fg.addColorStop(0, `rgba(255,236,200,${al * wx.a})`); fg.addColorStop(.7, `rgba(255,210,160,${al * .5 * wx.a})`); fg.addColorStop(1, 'rgba(255,210,160,0)');
@@ -673,56 +692,63 @@ function drawArcs(x, y, rw, rh, n, a) { // small flickering electric arcs around
   }
   ctx.restore();
 }
-function drawRain() { // faint, thin, behind blocks and balls; gusty and uneven, a touch brighter while lightning lights it
+function drawRain() { // rain with depth: far streaks short, faint and slow; near streaks long, quick and clearer. Behind blocks and balls.
   if (wx.kind !== 'storm' || wx.a < .01) return;
-  const slant = .18 + nz(t * .4, 4) * .1, base = wx.a * (.38 + wx.flash * .3) * (.8 + .2 * nz(t * 1.1, 8));
-  ctx.lineWidth = 1; ctx.lineCap = 'round';
-  for (let g = 0; g < 3; g++) { // three opacity groups so drops are not all alike
-    ctx.strokeStyle = `rgba(150,180,220,${base * (.55 + g * .3)})`; ctx.lineWidth = 1 + g * .4; ctx.beginPath();
-    for (let n = g; n < RAIN.length; n += 3) { const d = RAIN[n], x = ((d.x * (W + 60) + t * 70 * d.s) % (W + 60)) - 30, y = ((d.y * (H + 80) + t * 760 * d.s) % (H + 80)) - 40; ctx.moveTo(x, y); ctx.lineTo(x - d.l * slant, y + d.l); }
+  const a = wx.a;
+  atmos('40,52,76', .26 * a, { n: 11, y0: -.15, y1: .55, sp: 7 }); // the sky cools and darkens unevenly
+  atmos('150,170,200', .12 * a, { n: 7, y0: .55, y1: 1.1, sp: 9, off: 8 }); // moisture hanging low
+  if (wx.flash > 0) { const bx0 = wx.bolt ? wx.bolt.pts[0][0] : W / 2; atmos('200,220,255', .12 * wx.flash * a, { n: 4, y0: .1, y1: .6, sp: 0, off: Math.floor(bx0 / 20) }); }
+  const gust = nz(t * .4, 4), slantBase = .16 + gust * .09; ctx.lineCap = 'round';
+  for (let b = 0; b < 6; b++) { // six depth bands, each with its own weight
+    const z0 = b / 6, z1 = (b + 1) / 6, zc = (z0 + z1) / 2, al = a * (.1 + zc * .38) * (.85 + .15 * nz(t * 1.3 + b, 8)) * (1 + wx.flash * .6);
+    ctx.strokeStyle = `rgba(${170 - zc * 30},${190 - zc * 20},${220},${al})`; ctx.lineWidth = .5 + zc * 1.1; ctx.beginPath();
+    for (const d of RAIN) { if (d.z < z0 || d.z >= z1) continue;
+      const sl = slantBase + (d.v - .5) * .06, sp = 520 + d.z * 900, x = ((d.x * (W + 80) + t * sp * sl * d.s) % (W + 80)) - 40, y = ((d.y * (H + 80) + t * sp * d.s) % (H + 80)) - 40;
+      ctx.moveTo(x, y); ctx.lineTo(x - d.l * sl, y - d.l); }
     ctx.stroke();
   }
-  ctx.strokeStyle = `rgba(150,180,215,${wx.a * .8})`; ctx.lineWidth = 1.2; // splashes where rain meets the floor
-  for (let k = 0; k < 16; k++) { const sd = SEEDS[k + 8], ph = (t * 2.2 + sd.s) % 1, x = ((sd.x * W + Math.floor(t * 2.2 + sd.s) * 97) % W), y = BY + 70 + sd.y * 60;
-    ctx.beginPath(); ctx.ellipse(x, y, 2 + ph * 9, .8 + ph * 2.5, 0, Math.PI, 0); ctx.globalAlpha = 1 - ph; ctx.stroke(); }
+  ctx.strokeStyle = `rgba(170,190,215,${a * .5})`; ctx.lineWidth = .9; // tiny splashes on the floor
+  for (let k = 0; k < 18; k++) { const sd = SEEDS[(k + 3) % 24], ph = (t * (2 + sd.k) + sd.s) % 1, cyc = Math.floor(t * (2 + sd.k) + sd.s), x = (sd.x * W + cyc * 131 * (k + 1)) % W, y = BY + 60 + ((sd.y + cyc * .37) % 1) * 90;
+    ctx.globalAlpha = (1 - ph) * .9; ctx.beginPath(); ctx.ellipse(x, y, 1.5 + ph * 7, .6 + ph * 1.8, 0, Math.PI, 0); ctx.stroke(); }
   ctx.globalAlpha = 1;
 }
-function drawHaze() { // weather fog: an uneven, drifting haze that keeps blocks readable; the balls are drawn crisp above it
+function drawHaze() { // fog: three depths of soft, irregular mist banks drifting at different speeds, thick in places and clear in others
   if (wx.kind !== 'fog' || wx.a < .01) return;
-  const a = wx.a, br = .9 + .1 * nz(t * .3, 2), g = ctx.createLinearGradient(0, 0, 0, BY);
-  g.addColorStop(0, `rgba(205,210,220,${.86 * a * br})`); g.addColorStop(.55, `rgba(215,219,228,${.62 * a * br})`); g.addColorStop(1, `rgba(228,231,238,${.3 * a})`);
-  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
-  for (let k = 0; k < 14; k++) { // banks of different sizes, speeds and density
-    const sd = SEEDS[k], x = ((sd.x * (W + 300) + t * (6 + sd.k * 10)) % (W + 300)) - 150, y = H * (.12 + sd.y * .58) + nz(t * .2, sd.s) * 22;
-    const R = 90 + sd.k * 100, al = .55 * a * (nz(t * .35, sd.s) * .5 + .6);
-    const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(240,241,245,${al})`); rg.addColorStop(1, 'rgba(240,241,245,0)');
-    ctx.fillStyle = rg; ctx.save(); ctx.translate(x, y); ctx.scale(1.6, .7); ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.restore(); ctx.fill();
+  const a = wx.a;
+  for (const c of FOG) {
+    const sp = 5 + c.L * 7, span = W + 520, cx = ((c.x * span + t * sp) % span) - 260, cy = H * (.02 + c.y * .86) + nz(t * .12, c.s) * 26;
+    const dens = a * Math.max(0, nz(t * .09 + c.s, c.s) * .6 + .45) * (.3 + c.L * .1); if (dens < .01) continue; // some banks thin out entirely, opening clear patches
+    const R0 = 70 + c.L * 40;
+    for (const p of c.puffs) {
+      const x = cx + p.dx * R0 + nz(t * .2, c.s + p.r * 9) * 14, y = cy + p.dy * R0, R = R0 * p.r * (1 + .12 * nz(t * .3, p.dx * 7));
+      const g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, `rgba(238,240,245,${dens})`); g.addColorStop(.5, `rgba(236,238,244,${dens * .6})`); g.addColorStop(1, 'rgba(236,238,244,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
+    }
   }
 }
-function drawStorm() { // dark storm-cloud band across the top only, glowing blue from lightning
+function drawStorm() { // a real cloud deck along the top: layered billows, darker underneath, lit from inside by distant lightning
   if (wx.kind !== 'storm' || wx.a < .01) return;
-  const a = wx.a, ch = cloudH(); ctx.fillStyle = `rgba(28,36,58,${.26 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
-  const g = ctx.createLinearGradient(0, -20, 0, ch * 1.25);
-  g.addColorStop(0, `rgba(38,46,70,${.92 * a})`); g.addColorStop(.55, `rgba(58,68,96,${.7 * a})`); g.addColorStop(1, 'rgba(70,80,110,0)');
-  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, ch * 1.25 + 20);
-  for (let i = 0; i < 12; i++) { // uneven billowing underside: different sizes, depths and drift
-    const q = SEEDS[i], x = ((q.x * (W + 160) + t * (5 + q.k * 8)) % (W + 160)) - 80, y = ch * (.62 + q.y * .32) + nz(t * .4, q.s) * 9, R = 34 + q.k * 40;
-    const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(46,54,80,${.8 * a})`); rg.addColorStop(1, 'rgba(54,63,90,0)');
-    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
+  const a = wx.a, ch = cloudH(), bx0 = wx.bolt ? wx.bolt.pts[0][0] : W / 2;
+  for (let L = 0; L < 3; L++) { // back (higher, lighter) to front (lower, darker)
+    const col = L === 0 ? '96,108,134' : L === 1 ? '70,80,106' : '50,58,82';
+    for (let i = 0; i < 14; i++) {
+      const q = SEEDS[(i + L * 7) % 24], span = W + 260, x = ((q.x * span + i * 47 + t * (4 + L * 3 + q.k * 3)) % span) - 130;
+      const y = ch * (.05 + L * .28 + q.y * .3) + nz(t * .25 + i, q.s) * 8, R = (36 + q.k * 42) * (1.15 - L * .12);
+      const al = a * (.42 + L * .14) * (nz(t * .1 + i, q.s + L) * .2 + .85);
+      const g = ctx.createRadialGradient(x, y - R * .2, 0, x, y, R); g.addColorStop(0, `rgba(${col},${al})`); g.addColorStop(.6, `rgba(${col},${al * .7})`); g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, R * 1.35, R, 0, 0, 7); ctx.fill();
+      if (wx.flash > 0) { const near = Math.max(0, 1 - Math.abs(x - bx0) / (W * .45)); if (near > 0) { // lightning glows through nearby billows
+        const lg = ctx.createRadialGradient(x, y, 0, x, y, R); lg.addColorStop(0, `rgba(215,228,255,${.55 * wx.flash * near * a})`); lg.addColorStop(1, 'rgba(215,228,255,0)');
+        ctx.fillStyle = lg; ctx.beginPath(); ctx.ellipse(x, y, R * 1.35, R, 0, 0, 7); ctx.fill(); } }
+    }
   }
-  if (wx.flash > 0) { // the cloud lights up from inside, and the scene catches a faint blue reflection
-    const bx0 = wx.bolt ? wx.bolt.pts[0][0] : W / 2, lg = ctx.createRadialGradient(bx0, ch * .45, 0, bx0, ch * .45, W * .7);
-    const fk = wx.flash * (.75 + .25 * Math.sin(t * 60)); lg.addColorStop(0, `rgba(205,228,255,${.75 * fk * a})`); lg.addColorStop(1, 'rgba(150,190,255,0)');
-    ctx.fillStyle = lg; ctx.fillRect(-20, -20, W + 40, ch * 1.3);
-    ctx.fillStyle = `rgba(225,238,255,${.42 * wx.flash * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
-  }
-  if (wx.bolt) {
+  if (wx.bolt) { // brief, thin and soft
     const k = 1 - wx.bolt.t / .24, pts = wx.bolt.pts.slice();
     if (wx.bolt.o) { const o = wx.bolt.o; pts[pts.length - 1] = [bxOf(o), o.y - 22]; }
     const path = () => { ctx.beginPath(); pts.forEach(([x, y], n) => n ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); };
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.strokeStyle = `rgba(120,175,255,${.45 * k})`; ctx.lineWidth = 12; path(); ctx.stroke();
-    ctx.strokeStyle = `rgba(240,248,255,${.95 * k})`; ctx.lineWidth = 3.2; path(); ctx.stroke();
+    ctx.strokeStyle = `rgba(160,195,255,${.28 * k})`; ctx.lineWidth = 9; path(); ctx.stroke();
+    ctx.strokeStyle = `rgba(245,250,255,${.9 * k})`; ctx.lineWidth = 1.8; path(); ctx.stroke();
   }
 }
 function updateCrash(dt) {
