@@ -331,12 +331,13 @@ addEventListener('keydown', e => {
 });
 
 function die(x, y, bi = 0, blk = null) {
-  state = 'dead'; shake = 0; fx.freeze = .1; fx.dead = 0; // brief hit-stop holding the squashed impact frame
+  state = 'dead'; shake = 0; fx.freeze = .03; fx.dead = 0; // tiny hit-stop; the shatter itself starts on the impact frame
   crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null;
   crash.ball[bi] = { at: 0, burst: false }; if (blk) blk.hitAt = 0;
   // the twin ball: if it is meeting its own block at (nearly) the same moment, both shatter together as a mirror pair
   const j = 1 - bi;
   for (const o of things) if (o.k === 'b' && o !== blk && Math.abs(o.y - BY) < 52 && Math.abs(bx[j] - LX[o.l]) < 38) { crash.ball[j] = { at: 0, burst: false }; o.hitAt = 0; break; }
+  for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (c) { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // burst instantly
   beep(190, .45, 'sawtooth', .1, -140);
   if (score > bestNow()) { bests[bkey()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
   setTimeout(showOver, 750);
@@ -348,7 +349,7 @@ function update(dt) {
   if (state === 'paused') return;
   if (state === 'play' && resumeT <= 0) fogT = Math.max(0, fogT - dt);
   if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
-  if (state === 'dead' && fx.freeze > 0) { fx.freeze -= dt; return; } // hit-stop: hold the impact frame
+  if (state === 'dead' && fx.freeze > 0) { fx.freeze -= dt; updateCrash(dt); return; } // hit-stop: hold the impact frame
   t += dt; flashA = Math.max(0, flashA - dt * 3.5); shake = Math.max(0, shake - dt * 30); pulse = Math.max(0, pulse - dt * 4); fxA = Math.max(0, fxA - dt / 1.2);
   for (const k of ['gem', 'combo', 'score', 'arrow', 'squash', 'near']) fx[k] = Math.max(0, fx[k] - dt * (k === 'gem' || k === 'near' ? 3 : 4.5));
   fx.nearCool = Math.max(0, fx.nearCool - dt);
@@ -362,7 +363,7 @@ function update(dt) {
       const k = 1 - clamp01((fx.dead - .45) / .25);
       for (const o of things) o.y += speed * dt * k;
       for (let j = 0; j < 2; j++) if (!crash.ball[j]) for (const o of things)
-        if (o.k === 'b' && Math.abs(o.y - BY) < 44 && Math.abs(bx[j] - LX[o.l]) < 38) { crash.ball[j] = { at: fx.dead + .05, burst: false }; o.hitAt = fx.dead; break; }
+        if (o.k === 'b' && Math.abs(o.y - BY) < 44 && Math.abs(bx[j] - LX[o.l]) < 38) { crash.ball[j] = { at: fx.dead, burst: false }; o.hitAt = fx.dead; break; }
     }
     for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY); } }
     return;
@@ -628,9 +629,9 @@ function draw() {
     }
     const c = state === 'dead' ? crash.ball[i] : null;
     if (!c) drawBall(x, BY, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8);
-    else if (!c.burst) { // impact: squashed flat by the block, flaring white just before it shatters
-      const k = clamp01(1 - (c.at - fx.dead) / .05);
-      drawBall(x, BY + 3, r, P, i ? 1 : -1, 1.3 + .08 * k, .7 - .06 * k, 1, .75 + .25 * k);
+    else { // impact frame: the ball squashes flat and flares white as it bursts, gone within ~60ms
+      const k = clamp01((fx.dead - (c.bt || 0)) / .06);
+      if (k < 1) drawBall(x, BY + 3, r, P, i ? 1 : -1, 1.32 + .25 * k, .7 - .3 * k, 1, 1, 1 - k);
     }
     if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv; drawArrow(x, BY, (x < W / 2 ? 1 : -1) * nd, .32 + fx.arrow * .4, ease(fx.arrow)); }
   }
