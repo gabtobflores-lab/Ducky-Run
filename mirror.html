@@ -1114,6 +1114,29 @@ function drawCrash() {
   }
 }
 
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+function wetBlock(o, x, y, w, h, W8) { // rain on a block: a thin pool shining along the top, ripples, little splash crowns, and drops gathering and falling from the bottom corners
+  const x0 = x - w / 2, y0 = y - h / 2, sd = (o.row || 0) * 7.31 + o.l * 1.7;
+  ctx.save();
+  const sh = ctx.createLinearGradient(0, y0, 0, y0 + h); sh.addColorStop(0, `rgba(170,195,235,${.16 * W8})`); sh.addColorStop(.35, 'rgba(170,195,235,0)'); sh.addColorStop(1, `rgba(170,195,235,${.06 * W8})`);
+  ctx.fillStyle = sh; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.fill(); // wet gloss on the face
+  ctx.strokeStyle = `rgba(228,238,255,${.6 * W8})`; ctx.lineWidth = 1.6; ctx.lineCap = 'round'; ctx.beginPath(); // the pool's bright meniscus along the top
+  for (let i = 0; i <= 8; i++) { const px = x0 + 9 + (w - 18) * i / 8, py = y0 + 1.2 - Math.sin(i / 8 * Math.PI) * 1.1 + Math.sin(t * 3 + i + sd) * .25; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+  ctx.stroke();
+  for (let k = 0; k < 3; k++) { // drops landing on top: a ring spreading in the pool and a small crown of droplets
+    const rate = 1.6 + hash(sd + k) * 1.4, v = t * rate + hash(sd * 3 + k), ph = v % 1, c = Math.floor(v), sx = x0 + 10 + hash(c * 1.37 + sd + k * 9) * (w - 20);
+    ctx.strokeStyle = `rgba(220,234,255,${.7 * (1 - ph) * W8})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(sx, y0 + 1, 1.5 + ph * 9, .5 + ph * 1.6, 0, 0, 7); ctx.stroke();
+    if (ph < .4) { const u = ph / .4; ctx.fillStyle = `rgba(232,242,255,${.8 * (1 - u) * W8})`;
+      for (const [dx, hgt] of [[-1, 7], [1, 8], [-.45, 10], [.55, 9]]) { ctx.beginPath(); ctx.arc(sx + dx * (2 + u * 8), y0 - Math.sin(u * Math.PI) * hgt * 1.2, 1.25, 0, 7); ctx.fill(); } }
+  }
+  for (const side of [0, 1]) { // a drop swells at each lower corner, hangs, then lets go
+    const per = 1.3 + hash(sd + side * 5) * .9, ph = (t / per + hash(sd + side)) % 1, cx = side ? x0 + w - 7 : x0 + 7, cy = y0 + h - .5;
+    if (ph < .72) { const g = ph / .72, r = .6 + g * 2.1; ctx.fillStyle = `rgba(214,228,250,${.75 * W8})`; ctx.beginPath(); ctx.ellipse(cx, cy + r * .9, r * .85, r * 1.15, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = `rgba(255,255,255,${.7 * W8})`; ctx.beginPath(); ctx.arc(cx - r * .3, cy + r * .5, r * .3, 0, 7); ctx.fill(); }
+    else { const f = (ph - .72) / .28, dy = 3 + f * f * 46; ctx.fillStyle = `rgba(214,228,250,${.8 * (1 - f) * W8})`; ctx.beginPath(); ctx.ellipse(cx, cy + dy, 1.7, 2.6 + f * 1.5, 0, 0, 7); ctx.fill(); }
+  }
+  ctx.restore();
+}
 function drawBlock(x, y, w, h, motion, elec = false) {
   const r = 12, x0 = x - w / 2, y0 = y - h / 2;
   if (motion > 0) { ctx.fillStyle = `rgba(43,45,66,${.05 * motion})`; ctx.beginPath(); ctx.roundRect(x0 + 4, y0 - 26 * motion, w - 8, h, r); ctx.fill(); }
@@ -1189,7 +1212,7 @@ function draw() {
 
   drawBackWeather();
   drawRain();
-  const motion = clamp01((speed - 450) / 500);
+  const motion = clamp01((speed - 450) / 500), wetA = wx.kind === 'storm' && wx.phase !== 'warn' ? wx.a * wx.a * (3 - 2 * wx.a) : 0;
   for (const o of things) {
     const x = bxOf(o);
     if (o.k !== 'b') { drawGem(x, o.y, o.ph); continue; }
@@ -1197,7 +1220,7 @@ function draw() {
       const k = Math.max(0, fx.dead - o.hitAt), dmp = Math.max(0, 1 - k / .3), sq = Math.max(0, 1 - k / .18);
       ctx.save(); ctx.translate(x + Math.sin(k * 75) * 3.2 * dmp, o.y - 3 * sq); ctx.scale(1 + .07 * sq, 1 - .13 * sq);
       drawBlock(0, 0, bw(), 44, 0, o.elec); ctx.restore();
-    } else drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec);
+    } else { drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec); if (wetA > .02) wetBlock(o, x, o.y, bw(), 44, wetA); }
   }
   drawHaze();
   if (wx.kind === 'heat' && wx.a > .05) { // heat refraction: wobble strips of what is already drawn
