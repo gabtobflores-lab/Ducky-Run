@@ -66,6 +66,9 @@
   .seg[data-sel="3"] .pill{transform:translateX(100%)}
   .seg button{position:relative;flex:1;border:0;background:none;border-radius:11px;padding:10px 6px;font-weight:800;font-size:14px;cursor:pointer;color:var(--ink-2);transition:color .2s var(--ease),transform .15s var(--ease)}
   .seg button.on{color:#fff}
+  .mrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px}
+  .seg.sm{flex:0 0 64%;padding:3px;border-radius:12px} .seg.sm .pill{top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:9px}
+  .seg.sm button{padding:6px;font-size:13px;border-radius:9px} #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   .seg button:active{transform:scale(.97)}
 
   /* buttons */
@@ -124,7 +127,7 @@
   <div class="sub">two balls. one tap.</div>
   <canvas id="pv" aria-hidden="true"></canvas>
   <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Impossible</span></div></div>
-  <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div></div>
+  <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="mrow"><span class="label">MODE</span><div class="seg sm" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button></div></div></div>
   <button class="btn" id="play">PLAY</button>
   <div class="card best" id="mbest"></div>
   <div class="hint">tap to move the balls one step.<br>at the edge they turn around.</div>
@@ -160,6 +163,8 @@ const $ = s => document.querySelector(s);
 document.documentElement.style.setProperty('--gaps', [1, 2, 3, 4, 5].map(k => `linear-gradient(90deg,transparent calc(11px + (100% - 22px) * ${k}/6 - 1.5px),rgba(255,255,255,.95) 0,rgba(255,255,255,.95) calc(11px + (100% - 22px) * ${k}/6 + 1.5px),transparent 0)`).join(','));
 // per = ball positions per side (2 or 3). Columns N = per * 2; the two balls always mirror each other.
 let per = 3; try { per = +localStorage.mirrorPer === 2 ? 2 : 3; } catch (e) {}
+let mode = 'normal'; try { mode = localStorage.mirrorMode === 'infinite' ? 'infinite' : 'normal'; } catch (e) {}
+const GOAL = 1000; let won = false; // Normal mode ends the run at 1000 points
 let W = 520, N = 6, LX = [];
 let H = 800, BY = 640; // H grows on tall phones so the field fills the screen
 function layout() { W = per === 2 ? 480 : 520; N = per * 2; LX = Array.from({ length: N }, (_, i) => (i + .5) * W / N); resize(); }
@@ -196,7 +201,7 @@ const params = () => ({ start: 270 + 230 * diff, step: 18 + 36 * diff, max: 600 
 const LEVEL_TIME = 10;
 const targetSpeed = n => { const p = params(), k = 1 - Math.min(.55, 2.4 * (2 + .8 * diff) * p.step / (p.max - p.start)); return p.start + (p.max - p.start) * (1 - Math.pow(k, n)); };
 const rowGap = () => { const p = params(); return Math.max(p.gap - level * p.shrink, speed * p.minTime); };
-const bkey = () => per + '_' + bucket();
+const bkey = () => per + '_' + bucket() + (mode === 'infinite' ? '_inf' : ''); // infinite runs keep their own bests
 const bestNow = () => bests[bkey()] || 0;
 // soft slide-in whenever a label's text actually changes
 function bump(el) { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); }
@@ -206,10 +211,11 @@ function syncDiffUI() {
   document.documentElement.style.setProperty('--sc', SECT_COL[bucket()]);
   document.querySelectorAll('.drange').forEach(r => { if (+r.value !== sliderV) r.value = sliderV; r.style.setProperty('--f', sliderV / 120); r.setAttribute('aria-valuetext', NAMES[bucket()]); });
   document.querySelectorAll('.dname').forEach(n => swapText(n, NAMES[bucket()]));
-  const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${NAMES[bucket()]} · ${N} columns</i>` : `<span>BEST</span><b>–</b><i>no score yet on ${NAMES[bucket()]} · ${N} columns</i>`;
+  const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : ''}</i>` : `<span>BEST</span><b>–</b><i>no ${mode === 'infinite' ? 'infinite ' : ''}score yet on ${NAMES[bucket()]} · ${N} columns</i>`;
   ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
-  document.querySelectorAll('.seg').forEach(s => { s.dataset.sel = per; });
-  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', +b.dataset.per === per)); swapText($('#pername'), N + ' columns');
+  document.querySelectorAll('.seg:not(#mode)').forEach(s => { s.dataset.sel = per; });
+  document.querySelectorAll('.seg button[data-per]').forEach(b => b.classList.toggle('on', +b.dataset.per === per));
+  $('#mode').dataset.mode = mode; document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode)); swapText($('#pername'), N + ' columns');
 }
 // thumb grows while a finger is on the slider
 document.querySelectorAll('.drange').forEach(r => {
@@ -259,7 +265,7 @@ function reset() {
   const p = params();
   pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
   fog = 0; resumeT = 0; fogT = 0;
-  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
+  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
   Object.assign(wx, { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null }); if (typeof wxHide === 'function') wxHide();
   Object.assign(fx, { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 });
@@ -321,6 +327,7 @@ $('#pmenu').onclick = () => { if (fresh()) return; show('#pause', false); goMenu
 function goMenu() { wxHide(); show('#over', false); state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
 function showOver() {
   if (state !== 'dead') return;
+  $('#over .logo').innerHTML = won ? '<span class="c">COMPLETE</span>' : '<span class="p">CRASH</span>';
   $('#onew').textContent = newBest ? 'NEW BEST' : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo x${fx.maxCombo}` : '';
   syncDiffUI(); show('#over', true);
   const ob = $('#obest'); ob.classList.remove('celebrate'); if (newBest) { void ob.offsetWidth; ob.classList.add('celebrate'); }
@@ -328,7 +335,8 @@ function showOver() {
   const el = $('#oscore'), target = score, t0 = performance.now();
   (function tick(now) { const p = clamp01((now - t0) / 450), e = 1 - Math.pow(1 - p, 3); el.textContent = Math.round(target * e); if (p < 1 && state === 'dead') requestAnimationFrame(tick); else el.textContent = target; })(t0);
 }
-document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { per = +b.dataset.per; try { localStorage.mirrorPer = per; } catch (e) {} layout(); reset(); syncDiffUI(); });
+document.querySelectorAll('#mode button').forEach(b => b.onclick = () => { mode = b.dataset.mode; try { localStorage.mirrorMode = mode; } catch (e) {} syncDiffUI(); });
+document.querySelectorAll('.seg button[data-per]').forEach(b => b.onclick = () => { per = +b.dataset.per; try { localStorage.mirrorPer = per; } catch (e) {} layout(); reset(); syncDiffUI(); });
 $('#play').onclick = () => { if (!fresh()) startGame(); }; $('#retry').onclick = () => { if (!fresh()) startGame(); }; $('#tomenu').onclick = () => { if (!fresh()) goMenu(); };
 
 let flashA = 0, flashLane = 0;
@@ -358,6 +366,12 @@ addEventListener('keydown', e => {
   }
 });
 
+function finish() { // Normal mode: reaching the goal ends the run cleanly, no crash
+  state = 'dead'; won = true; shake = 0; fx.freeze = 0; fx.dead = 0; crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null; wxHide();
+  beep(660, .18, 'triangle', .07, 200); setTimeout(() => beep(990, .3, 'triangle', .07, 300), 140);
+  if (score > bestNow()) { bests[bkey()] = score; newBest = true; try { localStorage.mirrorBests = JSON.stringify(bests); } catch (e) {} }
+  setTimeout(showOver, 750);
+}
 function die(x, y, bi = 0, blk = null) {
   state = 'dead'; shake = 0; fx.freeze = .03; fx.dead = 0; // tiny hit-stop; the shatter itself starts on the impact frame
   crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null;
@@ -376,6 +390,7 @@ function die(x, y, bi = 0, blk = null) {
 function update(dt) {
   $('#pbtn').style.display = state === 'play' && resumeT <= 0 ? 'flex' : 'none';
   if (state === 'paused') return;
+  if (state === 'play' && mode === 'normal' && score >= GOAL) finish();
   if (state === 'play' && resumeT <= 0) fogT = Math.max(0, fogT - dt);
   if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
   if (state === 'dead' && fx.freeze > 0) { fx.freeze -= dt; updateCrash(dt); return; } // hit-stop: hold the impact frame
@@ -1054,7 +1069,7 @@ function draw() {
   floaters.forEach(f => { ctx.globalAlpha = f.life; txt(f.txt, f.x, f.y, 22, f.col, 'center', 900); }); ctx.globalAlpha = 1;
 
   // crash: darken + desaturate the frozen scene
-  if (state === 'dead') {
+  if (state === 'dead' && !won) {
     const k = clamp01(fx.dead / .4);
     ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${k * .55})`; ctx.fillRect(-20, -20, W + 40, H + 40); ctx.restore();
     ctx.fillStyle = `rgba(43,45,66,${k * .1})`; ctx.fillRect(-20, -20, W + 40, H + 40);
