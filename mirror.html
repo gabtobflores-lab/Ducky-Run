@@ -662,23 +662,23 @@ const LIGHTS = { // per event: where the light comes from, and where the sky fal
   sun: g => { const q = clamp01(wx.t / WX.sun.dur); light(g, -40 + q * (W + 80), H * .08, H * .8, [[0, '255,250,236,.6'], [.35, '255,236,200,.18'], [1, '255,236,200,0']], 'lighter'); light(g, W * .5, H * .3, H * 1.1, [[.55, '8,30,90,0'], [1, '8,30,90,.3']]); },
   wind: g => { light(g, W * .9, -H * .05, H * .8, [[0, '255,252,240,.45'], [1, '255,252,240,0']], 'lighter'); light(g, W * .1, H * .9, H * .7, [[0, '40,70,120,.18'], [1, '40,70,120,0']]); },
   hail: g => { light(g, W * .22, -H * .1, H * .85, [[0, '240,244,250,.4'], [1, '240,244,250,0']], 'lighter'); light(g, W * .5, H * .45, H * .95, [[.5, '18,24,38,0'], [1, '18,24,38,.4']]); },
-  meteor: g => { light(g, W * .92, H * .05, H * .55, [[0, '150,175,230,.2'], [1, '150,175,230,0']], 'lighter'); light(g, W * .2, H * .9, H * .8, [[0, '0,4,14,.45'], [1, '0,4,14,0']]); },
+  meteor: g => { light(g, W * .92, H * .05, H * .55, [[0, '200,176,240,.22'], [1, '150,175,230,0']], 'lighter'); light(g, W * .2, H * .9, H * .8, [[0, '0,4,14,.45'], [1, '0,4,14,0']]); },
 };
 function skyGrad(g, stops) { const lg = g.createLinearGradient(0, 0, 0, H); stops.forEach(([o, c]) => lg.addColorStop(o, `rgb(${c})`)); g.fillStyle = lg; g.fillRect(0, 0, W, H); }
 function glow(g, rgb, x, y, rx, ry, al) { const b = softBlob(rgb); g.globalAlpha = al; g.drawImage(b, x - rx, y - ry, rx * 2, ry * 2); g.globalAlpha = 1; }
 // each event's sky: an Apple-Weather-style colour field with slow luminous masses moving inside it
 const SKY = {
   storm: g => { skyGrad(g, [[0, '34,40,56'], [.4, '66,74,94'], [.8, '112,120,138'], [1, '140,146,162']]); for (let k = 0; k < 5; k++) { const sd = SEEDS[k]; glow(g, '30,36,52', ((sd.x * W * 1.6 + t * 9 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .16, .7); } glow(g, '170,185,210', W * .5, H * .95, W * .9, H * .25, .35); },
-  hail: g => { skyGrad(g, [[0, '92,104,126'], [.45, '150,160,178'], [1, '210,216,226']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
-  fog: g => { skyGrad(g, [[0, '112,122,142'], [.5, '128,138,158'], [1, '146,154,172']]); /* Apple's cloudy blue-grey */ for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, '170,178,194', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .5, H * .2, .5); } },
+  hail: g => { skyGrad(g, [[0, '88,106,138'], [.45, '128,148,180'], [1, '168,184,210']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
+  fog: g => { skyGrad(g, [[0, '102,110,126'], [.5, '116,124,140'], [1, '128,136,150']]); /* Apple's fog: smoky blue-grey */ for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, k % 2 ? '86,94,112' : '146,154,170', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .55, H * .22, .55); } }, // soft darker and lighter patches drifting
   heat: g => { // a blazing clear day: deep cobalt overhead, bleaching to a white-hot haze along the ground
     skyGrad(g, [[0, '26,88,190'], [.32, '74,146,222'], [.58, '176,200,226'], [.78, '246,222,190'], [1, '255,190,140']]); // hotter and hazier toward the ground
     glow(g, '255,244,226', W * .5, H * 1.02, W * 1.2, H * .22, .7); },
   meteor: g => { // a clear late-summer night: deep blue overhead, a cool glow along the horizon
-    skyGrad(g, [[0, '3,5,20'], [.4, '9,16,52'], [.72, '26,36,104'], [.9, '62,58,142'], [1, '112,80,164']]); // deep indigo into a soft violet horizon // Apple's clear night: deep, rich blue, never black
-    glow(g, '120,150,210', W * .78, H * .13, W * .7, H * .35, .35); glow(g, '150,100,210', W * .5, H * 1.03, W * 1.2, H * .16, .4);
+    skyGrad(g, [[0, '12,10,38'], [.35, '34,26,82'], [.68, '78,52,132'], [.88, '132,84,156'], [1, '176,112,166']]); // a violet night warming to pink at the horizon // Apple's clear night: deep, rich blue, never black
+    glow(g, '120,150,210', W * .78, H * .13, W * .7, H * .35, .35); glow(g, '220,130,190', W * .5, H * 1.03, W * 1.2, H * .18, .4);
   },
-  wind: g => { skyGrad(g, [[0, '92,150,214'], [.5, '160,196,232'], [1, '226,232,238']]); }, // a bright, blustery day
+  wind: g => { skyGrad(g, [[0, '64,112,186'], [.5, '86,138,206'], [1, '118,164,222']]); }, /* Apple's clear, rich blue */
   sun: g => { skyGrad(g, [[0, '46,92,166'], [.45, '74,124,194'], [1, '112,156,214']]); }, // Apple's sunny blue: rich, slightly dusty
   aurora: g => { // after Apple's aurora wallpaper: deep navy, tall luminous curtains, a bright cyan heart and an indigo glow underneath
     skyGrad(g, [[0, '3,9,26'], [.45, '6,22,44'], [.8, '14,30,78'], [1, '34,40,112']]); // deep navy, an indigo glow underneath (the colours you liked)
@@ -952,33 +952,31 @@ function drawWindRibbons() { // drawn after the air warp so the ribbons stay per
 }
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
-  const SA = { storm: .8, hail: .82, fog: .92, heat: .9, wind: .62, sun: .85, aurora: 1, meteor: 1 }[wx.kind];
+  const SA = { storm: .8, hail: .82, fog: .92, heat: .9, wind: .95, sun: .85, aurora: 1, meteor: 1 }[wx.kind];
   if (SA) skyField(SA * a * a * (3 - 2 * a), SKY[wx.kind]);
   if (wx.kind === 'meteor') { // the sky clears to a deep night: Milky Way, a fine field of stars, a crescent moon, then the shower
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a; ctx.drawImage(NIGHT(), 0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
     nightSky(a, 0);
     ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.translate(W * .45, H * .5); ctx.rotate(-1.05); // the Milky Way as one smooth, luminous band
-    ctx.globalAlpha = .2 * a; ctx.drawImage(softBlob('110,110,200'), -H * .8, -W * .45, H * 1.6, W * .9); ctx.globalAlpha = .1 * a; ctx.drawImage(softBlob('200,190,255'), -H * .6, -W * .18, H * 1.2, W * .36); ctx.restore();
+    ctx.globalAlpha = .2 * a; ctx.drawImage(softBlob('150,120,220'), -H * .8, -W * .45, H * 1.6, W * .9); ctx.globalAlpha = .1 * a; ctx.drawImage(softBlob('200,190,255'), -H * .6, -W * .18, H * 1.2, W * .36); ctx.restore();
     const R = W * .26, mx = W - R * .32, my = R * .36; /* a big moon, tucked into the corner and partly off the edge */ ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('200,210,240'), mx - R * 5, my - R * 5, R * 10, R * 10); ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('230,235,250'), mx - R * 1.6, my - R * 1.6, R * 3.2, R * 3.2); // atmospheric glow around the moon
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a; ctx.drawImage(MOON(), mx - R * 1.085, my - R * 1.085, R * 2.17, R * 2.17); ctx.globalAlpha = 1;
     meteors(wx.phase === 'on' ? 1.7 : wx.phase === 'warn' ? 0 : .6, a);
-    ctx.globalAlpha = .55 * a; ctx.drawImage(softBlob('120,96,200'), -W * .4, H * .8, W * 1.8, H * .4); ctx.globalAlpha = 1; } // a violet glow along the horizon
+    lowres(() => [[.1, .3, 4, 2.2, .85, 61], [.5, .34, -3, 2, 1, 62], [.74, .36, 5, 2.4, 1, 63]].forEach(([y, h, sp, sc, al, sd], i) => drawSheet(cloudTex('mcn' + i, '52,34,96', '236,186,236', { seed: sd, cover: .54, base: .8, top: .12, alpha: .92, squash: 1.5, sharp: 3, shadow: .7, p: 3 }), H * y + nz(t * .05, i + 3) * 10, H * h, sp, al * a, sc))); // soft violet clouds, their tops lit pink by the moon
+    ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('220,120,180'), -W * .4, H * .82, W * 1.8, H * .4); ctx.globalAlpha = 1; } // a pink glow along the horizon
   if (wx.kind === 'aurora') { nightSky(a, .3); meteors(.12, a);
-    ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a)); ctx.globalCompositeOperation = 'source-over';
-    lowres(() => drawSheet(cloudTex('wisp3', '6,12,28', '40,80,110', { seed: 21, cover: .36, base: .7, top: .25, alpha: .8, squash: 3, p: 3 }), H * .3 + nz(t * .05, 2) * 20, H * .2, 7, .18 * a, 2.2)); // thin dark cloud drifting in front of the lights
-    const RY = H * .84; if (skyC) { ctx.save(); ctx.beginPath(); ctx.rect(-20, RY, W + 40, H - RY + 20); ctx.clip(); // the sky mirrored in still water, broken by a slow ripple
-      for (let y = RY; y < H + 20; y += 20) { const ox = Math.sin(y * .06 + t * 1.4) * 3 * (1 + (y - RY) / 80); ctx.save(); ctx.beginPath(); ctx.rect(-20, y, W + 40, 20); ctx.clip(); ctx.translate(ox, RY); ctx.scale(1, -.3); ctx.translate(0, -RY); ctx.globalAlpha = .5 * a; ctx.drawImage(skyC, 0, 0, skyC.width * 8, skyC.height * 8); ctx.restore(); }
-      ctx.restore(); const hl = ctx.createLinearGradient(0, RY - 2, 0, RY + 3); hl.addColorStop(0, 'rgba(140,230,255,0)'); hl.addColorStop(.5, `rgba(140,230,255,${.35 * a})`); hl.addColorStop(1, 'rgba(140,230,255,0)'); ctx.fillStyle = hl; ctx.fillRect(-20, RY - 2, W + 40, 5); }
+    ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a * .4)); ctx.globalCompositeOperation = 'source-over'; // only a whisper of fine ray structure
+    lowres(() => { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .55 * a; ctx.drawImage(softBlob('50,70,210'), -W * .5, H * .72, W * 2, H * .5); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }); // a deep blue glow beneath the curtains
   }
   if (wx.kind === 'heat') { // the sun high in a cobalt sky with soft rays; heat haze pooling on the ground; the shimmer is real refraction
     sunGlow(W * .78, H * .09, a, .55);
     lowres(() => { for (let k = 0; k < 3; k++) { const y = H * (.78 + k * .07) + Math.sin(t * .6 + k) * 6; const g = ctx.createLinearGradient(0, y - 40, 0, y + 40); g.addColorStop(0, 'rgba(255,240,222,0)'); g.addColorStop(.5, `rgba(255,232,206,${.36 * a})`); g.addColorStop(1, 'rgba(255,240,222,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 40, W + 40, 80); } }); // layers of heat haze near the ground
   }
   if (wx.kind === 'wind') lowres(() => { // cumulus racing across a bright sky, nearer layers faster
-    [[.02, .3, 70, 2.2, .7], [.2, .28, 130, 1.8, .6], [.42, .26, 210, 1.6, .45]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('cu3' + i, '168,184,212', '255,255,255', { seed: 11 + i, cover: .46, base: .82, top: .12, sharp: 4.5, shadow: .75, squash: 1.1, p: 2 + i }), H * y + nz(t * .2, i) * 10, H * h, sp * windDir, Math.min(1, al * 1.4) * a, sc));
+    [[-.14, .62, 60, 2.2, 1.3], [.12, .38, 120, 1.8, .9], [.36, .26, 200, 1.5, .5]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('cu5' + i, '150,170,206', '255,255,255', { seed: 11 + i, cover: i ? .56 : .72, base: .82, top: .12, sharp: 4.5, shadow: .75, squash: 1.1, p: 2 + i }), H * y + nz(t * .2, i) * 10, H * h, sp * windDir, Math.min(1, al * 1.4) * a, sc));
   });
   if (wx.kind === 'wind') lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
-    ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .16 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .12, -H * .1, W * .24, H * 1.2); ctx.restore(); } });
+    ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
   if (wx.kind === 'hail') lowres(() => { for (let k = 0; k < 70; k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
     ctx.globalAlpha = (.18 + .3 * (1 - z)) * a; ctx.drawImage(softBlob('240,246,255'), x - r, y - r, r * 2, r * 2); } ctx.globalAlpha = 1; }); // layers of out-of-focus ice drifting in the air
   if (wx.kind === 'hail') { // ice beads of uneven size and speed, drifting slightly, with occasional splashes
@@ -1001,7 +999,7 @@ function drawFrontWeather() { // light and glass in front of the scene
     ctx.save(); ctx.globalCompositeOperation = 'screen';
     ctx.restore();
   }
-  if (wx.kind === 'fog' && wx.a > .01) { const f = frost(); ctx.globalAlpha = .32 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1; } // the original condensation at the corners, lighter
+  if (wx.kind === 'fog' && wx.a > .01) { const f = frost(); ctx.globalAlpha = .12 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1; } // the original condensation at the corners, lighter
   if (wx.kind === 'hail' && wx.a > .01) { // cold frost gathering in the corners of the glass
     const f = frost(); ctx.globalAlpha = .62 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
   }
@@ -1238,11 +1236,10 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
   lowres(() => {
   const L = [[-.05, .4, 4, 2.2, .3], [.18, .4, -6, 1.8, .38], [.42, .4, 5, 2.4, .46], [.64, .42, -8, 1.9, .54]]; // thin up high, pooling low; slow, as real fog drifts
   L.forEach(([y, h, sp, sc, al], i) => {
-    const img = sheet('fogz' + i, 512, 180, '168,178,198', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '214,220,232' }); // shaded bellies, bright crowns: reads as volume
+    const img = sheet('fogp' + i, 512, 180, '140,148,164', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '166,174,190' }); // shaded bellies, bright crowns: reads as volume
     const breath = .78 + .22 * nz(t * .13, i * 5), yy = H * y + nz(t * .07, i * 3) * 18;
     drawSheet(img, yy, H * h * (1 + .06 * nz(t * .1, i)), sp, al * e * breath, sc);
   });
-  CIRRUS && ((() => { const c = CIRRUS(), w = W * 1.6, o = (t * 5) % w; ctx.globalAlpha = .55 * e; for (const dx of [-w, 0]) ctx.drawImage(c, dx + o, 0, w, H); ctx.globalAlpha = 1; })()); // soft fibrous streaks drifting slowly, like Apple's cloudy sky
   atmos('190,198,212', .1 * e, { n: 4, y0: .1, y1: .9, sp: 3, off: 13 }); // faint ambient veil that ties the layers together
   });
 }
