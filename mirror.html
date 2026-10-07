@@ -582,53 +582,54 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.fillStyle = `rgba(12,14,26,${.45 * a})`; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
     ctx.strokeStyle = `rgba(255,236,205,${.6 * a})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 7); ctx.stroke();
   }
-  if (wx.kind === 'aurora') { { const sg = ctx.createLinearGradient(0, 0, 0, H * .6); sg.addColorStop(0, `rgba(10,20,40,${.82 * a})`); sg.addColorStop(1, `rgba(20,35,60,${.5 * a})`); ctx.fillStyle = sg; ctx.fillRect(-20, -20, W + 40, H + 40);
+  if (wx.kind === 'aurora') { { const sg = ctx.createLinearGradient(0, 0, 0, H * .6); sg.addColorStop(0, `rgba(8,16,38,${.6 * a})`); sg.addColorStop(.3, `rgba(10,22,46,${.85 * a})`); sg.addColorStop(.6, `rgba(16,34,60,${.72 * a})`); sg.addColorStop(1, `rgba(26,48,72,${.55 * a})`); ctx.fillStyle = sg; ctx.fillRect(-20, -20, W + 40, H + 40);
     for (let k = 0; k < 24; k++) { const sd = SEEDS[k]; ctx.fillStyle = `rgba(255,255,255,${a * .6 * (nz(t * 2, sd.s) * .3 + .7)})`; ctx.fillRect(sd.x * W, sd.y * H * .8, 1.5, 1.5); } }
-  } if (wx.kind === 'aurora') { // curtains that thicken, thin and breathe unevenly
-    for (let k = 0; k < 4; k++) {
-      const y0 = H * (.12 + k * .085), br = .55 + .45 * (nz(t * .25 + k * 3, k) * .5 + .5), g = ctx.createLinearGradient(0, 0, W, 0);
-      g.addColorStop(0, 'rgba(110,220,205,0)'); g.addColorStop(.25 + nz(t * .1, k) * .1, `rgba(80,255,150,${.62 * a * br})`); g.addColorStop(.62, `rgba(110,240,190,${.45 * a * br})`); g.addColorStop(.85, `rgba(255,120,200,${.35 * a * br})`); g.addColorStop(1, 'rgba(255,150,190,0)');
-      ctx.fillStyle = g; ctx.beginPath();
-      for (let x = -20; x <= W + 20; x += 12) ctx.lineTo(x, y0 + nz(x * .009 + t * .22, k * 7) * 34);
-      for (let x = W + 20; x >= -20; x -= 12) ctx.lineTo(x, y0 + 30 + (nz(x * .02 - t * .15, k * 3) * .5 + .5) * 70 + nz(x * .008 + t * .2, k * 7) * 30);
-      ctx.closePath(); ctx.fill();
+  } if (wx.kind === 'aurora') { // soft curtains built from thousands of faint vertical rays, folding slowly like the real thing
+    for (let c = 0; c < 2; c++) {
+      const h = H * (.2 + c * .06), g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, 'rgba(255,120,200,0)'); g.addColorStop(.35, c ? 'rgba(170,120,255,.5)' : 'rgba(255,130,200,.45)'); g.addColorStop(.75, 'rgba(90,255,170,.9)'); g.addColorStop(1, 'rgba(90,255,170,0)');
+      ctx.fillStyle = g;
+      for (let x = -10; x <= W + 10; x += 3) {
+        const base = H * (.42 + c * .08) + nz(x * .006 + t * .12, c * 9) * 55 + nz(x * .02 - t * .3, c * 4) * 12;
+        const ray = Math.pow(nz(x * .09 + t * .5, c * 13) * .5 + .5, 2), fold = nz(x * .012 + t * .2, c * 5) * .5 + .5;
+        ctx.globalAlpha = Math.min(1, a * (.22 + ray * .75)) * (.4 + fold * .6) * (c ? .7 : 1);
+        const hh = h * (.8 + ray * .3); ctx.setTransform(ctx.getTransform().translate(0, base - h)); ctx.fillRect(x, h - hh, 3.2, hh); ctx.setTransform(ctx.getTransform().translate(0, h - base));
+      }
     }
-    for (let k = 0; k < 14; k++) { // faint vertical rays inside the curtain
-      const sd = SEEDS[k], x = sd.x * W + nz(t * .2, sd.s) * 30, h = 60 + sd.k * 90, al = .3 * a * (nz(t * .6, sd.s) * .5 + .5);
-      const g = ctx.createLinearGradient(0, H * .12, 0, H * .12 + h); g.addColorStop(0, 'rgba(160,240,225,0)'); g.addColorStop(.5, `rgba(160,240,225,${al})`); g.addColorStop(1, 'rgba(160,240,225,0)');
-      ctx.fillStyle = g; ctx.fillRect(x, H * .12 + sd.y * 40, 3 + sd.k * 4, h);
-    }
+    ctx.globalAlpha = 1;
+    const gl = ctx.createLinearGradient(0, H * .25, 0, H * .7); gl.addColorStop(0, 'rgba(90,255,170,0)'); gl.addColorStop(.5, `rgba(90,230,170,${.08 * a})`); gl.addColorStop(1, 'rgba(90,255,170,0)');
+    ctx.fillStyle = gl; ctx.fillRect(-20, H * .25, W + 40, H * .45); // the glow it casts on the haze below
   }
   if (wx.kind === 'heat') { // irregular shimmer: uneven spacing, thickness and strength
-    { const hg = ctx.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(255,170,90,${.32 * a})`); hg.addColorStop(.6, `rgba(255,190,120,${.16 * a})`); hg.addColorStop(1, `rgba(255,140,80,${.3 * a})`); ctx.fillStyle = hg; ctx.fillRect(-20, -20, W + 40, H + 40);
+    { const hg = ctx.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(255,180,110,${.26 * a})`); hg.addColorStop(.55, `rgba(255,205,150,${.08 * a})`); hg.addColorStop(1, `rgba(255,160,100,${.22 * a})`); ctx.fillStyle = hg; ctx.fillRect(-20, -20, W + 40, H + 40);
       const sg = ctx.createRadialGradient(W * .8, H * .08, 0, W * .8, H * .08, W * .6); sg.addColorStop(0, `rgba(255,245,210,${.75 * a})`); sg.addColorStop(.15, `rgba(255,210,140,${.45 * a})`); sg.addColorStop(1, 'rgba(255,190,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-20, -20, W + 40, H); }
     for (let k = 0; k < 11; k++) {
-      const sd = SEEDS[k], y = H - ((t * (28 + sd.k * 22) + sd.y * H) % H), al = .22 * a * (nz(t * .9, sd.s) * .5 + .5);
+      const sd = SEEDS[k], y = H - ((t * (28 + sd.k * 22) + sd.y * H) % H), al = .14 * a * (nz(t * .9, sd.s) * .5 + .5);
       ctx.strokeStyle = `rgba(255,255,255,${al})`; ctx.lineWidth = 3 + sd.k * 5; ctx.beginPath();
       for (let x = -20; x <= W + 20; x += 12) ctx.lineTo(x, y + nz(x * .05 + t * 2.4, sd.s) * (2 + sd.k * 2));
       ctx.stroke();
     }
   }
-  if (wx.kind === 'wind') { ctx.fillStyle = `rgba(190,170,140,${.14 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40); }
+  if (wx.kind === 'wind') { ctx.fillStyle = `rgba(200,190,175,${.12 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40); }
   if (wx.kind === 'wind') { // gusty, uneven airflow wisps
     const gust = .6 + .4 * (nz(t * 1.6, 2) * .5 + .5); ctx.lineCap = 'round';
     for (let k = 0; k < 40; k++) {
       const sd = SEEDS[k % 24], spd = 380 + sd.k * 320, x = ((sd.x * (W + 260) + t * spd) % (W + 260)) - 130, X = windDir > 0 ? x : W - x;
-      const y = ((sd.y + k * .37) % 1) * H + nz(t * .7, sd.s) * 22, L = (40 + sd.k * 70) * gust, al = .85 * a * gust * (nz(t * 2 + k, sd.s) * .3 + .7);
-      ctx.strokeStyle = `rgba(255,255,255,${al})`; ctx.lineWidth = 1.5 + sd.k * 2;
+      const y = ((sd.y + k * .37) % 1) * H + nz(t * .7, sd.s) * 22, L = (40 + sd.k * 70) * gust, al = Math.min(1, 1.1 * a * gust) * (nz(t * 2 + k, sd.s) * .3 + .7);
+      { const sg2 = ctx.createLinearGradient(X, 0, X - windDir * L, 0); sg2.addColorStop(0, `rgba(255,255,255,${al})`); sg2.addColorStop(1, 'rgba(255,255,255,0)'); ctx.strokeStyle = sg2; } ctx.lineWidth = 1.1 + sd.k * 1.1;
       ctx.beginPath(); ctx.moveTo(X, y); ctx.bezierCurveTo(X - windDir * L * .3, y - 5 * sd.k, X - windDir * L * .7, y + 6 * nz(t + k, 1), X - windDir * L, y + nz(t * 1.3, sd.s) * 5); ctx.stroke();
     }
   }
   if (wx.kind === 'wind') for (let k = 0; k < 24; k++) { // dust motes riding the gust
     const sd = SEEDS[k % 24], x = ((sd.x * (W + 100) + t * (260 + sd.k * 260)) % (W + 100)) - 50, X = windDir > 0 ? x : W - x, y = sd.y * H + nz(t * 1.5 + k, sd.s) * 30;
-    ctx.fillStyle = k % 3 ? `rgba(140,120,90,${.6 * a})` : `rgba(120,160,90,${.75 * a})`; ctx.beginPath(); ctx.ellipse(X, y, k % 3 ? 2 + sd.k : 5 + sd.k * 2, k % 3 ? 1.2 : 2.4, t * (3 + sd.k * 4) + k, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(160,145,120,${.45 * a})`; ctx.beginPath(); ctx.ellipse(X, y, 1.4 + sd.k * 1.2, .9, t * (3 + sd.k * 4) + k, 0, 7); ctx.fill();
   }
-  if (wx.kind === 'hail') { const hg = ctx.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(80,95,120,${.45 * a})`); hg.addColorStop(1, `rgba(120,135,155,${.15 * a})`); ctx.fillStyle = hg; ctx.fillRect(-20, -20, W + 40, H + 40); }
+  if (wx.kind === 'hail') { const hg = ctx.createLinearGradient(0, 0, 0, H); hg.addColorStop(0, `rgba(78,92,118,${.5 * a})`); hg.addColorStop(.5, `rgba(130,145,168,${.22 * a})`); hg.addColorStop(1, `rgba(150,165,185,${.12 * a})`); ctx.fillStyle = hg; ctx.fillRect(-20, -20, W + 40, H + 40); }
   if (wx.kind === 'hail') { // ice beads of uneven size and speed, drifting slightly, with occasional splashes
     for (const d of HAIL) {
       const sway = nz(t * .8, d.x * 40) * 14, x = ((d.x * (W + 40) + t * 40 * d.s) % (W + 40)) - 20 + sway, y = ((d.y * (H + 60) + t * 600 * d.s) % (H + 60)) - 30;
       ctx.fillStyle = `rgba(250,253,255,${.95 * a})`; ctx.strokeStyle = `rgba(130,170,205,${.8 * a})`; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.ellipse(x, y, d.r, d.r * (.8 + .2 * Math.sin(d.x * 50)), d.y * 6, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(x, y, d.r, d.r * (.8 + .2 * Math.sin(d.x * 50)), d.y * 6, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath(); ctx.arc(x - d.r * .3, y - d.r * .3, d.r * .35, 0, 7); ctx.fill();
       if (y > BY + 55 && y < BY + 70 && Math.random() < .3 && hailHits.length < 16) hailHits.push({ x, y, t: 0, s: .6 + Math.random() * .8, vx: (Math.random() - .5) * 60, r: d.r });
     }
     for (const h of hailHits) { const k = h.t / .4; ctx.fillStyle = `rgba(255,255,255,${(1 - k) * .8 * a})`; ctx.beginPath(); ctx.arc(h.x + (h.vx || 0) * h.t, h.y - Math.sin(k * Math.PI) * 14 * (h.s || 1), (h.r || 1.5) * .8, 0, 7); ctx.fill(); ctx.strokeStyle = `rgba(200,225,245,${(1 - k) * .55 * a})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(h.x, h.y, (3 + k * 10) * (h.s || 1), (1 + k * 3) * (h.s || 1), 0, 0, 7); ctx.stroke(); }
