@@ -234,7 +234,6 @@ function draw() {
   ctx.fillStyle = 'rgba(255,107,129,.10)'; ctx.fillRect(0, 0, W / 2, H);
   ctx.fillStyle = 'rgba(46,196,214,.12)'; ctx.fillRect(W / 2, 0, W / 2, H);
   ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.fillRect(W / 2 - 2, 0, 4, H);
-  if (flashA > 0 && state === 'play') { [flashLane, N - 1 - flashLane].forEach(l => { ctx.fillStyle = `rgba(255,159,28,${.22 * flashA})`; ctx.fillRect(l * W / N, 0, W / N, H); }); }
   const off = (t * speed * .5) % 60;
   ctx.fillStyle = 'rgba(43,45,66,.07)';
   LX.forEach(x => { for (let y = -60 + off; y < H; y += 60) ctx.fillRect(x - 2, y, 4, 24); });
