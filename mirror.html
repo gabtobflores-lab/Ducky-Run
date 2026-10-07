@@ -684,20 +684,18 @@ const SKY = {
     skyGrad(g, [[0, '3,9,26'], [.45, '6,22,44'], [.8, '14,30,78'], [1, '34,40,112']]); // deep navy, an indigo glow underneath (the colours you liked)
     glow(g, '20,90,110', W * .7, H * .25, W * .7, H * .35, .55); glow(g, '50,60,170', W * .45, H * .98, W * .9, H * .28, .7);
     g.globalCompositeOperation = 'lighter';
-    const C = AUR;
-    for (const [base, hgt, mid, core, ph] of C) {
-      for (let x = -16; x <= W + 16; x += 8) {
-        const by = auroraY(x, base, ph);
-        const ray = Math.pow(nz(x * .045 + t * .3, ph * 3) * .5 + .5, 1.6), fold = nz(x * .007 - t * .09, ph) * .5 + .5, hh = H * hgt * (.6 + ray * .6);
-        const lg = g.createLinearGradient(0, by - hh, 0, by + 20); lg.addColorStop(0, `rgba(${mid},0)`); lg.addColorStop(.6, `rgba(${mid},${.35 * fold})`); lg.addColorStop(.92, `rgba(${core},${.9 * fold})`); lg.addColorStop(1, `rgba(${core},0)`);
-        g.globalAlpha = (.22 + ray * .7) * (.6 + .4 * (nz(t * .13 + x * .002, ph * 7) * .5 + .5)); g.fillStyle = lg; g.fillRect(x, by - hh, 9, hh + 20); // each curtain slowly breathes
-      }
-    }
-    g.globalAlpha = 1; glow(g, '90,230,255', W * (.5 + nz(t * .05, 1) * .15), H * .62, W * .8, H * .07, .3); // a soft glow along the base of the curtains
-    glow(g, '190,80,200', W * (.35 + nz(t * .04, 3) * .2), H * .2, W * .7, H * .1, .22); glow(g, '120,90,230', W * .75, H * .3, W * .5, H * .12, .18); // the pink-magenta fringe up high // a magenta-violet fringe high up
+    AUR.forEach(([base, hgt, , , ph], c) => { const CA = [1, .7, .55][c]; // each curtain is a row of soft, leaning streaks of light
+      for (let i = 0; i <= 34; i++) { const x = -W * .12 + i * W * 1.24 / 34 + nz(t * .05 + i, ph) * 8, by = auroraY(x, base, ph);
+        const ray = Math.pow(nz(x * .02 + t * .12, ph * 3) * .5 + .5, 1.8), fold = .5 + .5 * nz(x * .006 - t * .07, ph), hh = H * hgt * (.7 + .5 * ray), w = W * (.05 + .06 * ray), tilt = -.2 + nz(x * .003 + t * .05, ph + 9) * .14;
+        g.save(); g.translate(x, by); g.rotate(tilt); g.globalAlpha = Math.min(1, (.12 + .8 * ray) * fold * CA); g.drawImage(AURSTREAK(), -w / 2, -hh * .86, w, hh); g.restore(); } });
+    g.globalAlpha = 1; glow(g, '100,232,255', W * (.5 + nz(t * .05, 1) * .12), H * .56, W * .45, H * .2, .32); // the bright cyan heart
+    glow(g, '40,170,150', W * .7, H * .22, W * .6, H * .2, .16); glow(g, '120,90,230', W * .2, H * .18, W * .5, H * .12, .08); // teal-green up high, a breath of violet
     g.globalCompositeOperation = 'source-over';
   },
 };
+const AURSTREAK = () => sprite('aurstreak', 48, 256, (g) => { // one streak of aurora light: teal-green fading in at the top, a bright cyan hem, blue below, soft at the sides
+  const lg = g.createLinearGradient(0, 0, 0, 256); lg.addColorStop(0, 'rgba(40,190,150,0)'); lg.addColorStop(.3, 'rgba(40,190,150,.32)'); lg.addColorStop(.62, 'rgba(90,225,255,.75)'); lg.addColorStop(.84, 'rgba(200,250,255,1)'); lg.addColorStop(.92, 'rgba(70,130,255,.55)'); lg.addColorStop(1, 'rgba(70,130,255,0)');
+  g.fillStyle = lg; g.fillRect(0, 0, 48, 256); g.globalCompositeOperation = 'destination-in'; const hg = g.createLinearGradient(0, 0, 48, 0); hg.addColorStop(0, 'rgba(0,0,0,0)'); hg.addColorStop(.5, 'rgba(0,0,0,1)'); hg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = hg; g.fillRect(0, 0, 48, 256); });
 const AUR = [[.5, .62, '30,150,150', '90,235,255', 0], [.66, .5, '20,110,160', '80,190,255', 2.1], [.38, .45, '30,140,120', '120,255,220', 4.3]]; // cyan, blue and aqua curtains
 const auroraY = (x, base, ph) => H * base + nz(x * .004 + t * .07, ph) * H * .09 + Math.sin(x * .009 + t * .22 + ph) * H * .035;
 const STARS = () => sprite('stars', 512, 1024, (g, w, h) => { // a deep star field, rendered once: mostly faint pinpoints, a few bright ones with a soft halo, a hint of colour
@@ -721,27 +719,28 @@ const MILKY = () => sprite('milky', 512, 1024, (g, w, h) => { // the Milky Way: 
   if ('filter' in g) g.filter = 'blur(.5px)'; g.drawImage(tmp, 0, 0);
 });
 const NIGHT = () => sprite('night4', 512, 1024, (g, w, h) => { g.globalCompositeOperation = 'lighter'; g.globalAlpha = .12; g.drawImage(MILKY(), 0, 0); g.globalAlpha = .9; g.drawImage(STARS2(), 0, 0); g.globalAlpha = .75; g.drawImage(STARS(), 0, 0); }); // the whole night sky baked into one layer
-const MOON = () => sprite('moon12', 768, 768, (g) => { // the full moon as Apple shows it: cool grey, dark seas, bright cratered highlands, ray systems, crisp detail
+const MARIA = [[-.28, -.4, .3, .25], [.22, -.36, .17, .16], [.34, -.1, .21, .17], [.68, -.26, .11, .14], [.55, .1, .12, .17], [.38, .24, .09, .08], [-.58, -.05, .27, .44], [-.22, .32, .16, .12], [-.5, .36, .09, .09], [-.04, -.12, .17, .11], [-.08, -.7, .45, .07], [.05, -.42, .12, .1]]; // Imbrium, Serenitatis, Tranquillitatis, Crisium, Fecunditatis, Nectaris, Procellarum, Nubium, Humorum, Vaporum, Frigoris, and the bays between
+const MOON = () => sprite("moon19", 768, 768, (g) => { // the full moon as Apple shows it: cool grey, dark seas, bright cratered highlands, ray systems, crisp detail
   const N = 768, R = 354, c = N / 2, img = g.createImageData(N, N), d = img.data, hgt = new Float32Array(N * N), alb = new Float32Array(N * N);
   const hs = (i, j, s0) => { const v = Math.sin(i * 127.1 + j * 311.7 + s0 * 17.3) * 43758.5453; return v - Math.floor(v); };
   const vn = (x, y, s0) => { const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy); return (hs(xi, yi, s0) * (1 - sx) + hs(xi + 1, yi, s0) * sx) * (1 - sy) + (hs(xi, yi + 1, s0) * (1 - sx) + hs(xi + 1, yi + 1, s0) * sx) * sy; };
   const fbm = (x, y, s0, o) => { let v = 0, a = .5, f = 1; for (let k = 0; k < o; k++) { v += a * vn(x * f, y * f, s0 + k); a *= .5; f *= 2.03; } return v; };
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const u = (x - c) / R, v = (y - c) / R; if (u * u + v * v > 1.01) continue; const i = y * N + x;
-    const mare = smooth((fbm(u * 1.6 + 4, v * 1.6 + 2, 1, 5) * .8 + fbm(u * 5 + 9, v * 5, 5, 2) * .2 - .425 - v * .12 + u * .05) / .06); // several dark seas, more of them in the north, with crisp shorelines
-    alb[i] = .8 - .36 * mare + (fbm(u * 30, v * 30, 7, 3) - .5) * .16 + (fbm(u * 7, v * 7, 9, 3) - .5) * .12 * (1 - mare) + (vn(u * 160, v * 160, 11) - .5) * .07 /* with a fine grain for crisp detail */; hgt[i] = (fbm(u * 14, v * 14, 3, 3) - .5) * .7 * (1 - mare * .7); }
+    let mare = 0; const wu = u + (fbm(u * 3, v * 3, 13, 3) - .5) * .22, wv = v + (fbm(u * 3 + 7, v * 3, 14, 3) - .5) * .22; for (const [mx, my, rx, ry] of MARIA) { const dd = ((wu - mx) / rx) ** 2 + ((wv - my) / ry) ** 2 + (fbm(u * 9 + mx * 9, v * 9 + my * 9, 2, 4) - .5) * 1.1; mare = Math.max(mare, smooth((1.15 - dd) / .55)); } mare *= .75 + .35 * fbm(u * 4, v * 4, 15, 3); // the real seas, with ragged shorelines // several dark seas, more of them in the north, with crisp shorelines
+    alb[i] = .84 - .32 * mare - .06 * smooth((.2 - v) / .6) * (1 - mare) + (fbm(u * 30, v * 30, 7, 3) - .5) * .16 + (fbm(u * 7, v * 7, 9, 3) - .5) * .12 * (1 - mare) + (vn(u * 160, v * 160, 11) - .5) * .07 /* with a fine grain for crisp detail */; hgt[i] = (fbm(u * 14, v * 14, 3, 3) - .5) * .7 * (1 - mare * .7); }
   const crater = (cx, cy, r, depth, bright) => { const r2 = r * 1.7; for (let y = Math.max(1, cy - r2 | 0); y < Math.min(N - 1, cy + r2); y++) for (let x = Math.max(1, cx - r2 | 0); x < Math.min(N - 1, cx + r2); x++) {
     const q = Math.hypot(x - cx, y - cy) / r; if (q > 1.7) continue; const i = y * N + x;
     hgt[i] += q < 1 ? depth * (q * q - 1) + depth * .12 : depth * .12 * Math.exp(-((q - 1) ** 2) / .1); // a deep bowl and a low, soft rim
     if (bright > .5) alb[i] += .09 * bright * Math.max(0, 1 - q / 1.7) ** 1.5; } }; // only young craters carry a bright splash of ejecta
-  for (let k = 0; k < 2600; k++) { const a = Math.random() * 6.283, rr = Math.sqrt(Math.random()) * R * .93, r = Math.min(38, 2 * (1 - Math.random()) ** -.62), x = c + Math.cos(a) * rr, y = c + Math.sin(a) * rr, m = alb[(y | 0) * N + (x | 0)] < .6; if (m && Math.random() < .6) continue; // far fewer craters on the smooth seas
-    crater(x, y, r, r * (.25 + Math.random() * .2), Math.random() < .08 ? 1 : 0); }
-  for (const [rx, ry, rr, n, L] of [[c + 40, c + 250, 16, 34, 330], [c - 150, c - 60, 18, 26, 190], [c - 250, c + 30, 10, 16, 120]]) { crater(rx, ry, rr, rr * .5, 1.6); // Tycho, Copernicus and Kepler with their bright rays
-    for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, len = L * (.4 + Math.random() * .6), wd = 2 + Math.random() * 3; for (let s2 = rr; s2 < len; s2 += 1) { const f = 1 - s2 / len; for (let w2 = -wd; w2 <= wd; w2++) { const x = rx + Math.cos(a) * s2 - Math.sin(a) * w2 | 0, y = ry + Math.sin(a) * s2 + Math.cos(a) * w2 | 0; if (x > 0 && y > 0 && x < N && y < N) alb[y * N + x] += .034 * f * (1 - Math.abs(w2) / (wd + 1)); } } } }
-  const L = [.32, -.22, .92], ll = Math.hypot(...L); L[0] /= ll; L[1] /= ll; L[2] /= ll; // lit almost head-on, as at full moon: just enough relief to read every crater
+  for (let k = 0; k < 4200; k++) { const a = Math.random() * 6.283, rr = Math.sqrt(Math.random()) * R * .93, r = Math.min(38, 2 * (1 - Math.random()) ** -.62), x = c + Math.cos(a) * rr, y = c + Math.sin(a) * rr, m = alb[(y | 0) * N + (x | 0)] < .58; if (m && Math.random() < .75) continue; if (y < c - R * .2 && Math.random() < .3) continue; // far fewer craters on the smooth seas
+    crater(x, y, r, r * (.25 + Math.random() * .2), Math.random() < (r < 4 ? .3 : .08) ? 1 : 0); } /* many small fresh craters sparkle */
+  for (const [rx, ry, rr, n, L] of [[c - 45, c + 230, 15, 34, 330], [c - 105, c - 70, 17, 30, 210], [c - 190, c - 45, 9, 18, 120], [c - 220, c - 115, 5, 8, 50]]) { crater(rx, ry, rr, rr * .5, 1.6); // Tycho, Copernicus and Kepler with their bright rays
+    for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, len = L * (.4 + Math.random() * .6), wd = 2 + Math.random() * 3; for (let s2 = rr; s2 < len; s2 += 1) { const f = 1 - s2 / len; for (let w2 = -wd; w2 <= wd; w2++) { const x = rx + Math.cos(a) * s2 - Math.sin(a) * w2 | 0, y = ry + Math.sin(a) * s2 + Math.cos(a) * w2 | 0; if (x > 0 && y > 0 && x < N && y < N) alb[y * N + x] += .05 * f * (1 - Math.abs(w2) / (wd + 1)); } } } }
+  const L = [.14, -.1, .985], ll = Math.hypot(...L); L[0] /= ll; L[1] /= ll; L[2] /= ll; // lit almost head-on, as at full moon: just enough relief to read every crater
   for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) { const u = (x - c) / R, v = (y - c) / R, r2 = u * u + v * v; if (r2 > 1) continue; const i = y * N + x;
-    let nx = u, ny = v, nz2 = Math.sqrt(1 - r2); const lf = .45 * Math.sqrt(1 - r2), gx = (hgt[i + 1] - hgt[i - 1]) * lf, gy = (hgt[i + N] - hgt[i - N]) * lf; /* relief softens toward the limb */ nx -= gx; ny -= gy; const nl = Math.hypot(nx, ny, nz2); nx /= nl; ny /= nl; nz2 /= nl;
-    const mu0 = Math.max(0, nx * L[0] + ny * L[1] + nz2 * L[2]), mu = Math.max(.05, nz2), b = Math.min(1.2, Math.min(1.25, alb[i]) * 2 * mu0 / (mu0 + mu)) * (.92 + .08 * Math.sqrt(1 - r2));
-    const e = Math.min(1, (1 - Math.sqrt(r2)) * R * .9), q = i * 4; d[q] = 214 * b; d[q + 1] = 214 * b; d[q + 2] = 218 * b; d[q + 3] = 255 * e; } // cool neutral grey
+    let nx = u, ny = v, nz2 = Math.sqrt(1 - r2); const lf = .8 * Math.sqrt(1 - r2), gx = (hgt[i + 1] - hgt[i - 1]) * lf, gy = (hgt[i + N] - hgt[i - N]) * lf; /* relief softens toward the limb */ nx -= gx; ny -= gy; const nl = Math.hypot(nx, ny, nz2); nx /= nl; ny /= nl; nz2 /= nl;
+    const fz = Math.sqrt(1 - r2), rel = (nx * L[0] + ny * L[1] + nz2 * L[2]) - (u * L[0] + v * L[1] + fz * L[2]), b = Math.max(0, Math.min(1.2, Math.min(1.25, alb[i]) * (1 + .32 * rel))); /* lit head-on like a true full moon, evenly bright to the edge; the angled light only models the craters */
+    const e = Math.min(1, (1 - Math.sqrt(r2)) * R * .9), q = i * 4; const bb = Math.pow(b, 1.25) * 236; d[q] = bb; d[q + 1] = bb * .99; d[q + 2] = bb * .985; /* a little more contrast, as in the photo */ d[q + 3] = 255 * e; } // cool neutral grey
   g.putImageData(img, 0, 0);
 });
 setTimeout(() => { try { MOON(); } catch (e) {} }, 1200); // build it once while the menu is up, so the shower never stutters
@@ -959,13 +958,13 @@ function drawBackWeather() { // events that live behind the blocks and balls
     nightSky(a, 0);
     ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.translate(W * .45, H * .5); ctx.rotate(-1.05); // the Milky Way as one smooth, luminous band
     ctx.globalAlpha = .2 * a; ctx.drawImage(softBlob('150,120,220'), -H * .8, -W * .45, H * 1.6, W * .9); ctx.globalAlpha = .1 * a; ctx.drawImage(softBlob('200,190,255'), -H * .6, -W * .18, H * 1.2, W * .36); ctx.restore();
-    const R = W * .26, mx = W - R * .32, my = R * .36; /* a big moon, tucked into the corner and partly off the edge */ ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('200,210,240'), mx - R * 5, my - R * 5, R * 10, R * 10); ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('230,235,250'), mx - R * 1.6, my - R * 1.6, R * 3.2, R * 3.2); // atmospheric glow around the moon
-    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a; ctx.drawImage(MOON(), mx - R * 1.085, my - R * 1.085, R * 2.17, R * 2.17); ctx.globalAlpha = 1;
+    const R = W * .26, mx = W - R * .5, my = R * .55; /* a big moon, tucked into the corner and partly off the edge */ ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('200,210,240'), mx - R * 5, my - R * 5, R * 10, R * 10); ctx.globalAlpha = .5 * a; ctx.drawImage(softBlob('230,235,250'), mx - R * 1.6, my - R * 1.6, R * 3.2, R * 3.2); // atmospheric glow around the moon
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a * .93; ctx.drawImage(MOON(), mx - R * 1.085, my - R * 1.085, R * 2.17, R * 2.17); // a touch of the sky shows through, so it sits in the air rather than on top of it
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .3 * a; ctx.drawImage(softBlob('236,228,255'), mx - R * 1.35, my - R * 1.35, R * 2.7, R * 2.7); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; // its light blooms softly past the edge
     meteors(wx.phase === 'on' ? 1.7 : wx.phase === 'warn' ? 0 : .6, a);
     lowres(() => [[.1, .3, 4, 2.2, .85, 61], [.5, .34, -3, 2, 1, 62], [.74, .36, 5, 2.4, 1, 63]].forEach(([y, h, sp, sc, al, sd], i) => drawSheet(cloudTex('mcn' + i, '52,34,96', '236,186,236', { seed: sd, cover: .54, base: .8, top: .12, alpha: .92, squash: 1.5, sharp: 3, shadow: .7, p: 3 }), H * y + nz(t * .05, i + 3) * 10, H * h, sp, al * a, sc))); // soft violet clouds, their tops lit pink by the moon
     ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('220,120,180'), -W * .4, H * .82, W * 1.8, H * .4); ctx.globalAlpha = 1; } // a pink glow along the horizon
   if (wx.kind === 'aurora') { nightSky(a, .3); meteors(.12, a);
-    ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a * .4)); ctx.globalCompositeOperation = 'source-over'; // only a whisper of fine ray structure
     lowres(() => { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .55 * a; ctx.drawImage(softBlob('50,70,210'), -W * .5, H * .72, W * 2, H * .5); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }); // a deep blue glow beneath the curtains
   }
   if (wx.kind === 'heat') { // the sun high in a cobalt sky with soft rays; heat haze pooling on the ground; the shimmer is real refraction
