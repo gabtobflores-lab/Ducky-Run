@@ -91,6 +91,8 @@ try { const d = parseFloat(localStorage.mirrorDiff); if (d >= 0 && d <= 1.2) dif
 const bucket = () => diff > 1 ? 5 : Math.min(4, Math.floor(diff * 5)); // Impossible sits past the end of the scale (diff 1.2)
 // Difficulty 0..1. Each 5s level adds `step` speed and tightens the row gap, down to a floor of `minTime` seconds between rows.
 const params = () => ({ start: 270 + 230 * diff, step: 12 + 34 * diff, max: 540 + 380 * diff, gap: 280 - 70 * diff, shrink: 2 + 6 * diff, minTime: .46 - .20 * diff, flip: .5 + .4 * diff });
+// Speed-ups shrink as you get faster: the first jumps are big, later ones smaller, approaching the top speed.
+const targetSpeed = n => { const p = params(), k = 1 - Math.min(.35, 1.8 * p.step / (p.max - p.start)); return p.start + (p.max - p.start) * (1 - Math.pow(k, n)); };
 const rowGap = () => { const p = params(); return Math.max(p.gap - level * p.shrink, speed * p.minTime); };
 const bkey = () => per + '_' + bucket();
 const bestNow = () => bests[bkey()] || 0;
@@ -246,10 +248,10 @@ function update(dt) {
   const p = params();
   levelT += dt;
   if (levelT >= 5) {
-    levelT -= 5; level++; fxA = 1; const capped = p.start + level * p.step >= p.max;
+    levelT -= 5; level++; fxA = 1; const capped = p.max - targetSpeed(level) < 8;
     banner = capped ? 'MAX SPEED' : 'SPEED UP!'; beep(380 + Math.min(level, 12) * 35, .4, 'triangle', .08, 280);
   }
-  speed += (Math.min(p.max, p.start + level * p.step) - speed) * Math.min(1, dt * 2.5);
+  speed += (targetSpeed(level) - speed) * Math.min(1, dt * 2.5);
 
   for (const o of things) {
     o.y += speed * dt;
