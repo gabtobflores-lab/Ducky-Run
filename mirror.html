@@ -248,7 +248,7 @@ const WX = {
   heat: { dur: 14, p: 1 / 140, warn: .8, note: 'HEAT WAVE' }, sun: { dur: 3.2, p: 1 / 200, warn: .5, note: 'SUN FLASH' },
   aurora: { dur: 16, p: 1 / 220, warn: .8, note: 'AURORA' }, eclipse: { dur: 14, p: 1 / 600, warn: 1.2, note: 'ECLIPSE' },
 };
-const HAIL = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), r: 1.3 + Math.random() * 1.6, s: .9 + Math.random() * .4 })), hailHits = [];
+const HAIL = Array.from({ length: 44 }, () => ({ x: Math.random(), y: Math.random(), r: .9 + Math.random() * Math.random() * 2.6, s: .75 + Math.random() * .6 })), hailHits = [];
 const wx = { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null };
 const RAIN = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), l: 12 + Math.random() * 14, s: .85 + Math.random() * .4 }));
 let windDir = 1, rimA = 0, sunX = -999;
@@ -566,46 +566,65 @@ function windOffset() { // a soft sideways nudge that rises and falls smoothly d
   const q = clamp01(wx.t / WX.wind.dur); return windDir * 16 * Math.sin(q * Math.PI) * Math.min(1, wx.a * 1.2);
 }
 const cloudH = () => H * .19;
+// smooth pseudo-noise from incommensurate sines: gives drifting, uneven variation instead of perfect repetition
+const nz = (x, s = 0) => (Math.sin(x * 1.13 + s) + Math.sin(x * 2.37 + s * 1.7) * .55 + Math.sin(x * 4.71 + s * 2.9) * .25) / 1.8;
+const SEEDS = Array.from({ length: 24 }, () => ({ x: Math.random(), y: Math.random(), s: Math.random() * 99, k: .6 + Math.random() * .8 }));
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
   if (wx.kind === 'eclipse') {
     ctx.fillStyle = `rgba(18,22,38,${.5 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
-    const cx = W / 2, cy = H * .33, R = W * .3;
-    const co = ctx.createRadialGradient(cx, cy, R * .9, cx, cy, R * 1.9); co.addColorStop(0, `rgba(255,226,180,${.45 * a})`); co.addColorStop(.25, `rgba(255,200,150,${.14 * a})`); co.addColorStop(1, 'rgba(255,200,150,0)');
-    ctx.fillStyle = co; ctx.beginPath(); ctx.arc(cx, cy, R * 1.9, 0, 7); ctx.fill();
+    const cx = W / 2 + nz(t * .05, 3) * 6, cy = H * .33, R = W * .3, fl = 1 + nz(t * .7, 1) * .08;
+    const co = ctx.createRadialGradient(cx, cy, R * .9, cx, cy, R * 1.9 * fl); co.addColorStop(0, `rgba(255,226,180,${.42 * a})`); co.addColorStop(.25, `rgba(255,200,150,${.13 * a})`); co.addColorStop(1, 'rgba(255,200,150,0)');
+    ctx.fillStyle = co; ctx.beginPath(); ctx.arc(cx, cy, R * 1.9 * fl, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(cx, cy); // uneven corona streamers
+    for (let k = 0; k < 18; k++) { const an = k / 18 * 6.283 + nz(k, 5) * .2, L = R * (.25 + .35 * (nz(t * .3 + k * 1.7, k) * .5 + .5));
+      const g = ctx.createLinearGradient(Math.cos(an) * R, Math.sin(an) * R, Math.cos(an) * (R + L), Math.sin(an) * (R + L)); g.addColorStop(0, `rgba(255,230,195,${.16 * a})`); g.addColorStop(1, 'rgba(255,230,195,0)');
+      ctx.strokeStyle = g; ctx.lineWidth = 3 + (k % 3) * 2; ctx.beginPath(); ctx.moveTo(Math.cos(an) * R, Math.sin(an) * R); ctx.lineTo(Math.cos(an) * (R + L), Math.sin(an) * (R + L)); ctx.stroke(); }
+    ctx.restore();
     ctx.fillStyle = `rgba(12,14,26,${.45 * a})`; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
-    ctx.strokeStyle = `rgba(255,236,205,${.7 * a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 7); ctx.stroke();
+    ctx.strokeStyle = `rgba(255,236,205,${.6 * a})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 7); ctx.stroke();
   }
-  if (wx.kind === 'aurora') {
-    for (let k = 0; k < 3; k++) {
-      const y0 = H * (.14 + k * .1), g = ctx.createLinearGradient(0, 0, W, 0);
-      g.addColorStop(0, 'rgba(110,220,205,0)'); g.addColorStop(.3, `rgba(110,220,205,${.16 * a})`); g.addColorStop(.6, `rgba(150,135,240,${.14 * a})`); g.addColorStop(1, 'rgba(255,150,190,0)');
+  if (wx.kind === 'aurora') { // curtains that thicken, thin and breathe unevenly
+    for (let k = 0; k < 4; k++) {
+      const y0 = H * (.12 + k * .085), br = .55 + .45 * (nz(t * .25 + k * 3, k) * .5 + .5), g = ctx.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, 'rgba(110,220,205,0)'); g.addColorStop(.25 + nz(t * .1, k) * .1, `rgba(110,220,205,${.15 * a * br})`); g.addColorStop(.62, `rgba(150,135,240,${.12 * a * br})`); g.addColorStop(1, 'rgba(255,150,190,0)');
       ctx.fillStyle = g; ctx.beginPath();
-      for (let x = -20; x <= W + 20; x += 16) ctx.lineTo(x, y0 + Math.sin(x * .012 + t * .5 + k * 2) * 26 + Math.sin(x * .03 - t * .3) * 8);
-      for (let x = W + 20; x >= -20; x -= 16) ctx.lineTo(x, y0 + 60 + k * 10 + Math.sin(x * .011 + t * .45 + k) * 30);
+      for (let x = -20; x <= W + 20; x += 12) ctx.lineTo(x, y0 + nz(x * .009 + t * .22, k * 7) * 34);
+      for (let x = W + 20; x >= -20; x -= 12) ctx.lineTo(x, y0 + 30 + (nz(x * .02 - t * .15, k * 3) * .5 + .5) * 70 + nz(x * .008 + t * .2, k * 7) * 30);
       ctx.closePath(); ctx.fill();
     }
-  }
-  if (wx.kind === 'heat') { // faint rising shimmer bands
-    ctx.fillStyle = `rgba(255,190,130,${.05 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
-    ctx.strokeStyle = `rgba(255,255,255,${.12 * a})`; ctx.lineWidth = 6;
-    for (let k = 0; k < 9; k++) { const y = H - ((t * 40 + k * H / 9) % H); ctx.beginPath(); for (let x = -20; x <= W + 20; x += 14) ctx.lineTo(x, y + Math.sin(x * .04 + t * 3 + k) * 3); ctx.stroke(); }
-  }
-  if (wx.kind === 'wind') { // translucent airflow streaks showing the direction
-    ctx.strokeStyle = `rgba(255,255,255,${.5 * a})`; ctx.lineCap = 'round'; ctx.lineWidth = 2;
-    for (let k = 0; k < 14; k++) {
-      const y = (k * 137 % H), x = ((k * 91 + t * 520) % (W + 200)) - 100, X = windDir > 0 ? x : W - x, L = 60 + (k % 3) * 30;
-      ctx.beginPath(); ctx.moveTo(X, y); ctx.quadraticCurveTo(X - windDir * L * .5, y - 6, X - windDir * L, y + Math.sin(t * 2 + k) * 4); ctx.stroke();
+    for (let k = 0; k < 14; k++) { // faint vertical rays inside the curtain
+      const sd = SEEDS[k], x = sd.x * W + nz(t * .2, sd.s) * 30, h = 60 + sd.k * 90, al = .06 * a * (nz(t * .6, sd.s) * .5 + .5);
+      const g = ctx.createLinearGradient(0, H * .12, 0, H * .12 + h); g.addColorStop(0, 'rgba(160,240,225,0)'); g.addColorStop(.5, `rgba(160,240,225,${al})`); g.addColorStop(1, 'rgba(160,240,225,0)');
+      ctx.fillStyle = g; ctx.fillRect(x, H * .12 + sd.y * 40, 3 + sd.k * 4, h);
     }
   }
-  if (wx.kind === 'hail') { // tiny ice beads behind the play, with small glassy splashes low down
+  if (wx.kind === 'heat') { // irregular shimmer: uneven spacing, thickness and strength
+    ctx.fillStyle = `rgba(255,190,130,${.045 * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
+    for (let k = 0; k < 11; k++) {
+      const sd = SEEDS[k], y = H - ((t * (28 + sd.k * 22) + sd.y * H) % H), al = .11 * a * (nz(t * .9, sd.s) * .5 + .5);
+      ctx.strokeStyle = `rgba(255,255,255,${al})`; ctx.lineWidth = 3 + sd.k * 5; ctx.beginPath();
+      for (let x = -20; x <= W + 20; x += 12) ctx.lineTo(x, y + nz(x * .05 + t * 2.4, sd.s) * (2 + sd.k * 2));
+      ctx.stroke();
+    }
+  }
+  if (wx.kind === 'wind') { // gusty, uneven airflow wisps
+    const gust = .6 + .4 * (nz(t * 1.6, 2) * .5 + .5); ctx.lineCap = 'round';
+    for (let k = 0; k < 18; k++) {
+      const sd = SEEDS[k], spd = 380 + sd.k * 320, x = ((sd.x * (W + 260) + t * spd) % (W + 260)) - 130, X = windDir > 0 ? x : W - x;
+      const y = sd.y * H + nz(t * .7, sd.s) * 22, L = (40 + sd.k * 70) * gust, al = .42 * a * gust * (nz(t * 2 + k, sd.s) * .3 + .7);
+      ctx.strokeStyle = `rgba(255,255,255,${al})`; ctx.lineWidth = 1 + sd.k * 1.4;
+      ctx.beginPath(); ctx.moveTo(X, y); ctx.bezierCurveTo(X - windDir * L * .3, y - 5 * sd.k, X - windDir * L * .7, y + 6 * nz(t + k, 1), X - windDir * L, y + nz(t * 1.3, sd.s) * 5); ctx.stroke();
+    }
+  }
+  if (wx.kind === 'hail') { // ice beads of uneven size and speed, drifting slightly, with occasional splashes
     for (const d of HAIL) {
-      const x = ((d.x * (W + 40) + t * 40) % (W + 40)) - 20, y = ((d.y * (H + 60) + t * 620 * d.s) % (H + 60)) - 30;
-      ctx.fillStyle = `rgba(255,255,255,${.75 * a})`; ctx.strokeStyle = `rgba(150,190,220,${.5 * a})`; ctx.lineWidth = .8;
-      ctx.beginPath(); ctx.arc(x, y, d.r, 0, 7); ctx.fill(); ctx.stroke();
-      if (y > BY + 60 && y < BY + 72 && Math.random() < .25 && hailHits.length < 12) hailHits.push({ x, y, t: 0 });
+      const sway = nz(t * .8, d.x * 40) * 14, x = ((d.x * (W + 40) + t * 40 * d.s) % (W + 40)) - 20 + sway, y = ((d.y * (H + 60) + t * 600 * d.s) % (H + 60)) - 30;
+      ctx.fillStyle = `rgba(255,255,255,${(.5 + d.r * .14) * a})`; ctx.strokeStyle = `rgba(150,190,220,${.45 * a})`; ctx.lineWidth = .7;
+      ctx.beginPath(); ctx.ellipse(x, y, d.r, d.r * (.8 + .2 * Math.sin(d.x * 50)), d.y * 6, 0, 7); ctx.fill(); ctx.stroke();
+      if (y > BY + 55 && y < BY + 70 && Math.random() < .18 && hailHits.length < 10) hailHits.push({ x, y, t: 0, s: .6 + Math.random() * .8 });
     }
-    for (const h of hailHits) { const k = h.t / .4; ctx.strokeStyle = `rgba(200,225,245,${(1 - k) * .6 * a})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(h.x, h.y, 3 + k * 10, 1 + k * 3, 0, 0, 7); ctx.stroke(); }
+    for (const h of hailHits) { const k = h.t / .4; ctx.strokeStyle = `rgba(200,225,245,${(1 - k) * .55 * a})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(h.x, h.y, (3 + k * 10) * (h.s || 1), (1 + k * 3) * (h.s || 1), 0, 0, 7); ctx.stroke(); }
   }
 }
 function drawFrontWeather() { // light passing over the scene
@@ -613,7 +632,7 @@ function drawFrontWeather() { // light passing over the scene
   sunX = -999;
   if (wx.kind === 'sun' && wx.a > .01) {
     const q = clamp01(wx.t / WX.sun.dur); sunX = -160 + q * (W + 320); // diagonal band position at y=0
-    const g = ctx.createLinearGradient(sunX - 120, 0, sunX + 120, 60); g.addColorStop(0, 'rgba(255,230,180,0)'); g.addColorStop(.5, `rgba(255,236,200,${.26 * wx.a})`); g.addColorStop(1, 'rgba(255,230,180,0)');
+    const g = ctx.createLinearGradient(sunX - 120, 0, sunX + 120, 60); g.addColorStop(0, 'rgba(255,230,180,0)'); g.addColorStop(.42, `rgba(255,236,200,${.16 * wx.a})`); g.addColorStop(.55, `rgba(255,240,210,${(.24 + nz(t * 3, 1) * .04) * wx.a})`); g.addColorStop(1, 'rgba(255,230,180,0)');
     ctx.save(); ctx.transform(1, 0, -.35, 1, 0, 0); ctx.fillStyle = g; ctx.fillRect(sunX - 140, -20, 280, H + 40); ctx.restore();
   }
 }
@@ -624,7 +643,7 @@ function boltPts(x0, y0, x1, y1) {
   pts.push([x1, y1]); return pts;
 }
 function lightning() {
-  wx.flash = 1; beep(70, .6, 'sawtooth', .035, -30);
+  wx.flash = .75 + Math.random() * .25; if (Math.random() < .4) setTimeout(() => { if (wx.kind === 'storm') wx.flash = Math.max(wx.flash, .6); }, 90 + Math.random() * 120); beep(70, .6, 'sawtooth', .035, -30);
   // only strike blocks that are still far away (at least ~1.9s from the balls) so the side switches stay fair
   const cand = things.filter(o => o.k === 'b' && !o.elec && o.y > 10 && (BY - o.y) / speed > 1.9);
   if (cand.length && Math.random() < .45) {
@@ -641,21 +660,26 @@ function drawArcs(x, y, rw, rh, n, a) { // small flickering electric arcs around
   }
   ctx.restore();
 }
-function drawRain() { // faint, thin, behind blocks and balls; a touch brighter while lightning lights it
+function drawRain() { // faint, thin, behind blocks and balls; gusty and uneven, a touch brighter while lightning lights it
   if (wx.kind !== 'storm' || wx.a < .01) return;
-  ctx.strokeStyle = `rgba(110,140,185,${wx.a * (.11 + wx.flash * .16)})`; ctx.lineWidth = 1.1; ctx.lineCap = 'round'; ctx.beginPath();
-  for (const d of RAIN) { const x = ((d.x * (W + 60) + t * 70) % (W + 60)) - 30, y = ((d.y * (H + 80) + t * 760 * d.s) % (H + 80)) - 40; ctx.moveTo(x, y); ctx.lineTo(x - d.l * .2, y + d.l); }
-  ctx.stroke();
+  const slant = .18 + nz(t * .4, 4) * .1, base = wx.a * (.1 + wx.flash * .16) * (.8 + .2 * nz(t * 1.1, 8));
+  ctx.lineWidth = 1; ctx.lineCap = 'round';
+  for (let g = 0; g < 3; g++) { // three opacity groups so drops are not all alike
+    ctx.strokeStyle = `rgba(110,140,185,${base * (.55 + g * .3)})`; ctx.beginPath();
+    for (let n = g; n < RAIN.length; n += 3) { const d = RAIN[n], x = ((d.x * (W + 60) + t * 70 * d.s) % (W + 60)) - 30, y = ((d.y * (H + 80) + t * 760 * d.s) % (H + 80)) - 40; ctx.moveTo(x, y); ctx.lineTo(x - d.l * slant, y + d.l); }
+    ctx.stroke();
+  }
 }
-function drawHaze() { // weather fog: a translucent haze that keeps blocks readable; the balls are drawn crisp above it
+function drawHaze() { // weather fog: an uneven, drifting haze that keeps blocks readable; the balls are drawn crisp above it
   if (wx.kind !== 'fog' || wx.a < .01) return;
-  const a = wx.a, g = ctx.createLinearGradient(0, 0, 0, BY);
-  g.addColorStop(0, `rgba(222,224,231,${.46 * a})`); g.addColorStop(.6, `rgba(226,228,234,${.3 * a})`); g.addColorStop(1, `rgba(230,232,238,${.14 * a})`);
+  const a = wx.a, br = .9 + .1 * nz(t * .3, 2), g = ctx.createLinearGradient(0, 0, 0, BY);
+  g.addColorStop(0, `rgba(222,224,231,${.44 * a * br})`); g.addColorStop(.6, `rgba(226,228,234,${.28 * a * br})`); g.addColorStop(1, `rgba(230,232,238,${.13 * a})`);
   ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
-  for (let i = 0; i < 4; i++) for (let sd = 0; sd < 2; sd++) { // slow drifting haze banks, mirrored
-    const d = ((i * 97 + t * 10) % (W / 2 + 120)) - 60, x = sd ? W - d : d, y = H * (.22 + i * .16) + Math.sin(t * .5 + i) * 18, R = 110 + (i % 2) * 40;
-    const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(240,241,245,${.22 * a})`); rg.addColorStop(1, 'rgba(240,241,245,0)');
-    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
+  for (let k = 0; k < 9; k++) { // banks of different sizes, speeds and density
+    const sd = SEEDS[k], x = ((sd.x * (W + 300) + t * (6 + sd.k * 10)) % (W + 300)) - 150, y = H * (.12 + sd.y * .58) + nz(t * .2, sd.s) * 22;
+    const R = 80 + sd.k * 90, al = .2 * a * (nz(t * .35, sd.s) * .5 + .6);
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(240,241,245,${al})`); rg.addColorStop(1, 'rgba(240,241,245,0)');
+    ctx.fillStyle = rg; ctx.save(); ctx.translate(x, y); ctx.scale(1.6, .7); ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.restore(); ctx.fill();
   }
 }
 function drawStorm() { // dark storm-cloud band across the top only, glowing blue from lightning
@@ -663,14 +687,14 @@ function drawStorm() { // dark storm-cloud band across the top only, glowing blu
   const a = wx.a, ch = cloudH(), g = ctx.createLinearGradient(0, -20, 0, ch * 1.25);
   g.addColorStop(0, `rgba(38,46,70,${.92 * a})`); g.addColorStop(.55, `rgba(58,68,96,${.7 * a})`); g.addColorStop(1, 'rgba(70,80,110,0)');
   ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, ch * 1.25 + 20);
-  for (let i = 0; i < 5; i++) for (let sd = 0; sd < 2; sd++) { // billowing underside, mirrored
-    const d = ((i * 71 + t * 9) % (W / 2 + 90)) - 45, x = sd ? W - d : d, y = ch * .78 + Math.sin(t * .6 + i * 1.7) * 7, R = 48 + (i % 3) * 16;
+  for (let i = 0; i < 12; i++) { // uneven billowing underside: different sizes, depths and drift
+    const q = SEEDS[i], x = ((q.x * (W + 160) + t * (5 + q.k * 8)) % (W + 160)) - 80, y = ch * (.62 + q.y * .32) + nz(t * .4, q.s) * 9, R = 34 + q.k * 40;
     const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(54,63,90,${.55 * a})`); rg.addColorStop(1, 'rgba(54,63,90,0)');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
   }
   if (wx.flash > 0) { // the cloud lights up from inside, and the scene catches a faint blue reflection
     const bx0 = wx.bolt ? wx.bolt.pts[0][0] : W / 2, lg = ctx.createRadialGradient(bx0, ch * .45, 0, bx0, ch * .45, W * .7);
-    lg.addColorStop(0, `rgba(205,228,255,${.75 * wx.flash * a})`); lg.addColorStop(1, 'rgba(150,190,255,0)');
+    const fk = wx.flash * (.75 + .25 * Math.sin(t * 60)); lg.addColorStop(0, `rgba(205,228,255,${.75 * fk * a})`); lg.addColorStop(1, 'rgba(150,190,255,0)');
     ctx.fillStyle = lg; ctx.fillRect(-20, -20, W + 40, ch * 1.3);
     ctx.fillStyle = `rgba(170,205,255,${.07 * wx.flash * a})`; ctx.fillRect(-20, -20, W + 40, H + 40);
   }
