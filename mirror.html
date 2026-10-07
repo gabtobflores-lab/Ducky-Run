@@ -932,41 +932,43 @@ function cloudGlow() { // lightning inside the cloud: mostly a crawler racing si
 }
 function lightning() { // a strike from the cloud base: threads between the blocks to the floor; only now and then does one find a block
   const cand = things.filter(o => o.k === 'b' && !o.elec && o.y > 40 && (BY - o.y) / speed > 1.9); // only blocks still far from the balls, so it stays fair
-  const y0 = cloudH() * (.55 + Math.random() * .2), st = strokes(), lead = .07 + Math.random() * .08;
+  const y0 = -30, st = strokes(), lead = .16 + Math.random() * .12, pre = .3 + Math.random() * .35; // born up inside the cloud deck: it brightens first, then the leader steps down
   let bolt = null;
   if (cand.length && Math.random() < .22) {
     const o = cand[(Math.random() * cand.length) | 0];
     for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(o.ex ?? LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y - 22); if (!blocked(pts, o)) bolt = { o, pts }; }
     if (bolt) { o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l]; bolt.pts[0][0] = bolt.pts[0][0]; }
   }
-  for (let i = 0; i < 14 && !bolt; i++) { // find a channel that misses every block and both balls
-    const xe = W * (.04 + Math.random() * .92), x0 = xe + (Math.random() - .5) * W * .5, pts = boltPts(x0, y0, xe, H * (.88 + Math.random() * .08));
-    if (!blocked(pts)) bolt = { pts };
+  for (let i = 0; i < 24 && !bolt; i++) { // find a channel that misses every block and both balls
+    const xe = W * (.1 + Math.random() * .8), x0 = Math.min(W * .94, Math.max(W * .06, xe + (Math.random() - .5) * W * .5)), pts = boltPts(x0, y0, xe, H + 60); // runs right off the bottom, to the ground below the screen
+    if (!blocked(pts) && pts.every(([x]) => x > 12 && x < W - 12)) bolt = { pts }; // stays on screen the whole way down
   }
   if (!bolt) { cloudGlow(); return; } // nowhere clear to land: it stays in the cloud this time
-  Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o)), t: 0, lead, st, dur: lead + st[st.length - 1].t + .55 });
+  Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o)), t: 0, pre, lead, st, dur: pre + lead + st[st.length - 1].t + .55 });
   wx.bolt = bolt; wx.flash = 1;
-  if (bolt.o) { setTimeout(() => beep(1500, .12, 'square', .03, -1100), lead * 1000); thunder(lead + .05, .1, 2.4); } else thunder(lead + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
+  const at = pre + lead; if (bolt.o) { setTimeout(() => beep(1500, .12, 'square', .03, -1100), at * 1000); thunder(at + .05, .1, 2.4); } else thunder(at + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
 }
 function flashK(b) { // brightness after the leader: each stroke flares and decays fast
-  if (!b || b.t < b.lead) return 0; const tt = b.t - b.lead; let k = 0;
+  const s0 = b ? (b.pre || 0) + b.lead : 0; if (!b || b.t < s0) return 0; const tt = b.t - s0; let k = 0;
   for (const s2 of b.st) if (tt >= s2.t) k = Math.max(k, s2.k * Math.exp(-(tt - s2.t) * 13));
   return k;
 }
 const boltK = () => flashK(wx.bolt);
 function channel(b, k, wGlow, inCloud) { // the stepped leader creeps out faintly, then the return stroke lights the whole channel
-  const lead = b.t < b.lead, p = lead ? b.t / b.lead : 1, n = Math.max(2, Math.floor(b.pts.length * p)), main = b.pts.slice(0, n);
+  const tl = b.t - (b.pre || 0); if (tl < 0) return;
+  const lead = tl < b.lead, p = lead ? (b.pre ? Math.floor(tl / b.lead * 13 + Math.random() * .6) / 13 : tl / b.lead) : 1, n = Math.max(2, Math.floor(b.pts.length * p)), main = b.pts.slice(0, n); // the leader advances in little steps
   if (b.o && !lead) { const o = b.o; main[main.length - 1] = [bxOf(o), o.y - 22]; }
   const line = P => { ctx.beginPath(); P.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); };
-  const tt = Math.max(0, b.t - b.lead), after = lead ? 0 : .22 * Math.exp(-tt * 5); // the channel lingers faintly a moment after the flash
-  const I = lead ? .22 : Math.max(k, after);
+  const tt = Math.max(0, tl - b.lead), after = lead ? 0 : .22 * Math.exp(-tt * 5); // the channel lingers faintly a moment after the flash
+  const I = lead ? .14 + Math.random() * .14 : Math.max(k, after);
+  const ch = cloudH(), C = (rgb, al) => { if (inCloud) return `rgba(${rgb},${al})`; const g = ctx.createLinearGradient(0, 0, 0, ch * .95); g.addColorStop(0, `rgba(${rgb},${al * .15})`); g.addColorStop(1, `rgba(${rgb},${al})`); return g; }; // veiled where it is still inside the cloud
   if (I < .02) return;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalCompositeOperation = 'screen';
-  ctx.strokeStyle = `rgba(140,150,255,${.22 * I})`; ctx.lineWidth = wGlow * 2.2; line(main); ctx.stroke();
-  ctx.strokeStyle = `rgba(185,200,255,${.45 * I})`; ctx.lineWidth = wGlow; line(main); ctx.stroke();
+  ctx.strokeStyle = C('140,150,255', .22 * I); ctx.lineWidth = wGlow * 2.2; line(main); ctx.stroke();
+  ctx.strokeStyle = C('185,200,255', .45 * I); ctx.lineWidth = wGlow; line(main); ctx.stroke();
   for (const f of b.br) { if (f.i0 > n) continue; const m = lead ? Math.max(2, Math.floor(f.pts.length * Math.min(1, (n - f.i0) / (b.pts.length * .25)))) : f.pts.length, P = f.pts.slice(0, m);
     ctx.strokeStyle = `rgba(180,195,255,${.3 * I})`; ctx.lineWidth = wGlow * .45; line(P); ctx.stroke(); ctx.strokeStyle = `rgba(245,248,255,${.55 * I})`; ctx.lineWidth = .9; line(P); ctx.stroke(); }
-  ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = `rgba(252,253,255,${(inCloud ? .75 : .97) * I})`; ctx.lineWidth = lead ? 1 : 2.2; line(main); ctx.stroke();
+  ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = C('252,253,255', (inCloud ? .75 : .97) * I); ctx.lineWidth = lead ? 1.1 : 2.2; line(main); ctx.stroke();
 }
 function drawBolt() { // the strike, in front of the cloud: leader, return stroke, re-strikes, a glow where it lands
   const b = wx.bolt; if (!b) return; const k = flashK(b);
@@ -1045,6 +1047,8 @@ function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lig
       for (let i = 0; i < n; i += 5) { const [x, y] = gl.pts[i], R = 46 + (i * 37 % 30); ctx.globalAlpha = Math.min(1, .5 * kk); ctx.drawImage(g, x - R * 1.6, y - R * .8, R * 3.2, R * 1.6); } }
     else { const R = W * .42 * gl.r; ctx.globalAlpha = Math.min(1, 1.1 * kk); ctx.drawImage(g, gl.x - R * 1.5, gl.y - R * .55, R * 3, R * 1.1); ctx.globalAlpha = Math.min(1, .8 * kk); ctx.drawImage(softBlob('235,242,255'), gl.x - R * .6, gl.y - R * .22, R * 1.2, R * .44); }
   }
+  { const b = wx.bolt; if (b && b.pre && b.t < b.pre + b.lead) { const q = clamp01(b.t / b.pre), fl = .55 + .45 * Math.sin(b.t * 47) * Math.sin(b.t * 13 + 1), R = W * (.22 + .12 * q), x = b.pts[0][0];
+    ctx.globalAlpha = Math.min(1, (.12 + .55 * q * q) * fl * e); ctx.drawImage(g, x - R * 1.5, ch * .3 - R * .5, R * 3, R); } } // the cloud flickers where the strike is building
   const bk = boltK(); if (bk > 0) { const bx0 = wx.bolt.pts[0][0], R = W * .6; ctx.globalAlpha = Math.min(1, bk * e); ctx.drawImage(g, bx0 - R * 1.4, ch * .45 - R * .6, R * 2.8, R * 1.2); }
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   });
