@@ -677,8 +677,8 @@ function drawSheet(img, y, h, speed, alpha, scaleW) { // draws a wrapping sheet 
 }
 const rainTile = () => sprite('rain', 192, 192, (g, w) => { // a texture of faint, varied streaks: sells density without per-drop work
   g.lineCap = 'round';
-  for (let i = 0; i < 46; i++) { const x = Math.random() * w, y = Math.random() * w, l = 8 + Math.random() * 18; g.strokeStyle = `rgba(185,205,230,${.25 + Math.random() * .5})`; g.lineWidth = .6 + Math.random() * .5;
-    for (const dy of [-w, 0, w]) for (const dx of [-w, 0, w]) { g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx - l * .17, y + dy + l); g.stroke(); } }
+  for (let i = 0; i < 46; i++) { const x = Math.random() * w, y = Math.random() * w, l = 8 + Math.random() * 18; g.strokeStyle = `rgba(215,225,240,${.2 + Math.random() * .45})`; g.lineWidth = 1 + Math.random() * 1;
+    for (const dy of [-w, 0, w]) for (const dx of [-w, 0, w]) { g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx - l * .04, y + dy + l); g.stroke(); } }
 });
 const hailTrail = () => sprite('htrail', 4, 64, (g, w, h) => { const lg = g.createLinearGradient(0, 0, 0, h); lg.addColorStop(0, 'rgba(235,244,252,0)'); lg.addColorStop(1, 'rgba(235,244,252,1)'); g.fillStyle = lg; g.fillRect(0, 0, w, h); });
 const streak = dir => sprite('streak' + (dir > 0), 160, 10, (g, w, h) => { // tapered wind trail with a faint cool shadow so it reads on pale backgrounds
@@ -821,7 +821,7 @@ function drawFrontWeather() { // light and glass in front of the scene
   drawGlass();
 }
 // ---------- raindrops on the glass: a handful of real little lenses that refract the scene (upside down, like real drops) ----------
-const DROPS = Array.from({ length: 12 }, () => ({ on: false })), BEADS = Array.from({ length: 48 }, () => ({ on: false })); let glassT = 0, snapC = null;
+const DROPS = Array.from({ length: 12 }, () => ({ on: false })), BEADS = Array.from({ length: 48 }, () => ({ on: false })); let glassT = 0, snapC = null, glassWet = 0;
 function bead(x, y, r, max) { const b = BEADS.find(q => !q.on); if (b) Object.assign(b, { on: true, x, y, r, life: 0, max }); }
 function drawGlass() { // rain on the glass: lots of tiny beads, a few real drops that magnify the scene upside down, some sliding away in teardrops
   const dt = Math.min(.05, Math.max(0, t - glassT)); glassT = t;
@@ -831,6 +831,11 @@ function drawGlass() { // rain on the glass: lots of tiny beads, a few real drop
     if (Math.random() < dt * 2.4) { const d = DROPS.find(q => !q.on); if (d) { Object.assign(d, { on: true, x: 14 + Math.random() * (W - 28), y: Math.random() * H * .8, r: 5 + Math.random() ** 2 * 9, life: 0, slide: Math.random() < .45, hold: .6 + Math.random() * 1.8, vy: 0, max: 3 + Math.random() * 3, lastB: 0 });
       for (let k = 0; k < 3; k++) { const an = Math.random() * 6.283, rr = d.r * (1.3 + Math.random()); bead(d.x + Math.cos(an) * rr, d.y + Math.sin(an) * rr, .7 + Math.random() * 1.1, 1.5 + Math.random() * 2); } } } // splash specks around a new drop
   }
+  if (A > .01) { glassWet = raining ? Math.min(1, glassWet + dt / 7) : Math.max(0, glassWet - dt / 2.5); } else glassWet = 0;
+  if (glassWet > .01) { const fk = glassWet * A;
+    [[0, 0, 0, 1], [1, 130, 260, .7]].forEach(([i, ox, oy, m]) => { const f = glassFilm(i), tw = 260, th = 520; ctx.globalAlpha = Math.min(1, fk * m * (i ? clamp01(glassWet * 1.6 - .6) : 1));
+      for (let x = -ox; x < W; x += tw) for (let y = -oy; y < H; y += th) ctx.drawImage(f, x, y, tw, th); });
+    ctx.globalAlpha = 1; }
   let any = false;
   for (const b of BEADS) if (b.on) { b.life += dt; if (b.life > b.max || (!raining && A < .02)) b.on = false; else any = true; }
   for (const d of DROPS) if (d.on) {
@@ -843,10 +848,10 @@ function drawGlass() { // rain on the glass: lots of tiny beads, a few real drop
     if (d.y > H + 20 || d.life > d.max + (d.slide ? 5 : 0) || (!raining && A < .02)) d.on = false; else any = true;
   }
   if (!any) return;
-  const spr = dropSprite();
-  for (const b of BEADS) if (b.on) { // beads: just rim and glint, too small to need refraction
+  const spr = dropSprite(), bs = beadSprite();
+  for (const b of BEADS) if (b.on) { // beads in the same irregular style as the film
     const k = smooth(b.life / .1) * (1 - smooth((b.life - b.max + .8) / .8)) * Math.min(1, A * 1.6); if (k < .02) continue;
-    ctx.globalAlpha = k; ctx.drawImage(spr, b.x - b.r * 1.5, b.y - b.r * 1.4, b.r * 3, b.r * 3);
+    ctx.globalAlpha = k; ctx.drawImage(bs, b.x - b.r * 1.6, b.y - b.r * 1.6, b.r * 3.2, b.r * 3.2);
   }
   ctx.globalAlpha = 1;
   if (!DROPS.some(d => d.on)) return;
@@ -862,6 +867,19 @@ function drawGlass() { // rain on the glass: lots of tiny beads, a few real drop
     ctx.restore(); ctx.globalAlpha = k; ctx.drawImage(spr, d.x - rx * 1.5, cy - ry * 1.3, rx * 3, ry * 2.8); ctx.globalAlpha = 1;
   }
 }
+function wetDrop(g, x, y, r) { // one droplet on glass: irregular outline, darker body, light gathered along the lower edge, a tiny glint on top
+  g.save(); g.translate(x, y); g.beginPath(); const n = 9, ph = Math.random() * 6;
+  for (let i = 0; i <= n; i++) { const an = i / n * 6.283, rr = r * (1 + .16 * Math.sin(an * 2 + ph) + .08 * Math.sin(an * 3 - ph)) * (an > 0 && an < Math.PI ? 1.06 : 1); i ? g.lineTo(Math.cos(an) * rr, Math.sin(an) * rr) : g.moveTo(Math.cos(an) * rr, Math.sin(an) * rr); }
+  g.closePath(); const rg = g.createRadialGradient(0, -r * .25, 0, 0, 0, r * 1.15); rg.addColorStop(0, 'rgba(26,34,54,.08)'); rg.addColorStop(.75, 'rgba(26,34,54,.2)'); rg.addColorStop(1, 'rgba(26,34,54,.34)'); g.fillStyle = rg; g.fill();
+  g.clip(); g.strokeStyle = 'rgba(235,242,252,.5)'; g.lineWidth = Math.max(.6, r * .32); g.beginPath(); g.arc(0, r * .12, r * .92, .35, 2.8); g.stroke();
+  g.restore(); if (r > 1.6) { g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(x - r * .3, y - r * .42, r * .2, r * .12, -.5, 0, 7); g.fill(); }
+}
+const glassFilm = i => sprite('film' + i, 520, 1040, (g, w, h) => { // built once: hundreds of drops, mostly tiny, a few larger, tiles seamlessly
+  g.scale(2, 2); const W2 = w / 2, H2 = h / 2;
+  for (let k = 0; k < 420; k++) { const r = .6 + Math.random() ** 3 * 5.5, x = Math.random() * W2, y = Math.random() * H2;
+    for (const dx of [-W2, 0, W2]) for (const dy of [-H2, 0, H2]) if (x + dx > -8 && x + dx < W2 + 8 && y + dy > -8 && y + dy < H2 + 8) wetDrop(g, x + dx, y + dy, r); }
+});
+const beadSprite = () => sprite('bead2', 64, 64, g => wetDrop(g, 32, 32, 20));
 const dropSprite = () => sprite('drop', 96, 96, (g) => { // rim shading, a soft contact shadow, a bright specular and a small caustic
   const cx = 48, cy = 45, R = 32;
   let r = g.createRadialGradient(cx, cy + 6, R * .6, cx, cy + 6, R * 1.25); r.addColorStop(0, 'rgba(20,28,45,0)'); r.addColorStop(.75, 'rgba(20,28,45,.16)'); r.addColorStop(1, 'rgba(20,28,45,0)'); g.fillStyle = r; g.fillRect(0, 0, 96, 96);
@@ -988,10 +1006,10 @@ function drawArcs(x, y, rw, rh, n, a) { // small flickering electric arcs around
 function drawRain() { // storm, behind the gameplay: cool uneven sky, two scrolling rain textures for density, and a modest set of real streaks with depth
   if (wx.kind !== 'storm' || wx.a < .01) return;
   const a = wx.a, e = a * a * (3 - 2 * a);
-  const gust = nz(t * .35, 4), sl = .17 + gust * .07, tile = rainTile(), lit = 1 + boltK() * .8;
+  const gust = nz(t * .35, 4), sl = .035 + gust * .03, tile = rainTile(), lit = 1 + boltK() * .8;
   lowres(() => { // sky, low moisture and the distant rain curtain share one soft half-resolution pass (distant rain is naturally out of focus)
     [[.8, 430, .5], [1.25, 680, .55]].forEach(([sc, sp, al], li) => {
-      const T = 192 * sc, ox = (t * sp * .17 + li * 71) % T, oy = (t * sp + li * 53) % T; ctx.globalAlpha = al * e * lit;
+      const T = 192 * sc, ox = (t * sp * .04 + li * 71) % T, oy = (t * sp + li * 53) % T; ctx.globalAlpha = al * e * lit;
       for (let x = -T + ox; x < W; x += T) for (let y = -T + oy; y < H; y += T) ctx.drawImage(tile, x, y, T, T);
     });
     for (let k = 0; k < 3; k++) { const sd = SEEDS[k + 17], x = ((sd.x * W * 1.8 + t * (40 + sd.k * 30)) % (W * 1.8)) - W * .4; // sheets of heavier rain sweeping through
@@ -1001,7 +1019,7 @@ function drawRain() { // storm, behind the gameplay: cool uneven sky, two scroll
   });
   { const bk = boltK(); if (bk > 0) { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .28 * bk * e; ctx.drawImage(softBlob('200,215,255'), -W * .3, -H * .1, W * 1.6, H * 1.2); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; } }
   // individual drops: motion-blurred streaks that fade in from the tail to a brighter head, scaled by depth (near = longer, wider, faster)
-  const q = Math.max(0, Math.min(6, Math.round((sl - .08) / .035))), spr = rainStreak(q), slq = .08 + q * .035;
+  const q = Math.max(0, Math.min(5, Math.round((sl - .01) / .012))), spr = rainStreak(q), slq = .01 + q * .012;
   for (const d of RAIN) {
     const sp = 600 + d.z * 950, x = ((d.x * (W + 80) + t * sp * slq * d.s) % (W + 80)) - 40, y = ((d.y * (H + 80) + t * sp * d.s) % (H + 80)) - 40, L = d.l;
     ctx.globalAlpha = Math.min(1, e * (.18 + d.z * .5) * (.6 + .4 * d.v) * lit); ctx.drawImage(spr, x - spr.width * L / 64 + 2, y - L, spr.width * L / 64, L);
@@ -1013,10 +1031,10 @@ function drawRain() { // storm, behind the gameplay: cool uneven sky, two scroll
     if (ph < .5) { const u = ph / .5; for (const dx of [-1, 1, -.4, .5]) { ctx.beginPath(); ctx.arc(x + dx * (2 + u * 7), y - Math.sin(u * Math.PI) * (5 + Math.abs(dx) * 3), .8, 0, 7); ctx.fill(); } } }
   ctx.globalAlpha = 1;
 }
-const rainStreak = q => sprite('rs' + q, Math.ceil(6 + 64 * (.08 + q * .035)), 64, (g, w, h) => { // one cached streak per wind angle
-  const sl = .08 + q * .035, x0 = w - 3, lg = g.createLinearGradient(x0 - 64 * sl, 0, x0, h);
-  lg.addColorStop(0, 'rgba(210,222,240,0)'); lg.addColorStop(.7, 'rgba(210,222,240,.55)'); lg.addColorStop(1, 'rgba(235,242,252,.95)');
-  g.strokeStyle = lg; g.lineCap = 'round'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(x0 - 64 * sl, 1); g.lineTo(x0, h - 2); g.stroke();
+const rainStreak = q => sprite('rs' + q, Math.ceil(8 + 64 * (.01 + q * .012)), 64, (g, w, h) => { // a soft, rounded, near-vertical streak per wind angle
+  const sl = .01 + q * .012, x0 = w - 4, lg = g.createLinearGradient(0, 0, 0, h);
+  lg.addColorStop(0, 'rgba(225,232,245,0)'); lg.addColorStop(.45, 'rgba(225,232,245,.32)'); lg.addColorStop(.88, 'rgba(240,244,252,.85)'); lg.addColorStop(1, 'rgba(240,244,252,.2)');
+  g.strokeStyle = lg; g.lineCap = 'round'; g.lineWidth = 3.4; g.beginPath(); g.moveTo(x0 - 64 * sl, 3); g.lineTo(x0, h - 3); g.stroke();
 });
 function drawHaze() { // fog: four big, blurred mist layers, each with its own height, scale, speed and direction, overlapping for depth
   if (wx.kind !== 'fog' || wx.a < .01) return;
