@@ -123,12 +123,12 @@ function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
 
 // ---------- state ----------
 let state = 'menu', t = 0, shake = 0, demoT = 0;
-let fog = 0, resumeT = 0; const bv = [0, 0], trail = [[], []], MOVE = .12; let mv = [{ a: 0, b: 0, t0: 0 }, { a: 0, b: 0, t0: 0 }];
+let fog = 0, resumeT = 0, fogT = 0; const bv = [0, 0], trail = [[], []], MOVE = .12; let mv = [{ a: 0, b: 0, t0: 0 }, { a: 0, b: 0, t0: 0 }];
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 function reset() {
   const p = params();
   pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; mv = bx.map(x => ({ a: x, b: x, t0: 0 })); trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
-  fog = 0; resumeT = 0;
+  fog = 0; resumeT = 0; fogT = 0;
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   while (nextY > -1000) addRow();
 }
@@ -169,11 +169,11 @@ const show = (id, on) => $(id).classList.toggle('on', on);
 function startGame() { show('#menu', false); show('#over', false); state = 'play'; reset(); beep(520, .15, 'triangle', .06, 300); }
 function pauseGame() {
   if (state !== 'play' || resumeT > 0) return;
-  state = 'paused'; $('#pfog').textContent = fog ? `Fog level ${fog}. Resuming makes it thicker.` : 'Careful: resuming brings in fog.'; show('#pause', true);
+  state = 'paused'; $('#pfog').textContent = fog ? `Fog level ${fog}. Resuming brings thicker fog for 5 seconds.` : 'Careful: resuming brings in fog for 5 seconds.'; show('#pause', true);
 }
 function resumeGame() {
   if (state !== 'paused') return;
-  show('#pause', false); fog++; resumeT = 3; state = 'play'; beep(300, .3, 'sine', .06, -100);
+  show('#pause', false); fog++; resumeT = 3; fogT = 5; state = 'play'; beep(300, .3, 'sine', .06, -100); // fog lingers 5s after the countdown, thicker with every pause
 }
 $('#pbtn').onclick = pauseGame; $('#resume').onclick = resumeGame;
 $('#pmenu').onclick = () => { show('#pause', false); goMenu(); };
@@ -221,6 +221,7 @@ function die(x, y) {
 function update(dt) {
   $('#pbtn').style.display = state === 'play' ? 'flex' : 'none';
   if (state === 'paused') return;
+  if (state === 'play' && resumeT <= 0) fogT = Math.max(0, fogT - dt);
   if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
   t += dt; flashA = Math.max(0, flashA - dt * 3.5); shake = Math.max(0, shake - dt * 40); pulse = Math.max(0, pulse - dt * 4); fxA = Math.max(0, fxA - dt / 1.2);
   parts.forEach(q => { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 500 * dt; q.life -= dt; });
@@ -332,13 +333,16 @@ function draw() {
     ctx.save(); ctx.translate(W / 2, 250); ctx.scale(k, k); ctx.globalAlpha = clamp01(fxA * 2.2);
     txt(banner, 0, 0, 54, '#ff9f1c'); txt(`LEVEL ${level + 1}`, 0, 34, 22, '#2b2d42'); ctx.restore(); ctx.globalAlpha = 1;
   }
-  if (fog > 0 && state !== 'menu') {
+  const fogVis = state === 'menu' ? 0 : resumeT > 0 || state === 'paused' ? 1 : clamp01(fogT / .8);
+  if (fog > 0 && fogVis > 0) {
+    ctx.save(); ctx.globalAlpha = fogVis;
     // punishment fog: hides the top of the field, thicker with every pause
     const fy = Math.min(BY - 110, (BY - 60) * Math.min(.88, .3 * fog + .15)), fg = ctx.createLinearGradient(0, 0, 0, fy + 90);
     fg.addColorStop(0, 'rgba(226,220,210,1)'); fg.addColorStop(fy / (fy + 90), 'rgba(226,220,210,1)'); fg.addColorStop(1, 'rgba(226,220,210,0)');
     ctx.fillStyle = fg; ctx.fillRect(-20, -20, W + 40, fy + 110);
     ctx.fillStyle = 'rgba(226,220,210,.7)';
     for (let i = 0; i < 7; i++) { const x = ((i * 97 + t * 18) % (W + 160)) - 80; ctx.beginPath(); ctx.arc(x, fy + 30 + Math.sin(t + i) * 12, 46 + (i % 3) * 14, 0, 7); ctx.fill(); }
+    ctx.restore();
   }
   if (state === 'play' && resumeT > 0) { ctx.fillStyle = 'rgba(244,239,230,.35)'; ctx.fillRect(0, 0, W, H); txt(Math.ceil(resumeT) + '', W / 2, H * .45, 120, '#ff6b81'); txt('get ready', W / 2, H * .45 + 44, 22, 'rgba(43,45,66,.6)'); }
   floaters.forEach(f => { ctx.globalAlpha = f.life; txt(f.txt, f.x, f.y, 26, f.col); }); ctx.globalAlpha = 1;
