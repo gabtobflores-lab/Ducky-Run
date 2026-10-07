@@ -699,6 +699,7 @@ const MILKY = () => sprite('milky', 512, 1024, (g, w, h) => { // the Milky Way: 
   for (let i = 0; i < 1200; i++) { const q = Math.random(), [x, y] = P(q), off = (Math.random() + Math.random() - 1) * 90; c.fillStyle = `rgba(255,255,255,${.15 + Math.random() * .45})`; c.fillRect(x + off * .5, y + off, .9, .9); }
   if ('filter' in g) g.filter = 'blur(.5px)'; g.drawImage(tmp, 0, 0);
 });
+const NIGHT = () => sprite('night', 512, 1024, (g, w, h) => { g.globalCompositeOperation = 'lighter'; g.globalAlpha = .75; g.drawImage(MILKY(), 0, 0); g.globalAlpha = .9; g.drawImage(STARS2(), 0, 0); g.globalAlpha = .75; g.drawImage(STARS(), 0, 0); }); // the whole night sky baked into one layer
 const MOON = () => sprite('moon', 256, 256, (g) => { // a waxing crescent: the lit sliver, and the rest faintly visible by earthshine
   const c = 128, R = 92; g.save(); g.beginPath(); g.arc(c, c, R, 0, 7); g.clip();
   let rg = g.createRadialGradient(c, c, 0, c, c, R); rg.addColorStop(0, 'rgba(70,82,112,.55)'); rg.addColorStop(1, 'rgba(40,50,80,.6)'); g.fillStyle = rg; g.fillRect(0, 0, 256, 256); // earthshine
@@ -734,7 +735,7 @@ function meteors(rate, a) { // a real shower: every meteor streams away from one
   ctx.restore();
 }
 function nightSky(a, starA) { // stars with a slow twinkle on top of the cached field
-  ctx.globalAlpha = starA * a; ctx.drawImage(STARS(), 0, 0, W, H); ctx.globalAlpha = 1;
+  if (starA > 0) { ctx.globalAlpha = starA * a; ctx.drawImage(STARS(), 0, 0, W, H); ctx.globalAlpha = 1; }
   for (let k = 0; k < 14; k++) { const sd = SEEDS[k], tw = nz(t * (1.2 + sd.k), sd.s) * .5 + .5; ctx.globalAlpha = a * tw * .9; ctx.fillStyle = '#fff'; ctx.fillRect(sd.x * W, sd.y * H * .7, 1.6, 1.6);
     ctx.globalAlpha = a * tw * .25; ctx.fillRect(sd.x * W - 3, sd.y * H * .7 + .3, 7.6, 1); ctx.fillRect(sd.x * W + .3, sd.y * H * .7 - 3, 1, 7.6); }
   ctx.globalAlpha = 1;
@@ -863,8 +864,8 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.strokeStyle = `rgba(255,240,215,${.55 * a * E.tot})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R + .6, 0, 7); ctx.stroke(); // chromosphere edge
   }
   if (wx.kind === 'meteor') { // the sky clears to a deep night: Milky Way, a fine field of stars, a crescent moon, then the shower
-    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .75 * a; ctx.drawImage(MILKY(), 0, 0, W, H); ctx.globalAlpha = .9 * a; ctx.drawImage(STARS2(), 0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
-    nightSky(a, .75);
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a; ctx.drawImage(NIGHT(), 0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
+    nightSky(a, 0);
     const mx = W * .8, my = H * .12, R = W * .06; ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .35 * a; ctx.drawImage(softBlob('190,205,255'), mx - R * 6, my - R * 6, R * 12, R * 12); // moonlight halo
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a; ctx.drawImage(MOON(), mx - R * 1.39, my - R * 1.39, R * 2.78, R * 2.78); ctx.globalAlpha = 1;
     meteors(wx.phase === 'on' ? 3.4 : wx.phase === 'warn' ? 0 : .6, a); }
