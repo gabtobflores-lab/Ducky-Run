@@ -37,7 +37,7 @@
   <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="100" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Insane</span></div></div>
   <button class="btn" id="play">PLAY</button>
   <div class="small" id="mbest"></div>
-  <div class="small">tap the left side to spread apart, the right side to squeeze together</div>
+  <div class="small">tap a column to send the balls there</div>
 </div>
 
 <div class="screen" id="over">
@@ -138,14 +138,19 @@ function showOver() {
 }
 $('#play').onclick = startGame; $('#retry').onclick = startGame; $('#tomenu').onclick = goMenu;
 
-function move(d) {
+let flashA = 0, flashLane = 0;
+function setPos(np, lane) {
   if (state !== 'play') return;
-  const np = Math.max(0, Math.min(2, pos + d));
-  if (np !== pos) { pos = np; pulse = 1; beep(380 + pos * 90, .08, 'triangle', .05, d * 80); }
+  np = Math.max(0, Math.min(2, np)); flashA = 1; flashLane = lane === undefined ? np : lane;
+  if (np !== pos) { const d = np - pos; pos = np; pulse = 1; beep(380 + pos * 90, .08, 'triangle', .05, d * 80); }
 }
+const move = d => setPos(pos + d);
 function cycle() { if (pos + dirv > 2 || pos + dirv < 0) dirv = -dirv; move(dirv); }
-// left half of the screen spreads the balls apart, right half squeezes them together
-cv.addEventListener('pointerdown', e => { e.preventDefault(); move(e.clientX < innerWidth / 2 ? -1 : 1); });
+// tap a column and the balls go there (the other ball mirrors it on the opposite side)
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault(); const gx = (e.clientX * dpr - offX) / scale, lane = Math.max(0, Math.min(5, Math.floor(gx / (W / 6))));
+  setPos(Math.min(lane, 5 - lane), lane);
+});
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const act = ['Space', 'Enter'].includes(e.code);
@@ -168,7 +173,7 @@ function die(x, y) {
 
 // ---------- update ----------
 function update(dt) {
-  t += dt; shake = Math.max(0, shake - dt * 40); pulse = Math.max(0, pulse - dt * 4); fxA = Math.max(0, fxA - dt / 1.2);
+  t += dt; flashA = Math.max(0, flashA - dt * 3.5); shake = Math.max(0, shake - dt * 40); pulse = Math.max(0, pulse - dt * 4); fxA = Math.max(0, fxA - dt / 1.2);
   parts.forEach(q => { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 500 * dt; q.life -= dt; });
   parts = parts.filter(q => q.life > 0);
   floaters.forEach(f => { f.y -= 50 * dt; f.life -= dt * 1.1; }); floaters = floaters.filter(f => f.life > 0);
@@ -221,6 +226,7 @@ function draw() {
   ctx.fillStyle = 'rgba(255,107,129,.10)'; ctx.fillRect(0, 0, W / 2, H);
   ctx.fillStyle = 'rgba(46,196,214,.12)'; ctx.fillRect(W / 2, 0, W / 2, H);
   ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.fillRect(W / 2 - 2, 0, 4, H);
+  if (flashA > 0 && state === 'play') { [flashLane, 5 - flashLane].forEach(l => { ctx.fillStyle = `rgba(255,159,28,${.22 * flashA})`; ctx.fillRect(l * W / 6, 0, W / 6, H); }); }
   const off = (t * speed * .5) % 60;
   ctx.fillStyle = 'rgba(43,45,66,.07)';
   LX.forEach(x => { for (let y = -60 + off; y < H; y += 60) ctx.fillRect(x - 2, y, 4, 24); });
