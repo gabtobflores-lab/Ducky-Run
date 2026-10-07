@@ -657,62 +657,101 @@ function atmos(rgb, al, o = {}) { lowres(() => {
   }
   ctx.globalAlpha = 1;
 }); }
+const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+function eclipseState() {
+  const q = wx.phase === 'on' ? clamp01(wx.t / WX.eclipse.dur) : wx.phase === 'out' ? 1 : 0, R = W * .17, cx = W / 2, cy = H * .3;
+  const p = q < .42 ? 1 - smooth(q / .42) : q < .6 ? 0 : -smooth((q - .6) / .4), d = p * R * 2.3, an = -.42; // approach, totality, depart
+  const dx = Math.cos(an) * d, dy = Math.sin(an) * d, c = clamp01(1 - Math.abs(d) / (R * 2)), tot = clamp01(1 - Math.abs(d) / (R * .1));
+  const ring = clamp01((c - .9) / .06) * (1 - tot), dark = wx.a * (.12 + .88 * c * c * c);
+  return { R, cx, cy, dx, dy, c, tot, ring, dark };
+}
+function auroraRays(a, mul) { // curtains built from faint vertical rays, folding slowly like the real thing
+  for (let c = 0; c < 2; c++) {
+    const h = H * (.2 + c * .06), g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, 'rgba(255,120,200,0)'); g.addColorStop(.35, c ? 'rgba(170,120,255,.5)' : 'rgba(255,130,200,.45)'); g.addColorStop(.75, 'rgba(90,255,170,.9)'); g.addColorStop(1, 'rgba(90,255,170,0)');
+    ctx.fillStyle = g;
+    for (let x = -10; x <= W + 10; x += 4) {
+      const base = H * (.42 + c * .08) + nz(x * .006 + t * .12, c * 9) * 55 + nz(x * .02 - t * .3, c * 4) * 12;
+      const ray = Math.pow(nz(x * .09 + t * .5, c * 13) * .5 + .5, 2), fold = nz(x * .012 + t * .2, c * 5) * .5 + .5;
+      ctx.globalAlpha = Math.min(1, a * (.22 + ray * .75)) * (.4 + fold * .6) * (c ? .7 : 1) * mul;
+      const hh = h * (.8 + ray * .3); ctx.translate(0, base - h); ctx.fillRect(x, h - hh, 4.2, hh); ctx.translate(0, h - base);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
-  if (wx.kind === 'eclipse') {
-    lowres(() => { const cx0 = W / 2, cy0 = H * .33, dk = ctx.createRadialGradient(cx0, cy0, W * .2, cx0, cy0, H * .95); // sky darkens around the sun; a sunset glow rings the horizon
-      dk.addColorStop(0, `rgba(12,15,30,${.72 * a})`); dk.addColorStop(.6, `rgba(22,26,44,${.55 * a})`); dk.addColorStop(1, `rgba(40,36,48,${.42 * a})`); ctx.fillStyle = dk; ctx.fillRect(-20, -20, W + 40, H + 40);
-      atmos('255,150,90', .14 * a, { n: 6, y0: .82, y1: 1.05, sp: 3, off: 5 }); atmos('20,24,44', .2 * a, { n: 6, y0: 0, y1: .7, sp: 3, off: 11 }); });
-    for (let k = 0; k < 24; k++) { const sd = SEEDS[k]; ctx.fillStyle = `rgba(255,255,255,${a * .5 * (nz(t * 2, sd.s) * .3 + .7)})`; ctx.fillRect(sd.x * W, sd.y * H * .7, 1.4, 1.4); }
-    const cx = W / 2 + nz(t * .05, 3) * 6, cy = H * .33, R = W * .3, fl = 1 + nz(t * .7, 1) * .08;
-    const co = ctx.createRadialGradient(cx, cy, R * .9, cx, cy, R * 1.9 * fl); co.addColorStop(0, `rgba(255,226,180,${.42 * a})`); co.addColorStop(.25, `rgba(255,200,150,${.13 * a})`); co.addColorStop(1, 'rgba(255,200,150,0)');
-    ctx.fillStyle = co; ctx.beginPath(); ctx.arc(cx, cy, R * 1.9 * fl, 0, 7); ctx.fill();
-    ctx.save(); ctx.translate(cx, cy); // uneven corona streamers
-    for (let k = 0; k < 18; k++) { const an = k / 18 * 6.283 + nz(k, 5) * .2, L = R * (.25 + .35 * (nz(t * .3 + k * 1.7, k) * .5 + .5));
-      const g = ctx.createLinearGradient(Math.cos(an) * R, Math.sin(an) * R, Math.cos(an) * (R + L), Math.sin(an) * (R + L)); g.addColorStop(0, `rgba(255,230,195,${.16 * a})`); g.addColorStop(1, 'rgba(255,230,195,0)');
-      ctx.strokeStyle = g; ctx.lineWidth = 3 + (k % 3) * 2; ctx.beginPath(); ctx.moveTo(Math.cos(an) * R, Math.sin(an) * R); ctx.lineTo(Math.cos(an) * (R + L), Math.sin(an) * (R + L)); ctx.stroke(); }
-    ctx.restore();
-    ctx.fillStyle = `rgba(12,14,26,${.45 * a})`; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
-    ctx.strokeStyle = `rgba(255,236,205,${.6 * a})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 7); ctx.stroke();
+  if (wx.kind === 'eclipse') { // the moon actually crosses the sun: partial phase, diamond ring, totality with corona and stars, then out again
+    const E = eclipseState(), cx = E.cx, cy = E.cy, R = E.R;
+    lowres(() => {
+      const dk = ctx.createRadialGradient(cx, cy, R, cx, cy, H * 1.05); const D = E.dark;
+      dk.addColorStop(0, `rgba(10,13,28,${.8 * D})`); dk.addColorStop(.55, `rgba(20,24,42,${.62 * D})`); dk.addColorStop(1, `rgba(46,38,52,${.48 * D})`); ctx.fillStyle = dk; ctx.fillRect(-20, -20, W + 40, H + 40);
+      atmos('255,150,90', .2 * D * E.c, { n: 6, y0: .84, y1: 1.08, sp: 2, off: 5 }); // a sunset glow all around the horizon at totality
+    });
+    if (E.tot > 0) for (let k = 0; k < 24; k++) { const sd = SEEDS[k]; ctx.globalAlpha = E.tot * a * (.45 + .35 * (nz(t * 1.6, sd.s) * .5 + .5)); ctx.fillStyle = '#fff'; ctx.fillRect(sd.x * W, sd.y * H * .75, 1.4, 1.4); }
+    ctx.globalAlpha = 1;
+    const sunA = a * (1 - E.tot);
+    if (sunA > .01) { // the sun itself, blooming
+      ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = sunA * .9; const b = softBlob('255,236,200'); ctx.drawImage(b, cx - R * 3.2, cy - R * 3.2, R * 6.4, R * 6.4);
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = sunA; ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    if (E.tot > .01) { // corona: soft pearly glow with slow uneven streamers
+      const co = ctx.createRadialGradient(cx, cy, R * .95, cx, cy, R * 2.2); co.addColorStop(0, `rgba(255,240,220,${.55 * a * E.tot})`); co.addColorStop(.3, `rgba(220,225,255,${.16 * a * E.tot})`); co.addColorStop(1, 'rgba(220,225,255,0)');
+      ctx.fillStyle = co; ctx.beginPath(); ctx.arc(cx, cy, R * 2.2, 0, 7); ctx.fill();
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * .01); ctx.lineCap = 'round';
+      for (let k = 0; k < 14; k++) { const an = k / 14 * 6.283 + nz(k, 5) * .25, L = R * (.3 + .5 * (nz(t * .2 + k * 1.7, k) * .5 + .5));
+        const g = ctx.createLinearGradient(Math.cos(an) * R, Math.sin(an) * R, Math.cos(an) * (R + L), Math.sin(an) * (R + L)); g.addColorStop(0, `rgba(255,245,230,${.2 * a * E.tot})`); g.addColorStop(1, 'rgba(255,245,230,0)');
+        ctx.strokeStyle = g; ctx.lineWidth = 2 + (k % 3) * 2.5; ctx.beginPath(); ctx.moveTo(Math.cos(an) * R, Math.sin(an) * R); ctx.lineTo(Math.cos(an) * (R + L), Math.sin(an) * (R + L)); ctx.stroke(); }
+      ctx.restore();
+    }
+    if (E.c > 0) { // the moon is only visible where it covers the sun (and fully once the sky is dark)
+      ctx.save(); if (E.tot < .98) { ctx.beginPath(); ctx.arc(cx, cy, R + .5, 0, 7); ctx.clip(); }
+      ctx.fillStyle = `rgba(16,18,28,${a})`; ctx.beginPath(); ctx.arc(cx + E.dx, cy + E.dy, R * 1.005, 0, 7); ctx.fill(); ctx.restore(); }
+    if (E.ring > .01) { // diamond ring: the last bead of sunlight at the limb
+      const L = Math.hypot(E.dx, E.dy) || 1, bx = cx - E.dx / L * R, by = cy - E.dy / L * R;
+      ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = E.ring * a; ctx.drawImage(softBlob('255,250,240'), bx - R * .7, by - R * .7, R * 1.4, R * 1.4);
+      ctx.drawImage(sparkle(), bx - R * 1.1, by - R * 1.1, R * 2.2, R * 2.2); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    }
+    ctx.strokeStyle = `rgba(255,240,215,${.55 * a * E.tot})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R + .6, 0, 7); ctx.stroke(); // chromosphere edge
   }
   if (wx.kind === 'aurora') { { lowres(() => { atmos('10,20,44', .5 * a, { n: 14, y0: -.1, y1: .8, sp: 2, sc: 1.3 }); atmos('22,44,70', .32 * a, { n: 8, y0: .5, y1: 1.1, sp: 2, off: 9 }); });
     for (let k = 0; k < 24; k++) { const sd = SEEDS[k]; ctx.fillStyle = `rgba(255,255,255,${a * .6 * (nz(t * 2, sd.s) * .3 + .7)})`; ctx.fillRect(sd.x * W, sd.y * H * .8, 1.5, 1.5); } }
-  } if (wx.kind === 'aurora') { // soft curtains built from thousands of faint vertical rays, folding slowly like the real thing
-    for (let c = 0; c < 2; c++) {
-      const h = H * (.2 + c * .06), g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, 'rgba(255,120,200,0)'); g.addColorStop(.35, c ? 'rgba(170,120,255,.5)' : 'rgba(255,130,200,.45)'); g.addColorStop(.75, 'rgba(90,255,170,.9)'); g.addColorStop(1, 'rgba(90,255,170,0)');
-      ctx.fillStyle = g;
-      for (let x = -10; x <= W + 10; x += 4) {
-        const base = H * (.42 + c * .08) + nz(x * .006 + t * .12, c * 9) * 55 + nz(x * .02 - t * .3, c * 4) * 12;
-        const ray = Math.pow(nz(x * .09 + t * .5, c * 13) * .5 + .5, 2), fold = nz(x * .012 + t * .2, c * 5) * .5 + .5;
-        ctx.globalAlpha = Math.min(1, a * (.22 + ray * .75)) * (.4 + fold * .6) * (c ? .7 : 1);
-        const hh = h * (.8 + ray * .3); ctx.setTransform(ctx.getTransform().translate(0, base - h)); ctx.fillRect(x, h - hh, 4.2, hh); ctx.setTransform(ctx.getTransform().translate(0, h - base));
-      }
-    }
-    ctx.globalAlpha = 1;
+  } if (wx.kind === 'aurora') {
+    auroraRays(a, 1);
+    const RY = H - 70; // the aurora mirrored faintly in the glossy floor
+    ctx.save(); ctx.beginPath(); ctx.rect(-20, RY, W + 40, H - RY + 20); ctx.clip(); ctx.translate(0, RY * 2); ctx.scale(1, -1); ctx.translate(0, (RY - H * .5) * .55); auroraRays(a, .22); ctx.restore();
     const gl = ctx.createLinearGradient(0, H * .25, 0, H * .7); gl.addColorStop(0, 'rgba(90,255,170,0)'); gl.addColorStop(.5, `rgba(90,230,170,${.08 * a})`); gl.addColorStop(1, 'rgba(90,255,170,0)');
     ctx.fillStyle = gl; ctx.fillRect(-20, H * .25, W + 40, H * .45); // the glow it casts on the haze below
   }
-  if (wx.kind === 'heat') { // irregular shimmer: uneven spacing, thickness and strength
-    { lowres(() => { atmos('255,185,120', .2 * a, { n: 8, y0: -.1, y1: .5, sp: 4 }); atmos('255,165,105', .2 * a, { n: 7, y0: .75, y1: 1.1, sp: 5, off: 6 }); }); // hot air pooling near the ground
-      const sg = ctx.createRadialGradient(W * .8, H * .08, 0, W * .8, H * .08, W * .6); sg.addColorStop(0, `rgba(255,245,210,${.75 * a})`); sg.addColorStop(.15, `rgba(255,210,140,${.45 * a})`); sg.addColorStop(1, 'rgba(255,190,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-20, -20, W + 40, H); }
-    for (let k = 0; k < 11; k++) {
-      const sd = SEEDS[k], y = H - ((t * (28 + sd.k * 22) + sd.y * H) % H), al = .14 * a * (nz(t * .9, sd.s) * .5 + .5);
-      ctx.strokeStyle = `rgba(255,255,255,${al})`; ctx.lineWidth = 3 + sd.k * 5; ctx.beginPath();
-      for (let x = -20; x <= W + 20; x += 12) ctx.lineTo(x, y + nz(x * .05 + t * 2.4, sd.s) * (2 + sd.k * 2));
-      ctx.stroke();
-    }
+  if (wx.kind === 'heat') { // a white-hot sun high in the corner, slow light rays, warm air pooling low; the shimmer comes from real refraction below
+    lowres(() => { atmos('255,185,120', .2 * a, { n: 8, y0: -.1, y1: .5, sp: 4 }); atmos('255,160,100', .22 * a, { n: 7, y0: .75, y1: 1.1, sp: 5, off: 6 }); });
+    const sx = W * .82, sy = H * .07;
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(t * .025); ctx.globalCompositeOperation = 'screen'; // god rays, barely there and slowly turning
+    for (let k = 0; k < 9; k++) { const an = k / 9 * 6.283 + nz(k, 2) * .3, L = H * (.5 + .3 * (nz(t * .15 + k, k) * .5 + .5)), wdt = .05 + .03 * (k % 3);
+      const g = ctx.createLinearGradient(0, 0, Math.cos(an) * L, Math.sin(an) * L); g.addColorStop(0, `rgba(255,236,200,${.16 * a})`); g.addColorStop(1, 'rgba(255,236,200,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, L, an - wdt, an + wdt); ctx.closePath(); ctx.fill(); }
+    ctx.restore(); ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = .85 * a; ctx.drawImage(softBlob('255,226,170'), sx - W * .55, sy - W * .55, W * 1.1, W * 1.1);
+    ctx.globalAlpha = a; ctx.drawImage(softBlob('255,252,240'), sx - 60, sy - 60, 120, 120);
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    const mg = ctx.createLinearGradient(0, H * .82, 0, H); mg.addColorStop(0, 'rgba(255,240,220,0)'); mg.addColorStop(.6, `rgba(255,236,214,${.22 * a * (.8 + .2 * nz(t * 2, 4))})`); mg.addColorStop(1, 'rgba(255,240,220,0)');
+    ctx.fillStyle = mg; ctx.fillRect(-20, H * .82, W + 40, H * .18); // mirage sheen on the hot floor
   }
-  if (wx.kind === 'wind') atmos('205,190,165', .16 * a, { n: 7, sp: 260, dir: windDir, sc: .8 }); // dust clouds racing through
-  if (wx.kind === 'wind') { // tapered air trails from one cached sprite, gust-modulated; a light scatter of dust
-    const gust = .55 + .45 * (nz(t * 1.6, 2) * .5 + .5), img = streak(windDir);
-    for (let k = 0; k < 22; k++) {
-      const sd = SEEDS[k], spd = 420 + sd.k * 360, x = ((sd.x * (W + 300) + t * spd) % (W + 300)) - 150, X = windDir > 0 ? x : W - x;
-      const y = ((sd.y + k * .37) % 1) * H + nz(t * .7, sd.s) * 22, L = (120 + sd.k * 170) * gust, th = 3 + sd.k * 3;
-      ctx.globalAlpha = Math.min(1, .95 * a * gust * (nz(t * 2 + k, sd.s) * .3 + .7)); ctx.drawImage(img, windDir > 0 ? X - L : X, y - th / 2, L, th);
+  if (wx.kind === 'wind') { // air currents drawn as fine silk ribbons: a bright gust front races along each one, its tail dissolving behind
+    atmos('205,190,165', .1 * a, { n: 5, sp: 260, dir: windDir, sc: .8 });
+    const gust = .6 + .4 * (nz(t * 1.4, 2) * .5 + .5); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let k = 0; k < 7; k++) {
+      const sd = SEEDS[k + 3], base = H * (.1 + k * .125 + sd.y * .05), amp = 10 + sd.k * 18, fr = .006 + sd.k * .004, sp = 1.2 + sd.k;
+      const span = W * 1.9, head = ((t * (520 + sd.k * 260) + sd.x * span) % span) - W * .45, len = W * (.5 + sd.k * .3) * gust;
+      const hx = windDir > 0 ? head : W - head, tx = windDir > 0 ? head - len : W - head + len;
+      const g = ctx.createLinearGradient(tx, 0, hx, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.85, `rgba(255,255,255,${a})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+      const gs = ctx.createLinearGradient(tx, 0, hx, 0); gs.addColorStop(0, 'rgba(110,125,150,0)'); gs.addColorStop(.85, `rgba(110,125,150,${.3 * a})`); gs.addColorStop(1, 'rgba(110,125,150,0)');
+      const x0 = Math.min(tx, hx), x1 = Math.max(tx, hx), path = dy => { ctx.beginPath(); for (let x = x0; x <= x1 + 12; x += 12) { const y = base + Math.sin(x * fr - t * sp * windDir) * amp + nz(x * .01 + t * .5, sd.s) * 8 + dy; x === x0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } };
+      ctx.strokeStyle = gs; ctx.lineWidth = 4; path(2); ctx.stroke();
+      ctx.strokeStyle = g; ctx.lineWidth = 2 + sd.k * 1.1; path(0); ctx.stroke();
     }
-    ctx.globalAlpha = 1; ctx.fillStyle = `rgba(160,145,120,${.4 * a})`;
-    for (let k = 0; k < 14; k++) { const sd = SEEDS[k + 6 & 15], x = ((sd.x * (W + 100) + t * (260 + sd.k * 260)) % (W + 100)) - 50, X = windDir > 0 ? x : W - x, y = ((sd.y + k * .29) % 1) * H + nz(t * 1.5 + k, sd.s) * 30;
+    ctx.fillStyle = `rgba(160,145,120,${.4 * a})`;
+    for (let k = 0; k < 12; k++) { const sd = SEEDS[k + 6 & 15], x = ((sd.x * (W + 100) + t * (300 + sd.k * 260)) % (W + 100)) - 50, X = windDir > 0 ? x : W - x, y = ((sd.y + k * .29) % 1) * H + nz(t * 1.5 + k, sd.s) * 30;
       ctx.beginPath(); ctx.ellipse(X, y, 1.3 + sd.k, .8, t * 4 + k, 0, 7); ctx.fill(); }
   }
   if (wx.kind === 'hail') { lowres(() => { atmos('84,98,124', .34 * a, { n: 10, y0: -.15, y1: .45, sp: 10 }); atmos('150,165,188', .16 * a, { n: 6, y0: .4, y1: 1, sp: 8, off: 7 }); }); }
@@ -727,19 +766,75 @@ function drawBackWeather() { // events that live behind the blocks and balls
     for (const h of hailHits) { const k = h.t / .4; ctx.fillStyle = `rgba(255,255,255,${(1 - k) * .8 * a})`; ctx.beginPath(); ctx.arc(h.x + (h.vx || 0) * h.t, h.y - Math.sin(k * Math.PI) * 14 * (h.s || 1), (h.r || 1.5) * .8, 0, 7); ctx.fill(); ctx.strokeStyle = `rgba(200,225,245,${(1 - k) * .55 * a})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(h.x, h.y, (3 + k * 10) * (h.s || 1), (1 + k * 3) * (h.s || 1), 0, 0, 7); ctx.stroke(); }
   }
 }
-function drawFrontWeather() { // light passing over the scene
-  rimA = wx.kind === 'eclipse' ? wx.a : 0;
+function drawFrontWeather() { // light and glass in front of the scene
+  rimA = wx.kind === 'eclipse' ? eclipseState().dark : 0;
   sunX = -999;
-  if (wx.kind === 'sun' && wx.a > .01) {
-    const q = clamp01(wx.t / WX.sun.dur); sunX = -160 + q * (W + 320); // diagonal band position at y=0
-    const g = ctx.createLinearGradient(sunX - 120, 0, sunX + 120, 60); g.addColorStop(0, 'rgba(255,230,180,0)'); g.addColorStop(.42, `rgba(255,236,200,${.45 * wx.a})`); g.addColorStop(.55, `rgba(255,248,225,${(.7 + nz(t * 3, 1) * .06) * wx.a})`); g.addColorStop(1, 'rgba(255,230,180,0)');
-    ctx.save(); ctx.transform(1, 0, -.35, 1, 0, 0); ctx.fillStyle = g; ctx.fillRect(sunX - 140, -20, 280, H + 40); ctx.restore();
-    const sx = sunX, sy = H * .18; // lens flare ghosts
-    [[0, 90, .8], [.35, 28, .4], [.6, 46, .3], [.9, 18, .45]].forEach(([f, R, al]) => { const x = sx + (W / 2 - sx) * f * 2, y = sy + (H * .6 - sy) * f;
-      const fg = ctx.createRadialGradient(x, y, 0, x, y, R); fg.addColorStop(0, `rgba(255,236,200,${al * wx.a})`); fg.addColorStop(.7, `rgba(255,210,160,${al * .5 * wx.a})`); fg.addColorStop(1, 'rgba(255,210,160,0)');
-      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill(); });
+  if (wx.kind === 'sun' && wx.a > .01) { // the sun slides across the top of the frame like a camera catching it: bloom, anamorphic streak, iris ghosts
+    const q = clamp01(wx.t / WX.sun.dur), a = wx.a, sx = -50 + q * (W + 100), sy = H * .1 - Math.sin(q * Math.PI) * H * .04;
+    sunX = -160 + q * (W + 320);
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = .6 * a; ctx.drawImage(softBlob('255,232,190'), sx - W * .9, sy - W * .9, W * 1.8, W * 1.8); // veiling glare
+    ctx.globalAlpha = a; ctx.drawImage(softBlob('255,252,242'), sx - 70, sy - 70, 140, 140); ctx.drawImage(sparkle(), sx - 90, sy - 90, 180, 180);
+    const st = ctx.createLinearGradient(sx - W * .8, 0, sx + W * .8, 0); st.addColorStop(0, 'rgba(170,205,255,0)'); st.addColorStop(.5, `rgba(205,225,255,${.7 * a})`); st.addColorStop(1, 'rgba(170,205,255,0)');
+    ctx.globalAlpha = 1; ctx.fillStyle = st; ctx.fillRect(sx - W * .8, sy - 1, W * 1.6, 2); ctx.globalAlpha = .25; ctx.fillRect(sx - W * .8, sy - 6, W * 1.6, 12); ctx.globalAlpha = 1;
+    const cx = W / 2, cy = H * .48; // ghosts sit on the line from the sun through the centre of the lens
+    [[.45, 16, '255,210,150', .16], [.8, 44, '160,255,200', .07], [1.2, 26, '200,170,255', .1], [1.55, 70, '150,210,255', .06], [1.9, 20, '255,190,160', .12]].forEach(([f, R, c, al]) => {
+      const x = sx + (cx - sx) * f, y = sy + (cy - sy) * f; ctx.fillStyle = `rgba(${c},${al * a})`; ctx.strokeStyle = `rgba(${c},${al * 1.6 * a})`; ctx.lineWidth = 1;
+      ctx.beginPath(); for (let k = 0; k < 6; k++) { const an = k / 6 * 6.283 + .3; ctx.lineTo(x + Math.cos(an) * R, y + Math.sin(an) * R); } ctx.closePath(); ctx.fill(); ctx.stroke();
+    });
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  if ((wx.kind === 'fog' || wx.kind === 'hail') && wx.a > .01) { // condensation (fog) or cold frost (hail) gathering in the corners of the glass
+    const f = frost(); ctx.globalAlpha = (wx.kind === 'fog' ? .7 : .45) * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
+  }
+  drawGlass();
+}
+// ---------- raindrops on the glass: a handful of real little lenses that refract the scene (upside down, like real drops) ----------
+const DROPS = Array.from({ length: 14 }, () => ({ on: false })); let glassT = 0, snapC = null;
+function drawGlass() {
+  const dt = Math.min(.05, Math.max(0, t - glassT)); glassT = t;
+  const raining = wx.kind === 'storm' && wx.phase !== 'warn', A = wx.kind === 'storm' ? wx.a : 0;
+  if (raining && wx.a > .3 && Math.random() < dt * 3.2) { const d = DROPS.find(q => !q.on); if (d) Object.assign(d, { on: true, x: 14 + Math.random() * (W - 28), y: Math.random() * H * .85, r: 5.5 + Math.random() ** 2 * 10, life: 0, slide: Math.random() < .4, hold: .5 + Math.random() * 1.6, vy: 0, max: 3 + Math.random() * 3, trail: [] }); }
+  let any = false;
+  for (const d of DROPS) if (d.on) {
+    d.life += dt;
+    if (d.slide && d.life > d.hold) { d.vy = Math.min(d.vy + 240 * dt, 60 + d.r * 22); d.y += d.vy * dt; d.x += nz(t * 3, d.r) * .25; const L = d.trail[d.trail.length - 1]; if (!L || d.y - L[1] > 6) { d.trail.push([d.x, d.y]); if (d.trail.length > 16) d.trail.shift(); } }
+    if (d.y > H + 20 || d.life > d.max + (d.slide ? 4 : 0) || (!raining && A < .02)) d.on = false; else any = true;
+  }
+  if (!any) return;
+  const w = cv.width >> 1, h = cv.height >> 1; if (!snapC || snapC.width !== w || snapC.height !== h) { snapC = document.createElement('canvas'); snapC.width = w; snapC.height = h; }
+  const sx = snapC.getContext('2d'); sx.drawImage(cv, 0, 0, w, h); // one half-resolution snapshot per frame feeds every drop
+  const f = scale / 2, ox = offX / 2, oy = offY / 2, spr = dropSprite();
+  for (const d of DROPS) if (d.on) {
+    const k = smooth(d.life / .18) * (d.slide ? 1 : 1 - smooth((d.life - d.max + 1) / 1)) * Math.min(1, A * 1.6 + (d.slide && d.life > d.hold ? .4 : 0)); if (k < .01) continue;
+    if (d.trail.length > 1) { ctx.strokeStyle = `rgba(255,255,255,${.22 * k})`; ctx.lineWidth = d.r * .45; ctx.lineCap = 'round'; ctx.beginPath(); d.trail.forEach(([x, y], n) => n ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.lineTo(d.x, d.y); ctx.stroke(); }
+    const r = d.r * (d.slide && d.life > d.hold ? 1.06 : 1), S = r * 6;
+    ctx.save(); ctx.globalAlpha = k; ctx.beginPath(); ctx.ellipse(d.x, d.y, r, r * 1.08, 0, 0, 7); ctx.clip();
+    ctx.translate(d.x, d.y); ctx.scale(1, -1); ctx.drawImage(snapC, (d.x - S / 2) * f + ox, (d.y - S / 2 - r * 2) * f + oy, S * f, S * f, -r * 1.12, -r * 1.12, r * 2.24, r * 2.24);
+    ctx.restore(); ctx.globalAlpha = k; ctx.drawImage(spr, d.x - r * 1.5, d.y - r * 1.4, r * 3, r * 3); ctx.globalAlpha = 1;
   }
 }
+const dropSprite = () => sprite('drop', 96, 96, (g) => { // rim shading, a soft contact shadow, a bright specular and a small caustic
+  const cx = 48, cy = 45, R = 32;
+  let r = g.createRadialGradient(cx, cy + 6, R * .6, cx, cy + 6, R * 1.25); r.addColorStop(0, 'rgba(20,28,45,0)'); r.addColorStop(.75, 'rgba(20,28,45,.16)'); r.addColorStop(1, 'rgba(20,28,45,0)'); g.fillStyle = r; g.fillRect(0, 0, 96, 96);
+  r = g.createRadialGradient(cx, cy - 6, R * .55, cx, cy, R); r.addColorStop(0, 'rgba(25,35,60,0)'); r.addColorStop(.82, 'rgba(25,35,60,.14)'); r.addColorStop(1, 'rgba(25,35,60,.42)');
+  g.fillStyle = r; g.beginPath(); g.ellipse(cx, cy, R, R * 1.08, 0, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.98)'; g.beginPath(); g.ellipse(cx - R * .34, cy - R * .4, R * .24, R * .15, -.6, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy + 2, R * .82, .35, 2.6); g.stroke(); // light gathering along the lower inside edge
+  r = g.createRadialGradient(cx + R * .25, cy + R * .55, 0, cx + R * .25, cy + R * .55, R * .4); r.addColorStop(0, 'rgba(255,255,255,.45)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.beginPath(); g.ellipse(cx, cy, R, R * 1.08, 0, 0, 7); g.fill();
+});
+const sparkle = () => sprite('spark', 128, 128, (g) => { // thin starburst glints, like light catching a lens
+  g.translate(64, 64); for (const [an, L, w] of [[0, 64, 1.6], [Math.PI / 2, 64, 1.6], [Math.PI / 4, 34, 1], [-Math.PI / 4, 34, 1]]) {
+    g.save(); g.rotate(an); const lg = g.createLinearGradient(-L, 0, L, 0); lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(.5, 'rgba(255,255,255,.95)'); lg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = lg; g.fillRect(-L, -w / 2, L * 2, w); g.restore(); }
+});
+const frost = () => sprite('frost', 200, 400, (g, w, h) => { // fine condensation that thickens toward the corners and edges, clear in the middle
+  const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h; const c = tmp.getContext('2d'), b = softBlob('250,251,253');
+  for (let i = 0; i < 1400; i++) { const x = Math.random() * w, y = Math.random() * h, ex = Math.min(x, w - x) / (w / 2), ey = Math.min(y, h - y) / (h / 2), e = Math.min(ex * 1.2, ey * 1.6, Math.hypot(ex, ey) * .9);
+    if (Math.random() > Math.pow(1 - Math.min(1, e), 3)) continue; const R = .8 + Math.random() * 3.5 * (1 - e); c.globalAlpha = .25 + Math.random() * .5; c.drawImage(b, x - R, y - R, R * 2, R * 2); }
+  c.globalAlpha = 1; c.fillStyle = 'rgba(255,255,255,.95)'; // a few larger beads
+  for (let i = 0; i < 60; i++) { const x = Math.random() * w, y = Math.random() * h, e = Math.min(Math.min(x, w - x) / (w / 2), Math.min(y, h - y) / (h / 2)); if (e > .35) continue; c.beginPath(); c.arc(x, y, .5 + Math.random(), 0, 7); c.fill(); }
+  if ('filter' in g) g.filter = 'blur(.6px)'; g.drawImage(tmp, 0, 0);
+});
 const sunGlint = (x, y) => sunX < -500 ? 0 : Math.max(0, 1 - Math.abs(x + y * .35 - sunX) / 90) * wx.a;
 function boltPts(x0, y0, x1, y1) {
   const pts = [[x0, y0]], n = 7;
@@ -960,7 +1055,7 @@ function draw() {
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const hgt = Math.round(16 * dpr);
     if (!heatC || heatC.width !== cv.width || heatC.height !== cv.height) { heatC = document.createElement('canvas'); heatC.width = cv.width; heatC.height = cv.height; }
     const hx = heatC.getContext('2d'); hx.clearRect(0, 0, cv.width, cv.height); hx.drawImage(cv, 0, 0);
-    for (let y = 0; y < cv.height * .8; y += hgt) { const off = Math.sin(y * .02 / dpr + t * 3.2) * 4 * dpr * wx.a; if (Math.abs(off) > .3) ctx.drawImage(heatC, 0, y, cv.width, hgt, off, y, cv.width, hgt); }
+    for (let y = Math.floor(cv.height * .35); y < cv.height; y += hgt) { const dep = clamp01((y / cv.height - .35) / .65), off = (Math.sin(y * .021 / dpr + t * 3.4) * .7 + Math.sin(y * .047 / dpr - t * 2.1) * .3) * 5 * dpr * wx.a * dep * dep; if (Math.abs(off) > .3) ctx.drawImage(heatC, 0, y, cv.width, hgt, off, y, cv.width, hgt); } // stronger near the hot ground
     ctx.restore();
   }
 
