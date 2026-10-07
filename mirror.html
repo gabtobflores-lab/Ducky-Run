@@ -331,10 +331,10 @@ function draw() {
   }
   if (fog > 0 && state !== 'menu') {
     // punishment fog: hides the top of the field, thicker with every pause
-    const fy = Math.min(BY - 130, (BY - 120) * Math.min(.75, .22 * fog + .08)), fg = ctx.createLinearGradient(0, 0, 0, fy + 140);
-    fg.addColorStop(0, 'rgba(232,226,216,1)'); fg.addColorStop(fy / (fy + 140), 'rgba(232,226,216,.97)'); fg.addColorStop(1, 'rgba(232,226,216,0)');
-    ctx.fillStyle = fg; ctx.fillRect(-20, -20, W + 40, fy + 160);
-    ctx.fillStyle = 'rgba(232,226,216,.55)';
+    const fy = Math.min(BY - 110, (BY - 60) * Math.min(.88, .3 * fog + .15)), fg = ctx.createLinearGradient(0, 0, 0, fy + 90);
+    fg.addColorStop(0, 'rgba(226,220,210,1)'); fg.addColorStop(fy / (fy + 90), 'rgba(226,220,210,1)'); fg.addColorStop(1, 'rgba(226,220,210,0)');
+    ctx.fillStyle = fg; ctx.fillRect(-20, -20, W + 40, fy + 110);
+    ctx.fillStyle = 'rgba(226,220,210,.7)';
     for (let i = 0; i < 7; i++) { const x = ((i * 97 + t * 18) % (W + 160)) - 80; ctx.beginPath(); ctx.arc(x, fy + 30 + Math.sin(t + i) * 12, 46 + (i % 3) * 14, 0, 7); ctx.fill(); }
   }
   if (state === 'play' && resumeT > 0) { ctx.fillStyle = 'rgba(244,239,230,.35)'; ctx.fillRect(0, 0, W, H); txt(Math.ceil(resumeT) + '', W / 2, H * .45, 120, '#ff6b81'); txt('get ready', W / 2, H * .45 + 44, 22, 'rgba(43,45,66,.6)'); }
