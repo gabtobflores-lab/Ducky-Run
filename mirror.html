@@ -41,7 +41,7 @@
   <div class="diff"><div class="dl"><span>COLUMNS</span><b id="pername">6 columns</b></div><div class="seg"><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div></div>
   <button class="btn" id="play">PLAY</button>
   <div class="small" id="mbest"></div>
-  <div class="small">tap a column to send the balls there</div>
+  <div class="small">tap to move the balls one step. at the edge they turn around</div>
 </div>
 
 <div class="screen" id="over">
@@ -115,8 +115,8 @@ let state = 'menu', t = 0, shake = 0, demoT = 0;
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 function reset() {
   const p = params();
-  pos = 0; dirv = 1; bx = [LX[0], LX[N - 1]]; scored = new Set(); things = []; parts = []; floaters = [];
-  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = 0; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
+  pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; scored = new Set(); things = []; parts = []; floaters = [];
+  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   while (nextY > -1000) addRow();
 }
 // Three ball positions: outer (columns 0+5), middle (1+4), inner (2+3). Each row is safe for exactly one position.
@@ -159,22 +159,15 @@ function setPos(np, lane) {
 const move = d => setPos(pos + d);
 function cycle() { if (pos + dirv > per - 1 || pos + dirv < 0) dirv = -dirv; move(dirv); }
 // tap a column and the balls go there (the other ball mirrors it on the opposite side)
-let pressing = false;
-const colFromX = cx => Math.max(0, Math.min(N - 1, Math.floor(((cx * dpr - offX) / scale) / (W / N))));
-function press(e) { const lane = colFromX(e.clientX); setPos(Math.min(lane, N - 1 - lane), lane); }
-cv.addEventListener('pointerdown', e => { e.preventDefault(); pressing = true; press(e); });
-cv.addEventListener('pointermove', e => { if (pressing) press(e); }); // slide a finger across columns
-['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => cv.addEventListener(ev, () => { pressing = false; }));
-addEventListener('blur', () => { pressing = false; });
+// tap anywhere: the balls step one column; at the edge they turn around
+cv.addEventListener('pointerdown', e => { e.preventDefault(); cycle(); });
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const act = ['Space', 'Enter'].includes(e.code);
   if (state === 'menu' && act) { e.preventDefault(); startGame(); }
   else if (state === 'dead' && act && $('#over').classList.contains('on')) { e.preventDefault(); startGame(); }
   else if (state === 'play' && !e.repeat) {
-    if (['ArrowLeft', 'KeyA'].includes(e.code)) { e.preventDefault(); move(-1); }
-    else if (['ArrowRight', 'KeyD'].includes(e.code)) { e.preventDefault(); move(1); }
-    else if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) { e.preventDefault(); cycle(); }
+    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) { e.preventDefault(); cycle(); }
   }
 });
 
@@ -263,6 +256,7 @@ function draw() {
   if (state !== 'dead') [['#ff6b81', bx[0]], ['#2ec4d6', bx[1]]].forEach(([c, x]) => {
     ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, BY, 20 + pulse * 4, 0, 7); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(x - 6, BY - 7, 6, 0, 7); ctx.fill();
+    if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv, sx = (x < W / 2 ? 1 : -1) * nd; ctx.fillStyle = 'rgba(43,45,66,.35)'; ctx.beginPath(); ctx.moveTo(x + sx * 40, BY); ctx.lineTo(x + sx * 30, BY - 7); ctx.lineTo(x + sx * 30, BY + 7); ctx.fill(); }
     if (fxA > 0) { ctx.strokeStyle = `rgba(255,159,28,${fxA})`; ctx.lineWidth = 5 * fxA; ctx.beginPath(); ctx.arc(x, BY, 20 + (1 - fxA) * 90, 0, 7); ctx.stroke(); }
   });
   parts.forEach(q => { ctx.globalAlpha = Math.max(0, q.life / q.max); ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 7); ctx.fill(); });
