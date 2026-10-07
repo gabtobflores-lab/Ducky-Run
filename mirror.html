@@ -674,8 +674,8 @@ const SKY = {
   wind: g => { skyGrad(g, [[0, '196,214,234'], [.6, '226,232,238'], [1, '238,232,222']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 13], x = ((sd.x * W * 2 + t * (160 + sd.k * 120)) % (W * 2)) - W * .5; glow(g, '255,255,255', windDir > 0 ? x : W - x, H * sd.y, W * .4, H * .08, .45); } },
   sun: g => { skyGrad(g, [[0, '255,236,204'], [1, '255,246,236']]); },
   aurora: g => { // after Apple's aurora wallpaper: deep navy, tall luminous curtains, a bright cyan heart and an indigo glow underneath
-    skyGrad(g, [[0, '2,7,18'], [.45, '4,15,30'], [.8, '7,24,40'], [1, '12,32,48']]); // a cold arctic night
-    glow(g, '20,110,80', W * .6, H * .45, W * .8, H * .35, .35); glow(g, '40,30,90', W * .3, H * .15, W * .7, H * .2, .3);
+    skyGrad(g, [[0, '3,9,26'], [.45, '6,22,44'], [.8, '14,30,78'], [1, '34,40,112']]); // deep navy, an indigo glow underneath (the colours you liked)
+    glow(g, '20,90,110', W * .7, H * .25, W * .7, H * .35, .55); glow(g, '50,60,170', W * .45, H * .98, W * .9, H * .28, .7);
     g.globalCompositeOperation = 'lighter';
     const C = AUR;
     for (const [base, hgt, mid, core, ph] of C) {
@@ -686,12 +686,12 @@ const SKY = {
         g.globalAlpha = (.22 + ray * .7) * (.6 + .4 * (nz(t * .13 + x * .002, ph * 7) * .5 + .5)); g.fillStyle = lg; g.fillRect(x, by - hh, 9, hh + 20); // each curtain slowly breathes
       }
     }
-    g.globalAlpha = 1; glow(g, '90,255,170', W * (.5 + nz(t * .05, 1) * .15), H * .6, W * .38, H * .16, .38);
-    glow(g, '150,80,220', W * (.35 + nz(t * .04, 3) * .2), H * .2, W * .7, H * .1, .22); glow(g, '200,90,180', W * .75, H * .28, W * .5, H * .1, .1); // a magenta-violet fringe high up
+    g.globalAlpha = 1; glow(g, '90,230,255', W * (.5 + nz(t * .05, 1) * .15), H * .6, W * .35, H * .16, .45);
+    glow(g, '190,80,200', W * (.35 + nz(t * .04, 3) * .2), H * .2, W * .7, H * .1, .22); glow(g, '120,90,230', W * .75, H * .3, W * .5, H * .12, .18); // the pink-magenta fringe up high // a magenta-violet fringe high up
     g.globalCompositeOperation = 'source-over';
   },
 };
-const AUR = [[.5, .62, '20,150,90', '130,255,175', 0], [.64, .48, '18,120,130', '110,240,225', 2.1], [.36, .46, '100,55,165', '190,140,255', 4.3]]; // green, teal and a high violet curtain
+const AUR = [[.5, .62, '30,150,150', '90,235,255', 0], [.66, .5, '20,110,160', '80,190,255', 2.1], [.38, .45, '30,140,120', '120,255,220', 4.3]]; // cyan, blue and aqua curtains
 const auroraY = (x, base, ph) => H * base + nz(x * .004 + t * .07, ph) * H * .09 + Math.sin(x * .009 + t * .22 + ph) * H * .035;
 const STARS = () => sprite('stars', 512, 1024, (g, w, h) => { // a deep star field, rendered once: mostly faint pinpoints, a few bright ones with a soft halo, a hint of colour
   for (let i = 0; i < 380; i++) { const x = Math.random() * w, y = Math.random() * h, m = Math.random() ** 4, r = .45 + m * 1.3, c = Math.random();
@@ -906,7 +906,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a)); ctx.globalCompositeOperation = 'source-over';
     const RY = H * .84; if (skyC) { ctx.save(); ctx.beginPath(); ctx.rect(-20, RY, W + 40, H - RY + 20); ctx.clip(); // the sky mirrored in still water, broken by a slow ripple
       for (let y = RY; y < H + 20; y += 20) { const ox = Math.sin(y * .06 + t * 1.4) * 3 * (1 + (y - RY) / 80); ctx.save(); ctx.beginPath(); ctx.rect(-20, y, W + 40, 20); ctx.clip(); ctx.translate(ox, RY); ctx.scale(1, -.3); ctx.translate(0, -RY); ctx.globalAlpha = .5 * a; ctx.drawImage(skyC, 0, 0, skyC.width * 8, skyC.height * 8); ctx.restore(); }
-      ctx.restore(); const hl = ctx.createLinearGradient(0, RY - 2, 0, RY + 3); hl.addColorStop(0, 'rgba(140,230,255,0)'); hl.addColorStop(.5, `rgba(140,255,200,${.3 * a})`); hl.addColorStop(1, 'rgba(140,230,255,0)'); ctx.fillStyle = hl; ctx.fillRect(-20, RY - 2, W + 40, 5); }
+      ctx.restore(); const hl = ctx.createLinearGradient(0, RY - 2, 0, RY + 3); hl.addColorStop(0, 'rgba(140,230,255,0)'); hl.addColorStop(.5, `rgba(140,230,255,${.35 * a})`); hl.addColorStop(1, 'rgba(140,230,255,0)'); ctx.fillStyle = hl; ctx.fillRect(-20, RY - 2, W + 40, 5); }
   }
   if (wx.kind === 'heat') { // a white-hot sun high in the corner, slow light rays, warm air pooling low; the shimmer comes from real refraction below
     const sx = W * .82, sy = H * .07;
