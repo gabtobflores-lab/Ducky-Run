@@ -23,7 +23,15 @@
   .diff{width:min(320px,82vw);display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,.55);border-radius:18px;padding:12px 16px}
   .dl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;letter-spacing:.14em;font-weight:800}
   .dname{font-size:18px;letter-spacing:.04em;color:var(--teal)}
-  .drange{width:100%;accent-color:var(--teal);height:28px;margin:0}
+  .drange{-webkit-appearance:none;appearance:none;width:100%;height:32px;margin:0;background:transparent;outline:none;-webkit-tap-highlight-color:transparent;touch-action:none;--p:50%}
+  .drange::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--teal) var(--p),rgba(43,45,66,.15) var(--p))}
+  .drange::-moz-range-track{height:8px;border-radius:99px;background:rgba(43,45,66,.15)}
+  .drange::-moz-range-progress{height:8px;border-radius:99px;background:var(--teal)}
+  .drange::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-7px;border-radius:50%;background:#fff;border:3px solid var(--teal);box-shadow:0 2px 6px rgba(43,45,66,.25);transition:transform .15s ease-out}
+  .drange::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--teal);box-shadow:0 2px 6px rgba(43,45,66,.25);transition:transform .15s ease-out}
+  .drange.drag::-webkit-slider-thumb,.drange:active::-webkit-slider-thumb{transform:scale(1.5)}
+  .drange.drag::-moz-range-thumb,.drange:active::-moz-range-thumb{transform:scale(1.5)}
+  .drange:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px rgba(46,196,214,.3)}
   .dticks{display:flex;justify-content:space-between;font-size:11px;opacity:.55;font-weight:700}
   .seg{display:flex;gap:8px}
   .seg button{flex:1;border:0;border-radius:12px;padding:10px 6px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;background:rgba(43,45,66,.08);color:var(--ink)}
@@ -109,12 +117,18 @@ function bump(el) { el.classList.remove('swap'); void el.offsetWidth; el.classLi
 function swapText(el, v) { if (el.textContent !== v) { el.textContent = v; bump(el); } }
 function swapHTML(el, v) { if (el.innerHTML !== v) { el.innerHTML = v; bump(el); } }
 function syncDiffUI() {
-  document.querySelectorAll('.drange').forEach(r => { r.value = diff > 1 ? 120 : Math.round(diff * 100); });
+  document.querySelectorAll('.drange').forEach(r => { r.value = diff > 1 ? 120 : Math.round(diff * 100); r.style.setProperty('--p', (r.value / r.max * 100) + '%'); });
   document.querySelectorAll('.dname').forEach(n => swapText(n, NAMES[bucket()]));
   const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${NAMES[bucket()]} · ${N} columns</i>` : `<span>BEST</span><b>–</b><i>no score yet on ${NAMES[bucket()]} · ${N} columns</i>`;
   ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
   document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', +b.dataset.per === per)); swapText($('#pername'), N + ' columns');
 }
+// thumb grows while a finger is on the slider
+document.querySelectorAll('.drange').forEach(r => {
+  r.addEventListener('pointerdown', () => r.classList.add('drag'));
+  ['pointerup', 'pointercancel', 'blur'].forEach(ev => r.addEventListener(ev, () => r.classList.remove('drag')));
+});
+addEventListener('pointerup', () => document.querySelectorAll('.drange.drag').forEach(r => r.classList.remove('drag')));
 document.querySelectorAll('.drange').forEach(r => r.addEventListener('input', () => {
   diff = r.value > 100 ? 1.2 : r.value / 100; try { localStorage.mirrorDiff = diff; } catch (e) {} syncDiffUI(); if (state === 'menu') reset();
 }));
