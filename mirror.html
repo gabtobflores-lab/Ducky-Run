@@ -29,6 +29,13 @@
   .seg button{flex:1;border:0;border-radius:12px;padding:10px 6px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;background:rgba(43,45,66,.08);color:var(--ink)}
   .seg button.on{background:var(--teal);color:#fff}
   #pbtn{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(43,45,66,.12);color:var(--ink);font-size:16px;font-weight:900;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:5}
+  .best{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:center;background:rgba(255,159,28,.14);border-radius:14px;padding:8px 16px}
+  .best span{font-size:12px;font-weight:900;letter-spacing:.16em;color:#d97f00}
+  .best b{font-size:26px;font-weight:900;color:var(--ink)}
+  .best i{font-style:normal;font-size:12px;opacity:.6;width:100%}
+  .swap{display:inline-block;animation:swap .3s cubic-bezier(.2,.9,.3,1.2)}
+  .best.swap{display:flex}
+  @keyframes swap{from{opacity:0;transform:translateY(7px) scale(.96)}to{opacity:1;transform:none}}
   .small{font-size:13px;opacity:.65}
 </style>
 </head>
@@ -41,7 +48,7 @@
   <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Impossible</span></div></div>
   <div class="diff"><div class="dl"><span>COLUMNS</span><b id="pername">6 columns</b></div><div class="seg"><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div></div>
   <button class="btn" id="play">PLAY</button>
-  <div class="small" id="mbest"></div>
+  <div class="best" id="mbest"></div>
   <div class="small">tap to move the balls one step. at the edge they turn around</div>
 </div>
 
@@ -56,7 +63,7 @@
   <div class="tag" id="onew"></div>
   <h1><i>CRASH</i></h1>
   <div class="big" id="oscore">0</div>
-  <div class="small" id="obest"></div>
+  <div class="best" id="obest"></div>
   <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Impossible</span></div></div>
   <button class="btn" id="retry">TRY AGAIN</button>
   <button class="btn alt" id="tomenu">RETURN TO MENU</button>
@@ -97,12 +104,16 @@ const targetSpeed = n => { const p = params(), k = 1 - Math.min(.55, 2.4 * (2 + 
 const rowGap = () => { const p = params(); return Math.max(p.gap - level * p.shrink, speed * p.minTime); };
 const bkey = () => per + '_' + bucket();
 const bestNow = () => bests[bkey()] || 0;
+// soft slide-in whenever a label's text actually changes
+function bump(el) { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); }
+function swapText(el, v) { if (el.textContent !== v) { el.textContent = v; bump(el); } }
+function swapHTML(el, v) { if (el.innerHTML !== v) { el.innerHTML = v; bump(el); } }
 function syncDiffUI() {
   document.querySelectorAll('.drange').forEach(r => { r.value = diff > 1 ? 120 : Math.round(diff * 100); });
-  document.querySelectorAll('.dname').forEach(n => { n.textContent = NAMES[bucket()]; });
-  $('#mbest').textContent = bestNow() ? `best on ${NAMES[bucket()]}, ${N} columns: ${bestNow()}` : 'no score yet on this setup';
-  $('#obest').textContent = `best on ${NAMES[bucket()]}, ${N} columns: ${bestNow()}`;
-  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', +b.dataset.per === per)); $('#pername').textContent = N + ' columns';
+  document.querySelectorAll('.dname').forEach(n => swapText(n, NAMES[bucket()]));
+  const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${NAMES[bucket()]} · ${N} columns</i>` : `<span>BEST</span><b>–</b><i>no score yet on ${NAMES[bucket()]} · ${N} columns</i>`;
+  ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', +b.dataset.per === per)); swapText($('#pername'), N + ' columns');
 }
 document.querySelectorAll('.drange').forEach(r => r.addEventListener('input', () => {
   diff = r.value > 100 ? 1.2 : r.value / 100; try { localStorage.mirrorDiff = diff; } catch (e) {} syncDiffUI(); if (state === 'menu') reset();
@@ -350,6 +361,8 @@ function draw() {
   if (state === 'play') {
     txt(score + '', W / 2, 92, 72, 'rgba(43,45,66,.9)');
     txt('LEVEL ' + (level + 1) + '  ·  ' + NAMES[bucket()].toUpperCase(), W / 2, 122, 16, 'rgba(43,45,66,.55)');
+    const nb = score > bestNow() && bestNow() > 0; // live high score in the top-right corner
+    txt(nb ? 'NEW BEST!' : 'BEST', W - 18, 30, 13, nb ? '#ff6b81' : '#d97f00', 'right'); txt(Math.max(score, bestNow()) + '', W - 18, 58, 26, 'rgba(43,45,66,.85)', 'right');
     if (combo > 1) txt('x' + combo, W / 2, 160, 28, '#ff9f1c');
     // countdown to the next speed-up
     ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.beginPath(); ctx.roundRect(W / 2 - 90, 20, 180, 8, 4); ctx.fill();
