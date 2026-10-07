@@ -120,11 +120,11 @@ function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
 
 // ---------- state ----------
 let state = 'menu', t = 0, shake = 0, demoT = 0;
-let fog = 0, resumeT = 0; const bv = [0, 0], trail = [[], []];
+let fog = 0, resumeT = 0; const bv = [0, 0], trail = [[], []], MOVE = .12; let mv = [{ a: 0, b: 0, t0: 0 }, { a: 0, b: 0, t0: 0 }];
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 function reset() {
   const p = params();
-  pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; scored = new Set(); things = []; parts = []; floaters = [];
+  pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; mv = bx.map(x => ({ a: x, b: x, t0: 0 })); trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
   fog = 0; resumeT = 0;
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   while (nextY > -1000) addRow();
@@ -226,10 +226,13 @@ function update(dt) {
   if (state === 'dead') return;
   const tx = [LX[pos], LX[N - 1 - pos]];
   for (let i = 0; i < 2; i++) {
-    const ox = bx[i]; bx[i] += (tx[i] - bx[i]) * Math.min(1, dt * 30); bv[i] = (bx[i] - ox) / Math.max(dt, .001);
+    // smooth eased slide over a fixed short time instead of an instant jump
+    if (tx[i] !== mv[i].b) mv[i] = { a: bx[i], b: tx[i], t0: t };
+    const m = mv[i], p = clamp01((t - m.t0) / MOVE), e = p * p * (3 - 2 * p);
+    const ox = bx[i]; bx[i] = m.a + (m.b - m.a) * e; bv[i] = (bx[i] - ox) / Math.max(dt, .001);
     // faint trail while sliding between columns
     if (Math.abs(bv[i]) > 60) trail[i].push(ox); else if (trail[i].length) trail[i].shift();
-    if (trail[i].length > 4) trail[i].shift();
+    if (trail[i].length > 5) trail[i].shift();
   }
 
   if (state === 'menu') { // decorative demo behind the menu: no collisions
@@ -296,7 +299,11 @@ function draw() {
   ctx.strokeStyle = 'rgba(43,45,66,.25)'; ctx.lineWidth = 4; ctx.setLineDash([2, 10]); ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(bx[0], BY); ctx.lineTo(bx[1], BY); ctx.stroke(); ctx.setLineDash([]);
   if (state !== 'dead') [['#ff6b81', bx[0]], ['#2ec4d6', bx[1]]].forEach(([c, x], i) => {
-    trail[i].forEach((tx, k) => { ctx.globalAlpha = .07 * (k + 1); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(tx, BY, 16 + k, 0, 7); ctx.fill(); });
+    if (trail[i].length) { // soft motion smear from where the ball just was
+      ctx.strokeStyle = c; ctx.lineCap = 'round';
+      ctx.globalAlpha = .16; ctx.lineWidth = 30; ctx.beginPath(); ctx.moveTo(trail[i][0], BY); ctx.lineTo(x, BY); ctx.stroke();
+      ctx.globalAlpha = .28; ctx.lineWidth = 38; ctx.beginPath(); ctx.moveTo(trail[i][trail[i].length >> 1], BY); ctx.lineTo(x, BY); ctx.stroke();
+    }
     ctx.globalAlpha = 1;
     const st = Math.min(.18, Math.abs(bv[i]) / 4000); // gentle stretch along the move
     ctx.save(); ctx.translate(x, BY); ctx.scale(1 + st, 1 - st * .7);
