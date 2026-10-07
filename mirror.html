@@ -487,22 +487,24 @@ function drawGate() { // the finish: a frosted-glass ribbon with a gold core, a 
   const half = (side) => { // one half of the ribbon; after the crossing each half swings away from the centre and falls
     const sw = won ? smooth(k / .9) : 0, piv = side < 0 ? 0 : W; ctx.save(); ctx.translate(piv, y); ctx.rotate(side * -sw * 1.1); ctx.translate(-piv, -y);
     const x0 = side < 0 ? 4 : W / 2 + sw * 18, x1 = side < 0 ? W / 2 - sw * 18 : W - 4; ctx.globalAlpha = intro * fade;
-    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.roundRect(x0, y - 7, x1 - x0, 14, 7); ctx.fill(); // frosted glass body
-    ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1; ctx.stroke();
-    const cg = ctx.createLinearGradient(0, 0, W, 0); cg.addColorStop(0, '#ffc95a'); cg.addColorStop(.5, '#ffe7a6'); cg.addColorStop(1, '#ffc95a');
-    ctx.fillStyle = cg; ctx.beginPath(); ctx.roundRect(x0 + 3, y - 2.5, x1 - x0 - 6, 5, 2.5); ctx.fill(); // glowing gold core
-    ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y - 7, x1 - x0, 14, 7); ctx.clip(); const sx = ((gate.t * 240) % (W + 260)) - 130, sg = ctx.createLinearGradient(sx - 80, 0, sx + 80, 0);
-    sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.9)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 80, y - 8, 160, 16); ctx.restore(); // a sheen gliding along
+    ctx.fillStyle = 'rgba(43,45,66,.1)'; ctx.beginPath(); ctx.roundRect(x0 + 2, y - 4, x1 - x0 - 4, 18, 9); ctx.fill(); // soft shadow under the ribbon
+    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.beginPath(); ctx.roundRect(x0, y - 9, x1 - x0, 18, 9); ctx.fill(); // frosted glass body
+    ctx.save(); ctx.clip(); for (let cx = x0 + 8, n = 0; cx < x1 - 8; cx += 7, n++) { ctx.fillStyle = 'rgba(232,170,60,.32)'; ctx.fillRect(cx, n % 2 ? y - 6 : y, 7, 6); } ctx.restore(); // a faint chequer, the finish-line motif
+    const cg = ctx.createLinearGradient(0, 0, W, 0); cg.addColorStop(0, '#f2b43c'); cg.addColorStop(.5, '#ffe2a0'); cg.addColorStop(1, '#f2b43c');
+    ctx.strokeStyle = cg; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.roundRect(x0 + .8, y - 8.2, x1 - x0 - 1.6, 16.4, 8.2); ctx.stroke(); // gold edge
+    ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + 9, y - 7.3); ctx.lineTo(x1 - 9, y - 7.3); ctx.stroke(); // highlight along the top
+    ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y - 9, x1 - x0, 18, 9); ctx.clip(); const sx = ((gate.t * 240) % (W + 260)) - 130, sg = ctx.createLinearGradient(sx - 80, 0, sx + 80, 0);
+    sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.9)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 80, y - 10, 160, 20); ctx.restore(); // a sheen gliding along
     ctx.restore();
   };
   half(-1); half(1);
   for (let i = 0; i < 18; i++) { const sd = SEEDS[i % 24], ph = (gate.t * (.4 + sd.k * .3) + sd.s) % 1, x = ((sd.x + i * .37) % 1) * W + Math.sin(ph * 6 + i) * 5; // motes of light rising
     ctx.globalAlpha = intro * fade * (1 - ph) * .8; ctx.fillStyle = i % 3 ? '#ffe7a6' : '#ffffff'; ctx.beginPath(); ctx.arc(x, y - 8 - ph * 150, .8 + sd.k * .8, 0, 7); ctx.fill(); }
   if (!won) { // the label: a small glass pill, the same material as the game's buttons
-    ctx.globalAlpha = intro; const pw = 84, ph2 = 24, px = W / 2 - pw / 2, py = y - 34;
+    ctx.globalAlpha = intro; const pw = 92, ph2 = 26, px = W / 2 - pw / 2, py = y - 40;
     ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.beginPath(); ctx.roundRect(px, py + 3, pw, ph2, 12); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,.86)'; ctx.beginPath(); ctx.roundRect(px, py, pw, ph2, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,1)'; ctx.stroke();
-    if ('letterSpacing' in ctx) ctx.letterSpacing = '3px'; txt('FINISH', W / 2 + 1.5, py + 16.5, 11, '#d99a2b', 'center', 900); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '3px'; txt('FINISH', W / 2 + 1.5, py + 17.5, 11.5, '#d99a2b', 'center', 900); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
   }
   ctx.restore();
 }
@@ -666,13 +668,15 @@ const SKY = {
   storm: g => { skyGrad(g, [[0, '34,40,56'], [.4, '66,74,94'], [.8, '112,120,138'], [1, '140,146,162']]); for (let k = 0; k < 5; k++) { const sd = SEEDS[k]; glow(g, '30,36,52', ((sd.x * W * 1.6 + t * 9 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .16, .7); } glow(g, '170,185,210', W * .5, H * .95, W * .9, H * .25, .35); },
   hail: g => { skyGrad(g, [[0, '70,86,114'], [.45, '124,140,166'], [1, '182,194,212']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
   fog: g => { skyGrad(g, [[0, '204,209,218'], [.5, '220,223,229'], [1, '232,233,236']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, '246,247,249', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .5, H * .2, .5); } },
-  heat: g => { skyGrad(g, [[0, '255,186,112'], [.35, '255,212,160'], [.75, '255,200,150'], [1, '255,160,110']]); glow(g, '255,248,225', W * .82, H * .07, W * .7, W * .7, .9); glow(g, '255,150,90', W * .2, H * 1.02, W * .9, H * .2, .5); },
+  heat: g => { // a blazing clear day: deep azure overhead bleaching to a hot, hazy, golden horizon
+    skyGrad(g, [[0, '52,120,210'], [.35, '110,170,232'], [.68, '214,210,200'], [.86, '255,206,150'], [1, '255,176,120']]);
+    glow(g, '255,250,230', W * .82, H * .07, W * .75, W * .75, .95); glow(g, '255,170,110', W * .4, H * 1.02, W * 1.1, H * .2, .5); },
   meteor: g => { // a clear late-summer night: deep blue overhead, a cool glow along the horizon
     skyGrad(g, [[0, '1,3,10'], [.45, '4,8,22'], [.8, '9,16,38'], [1, '20,30,62']]); // deep space overhead, the faintest airglow at the horizon
     glow(g, '50,70,130', W * .5, H * 1.02, W * 1.1, H * .16, .4); glow(g, '30,60,70', W * .1, H * .98, W * .5, H * .1, .2);
   },
-  wind: g => { skyGrad(g, [[0, '196,214,234'], [.6, '226,232,238'], [1, '238,232,222']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 13], x = ((sd.x * W * 2 + t * (160 + sd.k * 120)) % (W * 2)) - W * .5; glow(g, '255,255,255', windDir > 0 ? x : W - x, H * sd.y, W * .4, H * .08, .45); } },
-  sun: g => { skyGrad(g, [[0, '255,236,204'], [1, '255,246,236']]); },
+  wind: g => { skyGrad(g, [[0, '92,150,214'], [.5, '160,196,232'], [1, '226,232,238']]); }, // a bright, blustery day
+  sun: g => { skyGrad(g, [[0, '86,150,226'], [.55, '170,205,240'], [1, '246,236,222']]); },
   aurora: g => { // after Apple's aurora wallpaper: deep navy, tall luminous curtains, a bright cyan heart and an indigo glow underneath
     skyGrad(g, [[0, '3,9,26'], [.45, '6,22,44'], [.8, '14,30,78'], [1, '34,40,112']]); // deep navy, an indigo glow underneath (the colours you liked)
     glow(g, '20,90,110', W * .7, H * .25, W * .7, H * .35, .55); glow(g, '50,60,170', W * .45, H * .98, W * .9, H * .28, .7);
@@ -775,6 +779,7 @@ function nightSky(a, starA) { // stars with a slow twinkle on top of the cached 
 const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' ? wx.a : wx.kind === 'eclipse' ? eclipseState().dark : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'hail' ? wx.a * .6 : 0;
 const hudInk = al => { const k = clamp01(nightK() * 1.3); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .25})`; };
 const SPR = {};
+const vignette = () => sprite('vig', 256, 512, (g, w, h) => { const r = g.createRadialGradient(w / 2, h * .45, h * .22, w / 2, h * .5, h * .72); r.addColorStop(0, 'rgba(4,6,18,0)'); r.addColorStop(1, 'rgba(4,6,18,.75)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
 function sprite(key, w, h, draw) { // offscreen textures rendered once and reused, so weather costs a few drawImage calls per frame
   if (!SPR[key]) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); SPR[key] = c; }
   return SPR[key];
@@ -867,7 +872,7 @@ function auroraRays2(a) { // fine rays and travelling pulses of light running al
 }
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
-  const SA = { storm: .8, hail: .65, fog: .55, heat: .6, wind: .4, aurora: 1, meteor: 1 }[wx.kind];
+  const SA = { storm: .8, hail: .78, fog: .55, heat: .78, wind: .62, sun: .5, aurora: 1, meteor: 1 }[wx.kind];
   if (SA) skyField(SA * a * a * (3 - 2 * a), SKY[wx.kind]);
   if (wx.kind === 'eclipse') { // the moon actually crosses the sun: partial phase, diamond ring, totality with corona and stars, then out again
     const E = eclipseState(), cx = E.cx, cy = E.cy, R = E.R;
@@ -903,6 +908,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a; ctx.drawImage(MOON(), mx - R * 1.28, my - R * 1.28, R * 2.56, R * 2.56); ctx.globalAlpha = 1;
     meteors(wx.phase === 'on' ? 3.4 : wx.phase === 'warn' ? 0 : .6, a); }
   if (wx.kind === 'aurora') { nightSky(a, .3); meteors(.12, a);
+    lowres(() => drawSheet(sheet('wisp', 512, 160, '10,18,40', 14, { y0: .3, yr: .4, lit: '30,50,90', blur: 7, holes: 4 }), H * .3 + nz(t * .05, 2) * 20, H * .22, 7, .45 * a, 2.2)); // thin dark cloud drifting in front of the lights
     ctx.globalCompositeOperation = 'screen'; lowres(() => auroraRays2(a)); ctx.globalCompositeOperation = 'source-over';
     const RY = H * .84; if (skyC) { ctx.save(); ctx.beginPath(); ctx.rect(-20, RY, W + 40, H - RY + 20); ctx.clip(); // the sky mirrored in still water, broken by a slow ripple
       for (let y = RY; y < H + 20; y += 20) { const ox = Math.sin(y * .06 + t * 1.4) * 3 * (1 + (y - RY) / 80); ctx.save(); ctx.beginPath(); ctx.rect(-20, y, W + 40, 20); ctx.clip(); ctx.translate(ox, RY); ctx.scale(1, -.3); ctx.translate(0, -RY); ctx.globalAlpha = .5 * a; ctx.drawImage(skyC, 0, 0, skyC.width * 8, skyC.height * 8); ctx.restore(); }
@@ -921,6 +927,9 @@ function drawBackWeather() { // events that live behind the blocks and balls
     const mg = ctx.createLinearGradient(0, H * .82, 0, H); mg.addColorStop(0, 'rgba(255,240,220,0)'); mg.addColorStop(.6, `rgba(255,236,214,${.22 * a * (.8 + .2 * nz(t * 2, 4))})`); mg.addColorStop(1, 'rgba(255,240,220,0)');
     ctx.fillStyle = mg; ctx.fillRect(-20, H * .82, W + 40, H * .18); // mirage sheen on the hot floor
   }
+  if (wx.kind === 'wind') lowres(() => { // cumulus racing across a bright sky, nearer layers faster
+    [[.02, .3, 70, 2.2, .7], [.2, .28, 130, 1.8, .6], [.42, .26, 210, 1.6, .45]].forEach(([y, h, sp, sc, al], i) => drawSheet(sheet('cum2' + i, 512, 200, '168,184,208', 18, { y0: .25, yr: .4, lit: '255,255,255', blur: 5, holes: 3 }), H * y + nz(t * .2, i) * 10, H * h, sp * windDir, Math.min(1, al * 1.4) * a, sc));
+  });
   if (wx.kind === 'wind') { // air currents drawn as fine silk ribbons: a bright gust front races along each one, its tail dissolving behind
     const gust = .6 + .4 * (nz(t * 1.4, 2) * .5 + .5); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (let k = 0; k < 7; k++) {
@@ -942,6 +951,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
       const sway = nz(t * .8, d.x * 40) * 14, x = ((d.x * (W + 40) + t * 40 * d.s) % (W + 40)) - 20 + sway, y = ((d.y * (H + 60) + t * 600 * d.s) % (H + 60)) - 30;
       ctx.globalAlpha = .28 * a; ctx.drawImage(hailTrail(), x - d.r * .4, y - d.r * 8, d.r * .8, d.r * 8); ctx.globalAlpha = a; ctx.drawImage(ICE(), x - d.r * 1.3, y - d.r * 1.4, d.r * 2.6, d.r * 2.85); ctx.globalAlpha = 1; // slightly stretched along the fall
       if (y > BY + 55 && y < BY + 70 && Math.random() < .3 && hailHits.length < 16) hailHits.push({ x, y, t: 0, s: .6 + Math.random() * .8, vx: (Math.random() - .5) * 60, r: d.r });
+      if (hailHits.length < 16 && Math.random() < .35) for (const o of things) if (o.k === 'b' && Math.abs(x - bxOf(o)) < bw() / 2 - 4 && y > o.y - 30 && y < o.y - 18) { hailHits.push({ x, y: o.y - 22, t: 0, s: .5 + Math.random() * .6, vx: (Math.random() - .5) * 90, r: d.r * .8 }); break; } // stones bounce off the blocks
     }
     for (const h of hailHits) { const k = h.t / .4; ctx.fillStyle = `rgba(255,255,255,${(1 - k) * .8 * a})`; ctx.beginPath(); ctx.arc(h.x + (h.vx || 0) * h.t, h.y - Math.sin(k * Math.PI) * 14 * (h.s || 1), (h.r || 1.5) * .8, 0, 7); ctx.fill(); ctx.strokeStyle = `rgba(200,225,245,${(1 - k) * .55 * a})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(h.x, h.y, (3 + k * 10) * (h.s || 1), (1 + k * 3) * (h.s || 1), 0, 0, 7); ctx.stroke(); }
   }
@@ -964,6 +974,7 @@ function drawFrontWeather() { // light and glass in front of the scene
     });
     ctx.globalCompositeOperation = 'source-over';
   }
+  { const vk = { storm: .5, hail: .35, aurora: .55, meteor: .6, eclipse: .5 }[wx.kind]; if (vk && wx.a > .01) { ctx.globalAlpha = vk * wx.a * wx.a; ctx.drawImage(vignette(), -10, -10, W + 20, H + 20); ctx.globalAlpha = 1; } } // edges fall off into shadow, like a lens
   if ((wx.kind === 'fog' || wx.kind === 'hail') && wx.a > .01) { // condensation (fog) or cold frost (hail) gathering in the corners of the glass
     const f = frost(); ctx.globalAlpha = (wx.kind === 'fog' ? .7 : .62) * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
   }
@@ -1202,7 +1213,7 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
   });
 }
 function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lightning glows through it softly (screen blend), never a white flash
-  if (wx.kind !== 'storm' || wx.a < .01) return;
+  if ((wx.kind !== 'storm' && wx.kind !== 'hail') || wx.a < .01) return; // hail shares the storm's cloud deck
   const a = wx.a, e = a * a * (3 - 2 * a), ch = cloudH();
   const C = [['52,60,84', '96,106,132', -.75, 1.25, -3, 2.4, .97], ['92,104,130', '150,160,182', -.3, .95, 5, 2.1, .8], ['64,74,100', '120,132,158', -.05, .85, -8, 1.7, .85], ['44,52,76', '96,106,132', .2, .7, 12, 1.5, .9]];
   lowres(() => {
