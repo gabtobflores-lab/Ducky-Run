@@ -37,7 +37,7 @@
   <div class="diff"><div class="dl"><span>DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="100" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Insane</span></div></div>
   <button class="btn" id="play">PLAY</button>
   <div class="small" id="mbest"></div>
-  <div class="small">tap to squeeze together or spread apart</div>
+  <div class="small">tap the left side to spread apart, the right side to squeeze together</div>
 </div>
 
 <div class="screen" id="over">
@@ -55,8 +55,8 @@
 // Dodge the blocks, catch the gems. Every 5 seconds the world speeds up by a fixed step.
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const $ = s => document.querySelector(s);
-const W = 480, H = 800, BY = 640;
-const LX = [90, 190, 290, 390];
+const W = 520, H = 800, BY = 640;
+const LX = [43, 129, 215, 301, 387, 473]; // 6 columns: 3 per side, balls mirror each other
 let scale = 1, offX = 0, offY = 0, dpr = 1;
 function resize() {
   dpr = Math.min(devicePixelRatio || 1, 2);
@@ -102,23 +102,24 @@ function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
 
 // ---------- state ----------
 let state = 'menu', t = 0, shake = 0, demoT = 0;
-let inward, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
+let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 function reset() {
   const p = params();
-  inward = false; bx = [LX[0], LX[3]]; things = []; parts = []; floaters = [];
-  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = false; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
+  pos = 0; dirv = 1; bx = [LX[0], LX[5]]; scored = new Set(); things = []; parts = []; floaters = [];
+  score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = 0; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false;
   while (nextY > -1000) addRow();
 }
-// Every row is safe for exactly one state (apart or together). The rhythm is fixed; only the pattern varies.
-let lastSafe = false;
+// Three ball positions: outer (columns 0+5), middle (1+4), inner (2+3). Each row is safe for exactly one position.
+let lastSafe = 0, rowId = 0, scored = new Set();
 function addRow() {
-  const safeIn = Math.random() < params().flip ? !lastSafe : lastSafe; lastSafe = safeIn;
-  const danger = safeIn ? [0, 3] : [1, 2];
-  const pick = Math.random() < .35 ? [danger[Math.random() < .5 ? 0 : 1]] : danger;
-  pick.forEach(l => things.push({ k: 'b', l, y: nextY }));
-  const safe = safeIn ? [1, 2] : [0, 3];
-  if (Math.random() < .55) things.push({ k: 'g', l: safe[Math.random() < .5 ? 0 : 1], y: nextY - rand(0, 40), ph: rand(0, 6) });
-  nextY -= rowGap();
+  let sp = lastSafe;
+  if (Math.random() < params().flip) { const o = [0, 1, 2].filter(v => v !== lastSafe); sp = o[(Math.random() * 2) | 0]; }
+  const jump = Math.abs(sp - lastSafe); lastSafe = sp; const row = rowId++;
+  [0, 1, 2].filter(q => q !== sp).forEach(q => {
+    (Math.random() < .3 ? [q, 5 - q] : [Math.random() < .5 ? q : 5 - q]).forEach(l => things.push({ k: 'b', l, y: nextY, row }));
+  });
+  if (Math.random() < .55) things.push({ k: 'g', l: Math.random() < .5 ? sp : 5 - sp, y: nextY - rand(0, 40), ph: rand(0, 6), row });
+  nextY -= rowGap() * (jump === 2 ? 1.4 : 1); // a two-step move needs two taps, so give it more room
 }
 reset();
 
@@ -137,17 +138,24 @@ function showOver() {
 }
 $('#play').onclick = startGame; $('#retry').onclick = startGame; $('#tomenu').onclick = goMenu;
 
-function tap() {
+function move(d) {
   if (state !== 'play') return;
-  inward = !inward; pulse = 1; beep(inward ? 520 : 380, .08, 'triangle', .05, inward ? 120 : -80);
+  const np = Math.max(0, Math.min(2, pos + d));
+  if (np !== pos) { pos = np; pulse = 1; beep(380 + pos * 90, .08, 'triangle', .05, d * 80); }
 }
-cv.addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
+function cycle() { if (pos + dirv > 2 || pos + dirv < 0) dirv = -dirv; move(dirv); }
+// left half of the screen spreads the balls apart, right half squeezes them together
+cv.addEventListener('pointerdown', e => { e.preventDefault(); move(e.clientX < innerWidth / 2 ? -1 : 1); });
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const act = ['Space', 'Enter'].includes(e.code);
   if (state === 'menu' && act) { e.preventDefault(); startGame(); }
   else if (state === 'dead' && act && $('#over').classList.contains('on')) { e.preventDefault(); startGame(); }
-  else if (state === 'play' && !e.repeat && ['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) { e.preventDefault(); tap(); }
+  else if (state === 'play' && !e.repeat) {
+    if (['ArrowLeft', 'KeyA'].includes(e.code)) { e.preventDefault(); move(-1); }
+    else if (['ArrowRight', 'KeyD'].includes(e.code)) { e.preventDefault(); move(1); }
+    else if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) { e.preventDefault(); cycle(); }
+  }
 });
 
 function die(x, y) {
@@ -165,11 +173,11 @@ function update(dt) {
   parts = parts.filter(q => q.life > 0);
   floaters.forEach(f => { f.y -= 50 * dt; f.life -= dt * 1.1; }); floaters = floaters.filter(f => f.life > 0);
   if (state === 'dead') return;
-  const tx = inward ? [LX[1], LX[2]] : [LX[0], LX[3]];
+  const tx = [LX[pos], LX[5 - pos]];
   bx[0] += (tx[0] - bx[0]) * Math.min(1, dt * 22); bx[1] += (tx[1] - bx[1]) * Math.min(1, dt * 22);
 
   if (state === 'menu') { // decorative demo behind the menu: no collisions
-    demoT += dt; if (demoT > 1.3) { demoT = 0; inward = !inward; }
+    demoT += dt; if (demoT > 1.2) { demoT = 0; if (pos + dirv > 2 || pos + dirv < 0) dirv = -dirv; pos += dirv; }
     things.forEach(o => { o.y += speed * dt; }); nextY += speed * dt; things = things.filter(o => o.y < H + 80);
     while (nextY > -300) addRow();
     return;
@@ -186,10 +194,10 @@ function update(dt) {
 
   for (const o of things) {
     o.y += speed * dt;
-    if (o.k === 'b' && !o.passed && o.y > BY + 40) { o.passed = true; score++; if (score % 10 === 0) { float(W / 2, 300, score + '!', '#ff9f1c'); beep(760, .2, 'triangle', .07, 300); } }
+    if (o.k === 'b' && o.y > BY + 40 && !scored.has(o.row)) { scored.add(o.row); score++; if (score % 10 === 0) { float(W / 2, 300, score + '!', '#ff9f1c'); beep(760, .2, 'triangle', .07, 300); } }
     const x = LX[o.l];
     if (Math.abs(o.y - BY) < 44) for (const b of bx) {
-      if (Math.abs(b - x) < (o.k === 'b' ? 42 : 36)) {
+      if (Math.abs(b - x) < (o.k === 'b' ? 38 : 34)) {
         if (o.k === 'b') return die(x, o.y);
         if (!o.got) { o.got = true; score += combo; combo = Math.min(8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); burst(x, o.y, 12, '#ff9f1c', 220, .5); float(x, o.y - 20, '+' + (combo - 1 || 1), '#ff9f1c'); }
       }
@@ -210,9 +218,9 @@ function draw() {
   ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * shake * scale, offY + (Math.random() - .5) * shake * scale);
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   ctx.fillStyle = '#f4efe6'; ctx.fillRect(-20, -20, W + 40, H + 40);
-  ctx.fillStyle = 'rgba(255,107,129,.10)'; ctx.fillRect(40, 0, 200, H);
-  ctx.fillStyle = 'rgba(46,196,214,.12)'; ctx.fillRect(240, 0, 200, H);
-  ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.fillRect(238, 0, 4, H);
+  ctx.fillStyle = 'rgba(255,107,129,.10)'; ctx.fillRect(0, 0, W / 2, H);
+  ctx.fillStyle = 'rgba(46,196,214,.12)'; ctx.fillRect(W / 2, 0, W / 2, H);
+  ctx.fillStyle = 'rgba(43,45,66,.12)'; ctx.fillRect(W / 2 - 2, 0, 4, H);
   const off = (t * speed * .5) % 60;
   ctx.fillStyle = 'rgba(43,45,66,.07)';
   LX.forEach(x => { for (let y = -60 + off; y < H; y += 60) ctx.fillRect(x - 2, y, 4, 24); });
@@ -220,8 +228,8 @@ function draw() {
   for (const o of things) {
     const x = LX[o.l];
     if (o.k === 'b') {
-      ctx.fillStyle = '#2b2d42'; ctx.beginPath(); ctx.roundRect(x - 40, o.y - 22, 80, 44, 12); ctx.fill();
-      ctx.fillStyle = '#ff9f1c'; ctx.fillRect(x - 24, o.y - 4, 48, 8);
+      ctx.fillStyle = '#2b2d42'; ctx.beginPath(); ctx.roundRect(x - 35, o.y - 22, 70, 44, 12); ctx.fill();
+      ctx.fillStyle = '#ff9f1c'; ctx.fillRect(x - 20, o.y - 4, 40, 8);
     } else {
       const s = 1 + Math.sin(t * 6 + o.ph) * .1;
       ctx.save(); ctx.translate(x, o.y); ctx.rotate(Math.PI / 4 + Math.sin(t * 3 + o.ph) * .2); ctx.scale(s, s);
