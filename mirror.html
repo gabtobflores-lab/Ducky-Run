@@ -887,7 +887,7 @@ function eclipseState() {
   const q = wx.phase === 'on' ? clamp01(wx.t / WX.eclipse.dur) : wx.phase === 'out' ? 1 : 0, R = W * .17, cx = W / 2, cy = H * .3;
   const p = q < .42 ? 1 - smooth(q / .42) : q < .6 ? 0 : -smooth((q - .6) / .4), d = p * R * 2.3, an = -.42; // approach, totality, depart
   const dx = Math.cos(an) * d, dy = Math.sin(an) * d, c = clamp01(1 - Math.abs(d) / (R * 2)), tot = smooth(1 - Math.abs(d) / (R * .32));
-  const ring = smooth((c - .86) / .1) * (1 - tot) * 1.2, dark = wx.a * (.12 + .88 * c * c * c);
+  const ring = smooth((c - .86) / .1) * (1 - clamp01(1 - Math.abs(d) / (R * .08))), dark = wx.a * (.12 + .88 * c * c * c);
   return { R, cx, cy, dx, dy, c, tot, ring, dark };
 }
 function auroraRays(a, mul) { // curtains built from faint vertical rays, folding slowly like the real thing
