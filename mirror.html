@@ -1126,10 +1126,16 @@ float streaks(vec2 p,float asp){float x=p.x*asp,y=p.y;float xs=x-y*.16;         
 uniform sampler2D fld;
 vec3 field(vec2 q){return texture2D(fld,q).rgb;} /* Apple's colour layout, smoothly interpolated */
 void main(){vec2 p=UV();float asp=res.x/res.y;
-  /* the composition is Apple's: measured colour by colour from the wallpaper; the curtains sway and breathe, and fine streaks run through the light */
-  vec2 q=p+vec2(.007*sin(t*.06+p.y*3.)+.01*(vn(vec2(p.y*2.5,t*.04))-.5),.005*sin(t*.045+p.x*2.5));
-  vec3 F=field(clamp(q,0.,1.));
-  F*=.86+.28*vn(vec2((p.x-p.y*.2)*3.-t*.03,t*.035));                              /* slow breathing along the curtains */
+  /* the composition is Apple's own; the motion is a real aurora's: folds travel down the curtains, two layers drift at different depths, surges of light roll along them and light flickers up the fine rays */
+  float xs=p.x-p.y*.16;                                                           /* along Apple's streak lean */
+  float w1=sin(p.y*6.5-t*.9+p.x*5.)*.012*(.6+.8*vn(vec2(p.x*2.,t*.1))), w2=sin(p.y*2.6+t*.31-p.x*3.)*.012;
+  float w3=(vn(vec2(p.y*3.2-t*.22,p.x*2.+t*.06))-.5)*.032;
+  vec2 q=p+vec2(w1+w2+w3,.006*sin(t*.2+p.x*4.));
+  vec2 q2=p+vec2(-w1*.7+w2*1.4-w3*.6+.006,-.01+.008*sin(t*.17+p.x*3.));            /* a deeper layer, moving its own way */
+  vec3 F=mix(field(clamp(q,0.,1.)),field(clamp(q2,0.,1.)),.35);
+  float surge=.74+.52*vn(vec2(xs*3.2-t*.2,t*.08+p.y*.6));                         /* surges roll along the curtains */
+  float ray=.84+.62*vn(vec2(xs*38.,p.y*1.6+t*.55))*vn(vec2(xs*9.+3.,t*.25));    /* light flickers up the rays */
+  F*=surge*ray;
   float lum=dot(F,vec3(.3,.5,.2));
   float m=streaks(p,asp)/.42;                                                     /* streak texture, about 1 on average */
   float k=.32*smoothstep(.05,.45,lum);                                            /* streaks show where there is light */
