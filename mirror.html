@@ -1066,7 +1066,7 @@ vec3 starfield(vec2 P,float k){vec3 c=vec3(0.);vec2 g=P*130.;vec2 id=floor(g);fl
   g=P*260.;id=floor(g);h=hs(id+7.);if(h>.975){vec2 f=fract(g)-.5;c+=vec3(.85,.9,1.)*exp(-dot(f,f)*34.)*.45;}return c*k;}
 `;
   const FS = {
-    clouds: `uniform vec3 cTop,cMid,cBot,cd,cl,glowC,hazeC;uniform vec4 cov,moon,glow,bolt;uniform vec2 drift;uniform float scl,stars,mw,cloudA,hazeK,shim,rain;uniform vec4 sun,band;uniform float mets;uniform sampler2D tex;
+    clouds: `uniform vec3 cTop,cMid,cBot,cd,cl,glowC,hazeC;uniform vec4 cov,moon,glow,bolt;uniform vec2 drift;uniform float scl,stars,mw,cloudA,hazeK,shim,rain;uniform vec4 sun,band;uniform vec2 flare;uniform float mets;uniform sampler2D tex;
 float rainL(vec2 uv,float asp,float dens,float spd,float sd){vec2 p=vec2((uv.x*asp+uv.y*.1)*dens,uv.y*dens*.09-t*spd);float id=floor(p.x),r=hs(vec2(id,sd));float y=fract(p.y+r*7.),len=.3+.4*r;
   float seg=smoothstep(0.,len*.25,y)*(1.-smoothstep(len*.7,len,y));float fx=fract(p.x)-.5-(r-.5)*.5;return seg*(1.-smoothstep(0.,.1,abs(fx)))*step(.4,hs(vec2(id,sd+3.)));}
 vec4 layer(vec2 P,vec2 uv,float s,float sp,float sd){vec2 p=P*s+drift*t*sp+sd;vec2 w=vec2(fbm3(p*.55+vec2(t*.06,t*.02)),fbm3(p*.55+vec2(5.2,1.3)-vec2(t*.045,-t*.03)));vec2 m=vec2(t*.035,-t*.05)*sp; /* the clouds billow and change shape as they drift */
@@ -1078,7 +1078,8 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
   if(stars>0.)sky+=starfield(P,stars);
   if(mets>0.)sky+=meteorsGL(P,asp,mets); /* faint meteors, far behind the clouds */
   if(sun.z>0.){vec2 d=P-vec2(sun.x*asp,sun.y);float r=length(d),an=atan(d.y,d.x); /* the sun as a phone camera sees it, after Apple's sunny sky */
-    float core=exp(-r*r*2600.)*1.25+exp(-r*18.)*.42+exp(-r*6.)*.16+exp(-r*1.6)*.05;
+    float br=1.+.08*sin(t*2.1)*flare.y; float core=(exp(-r*r*2600.)*1.25+exp(-r*18.)*.42+exp(-r*6.)*.16+exp(-r*1.6)*.05)*br;
+    float streak=exp(-pow((P.y-sun.y)*asp/.012,2.))*exp(-abs(P.x*asp-sun.x*asp)*3.)*.18*flare.y; sky+=vec3(1.,.97,.9)*streak;
     float sp=(pow(abs(cos(an*3.+.35+t*.03)),70.)*.28+pow(abs(cos(an*3.+1.4-t*.02)),110.)*.16)*exp(-r*15.)*(.85+.15*sin(t*1.7)); /* short, soft spikes */
     float R=.34,ring=exp(-(((r-R)/.035)*((r-R)/.035)))*.035;vec3 halo=vec3(1.,.66,.56)*exp(-(((r-R+.012)/.012)*((r-R+.012)/.012)))*.05+vec3(.62,.8,1.)*exp(-(((r-R-.014)/.016)*((r-R-.014)/.016)))*.045+vec3(ring); /* a faint 22-degree halo, warm inside, cool outside */
     vec2 C=vec2(.5*asp,.48),O=vec2(sun.x*asp,sun.y)+(C-vec2(sun.x*asp,sun.y))*1.3;float orb=(1.-smoothstep(.026,.034,length(P-O)))*.035+exp(-length(P-O)*40.)*.025;
@@ -1151,7 +1152,9 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
   hail: () => ({ cTop: '92,110,142', cMid: '114,134,166', cBot: '134,154,186', cd: '98,114,142', cl: '210,220,236', cov: [0, .6, .85, .18], scl: 2.2, drift: [.06, 0], cloudA: 1 }),
   wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '118,142,188', cl: '255,255,255', cov: [-.04, .76, .96, .1], scl: 1.6, drift: [.1 * windDir, 0], cloudA: 1 }),
   heat: () => ({ cTop: '36,90,174', cMid: '66,128,206', cBot: '150,176,214', hazeC: '120,70,20', hazeK: .55, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
-  sun: () => { const q = clamp01(wx.t / WX.sun.dur); return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [...toUV(W * (.2 + q * .6), H * .19), .35], glowC: '255,250,238', sun: [...toUV(W * (.2 + q * .6), H * .19), 1, 0] }; },
+  sun: () => { const q = clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // Apple-style: the glare slides in from the edge, peaks, then dissolves
+    const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
+    return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
   meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], mets: .8, scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
 let skyE = 0; // how much of the screen the GPU sky covers right now (the 2D backdrop fades out as it rises)
@@ -1159,7 +1162,7 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U;
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], band: [0, 1, 0, 0], mets: 0 }, cfg());
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0 }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
   if (!SKYGL.draw(k === 'fog' || k === 'aurora' ? k : 'clouds', U)) return false;
