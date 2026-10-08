@@ -21,24 +21,24 @@ Everything you need is in the **`release/`** folder. It is the finished game as 
 
 Cloudflare Pages, Vercel and GitHub Pages work the same way: upload the contents of `release/`. The site must be served over `https://` for offline support to switch on; all of these do that automatically.
 
-## Option 2: the App Store
+## Option 2: the App Store ($0.99)
 
-Apple only accepts native apps, so the web app is wrapped in a thin native shell. You need a Mac with Xcode and an Apple Developer Program membership ($99 a year).
+The iOS project is already set up in `ios/`: iPhone only, portrait only, full screen, your icon and launch screen, and the encryption question answered. You need a Mac with Xcode, Node.js (nodejs.org), and an Apple Developer Program membership ($99 a year).
 
-1. Install Node.js, then in an empty folder run:
+1. **One-time setup in App Store Connect** (appstoreconnect.apple.com): under *Business*, accept the **Paid Apps agreement** and add your bank and tax details. Apple won't sell a $0.99 app until this is done.
+2. **Pick your app ID.** Open `capacitor.config.json` and change `com.yourname.mirrordrop` to something unique to you: replace `yourname` with your own name or studio name.
+3. **Open the project.** In Terminal, in this repository's folder:
    ```
-   npm init -y
-   npm install @capacitor/core @capacitor/cli @capacitor/ios
-   npx cap init "Mirror Drop" com.yourname.mirrordrop --web-dir release
+   npm install
+   npm run ios
    ```
-2. Copy the `release` folder into that folder, then run:
-   ```
-   npx cap add ios
-   npx cap open ios
-   ```
-3. In Xcode: set your team under *Signing & Capabilities*, set *Device Orientation* to Portrait only, and drop `app-store-icon-1024.png` into *Assets → AppIcon*.
-4. Choose *Product → Archive*, then *Distribute App* to upload it to App Store Connect.
-5. In App Store Connect, add screenshots (play each event in the iOS Simulator and press ⌘S), a description and an age rating, then submit for review.
+   Xcode opens with the app.
+4. **Sign it.** In Xcode, click *App* in the left sidebar → *Signing & Capabilities* → choose your Team, and set *Bundle Identifier* to the same ID as step 2.
+5. **Try it on your iPhone.** Plug it in, pick it at the top of Xcode, press ▶. Turn on airplane mode and play: it works fully offline.
+6. **Upload.** Choose *Any iOS Device* at the top, then *Product → Archive* → *Distribute App* → *App Store Connect*.
+7. **Create the listing.** In App Store Connect, make a new app with the same bundle ID, then copy everything from [`appstore/APP_STORE.md`](appstore/APP_STORE.md): name, subtitle, description, keywords, price ($0.99), category, age rating and privacy answers. Upload the eight images from `appstore/screenshots/`.
+8. **Privacy and support links.** Apple needs both. Put your email into `release/privacy.html`, upload the `release` folder (Option 1), and use `https://your-site/privacy.html` for both.
+9. **Submit for review.** Reviews usually take one to two days.
 
 ## After you change the game
 
@@ -48,4 +48,4 @@ The game's source is `mirror.html`. After editing it, run
 bash tools/build-release.sh
 ```
 
-to rebuild `release/`, then upload the folder again (for the App Store, also run `npx cap copy ios` and archive a new build). Every build gets a new version number, so players get the update the next time they open the game.
+to rebuild `release/`, then upload the folder again. For the App Store, run `npm run ios`, raise the *Build* number in Xcode (*App → General*), and archive again. Every build gets a new version number, so players get the update the next time they open the game.

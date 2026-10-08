@@ -198,11 +198,14 @@ let qEma = 16.7, qSlow = 0, qFast = 0, qRaised = false;
 function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return; qEma += (ms - qEma) * .05;
   if (qEma > 21 && qLevel < 2) { if ((qSlow += ms) > 1500) { qLevel++; qSlow = 0; qEma = 16.7; resize(); try { localStorage.mirrorQ = qLevel; } catch (e) {} } } else qSlow = Math.max(0, qSlow - ms * .5);
   if (qEma < 13 && qLevel > 0 && !qRaised) { if ((qFast += ms) > 9000) { qLevel--; qFast = 0; qRaised = true; resize(); try { localStorage.mirrorQ = qLevel; } catch (e) {} } } else qFast = 0; }
+let hudDY = 0, satProbe = null;
+function safeTopPx() { try { if (!satProbe) { satProbe = document.createElement('div'); satProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top)'; document.body.appendChild(satProbe); } return parseFloat(getComputedStyle(satProbe).paddingTop) || 0; } catch (e) { return 0; } }
 function resize() {
   dpr = Math.min(devicePixelRatio || 1, QDPR[qLevel]); H = Math.max(800, W * innerHeight / innerWidth); BY = H - 250; // keep the balls above where a thumb rests
   cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
   scale = Math.min(cv.width / W, cv.height / H);
   offX = (cv.width - W * scale) / 2; offY = (cv.height - H * scale) / 2;
+  hudDY = Math.max(0, safeTopPx() - 14) * dpr / scale; // full screen on a notched iPhone: the top bar drops below the Dynamic Island
 }
 addEventListener('resize', resize); layout();
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -1837,7 +1840,7 @@ function draw() {
   if (state === 'dead' && won) drawWinLight();
   if (crash.shards.length || crash.waves.length) drawCrash();
 
-  if (state === 'play' || state === 'paused') {
+  if (state === 'play' || state === 'paused') { ctx.save(); ctx.translate(0, hudDY);
     if (score !== shownScore) { if (score > shownScore) fx.score = 1; shownScore = score; }
     const k = 1 + .14 * ease(fx.score);
     ctx.save(); ctx.translate(W / 2, 94); ctx.scale(k, k);
@@ -1849,14 +1852,15 @@ function draw() {
       const ck = 1 + .25 * ease(fx.combo), heat = clamp01((combo - 2) / 6);
       ctx.save(); ctx.translate(W / 2, 156); ctx.scale(ck, ck);
       if (heat > 0) { const cg = ctx.createRadialGradient(0, 0, 4, 0, 0, 46); cg.addColorStop(0, `rgba(255,200,103,${.25 * heat})`); cg.addColorStop(1, 'rgba(255,200,103,0)'); ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, 46, 0, 7); ctx.fill(); }
-      ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.roundRect(-34, -16, 68, 30, 15); ctx.fill();
-      txt('x' + combo, 0, 7, 20, combo >= 5 ? '#f08f1c' : '#e9a23b', 'center', 900); ctx.restore();
+      const cs = '×' + combo; ctx.font = '900 20px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const cm = ctx.measureText(cs), pw = Math.max(64, cm.width + 34);
+      ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.beginPath(); ctx.roundRect(-pw / 2, -16, pw, 32, 16); ctx.fill(); // the pill is centred on 0, and so is the text's ink
+      txt(cs, (cm.actualBoundingBoxLeft - cm.actualBoundingBoxRight) / 2, (cm.actualBoundingBoxAscent - cm.actualBoundingBoxDescent) / 2, 20, combo >= 5 ? '#f08f1c' : '#e9a23b', 'center', 900); ctx.restore();
     }
     // countdown to the next speed-up
     ctx.fillStyle = 'rgba(43,45,66,.08)'; ctx.beginPath(); ctx.roundRect(W / 2 - 80, 22, 160, 6, 3); ctx.fill();
     const bg = ctx.createLinearGradient(W / 2 - 80, 0, W / 2 + 80, 0); bg.addColorStop(0, '#ff6b81'); bg.addColorStop(1, '#2ec4d6');
     ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(W / 2 - 80, 22, Math.max(6, 160 * clamp01(levelT / LEVEL_TIME)), 6, 3); ctx.fill();
-  }
+    ctx.restore(); }
   ctx.restore();
 }
 

@@ -1,0 +1,17 @@
+{
+  "name": "mirror-drop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mirror Drop iOS app wrapper (Capacitor). The game itself is mirror.html; release/ is built from it.",
+  "scripts": {
+    "build": "bash tools/build-release.sh",
+    "ios": "npm run build && npx cap sync ios && npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0"
+  }
+}
