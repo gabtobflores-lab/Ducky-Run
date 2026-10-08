@@ -202,7 +202,7 @@ function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return
 let hudDY = 0, satProbe = null;
 function safeTopPx() { try { if (!satProbe) { satProbe = document.createElement('div'); satProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top)'; document.body.appendChild(satProbe); } return parseFloat(getComputedStyle(satProbe).paddingTop) || 0; } catch (e) { return 0; } }
 function resize() {
-  dpr = Math.min(devicePixelRatio || 1, QDPR[qLevel]); H = Math.max(800, W * innerHeight / innerWidth); BY = H - 250; // keep the balls above where a thumb rests
+  dpr = Math.min(devicePixelRatio || 1, QDPR[qLevel]); H = Math.max(800, W * innerHeight / Math.max(1, innerWidth)) || 800; BY = H - 250; // keep the balls above where a thumb rests
   cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
   scale = Math.min(cv.width / W, cv.height / H);
   offX = (cv.width - W * scale) / 2; offY = (cv.height - H * scale) / 2;
@@ -263,7 +263,7 @@ document.querySelectorAll('.drange').forEach(r => r.addEventListener('input', ()
 let ac;
 function beep(f, d = .1, type = 'sine', vol = .07, slide = 0) {
   try {
-    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state !== 'running') ac.resume().catch(() => {}); // iOS suspends audio after calls and backgrounding
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(f, ac.currentTime);
     if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), ac.currentTime + d);
@@ -282,11 +282,11 @@ const crash = { ball: [null, null], shards: [], waves: [], tmpl: null };
 // weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
 // per-second chances once the cooldown has passed; warn = seconds of notice before it starts (longer for events that affect play)
 const WX = {
-  fog: { dur: 14, p: 1 / 40, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 18, p: 1 / 380, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
+  fog: { dur: 14, p: 1 / 55, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 18, p: 1 / 140, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
   hail: { dur: 12, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 5.5, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
   heat: { dur: 12, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.8, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
   aurora: { dur: 17, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] },
-  meteor: { dur: 16, p: 1 / 320, warn: 1.2, note: ['Meteor shower', 'Look up'] },
+  meteor: { dur: 16, p: 1 / 150, warn: 1.2, note: ['Meteor shower', 'Look up'] },
 };
 const HAIL = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1.8 + Math.random() * Math.random() * 3.6, s: .75 + Math.random() * .6 })), hailHits = [];
 const wx = { kind: '', phase: '', t: 0, p: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 };
@@ -301,7 +301,7 @@ function reset() {
   fog = 0; resumeT = 0; fogT = 0;
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false; gate = null;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
-  Object.assign(wx, { kind: '', phase: '', t: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 }); if (typeof wxHide === 'function') wxHide();
+  Object.assign(wx, { kind: '', phase: '', t: 0, p: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 }); if (typeof wxHide === 'function') wxHide();
   Object.assign(fx, { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 });
   while (nextY > -1000) addRow();
 }
@@ -320,7 +320,7 @@ function addRow() {
   if (Math.random() < params().flip) {
     const opts = Array.from({ length: per }, (_, i) => i).filter(v => v !== lastSafe).map(v => [v, tapsTo(lastSafe, genDir, v)[0]]);
     const w = opts.map(([, c]) => c === 1 ? 1 : c === 2 ? .15 + .25 * diff : .05 + .1 * diff), tot = w.reduce((a, b) => a + b, 0);
-    let r = Math.random() * tot, i = 0; while (r > w[i]) { r -= w[i]; i++; }
+    let r = Math.random() * tot, i = 0; while (i < w.length - 1 && r > w[i]) { r -= w[i]; i++; }
     sp = opts[i][0];
   }
   const [taps, , nd] = tapsTo(lastSafe, genDir, sp); cost = taps; genDir = nd; lastSafe = sp; const row = rowId++;
@@ -645,15 +645,16 @@ function updateWeather(dt) {
     wx.p = wx.phase === 'on' ? Math.min(1, wx.p + dt / fin) : Math.max(0, wx.p - dt / fout); const p = wx.p; wx.a = p * p * p * (p * (p * 6 - 15) + 10); } // smootherstep: starts and settles gently, no pop
   for (const h of hailHits) h.t += dt; while (hailHits.length && hailHits[0].t > .4) hailHits.shift();
   wx.flash = Math.max(0, wx.flash - dt * 3);
-  { const b = wx.bolt; if (b && b.o && b.o.zap && b.t >= b.pre + b.lead) { const o = b.o; o.zap = false; o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l]; } } // the strike lands: now the block is charged
+  { const b = wx.bolt; if (b && b.o && b.o.zap && b.t >= b.pre + b.lead) { const o = b.o; o.zap = false; o.elec = true; o.et = 0; o.l0 = o.l; o.ex = LX[o.l];
+    const av = (BY - o.y) / Math.max(1, speed) - .35; o.sw = av >= 1.53 ? 2 : av >= .45 ? 1 : 0; o.ts = o.sw === 1 && av < .83 ? .83 / av : 1; } } // the strike lands: the block is charged, and its slides are fitted to finish well before it reaches the balls
   if (wx.bolt) { wx.bolt.t += dt; if (wx.bolt.t > wx.bolt.dur) wx.bolt = null; }
   for (const g of wx.glows) g.t += dt; wx.glows = wx.glows.filter(g => g.t < g.dur);
   if (wx.kind === 'storm' && wx.phase === 'on' && (wx.nextGlow -= dt) <= 0) { wx.nextGlow = .7 + Math.random() * 1.8; cloudGlow(); }
   if (wx.kind === 'storm' && wx.phase === 'on' && (wx.nextBolt -= dt) <= 0) { wx.nextBolt = 2.4 + Math.random() * 3.2; lightning(); }
   // electrified blocks: two readable side switches (to the mirror column and back), finished long before they reach the balls
   for (const o of things) if (o.elec) {
-    o.et += dt; const A = LX[o.l0], B = LX[N - 1 - o.l0], sm = q => q * q * (3 - 2 * q);
-    const p1 = sm(clamp01((o.et - .45) / .38)), p2 = sm(clamp01((o.et - 1.15) / .38));
+    o.et += dt; const A = LX[o.l0], B = LX[N - 1 - o.l0], sm = q => q * q * (3 - 2 * q), te = o.et * (o.ts || 1), sw = o.sw === undefined ? 2 : o.sw;
+    const p1 = sw ? sm(clamp01((te - .45) / .38)) : 0, p2 = sw > 1 ? sm(clamp01((te - 1.15) / .38)) : 0; // never mid-slide when it reaches the balls
     o.ex = A + (B - A) * (p1 - p2); o.l = Math.abs(o.ex - A) <= Math.abs(o.ex - B) ? o.l0 : N - 1 - o.l0;
   }
 }
@@ -1403,7 +1404,7 @@ const blocked = (pts, skip, ahead = 0) => { // does this channel cross a block (
 };
 function thunder(delay, vol, len = 2.2) { // soft low rumble: filtered noise swelling then rolling away
   try {
-    ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const n = ac.sampleRate * len | 0;
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state !== 'running') ac.resume().catch(() => {}); const n = ac.sampleRate * len | 0;
     if (!thunder.buf || thunder.buf.length !== n) { thunder.buf = ac.createBuffer(1, n, ac.sampleRate); const d = thunder.buf.getChannelData(0); let v = 0; for (let i = 0; i < n; i++) { v = v * .985 + (Math.random() * 2 - 1) * .15; d[i] = v; } }
     const src = ac.createBufferSource(), lp = ac.createBiquadFilter(), g = ac.createGain(), t0 = ac.currentTime + delay;
     src.buffer = thunder.buf; lp.type = 'lowpass'; lp.frequency.setValueAtTime(320, t0); lp.frequency.exponentialRampToValueAtTime(90, t0 + len);
@@ -1423,7 +1424,7 @@ function cloudGlow() { // lightning inside the cloud: mostly a crawler racing si
 function lightning() { // a strike from the cloud base: threads between the blocks to the floor; only now and then does one find a block
   const y0 = -30, st = strokes(), lead = .16 + Math.random() * .12, pre = .3 + Math.random() * .35, ahead = pre + lead; // born up inside the cloud deck: it brightens first, then the leader steps down
   const preZ = .2 + Math.random() * .12, aZ = preZ + lead; // a strike aimed at a block builds up a little quicker, so it can land while the block is still high
-  const react = .75, landOK = o => { const yl = o.y + speed * aZ; return yl > 70 && (BY - yl) / speed > react; }; // it lands on screen, and the charged block is still a fair distance from the balls
+  const react = .7, landOK = o => { const yl = o.y + speed * aZ; return yl > 24 && (BY - yl) / speed > react; }; // it lands on screen, and the charged block is still a fair distance from the balls
   const cand = things.filter(o => o.k === 'b' && !o.elec && !o.zap && landOK(o));
   let bolt = null, pre2 = pre;
   if (cand.length && Math.random() < .33) {
@@ -1887,7 +1888,7 @@ function drawPreview() {
 let last = performance.now();
 (function loop(now) { const ms = now - last, dt = Math.min(.033, ms / 1000); last = now; qTune(ms); update(dt); draw(); if (state === 'menu') drawPreview(); requestAnimationFrame(loop); })(last);
 syncDiffUI(); show('#menu', true);
-document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(true); } }); // leaving the app pauses without the fog penalty
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(true); } if (!document.hidden && ac && ac.state !== 'running') ac.resume().catch(() => {}); }); // leaving the app pauses without the fog penalty
 </script>
 <script>if ('serviceWorker' in navigator && (location.protocol === 'https:' || (location.protocol === 'http:' && location.hostname === 'localhost'))) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>
