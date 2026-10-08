@@ -1120,13 +1120,14 @@ void main(){vec2 p=UV();float asp=res.x/res.y;
   float hemA=.52+.14*sin(p.x*3.1+t*.22)+.06*sin(p.x*7.+t*.4);      /* main curtain: a wave across the width */
   float hemB=.62+.1*sin(p.x*2.3-t*.18);                             /* second, lower curtain on the left */
   float hemC=.36+.05*sin(p.x*4.+t*.3);                              /* faint high fold on the right */
-  float a=strands(p,asp,46.,.07,1.,hemA,1.)*smoothstep(.02,.22,p.x+.08)*(1.-smoothstep(.7,.95,p.x)*.4);
-  float b=strands(p,asp,38.,.07,2.,hemB,.9)*(1.-smoothstep(.45,.75,p.x));
-  float c2=strands(p,asp,52.,.07,3.,hemC,.45)*smoothstep(.55,.9,p.x);
+  float a=strands(p,asp,84.,.07,1.,hemA,1.25)*smoothstep(.02,.22,p.x+.08)*(1.-smoothstep(.7,.95,p.x)*.4)+strands(p,asp,40.,.07,11.,hemA,.8)*smoothstep(.02,.22,p.x+.08)*.6;  /* two layers: fine strands and broad ones */
+  float b=(strands(p,asp,70.,.07,2.,hemB,1.)+strands(p,asp,34.,.07,12.,hemB,.7))*(1.-smoothstep(.45,.75,p.x));
+  float c2=strands(p,asp,90.,.07,3.,hemC,.6)*smoothstep(.55,.9,p.x);
   vec3 col=colorAt(p.x,p.y)*a+vec3(.1,.62,1.)*b*.85+colorAt(p.x+.25,p.y)*c2;
-  col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.44)/.19,2.)-pow((p.y-.6)/.13,2.))+vec3(.7,1.,1.)*.35*exp(-pow((p.x-.44)/.09,2.)-pow((p.y-.6)/.06,2.)); /* the bright cyan heart, with a white-hot core */
-  col*=1.-.45*smoothstep(.3,0.,p.y);                              /* the top stays darker, as in Apple's */
-  col=1.-exp(-col*1.9);
+  float bloomA=strands(p,asp,22.,.07,21.,hemA,1.)*smoothstep(.02,.22,p.x+.08); col+=vec3(.3,.9,1.)*bloomA*.35; /* bloom: the brightest strands spill light around themselves */
+  col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.44)/.16,2.)-pow((p.y-.6)/.11,2.))+vec3(.75,1.,1.)*.45*exp(-pow((p.x-.44)/.08,2.)-pow((p.y-.6)/.05,2.)); /* the bright cyan heart, with a white-hot core */
+  col*=1.-.8*smoothstep(.45,0.,p.y);                              /* the top stays darker, as in Apple's */
+  col=1.-exp(-col*1.55);
   gl_FragColor=vec4(bg+col*(1.-bg)+dith(),1.);}`
   };
   cvs.addEventListener('webglcontextlost', e => { e.preventDefault(); gl = null; failed = true; }); // iOS can drop GPU contexts under memory pressure: fall back cleanly
