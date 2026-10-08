@@ -1120,14 +1120,14 @@ vec3 colorAt(float x,float y){vec3 teal=vec3(.12,.92,.66),cyan=vec3(.36,.94,1.),
 void main(){vec2 p=UV();float asp=res.x/res.y;
   vec3 bg=mix(vec3(.008,.02,.045),vec3(.03,.075,.17),smoothstep(0.,.55,p.y));bg=mix(bg,vec3(.09,.14,.36),smoothstep(.6,1.,p.y));
   bg+=starfield(vec2(p.x*asp,p.y),.35)*(1.-p.y);
-  float hemA=.52+.14*sin(p.x*3.1+t*.22)+.06*sin(p.x*7.+t*.4);      /* main curtain: a wave across the width */
+  float hemA=.62-.22*p.x+.06*sin(p.x*3.1+t*.22)+.03*sin(p.x*7.+t*.4);      /* main curtain: a wave across the width */
   float hemB=.62+.1*sin(p.x*2.3-t*.18);                             /* second, lower curtain on the left */
   float hemC=.36+.05*sin(p.x*4.+t*.3);                              /* faint high fold on the right */
-  float a=strands(p,asp,46.,.07,1.,hemA,1.)*smoothstep(.02,.22,p.x+.08)*(1.-smoothstep(.7,.95,p.x)*.4);
+  float a=strands(p,asp,46.,.15,1.,hemA,1.)*smoothstep(.02,.22,p.x+.08)*(1.-smoothstep(.7,.95,p.x)*.4);
   float b=strands(p,asp,38.,.07,2.,hemB,.9)*(1.-smoothstep(.45,.75,p.x));
   float c2=strands(p,asp,52.,.07,3.,hemC,.45)*smoothstep(.55,.9,p.x);
   vec3 col=colorAt(p.x,p.y)*a+vec3(.1,.62,1.)*b*.85+colorAt(p.x+.25,p.y)*c2;
-  col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.44)/.19,2.)-pow((p.y-.6)/.13,2.))+vec3(.7,1.,1.)*.35*exp(-pow((p.x-.44)/.09,2.)-pow((p.y-.6)/.06,2.)); /* the bright cyan heart, with a white-hot core */
+  col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.5)/.2,2.)-pow((p.y-.66)/.13,2.))+vec3(.7,1.,1.)*.35*exp(-pow((p.x-.5)/.09,2.)-pow((p.y-.66)/.06,2.)); /* the bright cyan heart, with a white-hot core */
   col*=1.-.45*smoothstep(.3,0.,p.y);                              /* the top stays darker, as in Apple's */
   col=1.-exp(-col*1.9);
   gl_FragColor=vec4(bg+col*(1.-bg)+dith(),1.);}`
