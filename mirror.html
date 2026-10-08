@@ -1081,7 +1081,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
     float br=1.+.08*sin(t*2.1)*flare.y; float core=(exp(-r*r*900.)*1.1+exp(-r*9.)*.42+exp(-r*3.2)*.22+exp(-r*1.1)*.08)*br;
     float streak=exp(-pow((P.y-sun.y)*asp/.012,2.))*exp(-abs(P.x*asp-sun.x*asp)*3.)*.18*flare.y; sky+=vec3(1.,.97,.9)*streak;
     float sp=(pow(abs(cos(an*2.+.35+t*.03)),90.)*.06)*exp(-r*11.)*(.85+.15*sin(t*1.7)); /* short, soft spikes */
-    float R=.34,ring=exp(-(((r-R)/.035)*((r-R)/.035)))*.035;vec3 halo=vec3(1.,.7,.62)*exp(-(((r-R+.01)/.02)*((r-R+.01)/.02)))*.03+vec3(.7,.84,1.)*exp(-(((r-R-.012)/.03)*((r-R-.012)/.03)))*.03+vec3(ring)*.5; /* a faint 22-degree halo, warm inside, cool outside */
+    float R=.34,ring=exp(-(((r-R)/.035)*((r-R)/.035)))*.018;vec3 halo=vec3(1.,.7,.62)*exp(-(((r-R+.01)/.02)*((r-R+.01)/.02)))*.03+vec3(.7,.84,1.)*exp(-(((r-R-.012)/.03)*((r-R-.012)/.03)))*.03+vec3(ring)*.5; /* a faint 22-degree halo, warm inside, cool outside */
     vec2 O=vec2(sun.x*asp,sun.y)+vec2(-.16,.34);float orb=exp(-pow(length(P-O)/.035,2.))*.05+exp(-pow(length(P-O)/.07,2.))*.025;
     sky+=(vec3(1.,.98,.93)*(core+sp)+halo+vec3(.8,.88,1.)*orb)*sun.z;}
   if(mw>0.){float v=(P.x-.55*asp)*.86+(P.y-.6)*.5;float band=exp(-v*v*28.)*(.45+.55*fbm3(P*5.+3.));sky+=vec3(.6,.5,.85)*band*mw*.3;}
@@ -1119,7 +1119,7 @@ float strands(vec2 p,float asp,float density,float lean,float seed,float hemY,fl
 vec3 colorAt(float x,float y){vec3 teal=vec3(.12,.92,.66),cyan=vec3(.36,.94,1.),blue=vec3(.22,.5,1.),white=vec3(.72,1.,1.);
   vec3 c=mix(teal,cyan,smoothstep(.22,.5,x));c=mix(c,blue,smoothstep(.62,.9,x+.1*sin(y*5.)));return mix(c,white,smoothstep(.2,.0,abs(y-.85))*.25);}
 void main(){vec2 p=UV();float asp=res.x/res.y;
-  vec3 bg=mix(vec3(.008,.02,.045),vec3(.03,.075,.17),smoothstep(0.,.55,p.y));bg=mix(bg,vec3(.09,.14,.36),smoothstep(.6,1.,p.y));
+  vec3 bg=mix(vec3(.008,.02,.045),vec3(.03,.075,.17),smoothstep(0.,.55,p.y));bg=mix(bg,vec3(.12,.18,.52),smoothstep(.6,1.,p.y));
   bg+=starfield(vec2(p.x*asp,p.y),.35)*(1.-p.y);
   float hemA=.62-.22*p.x+.06*sin(p.x*3.1+t*.22)+.03*sin(p.x*7.+t*.4);      /* main curtain: a wave across the width */
   float hemB=.62+.1*sin(p.x*2.3-t*.18);                             /* second, lower curtain on the left */
@@ -1190,7 +1190,7 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
   storm: () => ({ cTop: '58,70,92', cMid: '80,94,116', cBot: '108,122,142', cd: '72,84,106', cl: '172,182,200', cov: [0, .66, .9, .16], scl: 2.1, drift: [.05, 0], cloudA: 1, rain: 1 }),
   hail: () => ({ cTop: '92,110,142', cMid: '114,134,166', cBot: '134,154,186', cd: '98,114,142', cl: '210,220,236', cov: [0, .6, .85, .18], scl: 2.2, drift: [.06, 0], cloudA: 1 }),
   wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '118,142,188', cl: '255,255,255', cov: [-.04, .76, .96, .1], scl: 1.6, drift: [.1 * windDir, 0], cloudA: 1 }),
-  heat: () => ({ cTop: '36,90,174', cMid: '66,128,206', cBot: '150,176,214', hazeC: '120,70,20', hazeK: .55, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
+  heat: () => ({ cTop: '40,92,170', cMid: '70,130,204', cBot: '108,156,214', hazeC: '90,60,30', hazeK: .22, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
   sun: () => { const q = clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // Apple-style: the glare slides in from the edge, peaks, then dissolves
     const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
     return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
