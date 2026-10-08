@@ -180,11 +180,24 @@
   .arr:disabled{opacity:.3;cursor:default}
   .empty{text-align:center;color:var(--ink-3);font-size:14px;line-height:1.5;padding:26px 0}
   .foot{text-align:center;color:var(--ink-3);font-size:12px;line-height:1.45;padding:6px 10px 0}
+  /* loading screen: identical to the iOS launch screen (two balls on cream), so opening the app flows straight into it */
+  #boot{position:fixed;inset:0;z-index:60;background:#f6f1ea;display:grid;place-items:center;transition:opacity .4s var(--ease)}
+  #boot.gone{opacity:0;pointer-events:none}
+  #boot .bb{position:relative;width:130px;height:48px}
+  #boot .bb i{position:absolute;top:0;width:48px;height:48px;border-radius:50%;animation:bootsway 1.6s var(--ease) infinite alternate}
+  #boot .bb i.p{left:0;background:radial-gradient(circle at 36% 32%,#ffb3bf,#ff6b81 45%,#d93f5c)}
+  #boot .bb i.t{right:0;background:radial-gradient(circle at 64% 32%,#a6eef5,#2ec4d6 45%,#1595a8);animation-name:bootsway2}
+  #boot .bb i::after{content:'';position:absolute;left:28%;top:20%;width:28%;height:18%;border-radius:50%;background:rgba(255,255,255,.55)}
+  #boot .bar{position:absolute;left:50%;top:calc(50% + 58px);width:96px;height:4px;margin-left:-48px;border-radius:2px;background:rgba(43,45,66,.08);overflow:hidden;opacity:0;transition:opacity .4s}
+  #boot.slow .bar{opacity:1}
+  #boot .bar span{position:absolute;top:0;bottom:0;width:40%;border-radius:2px;background:linear-gradient(90deg,#ff6b81,#2ec4d6);animation:bootbar 1.1s ease-in-out infinite}
+  @keyframes bootsway{to{transform:translateX(9px)}} @keyframes bootsway2{to{transform:translateX(-9px)}} @keyframes bootbar{from{left:-40%}to{left:100%}}
   @media (max-height:700px){ .screen{gap:10px} #pv{height:124px} .logo{font-size:clamp(34px,10vw,48px)} .diff{padding:10px 14px 8px} .btn{padding:14px 20px} }
   @media (prefers-reduced-motion:reduce){ *{animation-duration:.01ms!important;transition-duration:.01ms!important} }
 </style>
 </head>
 <body>
+<div id="boot" aria-hidden="true"><div class="bb"><i class="p"></i><i class="t"></i></div><div class="bar"><span></span></div></div>
 <canvas id="sky" aria-hidden="true" style="visibility:hidden"></canvas>
 <canvas id="c"></canvas>
 
@@ -2028,6 +2041,11 @@ $('#sdone').addEventListener('click', closeSheet); pSheet.querySelector('.bd').a
 syncPfp();
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(true); }
   if (document.hidden && (state === 'play' || state === 'paused') && score > bestNow()) { bests[bkey()] = score; bestBanked = true; saveBests(); } /* if iOS closes the app in the background, a new best is already safe */ if (!document.hidden && ac && ac.state !== 'running') ac.resume().catch(() => {}); }); // leaving the app pauses without the fog penalty
+// the loading screen leaves once the heavy pictures are decoded and the first frame is on screen; it only shows a progress bar if that takes a while
+(() => { const boot = document.getElementById('boot'); if (!boot) return; const slow = setTimeout(() => boot.classList.add('slow'), 600);
+  const dec = im => (im.decode ? im.decode() : Promise.resolve()).catch(() => {});
+  Promise.race([Promise.all([dec(AURIMG), dec(MOONIMG)]), new Promise(r => setTimeout(r, 6000))]).then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+    clearTimeout(slow); boot.classList.add('gone'); setTimeout(() => boot.remove(), 450); }))); })();
 </script>
 <script>if ('serviceWorker' in navigator && (location.protocol === 'https:' || (location.protocol === 'http:' && location.hostname === 'localhost'))) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>
