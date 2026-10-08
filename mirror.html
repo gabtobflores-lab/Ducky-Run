@@ -1127,7 +1127,8 @@ void main(){vec2 p=UV();float asp=res.x/res.y;
   float a=strands(p,asp,46.,.15,1.,hemA,1.)*smoothstep(.02,.22,p.x+.08)*(1.-smoothstep(.7,.95,p.x)*.4);
   float b=strands(p,asp,38.,.07,2.,hemB,.9)*(1.-smoothstep(.45,.75,p.x));
   float c2=strands(p,asp,52.,.07,3.,hemC,.45)*smoothstep(.55,.9,p.x);
-  vec3 col=colorAt(p.x,p.y)*a+vec3(.1,.62,1.)*b*.85+colorAt(p.x+.25,p.y)*c2;
+  float back=strands(p,asp,30.,.15,7.,hemA+.12,.5);
+  vec3 col=vec3(.12,.36,.95)*back+colorAt(p.x,p.y)*a+vec3(.1,.62,1.)*b*.85+colorAt(p.x+.25,p.y)*c2;
   col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.45)/.32,2.)-pow((p.y-hemA+.03)/.07,2.))+vec3(.7,1.,1.)*.3*exp(-pow((p.x-.42)/.16,2.)-pow((p.y-hemA+.02)/.035,2.)); /* the bright cyan heart, with a white-hot core */
   col*=1.-.45*smoothstep(.3,0.,p.y);                              /* the top stays darker, as in Apple's */
   col=1.-exp(-col*1.9);
@@ -1189,7 +1190,7 @@ const toUV = (x, y) => [(offX + x * scale) / cv.width, (offY + y * scale) / cv.h
 const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, cloud shadow and light, and where the clouds gather
   storm: () => ({ cTop: '58,70,92', cMid: '80,94,116', cBot: '108,122,142', cd: '72,84,106', cl: '172,182,200', cov: [0, .66, .9, .16], scl: 2.1, drift: [.05, 0], cloudA: 1, rain: 1 }),
   hail: () => ({ cTop: '92,110,142', cMid: '114,134,166', cBot: '134,154,186', cd: '98,114,142', cl: '210,220,236', cov: [0, .6, .85, .18], scl: 2.2, drift: [.06, 0], cloudA: 1 }),
-  wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '118,142,188', cl: '255,255,255', cov: [-.04, .76, .96, .1], scl: 1.6, drift: [.1 * windDir, 0], cloudA: 1 }),
+  wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '120,146,192', cl: '255,255,255', cov: [-.04, .78, .74, .06], scl: 1.25, drift: [.1 * windDir, 0], cloudA: 1 }),
   heat: () => ({ cTop: '40,92,170', cMid: '70,130,204', cBot: '108,156,214', hazeC: '90,60,30', hazeK: .22, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
   sun: () => { const q = clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // Apple-style: the glare slides in from the edge, peaks, then dissolves
     const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
