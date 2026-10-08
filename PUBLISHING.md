@@ -37,8 +37,9 @@ The iOS project is already set up in `ios/`: iPhone only, portrait only, full sc
 5. **Try it on your iPhone.** Plug it in, pick it at the top of Xcode, press ▶. Turn on airplane mode and play: it works fully offline.
 6. **Upload.** Choose *Any iOS Device* at the top, then *Product → Archive* → *Distribute App* → *App Store Connect*.
 7. **Create the listing.** In App Store Connect, make a new app with the same bundle ID, then copy everything from [`appstore/APP_STORE.md`](appstore/APP_STORE.md): name, subtitle, description, keywords, price ($0.99), category, age rating and privacy answers. Upload the eight images from `appstore/screenshots/`.
-8. **Privacy and support links.** Apple needs both. Put your email into `release/privacy.html`, upload the `release` folder (Option 1), and use `https://your-site/privacy.html` for both.
-9. **Submit for review.** Reviews usually take one to two days.
+8. **Game Center.** In Xcode, *Signing & Capabilities* should already list Game Center (the project includes it). In App Store Connect, switch on Game Center for the app and create the 12 leaderboards listed in [`appstore/APP_STORE.md`](appstore/APP_STORE.md), then attach them to the version you submit. To test before release, sign in to a Game Center sandbox account on your iPhone (Settings → Game Center).
+9. **Privacy and support links.** Apple needs both. Put your email into `release/privacy.html`, upload the `release` folder (Option 1), and use `https://your-site/privacy.html` for both.
+10. **Submit for review.** Reviews usually take one to two days.
 
 ## After you change the game
 

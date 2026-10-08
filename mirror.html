@@ -178,6 +178,39 @@
   .arr{width:36px;height:36px;border-radius:50%;border:0;background:rgba(43,45,66,.06);font:inherit;font-size:22px;font-weight:700;color:var(--ink);cursor:pointer;line-height:1}
   .arr:disabled{opacity:.3;cursor:default}
   .empty{text-align:center;color:var(--ink-3);font-size:14px;line-height:1.5;padding:26px 0}
+  #pfpi,#pfpi>*{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;overflow:hidden}
+  #pfpi img,.pav img{width:100%;height:100%;object-fit:cover}
+  .phead{display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 0 2px;flex:none}
+  .pav{position:relative;width:88px;height:88px;border-radius:50%;border:0;padding:0;cursor:pointer;background:none;box-shadow:0 6px 18px rgba(43,45,66,.16);transition:transform .22s var(--spring)}
+  .pav:active{transform:scale(.95)}
+  .pav>span,.pav>img{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900;font-size:36px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+  .pav i,.pname i{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal;font-size:14px;color:var(--ink-2);box-shadow:0 1px 4px rgba(43,45,66,.2)}
+  .pname{position:relative;font-size:22px;font-weight:800;letter-spacing:-.01em;margin-top:4px;color:var(--ink);background:none;border:0;font-family:inherit;padding:2px 30px 2px 2px;cursor:default}
+  .pname.edit{cursor:pointer}
+  .pname i{width:22px;height:22px;font-size:11px;right:0;bottom:auto;top:5px;box-shadow:none;background:rgba(43,45,66,.07)}
+  .psub{font-size:13px;font-weight:600;color:var(--ink-3)}
+  .psub.gcok::before{content:'✓ ';color:#22b07d;font-weight:900}
+  .pnrow{display:flex;gap:8px;width:min(300px,100%);margin-top:4px}
+  .perr{font-size:13px;font-weight:700;color:var(--pink-lo)}
+  .gcbtn{margin-top:4px;border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:800;font-size:14px;color:#fff;cursor:pointer;background:linear-gradient(180deg,#3a3d58,#2b2d42);box-shadow:0 4px 12px rgba(43,45,66,.2)}
+  .pick{display:flex;flex-direction:column;gap:10px;background:#fff;border-radius:18px;padding:12px;box-shadow:var(--sh-card);flex:none}
+  .sw,.sy{display:grid;gap:8px}
+  .sw{grid-template-columns:repeat(8,1fr)}
+  .sw button{aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+  .sw button.on{box-shadow:0 0 0 2.5px #fff,0 0 0 4.5px var(--ink)}
+  .sy{grid-template-columns:repeat(6,1fr)}
+  .sy button{aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;background:var(--c);color:#fff;font-weight:900;font-size:18px;font-family:inherit;opacity:.85}
+  .sy button.on{opacity:1;box-shadow:0 0 0 2.5px #fff,0 0 0 4.5px var(--ink)}
+  .pbtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .mini.alt{background:rgba(43,45,66,.07);color:var(--ink)}
+  .pstats{display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-radius:18px;box-shadow:var(--sh-card);padding:12px 4px;flex:none}
+  .pstats div{text-align:center}
+  .pstats b{display:block;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+  .pstats small{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-3)}
+  .pstats div+div{border-left:1px solid rgba(43,45,66,.08)}
+  .row.world .av{background:linear-gradient(180deg,#3a3d58,#2b2d42);font-size:18px}
+  .chev{font-size:22px;font-weight:700;color:var(--ink-3)}
+  .lbt{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);padding:6px 4px 0}
   .foot{text-align:center;color:var(--ink-3);font-size:12px;line-height:1.45;padding:6px 10px 0}
   /* loading screen: identical to the iOS launch screen (two balls on cream), so opening the app flows straight into it */
   #boot{position:fixed;inset:0;z-index:60;background:#f6f1ea;display:grid;place-items:center;transition:opacity .4s var(--ease)}
@@ -201,7 +234,7 @@
 <canvas id="c"></canvas>
 
 <div class="screen" id="menu">
-  <button id="pfp" aria-label="Players and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button>
+  <button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button>
   <h1 class="logo" aria-label="Mirror Drop"><span class="p">MIRROR</span><span class="c">DROP</span></h1>
   <div class="sub">two balls. one tap.</div>
   <canvas id="pv" aria-hidden="true"></canvas>
@@ -233,8 +266,8 @@
 </div>
 
 <div id="sheet" aria-hidden="true"><div class="bd"></div><div class="pn" role="dialog" aria-modal="true" aria-labelledby="stitle"><div class="grab"></div>
-  <div class="shd"><b id="stitle">Players</b><button class="done" id="sdone">Done</button></div>
-  <div class="tabs" id="stabs" data-t="p"><span class="pill"></span><button data-t="p" class="on">Players</button><button data-t="l">Leaderboard</button></div>
+  <div class="shd"><b id="stitle">Profile</b><button class="done" id="sdone">Done</button></div>
+  <div class="tabs" id="stabs" data-t="p"><span class="pill"></span><button data-t="p" class="on">Profile</button><button data-t="l">Leaderboard</button></div>
   <div class="rows" id="srows"></div></div></div>
 
 <script>
@@ -249,8 +282,11 @@ document.documentElement.style.setProperty('--gaps', [1, 2, 3, 4, 5].map(k => `l
 // per = ball positions per side (2 or 3). Columns N = per * 2; the two balls always mirror each other.
 // saved progress lives on the device, so it needs no internet. In the App Store app it is also mirrored into iOS's own app storage,
 // which survives the low-storage clean-ups that can empty a web view's storage, and is restored from there if that ever happens.
-const SAVE_KEYS = ['mirrorBests', 'mirrorProfiles', 'mirrorBoard', 'mirrorPer', 'mirrorMode', 'mirrorSlider', 'mirrorQ'];
-const nativePrefs = (() => { try { const C = window.Capacitor; return C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.Preferences || null; } catch (e) { return null; } })();
+const SAVE_KEYS = ['mirrorBests', 'mirrorProfile', 'mirrorBoard', 'mirrorPer', 'mirrorMode', 'mirrorSlider', 'mirrorQ'];
+// native calls go straight through Capacitor's bridge (this single-file game has no JavaScript bundle, so Capacitor.Plugins is never filled in)
+const IS_NATIVE = (() => { try { const C = window.Capacitor; return !!(C && C.isNativePlatform && C.isNativePlatform() && C.nativePromise); } catch (e) { return false; } })();
+const capCall = (plugin, method, opts = {}) => { try { return Promise.resolve(window.Capacitor.nativePromise(plugin, method, opts)); } catch (e) { return Promise.reject(e); } };
+const nativePrefs = IS_NATIVE ? { get: o => capCall('Preferences', 'get', o), set: o => capCall('Preferences', 'set', o) } : null;
 const hadLocal = {}; SAVE_KEYS.forEach(k => { try { hadLocal[k] = localStorage[k] != null; } catch (e) { hadLocal[k] = false; } }); // what this device had saved before anything is written this session
 let nativeQ = nativePrefs ? {} : null; // until the backup has been checked, writes to it wait here, so a fresh start can never overwrite a good backup
 function saveKey(k, v) { try { localStorage[k] = v; } catch (e) {} if (!nativePrefs) return; if (nativeQ) nativeQ[k] = String(v); else nativePrefs.set({ key: k, value: String(v) }).catch(() => {}); }
@@ -310,25 +346,45 @@ const targetSpeed = n => { const p = params(), k = 1 - Math.min(.55, 2.4 * (2 + 
 const rowGap = () => { const p = params(); return Math.max(p.gap - level * p.shrink, speed * p.minTime); };
 const bkey = () => per + '_' + bucket() + (mode === 'infinite' ? '_inf' : ''); // infinite runs keep their own bests
 const bestNow = () => bests[bkey()] || 0;
-// ---------- players and leaderboard: kept on this device, so they work offline ----------
+// ---------- profile: one per phone. In the App Store app it is signed in with Game Center (Apple's player accounts, worldwide leaderboards);
+// everything is also kept on the device, so it works offline and survives without an account ----------
 const PCOL = ['#2ec4d6', '#ff6b81', '#e9a23b', '#8b6cf0', '#3b82f6', '#22b07d', '#f08f1c', '#64748b'];
-const newId = () => Math.random().toString(36).slice(2, 10);
+const AVSYM = ['', '★', '⚡', '☾', '❄', '☀', '◆', '♥', '✿', '☁', '♪', '✦']; // '' shows the name's initial
 const esc = t => String(t).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const initial = n => (String(n).trim()[0] || '?').toUpperCase();
-let profiles = null; try { profiles = JSON.parse(localStorage.mirrorProfiles || 'null'); } catch (e) {}
-let migrated = false; if (!profiles || !Array.isArray(profiles.list) || !profiles.list.length) { profiles = { active: 0, list: [{ id: newId(), name: 'Player 1', c: 0, bests }] }; migrated = true; } // the first player keeps any scores saved before players existed
-profiles.list = profiles.list.filter(pl => pl && typeof pl === 'object').slice(0, 8); if (!profiles.list.length) profiles.list = [{ id: newId(), name: 'Player 1', c: 0, bests: {} }];
-profiles.list.forEach((pl, i) => { if (!pl.bests || typeof pl.bests !== 'object') pl.bests = {}; if (!pl.id) pl.id = newId(); pl.name = String(pl.name || 'Player ' + (i + 1)).slice(0, 16); pl.c = (pl.c | 0) % PCOL.length; });
-profiles.active = Math.min(Math.max(0, profiles.active | 0), profiles.list.length - 1);
-const me = () => profiles.list[profiles.active];
-bests = me().bests;
+let prof = null; try { prof = JSON.parse(localStorage.mirrorProfile || 'null'); } catch (e) {}
+let migrated = false;
+if (!prof || typeof prof !== 'object' || Array.isArray(prof)) { // first launch, or moving over from the earlier version
+  let old = null; try { old = JSON.parse(localStorage.mirrorProfiles || 'null'); } catch (e) {}
+  const o = old && Array.isArray(old.list) ? old.list[old.active | 0] : null;
+  prof = { name: o && o.name || 'Player', c: o ? o.c | 0 : 0, sym: 0, photo: '', useGc: true, bests: o && o.bests || bests, runs: 0, combo: 0, oid: o && o.id || '' };
+  migrated = true;
+}
+if (!prof.bests || typeof prof.bests !== 'object') prof.bests = {};
+prof.name = String(prof.name || 'Player').slice(0, 16); prof.c = (prof.c | 0) % PCOL.length; prof.sym = (prof.sym | 0) % AVSYM.length;
+prof.photo = typeof prof.photo === 'string' && prof.photo.startsWith('data:image/') ? prof.photo : ''; prof.runs = prof.runs | 0; prof.combo = prof.combo | 0; prof.useGc = prof.useGc !== false;
+bests = prof.bests;
 let board = {}; try { board = JSON.parse(localStorage.mirrorBoard || '{}') || {}; } catch (e) {} if (typeof board !== 'object' || Array.isArray(board)) board = {};
-if (migrated) { const pl = profiles.list[0]; for (const k in bests) if (bests[k] > 0 && !(board[k] && board[k].length)) board[k] = [{ id: pl.id, n: pl.name, c: pl.c, s: bests[k], d: Date.now() }]; saveKey('mirrorProfiles', JSON.stringify(profiles)); saveKey('mirrorBoard', JSON.stringify(board)); } // scores from before players existed start the leaderboard, saved right away
+for (const k in board) board[k] = Array.isArray(board[k]) ? board[k].filter(x => x && x.s > 0 && (!x.id || !prof.oid || x.id === prof.oid)).map(x => ({ s: x.s | 0, d: +x.d || Date.now() })) : [];
+if (migrated) { for (const k in bests) if (bests[k] > 0 && !(board[k] && board[k].length)) board[k] = [{ s: bests[k], d: Date.now() }]; } // scores from before start the board
+const gc = { ok: false, alias: '', photo: '', busy: false }; // Game Center, this session
+const shownName = () => gc.ok ? gc.alias : prof.name;
 let lastRank = 0;
-function saveBests() { me().bests = bests; saveKey('mirrorProfiles', JSON.stringify(profiles)); saveKey('mirrorBests', JSON.stringify(bests)); }
-function recordRun(sc) { // the top ten runs for each difficulty and column setting, across every player on this device
-  if (!(sc > 0)) return 0; const k = bkey(), L = board[k] = Array.isArray(board[k]) ? board[k] : [], e = { id: me().id, n: me().name, c: me().c, s: sc, d: Date.now() };
-  L.push(e); L.sort((a, b) => b.s - a.s || a.d - b.d); L.length = Math.min(L.length, 10); saveKey('mirrorBoard', JSON.stringify(board)); return L.indexOf(e) + 1; }
+function saveBests() { prof.bests = bests; saveKey('mirrorProfile', JSON.stringify(prof)); saveKey('mirrorBests', JSON.stringify(bests)); }
+if (migrated) { saveBests(); saveKey('mirrorBoard', JSON.stringify(board)); }
+const lbId = (sc = bucket(), md = mode) => `mirrordrop.${md === 'infinite' ? 'infinite.' : ''}${NAMES[sc].toLowerCase()}`; // one Game Center leaderboard per mode and difficulty
+let pendingGc = []; try { pendingGc = JSON.parse(localStorage.mirrorPending || '[]'); if (!Array.isArray(pendingGc)) pendingGc = []; } catch (e) {}
+function flushGc() { // scores made offline or before sign-in are sent once Game Center is reachable
+  if (!gc.ok || !pendingGc.length || gc.busy) return; gc.busy = true; const q = pendingGc.slice();
+  Promise.all(q.map(p => capCall('GameCenter', 'submitScore', p).then(() => p).catch(() => null))).then(done => {
+    pendingGc = pendingGc.filter(p => !done.includes(p)); try { localStorage.mirrorPending = JSON.stringify(pendingGc); } catch (e) {} gc.busy = false; });
+}
+function recordRun(sc) { // this phone's top ten runs for each setting, plus Game Center when signed in
+  prof.runs++; prof.combo = Math.max(prof.combo, fx.maxCombo | 0); saveBests();
+  if (!(sc > 0)) return 0; const k = bkey(), L = board[k] = Array.isArray(board[k]) ? board[k] : [], e = { s: sc, d: Date.now() };
+  L.push(e); L.sort((a, b) => b.s - a.s || a.d - b.d); L.length = Math.min(L.length, 10); saveKey('mirrorBoard', JSON.stringify(board));
+  if (IS_NATIVE) { pendingGc.push({ leaderboardId: lbId(), score: sc }); pendingGc = pendingGc.slice(-50); try { localStorage.mirrorPending = JSON.stringify(pendingGc); } catch (e) {} flushGc(); }
+  return L.indexOf(e) + 1; }
 // soft slide-in whenever a label's text actually changes
 function bump(el) { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); }
 function swapText(el, v) { if (el.textContent !== v) { el.textContent = v; bump(el); } }
@@ -337,8 +393,7 @@ function syncDiffUI() {
   document.documentElement.style.setProperty('--sc', SECT_COL[bucket()]);
   document.querySelectorAll('.drange').forEach(r => { if (+r.value !== sliderV) r.value = sliderV; r.style.setProperty('--f', sliderV / 120); r.setAttribute('aria-valuetext', NAMES[bucket()]); });
   document.querySelectorAll('.dname').forEach(n => swapText(n, NAMES[bucket()]));
-  const who = profiles.list.length > 1 ? esc(me().name) + ' · ' : '';
-  const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${who}${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : ''}</i>` : `<span>BEST</span><b>–</b><i>${who}no ${mode === 'infinite' ? 'infinite ' : ''}score yet on ${NAMES[bucket()]} · ${N} columns</i>`;
+  const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : ''}</i>` : `<span>BEST</span><b>–</b><i>no ${mode === 'infinite' ? 'infinite ' : ''}score yet on ${NAMES[bucket()]} · ${N} columns</i>`;
   ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
   document.querySelectorAll('.seg:not(#mode)').forEach(s => { s.dataset.sel = per; });
   document.querySelectorAll('.seg button[data-per]').forEach(b => b.classList.toggle('on', +b.dataset.per === per));
@@ -458,7 +513,7 @@ function goMenu() { wxHide(); show('#over', false); state = 'menu'; reset(); syn
 function showOver() {
   if (state !== 'dead') return;
   $('#over .logo').innerHTML = won ? '<span class="c">COMPLETE</span>' : '<span class="p">CRASH</span>';
-  $('#onew').textContent = newBest ? 'NEW BEST' : lastRank && lastRank <= 3 && profiles.list.length > 1 ? `#${lastRank} ON THE LEADERBOARD` : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo x${fx.maxCombo}` : '';
+  $('#onew').textContent = newBest ? 'NEW BEST' : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo x${fx.maxCombo}` : '';
   syncDiffUI(); show('#over', true);
   const ob = $('#obest'); ob.classList.remove('celebrate'); if (newBest) { void ob.offsetWidth; ob.classList.add('celebrate'); }
   // quick count-up of the final score
@@ -1991,53 +2046,84 @@ function drawPreview() {
 let last = performance.now();
 (function loop(now) { const ms = now - last, dt = Math.min(.033, ms / 1000); last = now; qTune(ms); update(dt); draw(); if (state === 'menu') drawPreview(); requestAnimationFrame(loop); })(last);
 syncDiffUI(); show('#menu', true);
-// players + leaderboard sheet
+// profile + leaderboard sheet
 const pfp = $('#pfp'), pSheet = $('#sheet'), srows = $('#srows'), stabs = $('#stabs');
-let sTab = 'p', editing = -1, lbSect = null;
-const avatar = (name, c) => `<span class="av" style="background:${PCOL[c % PCOL.length]}">${esc(initial(name))}</span>`;
-const setLabel = sc => `${NAMES[sc]}<small>${N} columns${mode === 'infinite' ? ' · infinite' : ''}</small>`;
-function syncPfp() { $('#pfpi').textContent = initial(me().name); pfp.style.setProperty('--pc', PCOL[me().c % PCOL.length]); pfp.setAttribute('aria-label', `${me().name}: players and leaderboard`); }
+let sTab = 'p', editName = false, editPic = false, lbSect = null, nameErr = '', nameDraft = '';
+const BAD = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'cock', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'fag', 'retard', 'rape', 'nazi', 'hitler', 'porn', 'penis', 'vagina', 'boob', 'jizz', 'wank', 'twat', 'kike', 'spic', 'chink', 'dildo', 'anus', 'tits', 'piss', 'damn', 'hell'];
+function nameProblem(n) { // nicknames stay friendly: letters, numbers and a few marks, nothing rude even when spelled with numbers
+  if (n.length < 2) return 'At least 2 characters.';
+  if (!/^[\p{L}\p{N} ._-]+$/u.test(n)) return 'Letters, numbers, spaces, . _ and - only.';
+  const flat = n.toLowerCase().replace(/[0@4]/g, m => ({ 0: 'o', '@': 'a', 4: 'a' }[m])).replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/[5$]/g, 's').replace(/7/g, 't').replace(/[^a-z]/g, '');
+  return BAD.some(w => flat.includes(w)) ? 'Please choose a different name.' : ''; }
+function avHTML() { // the player's picture: their own photo, their Game Center picture, or a symbol on a colour
+  const ph = prof.photo || (prof.useGc && gc.photo) || '';
+  if (ph) return `<img src="${ph}" alt="">`;
+  return `<span style="background:${PCOL[prof.c]}">${esc(AVSYM[prof.sym] || initial(shownName()))}</span>`; }
+function syncPfp() { $('#pfpi').innerHTML = avHTML(); pfp.setAttribute('aria-label', `${shownName()}: profile and leaderboard`); }
 function renderSheet() {
   stabs.dataset.t = sTab; stabs.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === sTab));
-  $('#stitle').textContent = sTab === 'p' ? 'Players' : 'Leaderboard';
+  $('#stitle').textContent = sTab === 'p' ? 'Profile' : 'Leaderboard';
   let h = '';
   if (sTab === 'p') {
-    profiles.list.forEach((pl, i) => {
-      if (i === editing) {
-        h += `<div class="row me">${avatar(pl.name, pl.c)}<input class="nmi" id="nmi" maxlength="16" value="${esc(pl.name)}" enterkeyhint="done" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Player name"><button class="mini" data-act="save">Save</button></div>`;
-        if (profiles.list.length > 1) h += `<button class="link" data-act="del" data-i="${i}">Remove ${esc(pl.name)}</button>`;
-      } else h += `<button class="row${i === profiles.active ? ' me' : ''}" data-act="pick" data-i="${i}">${avatar(pl.name, pl.c)}<span class="nm">${esc(pl.name)}<small>${i === profiles.active ? 'Playing · tap to rename' : 'Tap to play as ' + esc(pl.name)}</small></span><span class="sc">${pl.bests[bkey()] || '–'}</span></button>`;
-    });
-    if (profiles.list.length < 8 && editing < 0) h += `<button class="row add" data-act="add"><span class="av">+</span><span class="nm">Add player</span></button>`;
-    h += `<div class="foot">Best scores on ${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : ''}.<br>Saved on this device. No internet needed.</div>`;
+    h += `<div class="phead"><button class="pav" data-act="pic" aria-label="Change profile picture">${avHTML()}<i aria-hidden="true">✎</i></button>`;
+    if (gc.ok) h += `<div class="pname">${esc(gc.alias)}</div><div class="psub gcok">Game Center · signed in</div>`;
+    else if (editName) h += `<div class="pnrow"><input class="nmi" id="nmi" maxlength="16" value="${esc(nameErr ? nameDraft : prof.name)}" enterkeyhint="done" autocomplete="nickname" autocorrect="off" spellcheck="false" aria-label="Nickname"><button class="mini" data-act="save">Save</button></div>${nameErr ? `<div class="perr">${esc(nameErr)}</div>` : ''}`;
+    else h += `<button class="pname edit" data-act="name">${esc(prof.name)}<i aria-hidden="true">✎</i></button>`;
+    if (!gc.ok) h += IS_NATIVE ? `<button class="gcbtn" data-act="signin">Sign in with Game Center</button>` : `<div class="psub">Saved on this device</div>`;
+    h += `</div>`;
+    if (editPic) {
+      h += `<div class="pick"><div class="sw">${PCOL.map((c, i) => `<button data-act="col" data-i="${i}" style="background:${c}" class="${!prof.photo && !(prof.useGc && gc.photo) && i === prof.c ? 'on' : ''}" aria-label="Colour ${i + 1}"></button>`).join('')}</div>
+        <div class="sy">${AVSYM.map((y, i) => `<button data-act="sym" data-i="${i}" class="${!prof.photo && !(prof.useGc && gc.photo) && i === prof.sym ? 'on' : ''}" style="--c:${PCOL[prof.c]}">${esc(y || initial(shownName()))}</button>`).join('')}</div>
+        <div class="pbtns"><button class="mini alt" data-act="photo">Choose photo</button>${gc.ok && gc.photo ? `<button class="mini alt" data-act="gcpic">Game Center picture</button>` : ''}</div></div>`;
+    }
+    const sc = bestNow();
+    h += `<div class="pstats"><div><b>${sc || '–'}</b><small>Best · ${NAMES[bucket()]}</small></div><div><b>${prof.runs}</b><small>Runs</small></div><div><b>${prof.combo > 1 ? '×' + prof.combo : '–'}</b><small>Best combo</small></div></div>`;
+    h += `<div class="foot">${gc.ok ? 'Scores also go to Game Center, even after playing offline.' : 'Saved on this ' + (IS_NATIVE ? 'iPhone' : 'device') + '. No internet needed.'}</div>`;
   } else {
     const sc = lbSect === null ? bucket() : lbSect, k = per + '_' + sc + (mode === 'infinite' ? '_inf' : ''), L = Array.isArray(board[k]) ? board[k] : [];
-    h += `<div class="lbh"><button class="arr" data-act="prev" aria-label="Easier"${sc > 0 ? '' : ' disabled'}>‹</button><span>${setLabel(sc)}</span><button class="arr" data-act="next" aria-label="Harder"${sc < 5 ? '' : ' disabled'}>›</button></div>`;
-    h += L.length ? L.map((e, i) => { const pl = profiles.list.find(p => p.id === e.id), nm = pl ? pl.name : e.n;
-      return `<div class="row${pl === me() ? ' me' : ''}"><span class="rk r${i}">${i + 1}</span>${avatar(nm, pl ? pl.c : e.c | 0)}<span class="nm">${esc(nm)}<small>${new Date(e.d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small></span><span class="sc">${e.s}</span></div>`; }).join('')
+    h += `<div class="lbh"><button class="arr" data-act="prev" aria-label="Easier"${sc > 0 ? '' : ' disabled'}>‹</button><span>${NAMES[sc]}<small>${mode === 'infinite' ? 'Infinite' : 'Normal'} mode</small></span><button class="arr" data-act="next" aria-label="Harder"${sc < 5 ? '' : ' disabled'}>›</button></div>`;
+    if (IS_NATIVE) h += gc.ok ? `<button class="row world" data-act="world"><span class="av">🌍</span><span class="nm">World leaderboard<small>Game Center · everyone on ${NAMES[sc]}</small></span><span class="chev">›</span></button>`
+      : `<button class="row world" data-act="signin"><span class="av">🌍</span><span class="nm">World leaderboard<small>Sign in with Game Center to compete</small></span><span class="chev">›</span></button>`;
+    h += `<div class="lbt">Your best runs · ${N} columns</div>`;
+    h += L.length ? L.map((e, i) => `<div class="row"><span class="rk r${i}">${i + 1}</span><span class="nm">${new Date(e.d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span><span class="sc">${e.s}</span></div>`).join('')
       : `<div class="empty">No runs on ${NAMES[sc]} yet.<br>Every finished run is ranked here.</div>`;
+    if (!IS_NATIVE) h += `<div class="foot">World leaderboards are in the App Store app.</div>`;
   }
   srows.innerHTML = h;
   const inp = $('#nmi'); if (inp) { inp.onkeydown = e => { if (e.key === 'Enter') commitName(); }; setTimeout(() => { inp.focus(); inp.select(); }, 60); }
 }
-function commitName() { const inp = $('#nmi'); if (!inp || editing < 0) return; const pl = profiles.list[editing]; pl.name = inp.value.trim().replace(/\s+/g, ' ').slice(0, 16) || pl.name; editing = -1; saveBests(); syncPfp(); syncDiffUI(); renderSheet(); }
-function playAs(i) { profiles.active = i; bests = me().bests; saveBests(); syncPfp(); syncDiffUI(); }
+function commitName() { const inp = $('#nmi'); if (!inp) { editName = false; return true; } const v = inp.value.trim().replace(/\s+/g, ' ').slice(0, 16), bad = nameProblem(v);
+  if (bad) { nameErr = bad; nameDraft = v; renderSheet(); return false; } prof.name = v; nameErr = ''; editName = false; saveBests(); syncPfp(); renderSheet(); return true; }
+const photoIn = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*' }); photoIn.style.display = 'none'; document.body.appendChild(photoIn);
+photoIn.addEventListener('change', () => { const f = photoIn.files && photoIn.files[0]; photoIn.value = ''; if (!f) return; const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => { const z = 192, c = document.createElement('canvas'); c.width = c.height = z; const g = c.getContext('2d'), m = Math.min(im.naturalWidth, im.naturalHeight); // a small square crop from the middle, kept on the phone
+    g.drawImage(im, (im.naturalWidth - m) / 2, (im.naturalHeight - m) / 2, m, m, 0, 0, z, z); URL.revokeObjectURL(url); prof.photo = c.toDataURL('image/jpeg', .85); saveBests(); syncPfp(); renderSheet(); };
+  im.onerror = () => URL.revokeObjectURL(url); im.src = url; });
+function gcSignIn() { if (!IS_NATIVE) return Promise.resolve(); return capCall('GameCenter', 'signIn').then(r => {
+  gc.ok = !!(r && r.authenticated); gc.alias = gc.ok ? String(r.alias || r.displayName || 'Player') : '';
+  if (gc.ok) { flushGc(); capCall('GameCenter', 'photo').then(p => { gc.photo = p && p.dataUrl || ''; syncPfp(); if (pSheet.classList.contains('on')) renderSheet(); }).catch(() => {}); }
+  syncPfp(); if (pSheet.classList.contains('on')) renderSheet(); }).catch(() => {}); }
 srows.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, i = +b.dataset.i;
-  if (a === 'pick') { if (editing >= 0) commitName(); if (i === profiles.active) editing = i; else { playAs(i); beep(660, .08, 'sine', .04, 120); } renderSheet(); }
-  else if (a === 'add') { const used = profiles.list.map(p => p.c), c = PCOL.findIndex((_, x) => !used.includes(x)); profiles.list.push({ id: newId(), name: 'Player ' + (profiles.list.length + 1), c: c < 0 ? profiles.list.length % PCOL.length : c, bests: {} }); playAs(profiles.list.length - 1); editing = profiles.active; renderSheet(); }
+  if (a === 'pic') { editPic = !editPic; renderSheet(); }
+  else if (a === 'name') { editName = true; nameErr = ''; renderSheet(); }
   else if (a === 'save') commitName();
-  else if (a === 'del') { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = 'Tap again to remove ' + profiles.list[i].name; return; } // two taps, so nobody is removed by accident
-    const gone = profiles.list.splice(i, 1)[0]; for (const k in board) if (Array.isArray(board[k])) board[k] = board[k].filter(x => x.id !== gone.id); saveKey('mirrorBoard', JSON.stringify(board));
-    editing = -1; playAs(Math.min(profiles.active > i ? profiles.active - 1 : profiles.active, profiles.list.length - 1)); renderSheet(); }
+  else if (a === 'col') { prof.c = i; prof.photo = ''; prof.useGc = false; saveBests(); syncPfp(); renderSheet(); }
+  else if (a === 'sym') { prof.sym = i; prof.photo = ''; prof.useGc = false; saveBests(); syncPfp(); renderSheet(); }
+  else if (a === 'photo') photoIn.click();
+  else if (a === 'gcpic') { prof.photo = ''; prof.useGc = true; saveBests(); syncPfp(); renderSheet(); }
+  else if (a === 'signin') gcSignIn();
+  else if (a === 'world') capCall('GameCenter', 'showLeaderboard', { leaderboardId: lbId(lbSect === null ? bucket() : lbSect) }).catch(() => {});
   else if (a === 'prev' || a === 'next') { const sc = lbSect === null ? bucket() : lbSect; lbSect = Math.max(0, Math.min(5, sc + (a === 'next' ? 1 : -1))); renderSheet(); }
 });
-stabs.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.t === sTab) return; if (editing >= 0) commitName(); sTab = b.dataset.t; lbSect = null; renderSheet(); });
-function openSheet(tab = 'p') { if (state !== 'menu') return; sTab = tab; editing = -1; lbSect = null; renderSheet(); pSheet.classList.add('on'); pSheet.setAttribute('aria-hidden', 'false'); requestAnimationFrame(() => requestAnimationFrame(() => pSheet.classList.add('open'))); beep(520, .07, 'sine', .035, 160); }
-function closeSheet() { if (!pSheet.classList.contains('on')) return; if (editing >= 0) commitName(); pSheet.classList.remove('open'); pSheet.setAttribute('aria-hidden', 'true'); setTimeout(() => { if (!pSheet.classList.contains('open')) pSheet.classList.remove('on'); }, 380); }
+stabs.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.t === sTab) return; if (editName && !commitName()) return; sTab = b.dataset.t; lbSect = null; editPic = false; renderSheet(); });
+function openSheet(tab = 'p') { if (state !== 'menu') return; sTab = tab; editName = editPic = false; nameErr = ''; lbSect = null; renderSheet(); pSheet.classList.add('on'); pSheet.setAttribute('aria-hidden', 'false'); requestAnimationFrame(() => requestAnimationFrame(() => pSheet.classList.add('open'))); beep(520, .07, 'sine', .035, 160); }
+function closeSheet() { if (!pSheet.classList.contains('on')) return; if (editName) { const inp = $('#nmi'); if (inp && nameProblem(inp.value.trim())) { editName = false; nameErr = ''; } else commitName(); } pSheet.classList.remove('open'); pSheet.setAttribute('aria-hidden', 'true'); setTimeout(() => { if (!pSheet.classList.contains('open')) pSheet.classList.remove('on'); }, 380); }
 pfp.addEventListener('click', () => openSheet('p'));
 $('#sdone').addEventListener('click', closeSheet); pSheet.querySelector('.bd').addEventListener('click', closeSheet);
+addEventListener('online', flushGc);
 syncPfp();
+setTimeout(gcSignIn, 1200); // Apple asks games to sign in at launch; iOS shows a small "Welcome back" banner
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(true); }
   if (document.hidden && (state === 'play' || state === 'paused') && score > bestNow()) { bests[bkey()] = score; bestBanked = true; saveBests(); } /* if iOS closes the app in the background, a new best is already safe */ if (!document.hidden && ac && ac.state !== 'running') ac.resume().catch(() => {}); }); // leaving the app pauses without the fog penalty
 // the loading screen leaves once the heavy pictures are decoded and the first frame is on screen; it only shows a progress bar if that takes a while

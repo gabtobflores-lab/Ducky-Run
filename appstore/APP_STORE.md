@@ -45,7 +45,7 @@ If "Mirror Drop" is already taken, use **Mirror Drop: Offline Arcade** (27 chara
 > • Normal mode with a final stretch to finish, or Infinite mode for high-score runs
 > • Two or three columns per side
 > • A best score for every combination
-> • Players and a leaderboard for everyone who shares your iPhone
+> • Worldwide Game Center leaderboards for every difficulty, plus your own best runs
 >
 > **Made with care**
 > Smooth, battery-friendly graphics tuned for iPhone, gentle animations that respect Reduce Motion, and a game that pauses itself the moment you leave.
@@ -57,6 +57,27 @@ If "Mirror Drop" is already taken, use **Mirror Drop: Offline Arcade** (27 chara
 ```
 offline,no wifi,arcade,reflex,dodge,one tap,casual,weather,aurora,storm,mirror,endless,airplane
 ```
+
+## Game Center leaderboards
+
+In App Store Connect, open your app → **Services → Game Center**, switch Game Center on, and create these 12 **Classic** leaderboards. For each one choose *Score format: Integer*, *Submission type: Best score*, *Sort: High to low*, *Score range: 0 to 1,000,000*, and add the English display name. The IDs must match exactly.
+
+| Leaderboard ID | Display name |
+|---|---|
+| `mirrordrop.chill` | Chill |
+| `mirrordrop.easy` | Easy |
+| `mirrordrop.normal` | Normal |
+| `mirrordrop.hard` | Hard |
+| `mirrordrop.insane` | Insane |
+| `mirrordrop.impossible` | Impossible |
+| `mirrordrop.infinite.chill` | Chill · Infinite |
+| `mirrordrop.infinite.easy` | Easy · Infinite |
+| `mirrordrop.infinite.normal` | Normal · Infinite |
+| `mirrordrop.infinite.hard` | Hard · Infinite |
+| `mirrordrop.infinite.insane` | Insane · Infinite |
+| `mirrordrop.infinite.impossible` | Impossible · Infinite |
+
+Then add the leaderboards to the app version you submit (on the version page, under *Game Center*).
 
 ## Screenshots
 
@@ -73,7 +94,7 @@ Upload the eight images in `appstore/screenshots/`, in order, to the **6.9" iPho
 
 ## App Review notes
 
-> Mirror Drop is a single-player arcade game that runs entirely on the device. It needs no network connection, account or permissions, and it collects no data. Tap anywhere to move both balls; weather events appear at random during play.
+> Mirror Drop is a single-player arcade game that runs entirely on the device. It needs no network connection or permissions and collects no data. Game Center sign-in is optional and used only for leaderboards; the game is fully playable without it. Tap anywhere to move both balls; weather events appear at random during play.
 
 ## URLs Apple asks for
 
