@@ -1100,6 +1100,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
     fog: `void main(){vec2 uv=UV();vec2 p=vec2(uv.x*res.x/res.y,uv.y)*2.2;
   vec2 q=vec2(fbm(p+vec2(t*.07,t*.02)),fbm(p+vec2(5.2,1.3)-vec2(t*.055,-t*.02)));float f=fbm(p+1.8*q+vec2(t*.09,t*.025)); /* the fog churns and rolls */
   vec3 dark=vec3(.36,.4,.48),mid=vec3(.45,.49,.57),lite=vec3(.57,.61,.69);vec3 c=mix(dark,mid,smoothstep(.22,.55,f));c=mix(c,lite,smoothstep(.55,.88,f));
+  float f2=fbm(p*.45+vec2(-t*.02,t*.006)+q*.6);c=mix(c,lite*1.04,.28*smoothstep(.45,.85,f2));c=mix(c,dark*.92,.22*(1.-smoothstep(.2,.55,f2))*uv.y); /* a larger, slower layer: depth */
   c+=.05*exp(-((uv.x-.5)*(uv.x-.5))*5.-((uv.y-.36)*(uv.y-.36))*4.);c=mix(c,lite,.18*uv.y);gl_FragColor=vec4(c+dith(),1.);}`,
     blurH: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
     blurV: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
@@ -1127,7 +1128,7 @@ void main(){vec2 p=UV();float asp=res.x/res.y;
   float b=strands(p,asp,38.,.07,2.,hemB,.9)*(1.-smoothstep(.45,.75,p.x));
   float c2=strands(p,asp,52.,.07,3.,hemC,.45)*smoothstep(.55,.9,p.x);
   vec3 col=colorAt(p.x,p.y)*a+vec3(.1,.62,1.)*b*.85+colorAt(p.x+.25,p.y)*c2;
-  col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.5)/.2,2.)-pow((p.y-.66)/.13,2.))+vec3(.7,1.,1.)*.35*exp(-pow((p.x-.5)/.09,2.)-pow((p.y-.66)/.06,2.)); /* the bright cyan heart, with a white-hot core */
+  col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.45)/.32,2.)-pow((p.y-hemA+.03)/.07,2.))+vec3(.7,1.,1.)*.3*exp(-pow((p.x-.42)/.16,2.)-pow((p.y-hemA+.02)/.035,2.)); /* the bright cyan heart, with a white-hot core */
   col*=1.-.45*smoothstep(.3,0.,p.y);                              /* the top stays darker, as in Apple's */
   col=1.-exp(-col*1.9);
   gl_FragColor=vec4(bg+col*(1.-bg)+dith(),1.);}`
