@@ -1268,7 +1268,7 @@ function drawFrontWeather() { // light and glass in front of the scene
 // ---------- raindrops on the glass: a handful of real little lenses that refract the scene (upside down, like real drops) ----------
 const DROPS = Array.from({ length: 12 }, () => ({ on: false })), BEADS = Array.from({ length: 48 }, () => ({ on: false })); let glassT = 0, snapC = null, glassWet = 0;
 function bead(x, y, r, max) { const b = BEADS.find(q => !q.on); if (b) Object.assign(b, { on: true, x, y, r, life: 0, max }); }
-function drawGlass() { if (RM) return; // rain on the glass: lots of tiny beads, a few real drops that magnify the scene upside down, some sliding away in teardrops
+function drawGlass() { if (RM || (wx.kind === 'fog' && skyE)) return; // rain on the glass: lots of tiny beads, a few real drops that magnify the scene upside down, some sliding away in teardrops
   const dt = Math.min(.05, Math.max(0, t - glassT)); glassT = t;
   const fogging = false, raining = wx.kind === 'storm' && wx.phase !== 'warn' && wx.a > .3 || fogging, A = wx.kind === 'storm' || wx.kind === 'fog' ? wx.a * (wx.kind === 'fog' ? .38 : 1) : 0; // fog condenses on the glass
   if (raining) {
@@ -1491,13 +1491,13 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
   const a = wx.a, e = a * a * (3 - 2 * a); // eased in and out
   lowres(() => {
   const L = [[-.05, .4, 4, 2.2, .2], [.18, .4, -6, 1.8, .26], [.42, .4, 5, 2.4, .32], [.64, .42, -8, 1.9, .38]]; // thin up high, pooling low; slow, as real fog drifts
-  L.forEach(([y, h, sp, sc, al], i) => { if (skyE && i % 2 === 0) return; // over the GPU fog, two front layers are enough
+  L.forEach(([y, h, sp, sc, al], i) => { if (skyE && i !== 3) return; // over the GPU fog, one front layer keeps the blocks veiled // over the GPU fog, two front layers are enough
     const img = sheet('fogp' + i, 512, 180, '140,148,164', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '166,174,190' }); // shaded bellies, bright crowns: reads as volume
     const breath = .78 + .22 * nz(t * .13, i * 5), yy = H * y + nz(t * .07, i * 3) * 18;
     drawSheet(img, yy, H * h * (1 + .06 * nz(t * .1, i)), sp, al * e * breath, sc);
   });
   if (!skyE) atmos('190,198,212', .1 * e, { n: 4, y0: .1, y1: .9, sp: 3, off: 13 }); // faint ambient veil that ties the layers together
-  }, skyE ? .3 : 0);
+  }, skyE ? .22 : 0);
 }
 function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lightning glows through it softly (screen blend), never a white flash
   if ((wx.kind !== 'storm' && wx.kind !== 'hail') || wx.a < .01) return; // hail shares the storm's cloud deck
