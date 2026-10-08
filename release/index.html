@@ -301,7 +301,7 @@ function reset() {
   fog = 0; resumeT = 0; fogT = 0;
   score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false; gate = null;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
-  Object.assign(wx, { kind: '', phase: '', t: 0, p: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 }); if (typeof wxHide === 'function') wxHide();
+  Object.assign(wx, { kind: '', phase: '', t: 0, p: 0, hits: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 }); if (typeof wxHide === 'function') wxHide();
   Object.assign(fx, { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 });
   while (nextY > -1000) addRow();
 }
@@ -637,7 +637,7 @@ function updateWeather(dt) {
     }
   } else {
     wx.t += dt;
-    if (wx.phase === 'warn' && wx.t >= WX[wx.kind].warn) { wx.phase = 'on'; wx.t = 0; wx.nextBolt = 2 + Math.random() * 2.5; wx.nextGlow = .6; } // warning always comes first
+    if (wx.phase === 'warn' && wx.t >= WX[wx.kind].warn) { wx.phase = 'on'; wx.t = 0; wx.nextBolt = 2 + Math.random() * 2.5; wx.nextGlow = .6; wx.hits = 0; } // warning always comes first
     else if (wx.phase === 'on' && wx.t >= WX[wx.kind].dur) { wx.phase = 'out'; wx.t = 0; }
     else if (wx.phase === 'out' && wx.p <= 0) { wx.kind = ''; wx.phase = ''; wx.cool = 30 + Math.random() * 30; } // long quiet spell before the next one
   }
@@ -1427,10 +1427,15 @@ function lightning() { // a strike from the cloud base: threads between the bloc
   const react = .7, landOK = o => { const yl = o.y + speed * aZ; return yl > 24 && (BY - yl) / speed > react; }; // it lands on screen, and the charged block is still a fair distance from the balls
   const cand = things.filter(o => o.k === 'b' && !o.elec && !o.zap && landOK(o));
   let bolt = null, pre2 = pre;
-  if (cand.length && Math.random() < .33) {
-    const o = cand[(Math.random() * cand.length) | 0];
-    for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y + speed * aZ - 22); if (!blocked(pts, o, aZ)) bolt = { o, pts }; } // aimed at where the block will be
-    if (bolt) { o.zap = true; pre2 = preZ; } // it becomes electrified the moment the bolt lands
+  const need = 2 - (wx.hits || 0), left = (WX.storm.dur - wx.t) / 4; // every storm charges at least two blocks: once the bolts left are only just enough, each one goes for a block
+  const must = need > 0 && left <= need + 1.5;
+  if (must && !cand.length) { cloudGlow(); wx.nextBolt = .5; return; } // no block in a fair spot this instant: it rumbles in the cloud and tries again moments later
+  if (cand.length && (must || Math.random() < .33)) {
+    for (const o of cand.sort(() => Math.random() - .5)) { // every fair target in turn
+      for (let i = 0; i < 16 && !bolt; i++) { const pts = boltPts(LX[o.l] + (Math.random() - .5) * (i < 6 ? 140 : W * .8), y0, LX[o.l], o.y + speed * aZ - 22); if (!blocked(pts, o, aZ)) bolt = { o, pts }; } // aimed at where the block will be; later tries come in from further across the sky, around the blocks above
+      if (bolt) { o.zap = true; pre2 = preZ; wx.hits = (wx.hits || 0) + 1; break; }
+    }
+    if (!bolt && must) { cloudGlow(); wx.nextBolt = .5; return; } // no clear path to any of them yet: try again moments later // it becomes electrified the moment the bolt lands
   }
   for (let i = 0; i < 120 && !bolt; i++) { // find a channel that misses every block and both balls; later tries run straighter
     const xe = W * (.1 + Math.random() * .8), x0 = Math.min(W * .94, Math.max(W * .06, xe + (Math.random() - .5) * W * (i < 60 ? .5 : .15))), pts = boltPts(x0, y0, xe, H + 60, i < 60 ? .32 : .16); // runs right off the bottom, to the ground below the screen
