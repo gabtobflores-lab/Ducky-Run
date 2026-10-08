@@ -82,7 +82,7 @@
   .btn.alt:active{box-shadow:0 0 0 1.5px rgba(43,45,66,.2) inset}
 
   /* pause button */
-  #pbtn{position:fixed;top:max(14px,env(safe-area-inset-top));left:14px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.72);box-shadow:0 4px 12px rgba(43,45,66,.10);display:none;align-items:center;justify-content:center;gap:4px;cursor:pointer;z-index:5;transition:transform .2s var(--spring)}
+  #pbtn{position:fixed;top:max(14px,env(safe-area-inset-top));left:14px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.6);background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.28));-webkit-backdrop-filter:blur(18px) saturate(190%);backdrop-filter:blur(18px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 1px rgba(255,255,255,.18),0 6px 18px rgba(20,24,40,.14);display:none;align-items:center;justify-content:center;gap:4px;cursor:pointer;z-index:5;transition:transform .2s var(--spring)}
   #pbtn i{display:block;width:4px;height:14px;border-radius:2px;background:var(--ink-2)}
   #pbtn:active{transform:scale(.9)}
 
@@ -98,6 +98,16 @@
   #wxnote small{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
   #wxnote.dark{color:#f5f5f7;background:rgba(40,42,56,.5);border-color:rgba(255,255,255,.16);box-shadow:0 4px 14px rgba(0,0,0,.18),0 1px 0 rgba(255,255,255,.14) inset}
   #wxnote.dark .ic{background:rgba(255,255,255,.1)} #wxnote.dark svg{stroke:rgba(245,245,247,.82)} #wxnote.dark small{color:rgba(235,235,245,.5)}
+  /* liquid glass: the scene behind is blurred and its colour lifted; a bright hairline rim and a soft highlight along the top, like Apple's glass */
+  #wxnote{background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.34));border-color:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.2),0 8px 24px rgba(20,24,40,.14)}
+  #wxnote.dark{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.07));border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.22)}
+  body.night #pbtn{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));border-color:rgba(255,255,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 6px 18px rgba(0,0,0,.24)} body.night #pbtn i{background:rgba(245,245,247,.9)}
+  #banner{position:fixed;left:50%;top:0;z-index:4;pointer-events:none;opacity:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 34px 13px;border-radius:26px;white-space:nowrap;
+    background:linear-gradient(180deg,rgba(255,255,255,.58),rgba(255,255,255,.3));border:1px solid rgba(255,255,255,.62);-webkit-backdrop-filter:blur(26px) saturate(200%);backdrop-filter:blur(26px) saturate(200%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.92),inset 0 -1px 1px rgba(255,255,255,.2),0 12px 32px rgba(20,24,40,.16);will-change:transform,opacity}
+  #banner b{font:900 40px/1 -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif;letter-spacing:-.01em;background:linear-gradient(180deg,#f7b955,#e3922a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #banner small{font:800 12px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.16em;color:rgba(43,45,66,.55)}
+  body.night #banner{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.1));border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 12px 32px rgba(0,0,0,.26)} body.night #banner small{color:rgba(235,235,245,.62)}
   /* best score card */
   .best{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 18px 11px}
   .best span{font-size:11px;font-weight:900;letter-spacing:.2em;background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -136,6 +146,7 @@
 </div>
 
 <button id="pbtn" aria-label="Pause"><i></i><i></i></button>
+<div id="banner" aria-live="polite"><b></b><small></small></div>
 <div id="wxnote" role="status" aria-live="polite"></div>
 <div class="screen" id="pause">
   <h1 class="logo"><span class="c">PAUSED</span></h1>
@@ -729,8 +740,8 @@ const AURGL = (() => { let cvg = null, gl = null, prog = null, uRes, uT, failed 
   const FS = `precision highp float;uniform vec2 res;uniform float t;
 float h1(float n){return fract(sin(n)*43758.5453);}
 float n1(float x){float i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(h1(i),h1(i+1.),f);}
-float rays(float x,float s){return .5*n1(x*5.+s+t*.18)+.32*n1(x*13.+s*2.-t*.26)+.18*n1(x*31.+s*3.+t*.4);}
-vec3 ramp(float k){vec3 c0=vec3(.62,.98,1.),c1=vec3(.24,.8,1.),c2=vec3(.1,.56,.56),c3=vec3(.05,.28,.26);return k<.15?mix(c0,c1,k/.15):k<.5?mix(c1,c2,(k-.15)/.35):mix(c2,c3,clamp((k-.5)/.5,0.,1.));}
+float rays(float x,float s){return .46*n1(x*5.+s+t*.42)+.3*n1(x*13.+s*2.-t*.6)+.16*n1(x*31.+s*3.+t*.95)+.08*n1(x*78.-t*1.6);}
+vec3 ramp(float k){vec3 c0=vec3(.66,1.,1.),c1=vec3(.24,.82,1.),c2=vec3(.1,.6,.56),c3=vec3(.06,.3,.3);return k<.15?mix(c0,c1,k/.15):k<.5?mix(c1,c2,(k-.15)/.35):mix(c2,c3,clamp((k-.5)/.5,0.,1.));}
 vec3 curtain(vec2 p,float asp,float hem,float len,float tilt,float s,vec3 below,float bl){
   float d=hem-p.y;float x0=p.x*asp-d*tilt;float r=pow(rays(x0,s),2.2);float L=len*(.45+1.3*r);
   float sm=smoothstep(-.06,.05,d);vec3 c=ramp(clamp(d/(L*2.4),0.,1.))*sm*exp(-max(d,0.)/L)*(.1+2.4*r); /* soft, out of focus: no hard hem */
@@ -740,7 +751,7 @@ void main(){vec2 p=gl_FragCoord.xy/res;p.y=1.-p.y;float asp=res.x/res.y;
   float hot=1.+3.2*exp(-pow((p.x-.42)/.2,2.)-pow((p.y-.6)/.17,2.)); /* the bright cyan heart, just left of centre */
   vec3 c=curtain(p,asp,hem,.2,.2,0.,vec3(.16,.34,1.),.16)*hot;
   c+=.5*curtain(vec2(p.x-.14,p.y),asp,hem-.18,.16,.24,7.,vec3(.08,.3,.7),.08);
-  float lh=1.02-.5*p.x+.02*sin(p.x*9.+t*.25);c+=curtain(p,asp,lh,.22,.16,13.,vec3(.2,.28,1.),.1)*vec3(.42,.68,1.25)*smoothstep(.48,.22,p.x)*.85;
+  float lh=1.02-.5*p.x+.03*sin(p.x*7.+t*.55)+.01*sin(p.x*19.-t*.9);c+=curtain(p,asp,lh,.22,.16,13.,vec3(.2,.28,1.),.1)*vec3(.42,.68,1.25)*smoothstep(.48,.22,p.x)*.85;
   c*=1.-.55*exp(-pow((p.x-.58)/.16,2.)-pow((p.y-.8)/.06,2.));
   c=1.-exp(-c*1.8);c+=(h1(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))-.5)/255.;gl_FragColor=vec4(c,1.);}`;
   const init = () => { cvg = document.createElement('canvas'); gl = cvg.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: true }); if (!gl) return false;
@@ -980,7 +991,7 @@ const SUNSTAR = () => sprite('sunstar3', 256, 256, (g) => { const c = 128, tmp =
 const HALO = () => sprite('halo22', 512, 512, (g) => { const c = 256, rg = g.createRadialGradient(c, c, 0, c, c, 256);
   rg.addColorStop(0, 'rgba(255,255,255,0)'); rg.addColorStop(.68, 'rgba(255,255,255,0)'); rg.addColorStop(.74, 'rgba(255,196,170,.45)'); rg.addColorStop(.79, 'rgba(255,252,236,.55)'); rg.addColorStop(.85, 'rgba(176,206,255,.4)'); rg.addColorStop(.95, 'rgba(176,206,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 512, 512); }); // warm inside, cool outside
 function sunGlow(x, y, k, rays) { // the sun as a camera records it: a blown-out white disc, a steep glow falling off smoothly at several scales, a faint cool veiling glare over the sky
-  if (k < .01) return;
+  if (k < .01 || skyE > 0) return; /* the GPU sky draws the sun */
   ctx.save(); ctx.globalCompositeOperation = 'screen';
   if (!skyE) lowres(() => {
     ctx.globalAlpha = .12 * k; ctx.drawImage(softBlob('225,236,255'), x - W * 1.3, y - W * 1.3, W * 2.6, W * 2.6); // veiling glare: scattered light across the whole lens
@@ -1051,42 +1062,52 @@ vec3 starfield(vec2 P,float k){vec3 c=vec3(0.);vec2 g=P*130.;vec2 id=floor(g);fl
   g=P*260.;id=floor(g);h=hs(id+7.);if(h>.975){vec2 f=fract(g)-.5;c+=vec3(.85,.9,1.)*exp(-dot(f,f)*34.)*.45;}return c*k;}
 `;
   const FS = {
-    clouds: `uniform vec3 cTop,cMid,cBot,cd,cl,glowC,hazeC;uniform vec4 cov,moon,glow,bolt;uniform vec2 drift;uniform float scl,stars,mw,cloudA,hazeK,shim,rain;uniform sampler2D tex;
+    clouds: `uniform vec3 cTop,cMid,cBot,cd,cl,glowC,hazeC;uniform vec4 cov,moon,glow,bolt;uniform vec2 drift;uniform float scl,stars,mw,cloudA,hazeK,shim,rain;uniform vec4 sun,band;uniform sampler2D tex;
 float rainL(vec2 uv,float asp,float dens,float spd,float sd){vec2 p=vec2((uv.x*asp+uv.y*.1)*dens,uv.y*dens*.09-t*spd);float id=floor(p.x),r=hs(vec2(id,sd));float y=fract(p.y+r*7.),len=.3+.4*r;
   float seg=smoothstep(0.,len*.25,y)*(1.-smoothstep(len*.7,len,y));float fx=fract(p.x)-.5-(r-.5)*.5;return seg*smoothstep(.1,0.,abs(fx))*step(.4,hs(vec2(id,sd+3.)));}
-vec4 layer(vec2 P,vec2 uv,float s,float sp,float sd){vec2 p=P*s+drift*t*sp+sd;vec2 w=vec2(fbm3(p*.55+vec2(t*.018,0.)),fbm3(p*.55+vec2(5.2,1.3)-vec2(t*.013,0.)));
-  float f=fbm(p+w*1.3),f2=fbm(p+w*1.3+vec2(.03,-.16));float c=clamp((uv.y-cov.y)/(cov.x-cov.y),0.,1.);c=c*c*(3.-2.*c)*cov.z;
+vec4 layer(vec2 P,vec2 uv,float s,float sp,float sd){vec2 p=P*s+drift*t*sp+sd;vec2 w=vec2(fbm3(p*.55+vec2(t*.06,t*.02)),fbm3(p*.55+vec2(5.2,1.3)-vec2(t*.045,-t*.03)));vec2 m=vec2(t*.035,-t*.05)*sp; /* the clouds billow and change shape as they drift */
+  float f=fbm(p+w*1.5+m),f2=fbm(p+w*1.5+m+vec2(.03,-.16));float c=clamp((uv.y-cov.y)/(cov.x-cov.y),0.,1.);c=c*c*(3.-2.*c)*cov.z+band.z*exp(-pow((uv.y-band.x)/band.y,2.));
   float d=smoothstep(1.-c-cov.w,1.-c+cov.w,f);float lit=clamp((f-f2)*4.5+.55,0.,1.);vec3 col=mix(cd,cl,lit);return vec4(col,d);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3.)*.0016*shim*smoothstep(.45,1.,uv.y);
   vec3 sky=uv.y<.55?mix(cTop,cMid,uv.y/.55):mix(cMid,cBot,(uv.y-.55)/.45);sky+=hazeC*hazeK*smoothstep(.55,1.,uv.y);
   vec2 P=vec2(uv.x*asp,uv.y);vec2 G=vec2(glow.x*asp,glow.y);float gd=length(P-G);sky+=glowC*glow.z*exp(-gd*gd*5.);
   if(stars>0.)sky+=starfield(P,stars);
+  if(sun.z>0.){vec2 d=P-vec2(sun.x*asp,sun.y);float r=length(d),an=atan(d.y,d.x); /* the sun as a phone camera sees it, after Apple's sunny sky */
+    float core=exp(-r*r*1400.)*1.5+exp(-r*14.)*.62+exp(-r*4.5)*.3+exp(-r*1.4)*.12;
+    float sp=(pow(abs(cos(an*3.+.35+t*.03)),70.)*.28+pow(abs(cos(an*3.+1.4-t*.02)),110.)*.16)*exp(-r*15.)*(.85+.15*sin(t*1.7)); /* short, soft spikes */
+    float R=.34,ring=exp(-pow((r-R)/.035,2.))*.035;vec3 halo=vec3(1.,.66,.56)*exp(-pow((r-R+.012)/.012,2.))*.05+vec3(.62,.8,1.)*exp(-pow((r-R-.014)/.016,2.))*.045+vec3(ring); /* a faint 22-degree halo, warm inside, cool outside */
+    vec2 C=vec2(.5*asp,.48),O=vec2(sun.x*asp,sun.y)+(C-vec2(sun.x*asp,sun.y))*1.3;float orb=smoothstep(.034,.026,length(P-O))*.035+exp(-length(P-O)*40.)*.025;
+    sky+=(vec3(1.,.98,.93)*(core+sp)+halo+vec3(.8,.88,1.)*orb)*sun.z;}
   if(mw>0.){float v=(P.x-.55*asp)*.86+(P.y-.6)*.5;float band=exp(-v*v*28.)*(.45+.55*fbm3(P*5.+3.));sky+=vec3(.6,.5,.85)*band*mw*.3;}
-  if(moon.w>0.){vec2 q=(P-vec2(moon.x*asp,moon.y))/moon.z;float r=length(q);float o=max(r-1.,0.);sky+=vec3(.82,.76,.98)*(exp(-o*1.2)*.2+exp(-o*4.5)*.28)*moon.w;
-    if(r<1.02){vec3 tc=texture2D(tex,q*.5*.9875+.5).rgb;float term=-.42*sqrt(max(0.,1.-q.y*q.y));float lt=smoothstep(-.16,.16,q.x-term);float edge=smoothstep(1.,.975,r);
-      vec3 mc=mix(tc*1.22+.03,sky,.14);sky=mix(sky,mc,edge*(.04+.96*lt)*moon.w);}}
+  float ml=0.;if(moon.w>0.){vec2 q=(P-vec2(moon.x*asp,moon.y))/moon.z;float r=length(q);float o=max(r-1.,0.); /* the moon: luminous, wrapped in its own glow, lighting the air and clouds around it */
+    float term0=-.42*sqrt(max(0.,1.-min(q.y*q.y,1.)));float side=smoothstep(-.6,.4,q.x-term0); /* glow comes from the lit side, never fills the dark limb */
+    sky+=vec3(.86,.8,1.)*(exp(-o*.55)*.1+exp(-o*1.8)*.2*(.3+.7*side)+exp(-o*6.)*.36*side*smoothstep(.96,1.04,r))*moon.w;sky+=vec3(.95,.8,1.)*exp(-pow((r-2.1)/.16,2.))*.05*moon.w; /* a faint ring where its light meets thin cloud */
+    ml=exp(-o*o*.5)*moon.w;
+    if(r<1.02){vec3 tc=texture2D(tex,q*.5*.9875+.5).rgb;float term=-.42*sqrt(max(0.,1.-q.y*q.y));float lt=smoothstep(-.18,.18,q.x-term);float edge=smoothstep(1.,.965,r);
+      vec3 mc=(1.-exp(-tc*2.9))*vec3(1.,.98,.95);mc+=vec3(.12,.1,.16)*pow(r,4.);mc=mix(mc,sky,.08);sky=mix(sky,mc,edge*(.05+.95*lt)*moon.w);}}
   vec4 far=layer(P,uv,scl*.62,.55,3.1),near=layer(P,uv,scl,1.,0.);vec3 lift=glowC*glow.z*1.4;
   float bd=length(P-vec2(bolt.x*asp,bolt.y));vec3 bl=vec3(.72,.8,1.)*bolt.z*exp(-bd*bd*7.);
-  far.rgb+=lift*exp(-gd*gd*3.)+bl*.8;near.rgb+=lift*exp(-gd*gd*3.)+bl;
+  far.rgb+=lift*exp(-gd*gd*3.)+bl*.8;near.rgb+=lift*exp(-gd*gd*3.)+bl;vec3 mlc=vec3(.95,.9,1.)*ml;far.rgb+=mlc*(.1+.35*(1.-far.a));near.rgb+=mlc*(.12+.45*(1.-near.a)); /* silver linings near the moon */
   sky=mix(sky,far.rgb,far.a*.72*cloudA);sky=mix(sky,near.rgb,near.a*cloudA);
   if(rain>0.)sky+=vec3(.82,.88,.98)*(rainL(uv,asp,70.,9.,1.)*.15+rainL(uv,asp,125.,6.5,2.)*.09)*rain*(1.+bolt.z*.8); /* the distant rain curtain */
   gl_FragColor=vec4(sky+dith(),1.);}`,
     fog: `void main(){vec2 uv=UV();vec2 p=vec2(uv.x*res.x/res.y,uv.y)*2.2;
-  vec2 q=vec2(fbm(p+vec2(t*.03,t*.008)),fbm(p+vec2(5.2,1.3)-vec2(t*.022,0.)));float f=fbm(p+1.6*q+vec2(t*.04,t*.01));
+  vec2 q=vec2(fbm(p+vec2(t*.07,t*.02)),fbm(p+vec2(5.2,1.3)-vec2(t*.055,-t*.02)));float f=fbm(p+1.8*q+vec2(t*.09,t*.025)); /* the fog churns and rolls */
   vec3 dark=vec3(.36,.4,.48),mid=vec3(.45,.49,.57),lite=vec3(.57,.61,.69);vec3 c=mix(dark,mid,smoothstep(.22,.55,f));c=mix(c,lite,smoothstep(.55,.88,f));
   c+=.05*exp(-pow(uv.x-.5,2.)*5.-pow(uv.y-.36,2.)*4.);c=mix(c,lite,.18*uv.y);gl_FragColor=vec4(c+dith(),1.);}`,
     aurora: `float h1(float n){return fract(sin(n)*43758.5453);}
 float n1(float x){float i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(h1(i),h1(i+1.),f);}
-float rays(float x,float s){return .5*n1(x*5.+s+t*.18)+.32*n1(x*13.+s*2.-t*.26)+.18*n1(x*31.+s*3.+t*.4);}
-vec3 ramp(float k){vec3 c0=vec3(.62,.98,1.),c1=vec3(.24,.8,1.),c2=vec3(.1,.56,.56),c3=vec3(.05,.28,.26);return k<.15?mix(c0,c1,k/.15):k<.5?mix(c1,c2,(k-.15)/.35):mix(c2,c3,clamp((k-.5)/.5,0.,1.));}
+float rays(float x,float s){return .46*n1(x*5.+s+t*.42)+.3*n1(x*13.+s*2.-t*.6)+.16*n1(x*31.+s*3.+t*.95)+.08*n1(x*78.-t*1.6);}
+vec3 ramp(float k){vec3 c0=vec3(.66,1.,1.),c1=vec3(.24,.82,1.),c2=vec3(.1,.6,.56),c3=vec3(.06,.3,.3);return k<.15?mix(c0,c1,k/.15):k<.5?mix(c1,c2,(k-.15)/.35):mix(c2,c3,clamp((k-.5)/.5,0.,1.));}
 vec3 curtain(vec2 p,float asp,float hem,float len,float tilt,float s,vec3 below,float bl){float d=hem-p.y;float x0=p.x*asp-d*tilt;float r=pow(rays(x0,s),2.2);float L=len*(.45+1.3*r);
   float sm=smoothstep(-.06,.05,d);vec3 c=ramp(clamp(d/(L*2.4),0.,1.))*sm*exp(-max(d,0.)/L)*(.1+2.4*r);c+=below*(1.-sm)*exp(min(d,0.)/bl)*(.12+1.6*r);return c;}
 void main(){vec2 p=UV();float asp=res.x/res.y;
   vec3 bg=p.y<.38?mix(vec3(.008,.024,.063),vec3(.016,.055,.125),p.y/.38):p.y<.7?mix(vec3(.016,.055,.125),vec3(.05,.12,.3),(p.y-.38)/.32):mix(vec3(.05,.12,.3),vec3(.18,.19,.58),(p.y-.7)/.3);
   bg+=starfield(vec2(p.x*asp,p.y),.45)*(1.-p.y);
-  float hem=.8-.38*p.x+.016*sin(p.x*6.+t*.2)+.007*sin(p.x*15.-t*.33);float hot=1.+3.2*exp(-pow((p.x-.42)/.2,2.)-pow((p.y-.6)/.17,2.));
+  float hem=.8-.38*p.x+.03*sin(p.x*5.+t*.45)+.014*sin(p.x*13.-t*.75)+.006*sin(p.x*29.+t*1.2); /* the curtain sways and ripples */
+  float hx=.42+.06*sin(t*.17),hy=.6+.03*sin(t*.13+1.);float hot=(1.+3.2*exp(-pow((p.x-hx)/.21,2.)-pow((p.y-hy)/.17,2.)))*(.9+.1*sin(t*.6));
   vec3 c=curtain(p,asp,hem,.2,.2,0.,vec3(.16,.34,1.),.16)*hot;c+=.5*curtain(vec2(p.x-.14,p.y),asp,hem-.18,.16,.24,7.,vec3(.08,.3,.7),.08);
-  float lh=1.02-.5*p.x+.02*sin(p.x*9.+t*.25);c+=curtain(p,asp,lh,.22,.16,13.,vec3(.2,.28,1.),.1)*vec3(.42,.68,1.25)*smoothstep(.48,.22,p.x)*.85;
+  float lh=1.02-.5*p.x+.03*sin(p.x*7.+t*.55)+.01*sin(p.x*19.-t*.9);c+=curtain(p,asp,lh,.22,.16,13.,vec3(.2,.28,1.),.1)*vec3(.42,.68,1.25)*smoothstep(.48,.22,p.x)*.85;
   c*=1.-.55*exp(-pow((p.x-.58)/.16,2.)-pow((p.y-.8)/.06,2.));c=1.-exp(-c*1.8);gl_FragColor=vec4(bg+c*(1.-bg)+dith(),1.);}`
   };
   const init = () => { gl = cvs.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' }); if (!gl) return false;
@@ -1116,17 +1137,17 @@ void main(){vec2 p=UV();float asp=res.x/res.y;
 })();
 const toUV = (x, y) => [(offX + x * scale) / cv.width, (offY + y * scale) / cv.height]; // game coordinates to screen fractions, for the sky shaders
 const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, cloud shadow and light, and where the clouds gather
-  storm: () => ({ cTop: '58,70,92', cMid: '80,94,116', cBot: '108,122,142', cd: '72,84,106', cl: '172,182,200', cov: [0, .66, .9, .16], scl: 2.1, drift: [.02, 0], cloudA: 1, rain: 1 }),
-  hail: () => ({ cTop: '92,110,142', cMid: '114,134,166', cBot: '134,154,186', cd: '98,114,142', cl: '210,220,236', cov: [0, .6, .85, .18], scl: 2.2, drift: [.03, 0], cloudA: 1 }),
-  wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '118,142,188', cl: '255,255,255', cov: [-.04, .76, .96, .1], scl: 1.6, drift: [.07 * windDir, 0], cloudA: 1 }),
-  heat: () => ({ cTop: '36,90,174', cMid: '66,128,206', cBot: '150,176,214', hazeC: '120,70,20', hazeK: .55, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .55], glowC: '255,246,232' }),
-  sun: () => { const q = clamp01(wx.t / WX.sun.dur); return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [...toUV(W * (.2 + q * .6), H * .19), .5], glowC: '255,250,238' }; },
-  meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .5, .16], scl: 1.8, drift: [.012, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
+  storm: () => ({ cTop: '58,70,92', cMid: '80,94,116', cBot: '108,122,142', cd: '72,84,106', cl: '172,182,200', cov: [0, .66, .9, .16], scl: 2.1, drift: [.05, 0], cloudA: 1, rain: 1 }),
+  hail: () => ({ cTop: '92,110,142', cMid: '114,134,166', cBot: '134,154,186', cd: '98,114,142', cl: '210,220,236', cov: [0, .6, .85, .18], scl: 2.2, drift: [.06, 0], cloudA: 1 }),
+  wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '118,142,188', cl: '255,255,255', cov: [-.04, .76, .96, .1], scl: 1.6, drift: [.1 * windDir, 0], cloudA: 1 }),
+  heat: () => ({ cTop: '36,90,174', cMid: '66,128,206', cBot: '150,176,214', hazeC: '120,70,20', hazeK: .55, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
+  sun: () => { const q = clamp01(wx.t / WX.sun.dur); return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [...toUV(W * (.2 + q * .6), H * .19), .35], glowC: '255,250,238', sun: [...toUV(W * (.2 + q * .6), H * .19), 1, 0] }; },
+  meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
 let skyE = 0; // how much of the screen the GPU sky covers right now (the 2D backdrop fades out as it rises)
 function drawSky() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U;
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0 }, cfg());
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], band: [0, 1, 0, 0] }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
   if (!SKYGL.draw(k === 'fog' || k === 'aurora' ? k : 'clouds', U)) return false;
@@ -1578,7 +1599,13 @@ function drawDivider(k) {
 // ---------- draw: frame ----------
 let shownScore = 0;
 let heatC = null;
+const bannerEl = document.getElementById('banner'); let bannerTxt = '', bannerOn = false, nightOn = false;
+function bannerUI(al, y, k) { // the speed-up banner as a real liquid-glass card over the scene
+  if (al <= .01) { if (bannerOn) { bannerEl.style.opacity = 0; bannerOn = false; } return; }
+  const tx = banner + '|' + level; if (tx !== bannerTxt) { bannerTxt = tx; bannerEl.firstChild.textContent = banner; bannerEl.lastChild.textContent = 'LEVEL ' + (level + 1); }
+  const cy = (offY + y * scale) / dpr, sc2 = scale / dpr; bannerEl.style.opacity = al; bannerEl.style.transform = `translate(-50%,${cy - 46 * sc2}px) scale(${sc2 * (.94 + .06 * k)})`; bannerOn = true; }
 function draw() {
+  { const n = state !== 'menu' && uiNight() > .5; if (n !== nightOn) { nightOn = n; document.body.classList.toggle('night', n); } } // glass tints to the sky
   ctx = mainCtx;
   const skyOn = drawSky();
   ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? 1 - skyE : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
@@ -1677,11 +1704,8 @@ function draw() {
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 80 + (i % 3) * 30); ctx.stroke();
     }
     const age = 1 - fxA, inK = ease(age / .18), outK = clamp01((age - .75) / .25);
-    ctx.save(); ctx.globalAlpha = inK * (1 - outK); ctx.translate(W / 2, 240 + (1 - inK) * -18 + outK * -10);
-    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.roundRect(-150, -48, 300, 92, 24); ctx.fill();
-    txt(banner, 0, 0, 46, '#e9a23b', 'center', 900); txt(`LEVEL ${level + 1}`, 0, 30, 16, 'rgba(43,45,66,.55)', 'center', 800);
-    ctx.restore();
-  }
+    bannerUI(inK * (1 - outK), 240 + (1 - inK) * -18 + outK * -10, inK);
+  } else bannerUI(0);
 
   // pause fog: a frosted liquid-glass sheet with a glossy lip; pink and cyan tints mirror each other
   const fogVis = resumeT > 0 || state === 'paused' ? 1 : clamp01(fogT / .8);
