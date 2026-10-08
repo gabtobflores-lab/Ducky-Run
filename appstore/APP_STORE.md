@@ -45,6 +45,7 @@ If "Mirror Drop" is already taken, use **Mirror Drop: Offline Arcade** (27 chara
 > • Normal mode with a final stretch to finish, or Infinite mode for high-score runs
 > • Two or three columns per side
 > • A best score for every combination
+> • Players and a leaderboard for everyone who shares your iPhone
 >
 > **Made with care**
 > Smooth, battery-friendly graphics tuned for iPhone, gentle animations that respect Reduce Motion, and a game that pauses itself the moment you leave.
