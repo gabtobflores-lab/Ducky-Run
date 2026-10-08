@@ -1104,36 +1104,29 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
   c+=.05*exp(-((uv.x-.5)*(uv.x-.5))*5.-((uv.y-.36)*(uv.y-.36))*4.);c=mix(c,lite,.18*uv.y);gl_FragColor=vec4(c+dith(),1.);}`,
     blurH: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
     blurV: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
-    comp: `uniform sampler2D tex;uniform sampler2D tex2;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 s=texture2D(tex,uv).rgb;vec3 b=texture2D(tex2,uv).rgb;vec3 c=s*.12+b*1.45;c=1.-exp(-c*1.1);gl_FragColor=vec4(c+dith(),1.);}`,
-    aurora: `/* Apple's aurora: many thin strands with dark gaps between them, teal-green on the left, a cyan hem, blue sweeping below */
-float strands(vec2 p,float asp,float density,float lean,float seed,float hemY,float bright){
-  float u=(p.x*asp-p.y*lean+t*.012*seed)*density;float id=floor(u),f=fract(u);
-  float r=hs(vec2(id,seed)),r2=hs(vec2(id+3.7,seed*1.3));
-  float w=exp(-pow((f-.5)/(.22+.3*r2),2.));                   /* one thin strand per column, varying width */
-  float d=hemY-p.y;                                             /* distance above the curtain's lower hem */
-  float body=smoothstep(-.03,.06,d)*exp(-max(d,0.)*(1.1+1.4*r2))*(.5+.5*r); /* brightest near the hem, fading up */
-  float hem=exp(-pow((p.y-hemY)/.05,2.))*.7;                  /* the bright hem itself */
-  float streak=.45+.55*vn(vec2(id*1.3+seed*5.,(hemY-p.y)*4.-t*.25));  /* strands break into lengths of light, not uniform stripes */
-  float shimmer=.55+.45*sin(t*(.8+1.6*r)+id*1.7+seed);
-  return (w*body*streak*shimmer+w*hem*.6)*bright;}
-vec3 colorAt(float x,float y){vec3 teal=vec3(.12,.92,.66),cyan=vec3(.36,.94,1.),blue=vec3(.22,.5,1.),white=vec3(.72,1.,1.);
-  vec3 c=mix(teal,cyan,smoothstep(.22,.5,x));c=mix(c,blue,smoothstep(.62,.9,x+.1*sin(y*5.)));return mix(c,white,smoothstep(.2,.0,abs(y-.85))*.25);}
+    comp: `uniform sampler2D tex;uniform sampler2D tex2;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 s=texture2D(tex,uv).rgb;vec3 b=texture2D(tex2,uv).rgb;vec3 c=s*.7+b*.45;gl_FragColor=vec4(c+dith(),1.);}`,
+    aurora: `/* Apple's aurora, by its principles: layered translucent ribbons at different depths, continuous green-cyan-purple-pink gradients, very soft edges, slow flow, subdued light over a near-black blue sky, bright spots placed unevenly */
+vec3 grad(float k){vec3 g=vec3(.16,.95,.62),c=vec3(.2,.82,1.),p=vec3(.52,.36,.95),k2=vec3(.95,.42,.78);  /* green at the hem, cyan, purple, then pink at the top */
+  return k<.33?mix(g,c,k/.33):k<.66?mix(c,p,(k-.33)/.33):mix(p,k2,(k-.66)/.34);}
+vec3 ribbon(vec2 p,float asp,float base,float amp,float freq,float spd,float seed,float height,float bright){
+  float x=p.x*asp;
+  float y0=base-.28*(p.x-.5)+amp*sin(x*freq+t*spd+seed)+amp*.55*sin(x*freq*2.3-t*spd*1.3+seed*2.)+.06*(fbm3(vec2(x*.9+t*.02,seed))-.5); /* the ribbon's flowing lower edge */
+  float d=y0-p.y;                                                    /* height above that edge */
+  float body=smoothstep(-.035,.03,d)*exp(-max(d,0.)/height);         /* rises from a soft hem and fades upward: no outline anywhere */
+  float rays=.25+.75*pow(fbm3(vec2(x*16.+seed*3.+d*2.,d*.8-t*.05)),1.6); /* visible rays rising through the light */            /* faint vertical texture inside the light */
+  float vary=.35+.65*smoothstep(.25,.75,fbm3(vec2(x*1.4-t*.025,seed*1.7)));  /* uneven brightness along the ribbon: organic, never repeating */
+  float k=clamp(d/(height*2.6),0.,1.);
+  return grad(k)*body*rays*vary*bright;}
 void main(){vec2 p=UV();float asp=res.x/res.y;
-  vec3 bg=mix(vec3(.008,.02,.045),vec3(.03,.075,.17),smoothstep(0.,.55,p.y));bg=mix(bg,vec3(.12,.18,.52),smoothstep(.6,1.,p.y));
-  bg+=starfield(vec2(p.x*asp,p.y),.35)*(1.-p.y);
-  float hemA=.62-.22*p.x+.06*sin(p.x*3.1+t*.22)+.03*sin(p.x*7.+t*.4);      /* main curtain: a wave across the width */
-  float hemB=.62+.1*sin(p.x*2.3-t*.18);                             /* second, lower curtain on the left */
-  float hemC=.36+.05*sin(p.x*4.+t*.3);                              /* faint high fold on the right */
-  float clumpA=smoothstep(.38,.68,fbm3(vec2(p.x*2.2-p.y*.7+t*.02,1.3)));       /* light gathers in a few large, soft clumps with dark sky between */
-  float a=strands(p,asp,30.,.15,1.,hemA,1.35)*smoothstep(.02,.22,p.x+.08)*(1.-smoothstep(.7,.95,p.x)*.4)*(.15+.85*clumpA);
-  float clumpB=smoothstep(.35,.65,fbm3(vec2(p.x*2.6+p.y*.5-t*.018,7.7)));
-  float b=strands(p,asp,26.,.07,2.,hemB,1.25)*(1.-smoothstep(.45,.75,p.x))*(.2+.8*clumpB);
-  float c2=strands(p,asp,52.,.07,3.,hemC,.45)*smoothstep(.55,.9,p.x);
-  float back=strands(p,asp,30.,.15,7.,hemA+.12,.5);
-  vec3 col=vec3(.12,.36,.95)*back+colorAt(p.x,p.y)*a+vec3(.1,.62,1.)*b*.85+colorAt(p.x+.25,p.y)*c2;
-  col+=vec3(.25,.92,1.)*1.1*exp(-pow((p.x-.45)/.32,2.)-pow((p.y-hemA+.03)/.07,2.))+vec3(.7,1.,1.)*.3*exp(-pow((p.x-.42)/.16,2.)-pow((p.y-hemA+.02)/.035,2.)); /* the bright cyan heart, with a white-hot core */
-  col*=1.-.45*smoothstep(.3,0.,p.y);                              /* the top stays darker, as in Apple's */
-  col=1.-exp(-col*1.9);
+  vec3 bg=mix(vec3(.004,.012,.035),vec3(.02,.05,.13),smoothstep(0.,.7,p.y));bg=mix(bg,vec3(.05,.08,.22),smoothstep(.7,1.,p.y)); /* a near-black blue foundation */
+  bg+=starfield(vec2(p.x*asp,p.y),.3)*(1.-p.y*.8);
+  vec3 col=vec3(0.);
+  col+=ribbon(p,asp,.42,.1,1.9,.05,1.,.3,.3);   /* far: high, faint, slow */
+  col+=ribbon(p,asp,.52,.12,2.4,.07,4.,.34,.45);
+  col+=ribbon(p,asp,.63,.13,2.,.09,7.,.4,.85);   /* middle */
+  col+=ribbon(p,asp,.76,.14,1.5,.11,11.,.46,1.2);   /* near: low, bright, prominent */
+  col*=.85+.15*sin(t*.18+p.x*2.);                   /* the whole display breathes very slowly */
+  col=1.-exp(-col*1.25);                            /* soft rolloff: glow, never neon */
   gl_FragColor=vec4(bg+col*(1.-bg)+dith(),1.);}`
   };
   cvs.addEventListener('webglcontextlost', e => { e.preventDefault(); gl = null; failed = true; }); // iOS can drop GPU contexts under memory pressure: fall back cleanly
