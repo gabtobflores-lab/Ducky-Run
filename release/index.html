@@ -1422,21 +1422,23 @@ function cloudGlow() { // lightning inside the cloud: mostly a crawler racing si
 }
 function lightning() { // a strike from the cloud base: threads between the blocks to the floor; only now and then does one find a block
   const y0 = -30, st = strokes(), lead = .16 + Math.random() * .12, pre = .3 + Math.random() * .35, ahead = pre + lead; // born up inside the cloud deck: it brightens first, then the leader steps down
-  const cand = things.filter(o => o.k === 'b' && !o.elec && !o.zap && o.y > 40 && (BY - o.y) / speed > 1.9 + ahead); // only blocks still far from the balls when it lands, so it stays fair
-  let bolt = null;
-  if (cand.length && Math.random() < .22) {
+  const preZ = .2 + Math.random() * .12, aZ = preZ + lead; // a strike aimed at a block builds up a little quicker, so it can land while the block is still high
+  const react = .75, landOK = o => { const yl = o.y + speed * aZ; return yl > 70 && (BY - yl) / speed > react; }; // it lands on screen, and the charged block is still a fair distance from the balls
+  const cand = things.filter(o => o.k === 'b' && !o.elec && !o.zap && landOK(o));
+  let bolt = null, pre2 = pre;
+  if (cand.length && Math.random() < .33) {
     const o = cand[(Math.random() * cand.length) | 0];
-    for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y + speed * ahead - 22); if (!blocked(pts, o, ahead)) bolt = { o, pts }; } // aimed at where the block will be
-    if (bolt) o.zap = true; // it becomes electrified the moment the bolt lands
+    for (let i = 0; i < 10 && !bolt; i++) { const pts = boltPts(LX[o.l] + (Math.random() - .5) * 140, y0, LX[o.l], o.y + speed * aZ - 22); if (!blocked(pts, o, aZ)) bolt = { o, pts }; } // aimed at where the block will be
+    if (bolt) { o.zap = true; pre2 = preZ; } // it becomes electrified the moment the bolt lands
   }
   for (let i = 0; i < 120 && !bolt; i++) { // find a channel that misses every block and both balls; later tries run straighter
     const xe = W * (.1 + Math.random() * .8), x0 = Math.min(W * .94, Math.max(W * .06, xe + (Math.random() - .5) * W * (i < 60 ? .5 : .15))), pts = boltPts(x0, y0, xe, H + 60, i < 60 ? .32 : .16); // runs right off the bottom, to the ground below the screen
     if (!blocked(pts, null, ahead) && pts.every(([x]) => x > 6 && x < W - 6)) bolt = { pts }; // stays on screen the whole way down
   }
   if (!bolt) { cloudGlow(); wx.nextBolt = .6 + Math.random() * .6; return; } // nowhere clear to land: it stays in the cloud this time, and tries again shortly
-  Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o, ahead)), t: 0, pre, lead, st, dur: pre + lead + st[st.length - 1].t + .55 });
+  const pz = bolt.o ? pre2 : pre; Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o, pz + lead)), t: 0, pre: pz, lead, st, dur: pz + lead + st[st.length - 1].t + .55 });
   wx.bolt = bolt; wx.flash = 1;
-  const at = pre + lead; if (bolt.o) { setTimeout(() => beep(1500, .12, 'square', .03, -1100), at * 1000); thunder(at + .05, .1, 2.4); } else thunder(at + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
+  const at = bolt.pre + lead; if (bolt.o) { setTimeout(() => beep(1500, .12, 'square', .03, -1100), at * 1000); thunder(at + .05, .1, 2.4); } else thunder(at + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
 }
 function flashK(b) { // brightness after the leader: each stroke flares and decays fast
   const s0 = b ? (b.pre || 0) + b.lead : 0; if (!b || b.t < s0) return 0; const tt = b.t - s0; let k = 0;
