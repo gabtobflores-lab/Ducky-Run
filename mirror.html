@@ -1154,7 +1154,7 @@ void main(){vec2 p=UV();float asp=res.x/res.y;
 `
   };
   cvs.addEventListener('webglcontextlost', e => { e.preventDefault(); gl = null; failed = true; }); // iOS can drop GPU contexts under memory pressure: fall back cleanly
-  cvs.addEventListener('webglcontextrestored', () => { gl = null; failed = false; for (const k in P) delete P[k]; texOK = false; tex = null; fldT = null; fldHi = false; });
+  cvs.addEventListener('webglcontextrestored', () => { gl = null; failed = false; for (const k in P) delete P[k]; texOK = false; tex = null; fldT = null; fldHi = false; TS = TT = TU = null; });
   const init = () => { gl = cvs.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true, /* Safari may otherwise show a blank black buffer on any frame the sky is not redrawn (pause, app switch) */ powerPreference: 'high-performance' }); if (!gl) return false;
     buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW); return true; };
   const prog = name => { if (P[name] !== undefined) return P[name];

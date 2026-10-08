@@ -2,6 +2,8 @@
 
 Everything you need is in the **`release/`** folder. It is the finished game as a web app: it installs to the iPhone home screen with its own icon, opens full screen like a native app, and keeps working offline once it has been opened.
 
+**No internet needed.** The game never goes online: every image, effect and line of code is inside `index.html`. Once someone has opened your link a single time (or added it to their home screen), it opens and plays with no connection at all, even in aeroplane mode. The App Store version from Option 2 is offline from the start.
+
 | File | What it is |
 |---|---|
 | `index.html` | The game |

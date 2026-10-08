@@ -12,7 +12,7 @@ python3 - "$out/index.html" <<'PY'
 import sys
 s = open('mirror.html').read()
 s = s.replace('<title>Mirror Drop</title>', '<title>Mirror Drop</title>\n<link rel="manifest" href="manifest.webmanifest">', 1)
-s = s.replace('</body>', "<script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});</script>\n</body>", 1)
+s = s.replace('</body>', "<script>if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});</script>\n</body>", 1)
 open(sys.argv[1], 'w').write(s)
 PY
 
