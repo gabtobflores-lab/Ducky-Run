@@ -19,7 +19,8 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;height:100dvh;background:var(--paper);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","SF Pro Display",system-ui,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
-  canvas#c{display:block;width:100%;height:100%}
+  canvas#sky{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
+  canvas#c{position:relative;display:block;width:100%;height:100%}
   button{font:inherit;color:inherit}
 
   /* screens + transitions */
@@ -120,6 +121,7 @@
 </style>
 </head>
 <body>
+<canvas id="sky" aria-hidden="true"></canvas>
 <canvas id="c"></canvas>
 
 <div class="screen" id="menu">
@@ -642,9 +644,9 @@ const SEEDS = Array.from({ length: 24 }, () => ({ x: Math.random(), y: Math.rand
 // uneven, drifting atmosphere: many large soft patches instead of one flat tint, so the scene changes like real air
 // soft weather layers render into a half-resolution buffer and are scaled up once: they are blurry by nature, so this is invisible but much cheaper
 let lrC = null, lrX = null; const lrScale = () => qLevel ? .4 : .5;
-function lowres(fn) {
+function lowres(fn, sc) {
   if (ctx === lrX) return fn(); // already inside a low-res pass
-  const LR = lrScale(), w = Math.ceil(W * LR) + 2, h = Math.ceil(H * LR) + 2;
+  const LR = sc || lrScale(), w = Math.ceil(W * LR) + 2, h = Math.ceil(H * LR) + 2;
   if (!lrC || lrC.width !== w || lrC.height !== h) { lrC = document.createElement('canvas'); lrC.width = w; lrC.height = h; lrX = lrC.getContext('2d'); }
   lrX.setTransform(1, 0, 0, 1, 0, 0); lrX.clearRect(0, 0, w, h); lrX.setTransform(LR, 0, 0, LR, 0, 0);
   const prev = ctx; ctx = lrX; try { fn(); } finally { ctx = prev; }
@@ -826,7 +828,9 @@ const MOON = () => sprite("moon19", 768, 768, (g) => { // the full moon as Apple
     const e = Math.min(1, (1 - Math.sqrt(r2)) * R * .9), q = i * 4; const bb = Math.pow(b, 1.25) * 236; d[q] = bb; d[q + 1] = bb * .99; d[q + 2] = bb * .985; /* a little more contrast, as in the photo */ d[q + 3] = 255 * e; } // cool neutral grey
   g.putImageData(img, 0, 0);
 });
-setTimeout(() => { try { MOONG(); } catch (e) {} }, 1200); // build it once while the menu is up, so the shower never stutters
+setTimeout(() => { const jobs = [() => SKYGL.warm(), () => rainTile(), () => { for (let q = 0; q < 6; q++) rainStreak(q); }, () => glassFilm(0), () => glassFilm(1), () => beadSprite(), () => dropSprite(), () => ICE(), () => hailWake(), () => frost(), () => SUNSTAR(), () => HALO(),
+  ...[0, 1, 2, 3].map(i => () => sheet('fogp' + i, 512, 180, '140,148,164', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '166,174,190' }))];
+  const next = () => { const j = jobs.shift(); if (!j) return; try { j(); } catch (e) {} setTimeout(next, 60); }; next(); }, 900); // one piece at a time, so the menu stays smooth // build it once while the menu is up, so the shower never stutters
 const MET = [], TRAINS = []; let metT = 0, metFlash = 0;
 function meteors(rate, a) { // Apple-style shower: meteors glide from one radiant, each a luminous streak with a soft bloom; bright ones leave a glow that slowly fades
   const dt = Math.min(.05, Math.max(0, t - metT)); metT = t; metFlash = Math.max(0, metFlash - dt * 1.2);
@@ -947,7 +951,7 @@ function atmos(rgb, al, o = {}) { lowres(() => {
 const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
 let paneC = null;
 function glassPane() { // a pane of frosted glass between the sky and the game: what lies behind is softly blurred and lifted; a hairline edge catches the light
-  const k = { meteor: .06, heat: .6, sun: .55, hail: .3 }[wx.kind]; if (!k || wx.a < .02 || qLevel > 1) return; const A = k * wx.a * wx.a * (3 - 2 * wx.a);
+  const k = { meteor: .06, heat: .6, sun: .55, hail: .3 }[wx.kind]; if (!k || wx.a < .02 || qLevel > 1 || skyE > 0) return; const A = k * wx.a * wx.a * (3 - 2 * wx.a);
   const w = Math.max(1, cv.width >> 3), h = Math.max(1, cv.height >> 3); if (!paneC || paneC.width !== w || paneC.height !== h) { paneC = document.createElement('canvas'); paneC.width = w; paneC.height = h; }
   const px = paneC.getContext('2d'); px.imageSmoothingQuality = 'medium'; px.drawImage(cv, 0, 0, w, h);
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingQuality = 'medium'; ctx.globalAlpha = A; ctx.drawImage(paneC, 0, 0, cv.width, cv.height); ctx.restore(); // frosted: the scene behind goes soft
@@ -978,12 +982,12 @@ const HALO = () => sprite('halo22', 512, 512, (g) => { const c = 256, rg = g.cre
 function sunGlow(x, y, k, rays) { // the sun as a camera records it: a blown-out white disc, a steep glow falling off smoothly at several scales, a faint cool veiling glare over the sky
   if (k < .01) return;
   ctx.save(); ctx.globalCompositeOperation = 'screen';
-  lowres(() => {
+  if (!skyE) lowres(() => {
     ctx.globalAlpha = .12 * k; ctx.drawImage(softBlob('225,236,255'), x - W * 1.3, y - W * 1.3, W * 2.6, W * 2.6); // veiling glare: scattered light across the whole lens
     ctx.globalAlpha = .26 * k; ctx.drawImage(softBlob('255,244,226'), x - W * .55, y - W * .55, W * 1.1, W * 1.1);
     ctx.globalAlpha = .45 * k; ctx.drawImage(softBlob('255,250,240'), x - W * .2, y - W * .2, W * .4, W * .4);
   });
-  lowres(() => { const hr = W * .62; ctx.globalAlpha = .55 * k; ctx.drawImage(HALO(), x - hr, y - hr, hr * 2, hr * 2); // the faint halo ring around the sun
+  (skyE ? f => f() : lowres)(() => { const hr = W * .62; ctx.globalAlpha = .55 * k; ctx.drawImage(HALO(), x - hr, y - hr, hr * 2, hr * 2); // the faint halo ring around the sun
     const gx = x + (W * .5 - x) * 1.25, gy = y + (H * .42 - y) * 1.25, gr = W * .05; ctx.globalAlpha = .22 * k; ctx.drawImage(softBlob('220,232,255'), gx - gr, gy - gr, gr * 2, gr * 2); }); // one soft lens orb
   const S = W * .5; ctx.globalAlpha = k; ctx.save(); ctx.translate(x, y); ctx.rotate(t * .02); ctx.drawImage(SUNSTAR(), -S / 2, -S / 2, S, S); ctx.restore(); // a soft star of light that turns very slowly
   ctx.restore();
@@ -1032,12 +1036,109 @@ function drawWindRibbons() { // drawn after the air warp so the ribbons stay per
       ctx.beginPath(); ctx.ellipse(X, y, 1.3 + sd.k, .8, t * 1.2 + k, 0, 7); ctx.fill(); }
   }
 }
+
+// ---------- the sky engine: every event's sky is painted on the GPU, on its own canvas behind the game, the way Apple renders Weather ----------
+const SKYGL = (() => {
+  const cvs = document.getElementById('sky'); let gl = null, failed = false, buf = null, tex = null, texOK = false; const P = {};
+  const COMMON = `precision highp float;uniform vec2 res;uniform float t;
+float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1,0)),f.x),mix(hs(i+vec2(0,1)),hs(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int k=0;k<5;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
+float fbm3(vec2 p){float v=0.,a=.5;for(int k=0;k<3;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v/.875;}
+vec2 UV(){vec2 uv=gl_FragCoord.xy/res;uv.y=1.-uv.y;return uv;}
+float dith(){return (hs(gl_FragCoord.xy+fract(t*7.))-.5)/255.;}
+vec3 starfield(vec2 P,float k){vec3 c=vec3(0.);vec2 g=P*130.;vec2 id=floor(g);float h=hs(id);if(h>.982){vec2 f=fract(g)-.5;c+=vec3(1.)*exp(-dot(f,f)*30.)*(h-.982)/.018*(.65+.35*sin(t*(1.3+h*3.)+h*50.));}
+  g=P*260.;id=floor(g);h=hs(id+7.);if(h>.975){vec2 f=fract(g)-.5;c+=vec3(.85,.9,1.)*exp(-dot(f,f)*34.)*.45;}return c*k;}
+`;
+  const FS = {
+    clouds: `uniform vec3 cTop,cMid,cBot,cd,cl,glowC,hazeC;uniform vec4 cov,moon,glow,bolt;uniform vec2 drift;uniform float scl,stars,mw,cloudA,hazeK,shim,rain;uniform sampler2D tex;
+float rainL(vec2 uv,float asp,float dens,float spd,float sd){vec2 p=vec2((uv.x*asp+uv.y*.1)*dens,uv.y*dens*.09-t*spd);float id=floor(p.x),r=hs(vec2(id,sd));float y=fract(p.y+r*7.),len=.3+.4*r;
+  float seg=smoothstep(0.,len*.25,y)*(1.-smoothstep(len*.7,len,y));float fx=fract(p.x)-.5-(r-.5)*.5;return seg*smoothstep(.1,0.,abs(fx))*step(.4,hs(vec2(id,sd+3.)));}
+vec4 layer(vec2 P,vec2 uv,float s,float sp,float sd){vec2 p=P*s+drift*t*sp+sd;vec2 w=vec2(fbm3(p*.55+vec2(t*.018,0.)),fbm3(p*.55+vec2(5.2,1.3)-vec2(t*.013,0.)));
+  float f=fbm(p+w*1.3),f2=fbm(p+w*1.3+vec2(.03,-.16));float c=clamp((uv.y-cov.y)/(cov.x-cov.y),0.,1.);c=c*c*(3.-2.*c)*cov.z;
+  float d=smoothstep(1.-c-cov.w,1.-c+cov.w,f);float lit=clamp((f-f2)*4.5+.55,0.,1.);vec3 col=mix(cd,cl,lit);return vec4(col,d);}
+void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3.)*.0016*shim*smoothstep(.45,1.,uv.y);
+  vec3 sky=uv.y<.55?mix(cTop,cMid,uv.y/.55):mix(cMid,cBot,(uv.y-.55)/.45);sky+=hazeC*hazeK*smoothstep(.55,1.,uv.y);
+  vec2 P=vec2(uv.x*asp,uv.y);vec2 G=vec2(glow.x*asp,glow.y);float gd=length(P-G);sky+=glowC*glow.z*exp(-gd*gd*5.);
+  if(stars>0.)sky+=starfield(P,stars);
+  if(mw>0.){float v=(P.x-.55*asp)*.86+(P.y-.6)*.5;float band=exp(-v*v*28.)*(.45+.55*fbm3(P*5.+3.));sky+=vec3(.6,.5,.85)*band*mw*.3;}
+  if(moon.w>0.){vec2 q=(P-vec2(moon.x*asp,moon.y))/moon.z;float r=length(q);float o=max(r-1.,0.);sky+=vec3(.82,.76,.98)*(exp(-o*1.2)*.2+exp(-o*4.5)*.28)*moon.w;
+    if(r<1.02){vec3 tc=texture2D(tex,q*.5*.9875+.5).rgb;float term=-.42*sqrt(max(0.,1.-q.y*q.y));float lt=smoothstep(-.16,.16,q.x-term);float edge=smoothstep(1.,.975,r);
+      vec3 mc=mix(tc*1.22+.03,sky,.14);sky=mix(sky,mc,edge*(.04+.96*lt)*moon.w);}}
+  vec4 far=layer(P,uv,scl*.62,.55,3.1),near=layer(P,uv,scl,1.,0.);vec3 lift=glowC*glow.z*1.4;
+  float bd=length(P-vec2(bolt.x*asp,bolt.y));vec3 bl=vec3(.72,.8,1.)*bolt.z*exp(-bd*bd*7.);
+  far.rgb+=lift*exp(-gd*gd*3.)+bl*.8;near.rgb+=lift*exp(-gd*gd*3.)+bl;
+  sky=mix(sky,far.rgb,far.a*.72*cloudA);sky=mix(sky,near.rgb,near.a*cloudA);
+  if(rain>0.)sky+=vec3(.82,.88,.98)*(rainL(uv,asp,70.,9.,1.)*.15+rainL(uv,asp,125.,6.5,2.)*.09)*rain*(1.+bolt.z*.8); /* the distant rain curtain */
+  gl_FragColor=vec4(sky+dith(),1.);}`,
+    fog: `void main(){vec2 uv=UV();vec2 p=vec2(uv.x*res.x/res.y,uv.y)*2.2;
+  vec2 q=vec2(fbm(p+vec2(t*.03,t*.008)),fbm(p+vec2(5.2,1.3)-vec2(t*.022,0.)));float f=fbm(p+1.6*q+vec2(t*.04,t*.01));
+  vec3 dark=vec3(.36,.4,.48),mid=vec3(.45,.49,.57),lite=vec3(.57,.61,.69);vec3 c=mix(dark,mid,smoothstep(.22,.55,f));c=mix(c,lite,smoothstep(.55,.88,f));
+  c+=.05*exp(-pow(uv.x-.5,2.)*5.-pow(uv.y-.36,2.)*4.);c=mix(c,lite,.18*uv.y);gl_FragColor=vec4(c+dith(),1.);}`,
+    aurora: `float h1(float n){return fract(sin(n)*43758.5453);}
+float n1(float x){float i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(h1(i),h1(i+1.),f);}
+float rays(float x,float s){return .5*n1(x*5.+s+t*.18)+.32*n1(x*13.+s*2.-t*.26)+.18*n1(x*31.+s*3.+t*.4);}
+vec3 ramp(float k){vec3 c0=vec3(.62,.98,1.),c1=vec3(.24,.8,1.),c2=vec3(.1,.56,.56),c3=vec3(.05,.28,.26);return k<.15?mix(c0,c1,k/.15):k<.5?mix(c1,c2,(k-.15)/.35):mix(c2,c3,clamp((k-.5)/.5,0.,1.));}
+vec3 curtain(vec2 p,float asp,float hem,float len,float tilt,float s,vec3 below,float bl){float d=hem-p.y;float x0=p.x*asp-d*tilt;float r=pow(rays(x0,s),2.2);float L=len*(.45+1.3*r);
+  float sm=smoothstep(-.06,.05,d);vec3 c=ramp(clamp(d/(L*2.4),0.,1.))*sm*exp(-max(d,0.)/L)*(.1+2.4*r);c+=below*(1.-sm)*exp(min(d,0.)/bl)*(.12+1.6*r);return c;}
+void main(){vec2 p=UV();float asp=res.x/res.y;
+  vec3 bg=p.y<.38?mix(vec3(.008,.024,.063),vec3(.016,.055,.125),p.y/.38):p.y<.7?mix(vec3(.016,.055,.125),vec3(.05,.12,.3),(p.y-.38)/.32):mix(vec3(.05,.12,.3),vec3(.18,.19,.58),(p.y-.7)/.3);
+  bg+=starfield(vec2(p.x*asp,p.y),.45)*(1.-p.y);
+  float hem=.8-.38*p.x+.016*sin(p.x*6.+t*.2)+.007*sin(p.x*15.-t*.33);float hot=1.+3.2*exp(-pow((p.x-.42)/.2,2.)-pow((p.y-.6)/.17,2.));
+  vec3 c=curtain(p,asp,hem,.2,.2,0.,vec3(.16,.34,1.),.16)*hot;c+=.5*curtain(vec2(p.x-.14,p.y),asp,hem-.18,.16,.24,7.,vec3(.08,.3,.7),.08);
+  float lh=1.02-.5*p.x+.02*sin(p.x*9.+t*.25);c+=curtain(p,asp,lh,.22,.16,13.,vec3(.2,.28,1.),.1)*vec3(.42,.68,1.25)*smoothstep(.48,.22,p.x)*.85;
+  c*=1.-.55*exp(-pow((p.x-.58)/.16,2.)-pow((p.y-.8)/.06,2.));c=1.-exp(-c*1.8);gl_FragColor=vec4(bg+c*(1.-bg)+dith(),1.);}`
+  };
+  const init = () => { gl = cvs.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' }); if (!gl) return false;
+    buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW); return true; };
+  const prog = name => { if (P[name] !== undefined) return P[name];
+    const sh = (ty, src) => { const o = gl.createShader(ty); gl.shaderSource(o, src); gl.compileShader(o); return gl.getShaderParameter(o, gl.COMPILE_STATUS) ? o : null; };
+    const v = sh(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}'), f = sh(gl.FRAGMENT_SHADER, COMMON + FS[name]); if (!v || !f) return P[name] = null;
+    const pr = gl.createProgram(); gl.attachShader(pr, v); gl.attachShader(pr, f); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return P[name] = null;
+    return P[name] = { pr, loc: {}, a: gl.getAttribLocation(pr, 'p') }; };
+  const moonTex = () => { if (texOK || !MOONIMG.complete || !MOONIMG.naturalWidth) return; tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, MOONIMG); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); texOK = true; };
+  const ok = () => { if (failed) return false; if (!gl && !init()) { failed = true; return false; } return true; };
+  const rgb = c => c.split(',').map(v => v / 255);
+  return {
+    ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); },
+    draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
+      const sc = Math.min(devicePixelRatio || 1, 2) * (qLevel ? .45 : .6), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
+      const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
+      gl.uniform2f(L('res'), w, h); gl.uniform1f(L('t'), t % 1000);
+      for (const k in U) { const v = U[k], l = L(k); if (!l) continue; if (typeof v === 'number') gl.uniform1f(l, v); else if (typeof v === 'string') gl.uniform3fv(l, rgb(v)); else if (v.length === 2) gl.uniform2fv(l, v); else if (v.length === 3) gl.uniform3fv(l, v); else gl.uniform4fv(l, v); }
+      if (name === 'clouds') { moonTex(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(L('tex'), 0); }
+      gl.drawArrays(gl.TRIANGLES, 0, 3); return true; }
+  };
+})();
+const toUV = (x, y) => [(offX + x * scale) / cv.width, (offY + y * scale) / cv.height]; // game coordinates to screen fractions, for the sky shaders
+const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, cloud shadow and light, and where the clouds gather
+  storm: () => ({ cTop: '58,70,92', cMid: '80,94,116', cBot: '108,122,142', cd: '72,84,106', cl: '172,182,200', cov: [0, .66, .9, .16], scl: 2.1, drift: [.02, 0], cloudA: 1, rain: 1 }),
+  hail: () => ({ cTop: '92,110,142', cMid: '114,134,166', cBot: '134,154,186', cd: '98,114,142', cl: '210,220,236', cov: [0, .6, .85, .18], scl: 2.2, drift: [.03, 0], cloudA: 1 }),
+  wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '118,142,188', cl: '255,255,255', cov: [-.04, .76, .96, .1], scl: 1.6, drift: [.07 * windDir, 0], cloudA: 1 }),
+  heat: () => ({ cTop: '36,90,174', cMid: '66,128,206', cBot: '150,176,214', hazeC: '120,70,20', hazeK: .55, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .55], glowC: '255,246,232' }),
+  sun: () => { const q = clamp01(wx.t / WX.sun.dur); return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [...toUV(W * (.2 + q * .6), H * .19), .5], glowC: '255,250,238' }; },
+  meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .5, .16], scl: 1.8, drift: [.012, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
+};
+let skyE = 0; // how much of the screen the GPU sky covers right now (the 2D backdrop fades out as it rises)
+function drawSky() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
+  const k = wx.kind, cfg = SKYCFG[k]; let U;
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0 }, cfg());
+    if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
+  } else return false;
+  if (!SKYGL.draw(k === 'fog' || k === 'aurora' ? k : 'clouds', U)) return false;
+  const a = wx.a; skyE = a * a * (3 - 2 * a); return true; }
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
   const SA = { storm: .95, hail: .95, fog: .92, heat: .9, wind: .95, sun: .85, aurora: 1, meteor: 1 }[wx.kind];
-  if (SA) skyField(SA * a * a * (3 - 2 * a), SKY[wx.kind]);
-  if (wx.kind === 'fog') { const fg = FOGGL(); if (fg) { ctx.globalAlpha = .95 * a * a * (3 - 2 * a); ctx.drawImage(fg, 0, 0, W, H); ctx.globalAlpha = 1; } } // the fog itself, painted on the GPU
-  if (wx.kind === 'meteor') { // the sky clears to a deep night: Milky Way, a fine field of stars, a crescent moon, then the shower
+  const G = skyE > 0; // the GPU sky is painting this event
+  if (SA && !G) skyField(SA * a * a * (3 - 2 * a), SKY[wx.kind]);
+  if (wx.kind === 'fog' && !G) { const fg = FOGGL(); if (fg) { ctx.globalAlpha = .95 * a * a * (3 - 2 * a); ctx.drawImage(fg, 0, 0, W, H); ctx.globalAlpha = 1; } } // the fog itself, painted on the GPU
+  if (wx.kind === 'meteor' && G) meteors(wx.phase === 'on' ? 1.7 : wx.phase === 'warn' ? 0 : .6, a);
+  if (wx.kind === 'meteor' && !G) { // the sky clears to a deep night: Milky Way, a fine field of stars, a crescent moon, then the shower
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a; ctx.drawImage(NIGHT(), 0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
     nightSky(a, 0);
     ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.translate(W * .45, H * .5); ctx.rotate(-1.05); // the Milky Way as one smooth, luminous band
@@ -1049,19 +1150,20 @@ function drawBackWeather() { // events that live behind the blocks and balls
     meteors(wx.phase === 'on' ? 1.7 : wx.phase === 'warn' ? 0 : .6, a);
     lowres(() => [[.16, .26, 4, 2.2, .7, 61], [.5, .34, -3, 2, 1, 62], [.74, .36, 5, 2.4, 1, 63]].forEach(([y, h, sp, sc, al, sd], i) => drawSheet(cloudTex('mcn' + i, '52,34,96', '236,186,236', { seed: sd, cover: .54, base: .8, top: .12, alpha: .92, squash: 1.5, sharp: 3, shadow: .7, p: 3 }), H * y + nz(t * .05, i + 3) * 10, H * h, sp, al * a, sc))); // soft violet clouds, their tops lit pink by the moon
     ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('220,120,180'), -W * .4, H * .82, W * 1.8, H * .4); ctx.globalAlpha = 1; } // a pink glow along the horizon
-  if (wx.kind === 'aurora') { nightSky(a * .5, .12); meteors(.06, a); drawAurora(a);
+  if (wx.kind === 'aurora' && G) meteors(.06, a);
+  if (wx.kind === 'aurora' && !G) { nightSky(a * .5, .12); meteors(.06, a); drawAurora(a);
     lowres(() => { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .55 * a; ctx.drawImage(softBlob('50,70,210'), -W * .5, H * .72, W * 2, H * .5); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }); // a deep blue glow beneath the curtains
   }
   if (wx.kind === 'heat') { // the sun high in a cobalt sky with soft rays; heat haze pooling on the ground; the shimmer is real refraction
     sunGlow(W * .78, H * .09, a, .55);
-    lowres(() => { for (let k = 0; k < 3; k++) { const y = H * (.78 + k * .07) + Math.sin(t * .6 + k) * 6; const g = ctx.createLinearGradient(0, y - 40, 0, y + 40); g.addColorStop(0, 'rgba(255,240,222,0)'); g.addColorStop(.5, `rgba(255,232,206,${.16 * a})`); g.addColorStop(1, 'rgba(255,240,222,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 40, W + 40, 80); } }); // layers of heat haze near the ground
+    if (!G) lowres(() => { for (let k = 0; k < 3; k++) { const y = H * (.78 + k * .07) + Math.sin(t * .6 + k) * 6; const g = ctx.createLinearGradient(0, y - 40, 0, y + 40); g.addColorStop(0, 'rgba(255,240,222,0)'); g.addColorStop(.5, `rgba(255,232,206,${.16 * a})`); g.addColorStop(1, 'rgba(255,240,222,0)'); ctx.fillStyle = g; ctx.fillRect(-20, y - 40, W + 40, 80); } }); // layers of heat haze near the ground
   }
-  if (wx.kind === 'wind') lowres(() => { // cumulus racing across a bright sky, nearer layers faster
+  if (wx.kind === 'wind' && !G) lowres(() => { // cumulus racing across a bright sky, nearer layers faster
     [[-.14, .62, 60, 2.2, 1.3], [.12, .38, 120, 1.8, .9], [.36, .26, 200, 1.5, .5]].forEach(([y, h, sp, sc, al], i) => drawSheet(cloudTex('cu5' + i, '150,170,206', '255,255,255', { seed: 11 + i, cover: i ? .56 : .72, base: .82, top: .12, sharp: 4.5, shadow: .75, squash: 1.1, p: 2 + i }), H * y + nz(t * .2, i) * 10, H * h, sp * windDir, Math.min(1, al * 1.4) * a, sc));
   });
-  if (wx.kind === 'wind') lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
+  if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
-  if (wx.kind === 'hail') lowres(() => { for (let k = 0; k < 70; k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
+  if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
     ctx.globalAlpha = (.18 + .3 * (1 - z)) * a; ctx.drawImage(softBlob('240,246,255'), x - r, y - r, r * 2, r * 2); } ctx.globalAlpha = 1; }); // layers of out-of-focus ice drifting in the air
   if (wx.kind === 'hail') { // ice beads of uneven size and speed, drifting slightly, with occasional splashes
     for (const d of HAIL) {
@@ -1102,7 +1204,7 @@ function drawGlass() { if (RM) return; // rain on the glass: lots of tiny beads,
   }
   if (A > .01) { glassWet = raining ? Math.min(1, glassWet + dt / 7) : Math.max(0, glassWet - dt / 2.5); } else glassWet = 0;
   if (glassWet > .01) { const fk = glassWet * A;
-    [[0, 0, 0, 1], [1, 130, 260, .7]].forEach(([i, ox, oy, m]) => { const f = glassFilm(i), tw = 260, th = 520; ctx.globalAlpha = Math.min(1, fk * m * (i ? clamp01(glassWet * 1.6 - .6) : 1));
+    (skyE ? [[0, 0, 0, 1]] : [[0, 0, 0, 1], [1, 130, 260, .7]]).forEach(([i, ox, oy, m]) => { const f = glassFilm(i), tw = 260, th = 520; ctx.globalAlpha = Math.min(1, fk * m * (i ? clamp01(glassWet * 1.6 - .6) : 1));
       for (let x = -ox; x < W; x += tw) for (let y = -oy; y < H; y += th) ctx.drawImage(f, x, y, tw, th); });
     ctx.globalAlpha = 1; }
   let any = false;
@@ -1125,6 +1227,8 @@ function drawGlass() { if (RM) return; // rain on the glass: lots of tiny beads,
   }
   ctx.globalAlpha = 1;
   if (!DROPS.some(d => d.on)) return;
+  if (skyE) { for (const d of DROPS) if (d.on) { const run = d.slide && d.life > d.hold, sp = run ? clamp01(d.vy / (50 + d.r * 20)) : 0, k = smooth(d.life / .12) * (d.slide ? 1 : 1 - smooth((d.life - d.max + 1) / 1)) * Math.min(1, A * 1.6 + (run ? .4 : 0)); if (k < .01) continue;
+    const rx = d.r * (1 - sp * .12), ry = d.r * (1.06 + sp * .32), cy = d.y + sp * d.r * .15; ctx.globalAlpha = k; ctx.drawImage(spr, d.x - rx * 1.5, cy - ry * 1.3, rx * 3, ry * 2.8); } ctx.globalAlpha = 1; return; } // drops without the per-frame screen copy
   const w = cv.width >> 1, h = cv.height >> 1; if (!snapC || snapC.width !== w || snapC.height !== h) { snapC = document.createElement('canvas'); snapC.width = w; snapC.height = h; }
   snapC.getContext('2d').drawImage(cv, 0, 0, w, h); // one half-resolution snapshot per frame feeds every drop
   const f = scale / 2, ox = offX / 2, oy = offY / 2;
@@ -1277,12 +1381,12 @@ function drawRain() { // storm, behind the gameplay: cool uneven sky, two scroll
   if (wx.kind !== 'storm' || wx.a < .01) return;
   const a = wx.a, e = a * a * (3 - 2 * a);
   const gust = nz(t * .35, 4), sl = .012 + gust * .012, tile = rainTile(), lit = 1 + boltK() * .8;
-  lowres(() => { // sky, low moisture and the distant rain curtain share one soft half-resolution pass (distant rain is naturally out of focus)
+  if (!skyE) lowres(() => { // sky, low moisture and the distant rain curtain share one soft half-resolution pass (distant rain is naturally out of focus)
     [[.8, 430, .22], [1.25, 680, .26]].forEach(([sc, sp, al], li) => {
       const T = 192 * sc, ox = (t * sp * .04 + li * 71) % T, oy = (t * sp + li * 53) % T; ctx.globalAlpha = al * e * lit;
       for (let x = -T + ox; x < W; x += T) for (let y = -T + oy; y < H; y += T) ctx.drawImage(tile, x, y, T, T);
     });
-    [[.18, .4, 12, 1.8, .2], [.5, .45, -9, 2.1, .16]].forEach(([yy, hh, sp, sc, al], i) => drawSheet(sheet('fog' + i, 512, 180, '206,211,222', 20, { holes: 4, blur: 8, sc: 1.25, y0: .2, yr: .5, lit: '250,251,253' }), H * yy + nz(t * .08, i) * 20, H * hh, sp, al * e, sc)); // moving mist between the rain layers
+    if (!skyE) [[.18, .4, 12, 1.8, .2], [.5, .45, -9, 2.1, .16]].forEach(([yy, hh, sp, sc, al], i) => drawSheet(sheet('fog' + i, 512, 180, '206,211,222', 20, { holes: 4, blur: 8, sc: 1.25, y0: .2, yr: .5, lit: '250,251,253' }), H * yy + nz(t * .08, i) * 20, H * hh, sp, al * e, sc)); // moving mist between the rain layers
     for (let k = 0; k < 3; k++) { const sd = SEEDS[k + 17], x = ((sd.x * W * 1.8 + t * (40 + sd.k * 30)) % (W * 1.8)) - W * .4; // sheets of heavier rain sweeping through
       ctx.save(); ctx.translate(x, 0); ctx.transform(1, 0, -.18, 1, 0, 0); ctx.globalAlpha = .07 * e * (.6 + .4 * nz(t * .3, sd.s)); ctx.drawImage(softBlob('205,215,232'), -W * .15, -H * .1, W * .3, H * 1.2); ctx.restore(); }
     ctx.globalAlpha = .22 * e; ctx.drawImage(softBlob('190,200,215'), -W * .3, H * .82, W * 1.6, H * .3); // spray and mist where the rain hits the floor
@@ -1319,20 +1423,20 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
   const a = wx.a, e = a * a * (3 - 2 * a); // eased in and out
   lowres(() => {
   const L = [[-.05, .4, 4, 2.2, .2], [.18, .4, -6, 1.8, .26], [.42, .4, 5, 2.4, .32], [.64, .42, -8, 1.9, .38]]; // thin up high, pooling low; slow, as real fog drifts
-  L.forEach(([y, h, sp, sc, al], i) => {
+  L.forEach(([y, h, sp, sc, al], i) => { if (skyE && i % 2 === 0) return; // over the GPU fog, two front layers are enough
     const img = sheet('fogp' + i, 512, 180, '140,148,164', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '166,174,190' }); // shaded bellies, bright crowns: reads as volume
     const breath = .78 + .22 * nz(t * .13, i * 5), yy = H * y + nz(t * .07, i * 3) * 18;
     drawSheet(img, yy, H * h * (1 + .06 * nz(t * .1, i)), sp, al * e * breath, sc);
   });
-  atmos('190,198,212', .1 * e, { n: 4, y0: .1, y1: .9, sp: 3, off: 13 }); // faint ambient veil that ties the layers together
-  });
+  if (!skyE) atmos('190,198,212', .1 * e, { n: 4, y0: .1, y1: .9, sp: 3, off: 13 }); // faint ambient veil that ties the layers together
+  }, skyE ? .3 : 0);
 }
 function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lightning glows through it softly (screen blend), never a white flash
   if ((wx.kind !== 'storm' && wx.kind !== 'hail') || wx.a < .01) return; // hail shares the storm's cloud deck
   const a = wx.a, e = a * a * (3 - 2 * a), ch = cloudH();
   const HL = wx.kind === 'hail', C = HL ? [['94,110,138', '198,210,228', -.75, 1.25, -3, 2.4, .97], ['118,134,162', '222,230,242', -.3, .95, 5, 2.1, .8], ['104,120,148', '208,218,234', -.05, .85, -8, 1.7, .85], ['88,104,132', '184,196,218', .2, .7, 12, 1.5, .9]] : [['70,82,104', '146,158,178', -.75, 1.25, -3, 2.4, .97], ['100,112,134', '184,194,210', -.3, .95, 5, 2.1, .8], ['84,96,118', '164,176,194', -.05, .85, -8, 1.7, .85], ['66,78,100', '136,148,168', .2, .7, 12, 1.5, .9]]; // Apple's palettes: slate rain clouds with light tops; cool blue snow clouds
-  lowres(() => {
-  C.forEach(([col, lit, y, h, sp, sc, al], i) => {
+  (skyE ? f => f() : lowres)(() => {
+  if (!skyE) C.forEach(([col, lit, y, h, sp, sc, al], i) => {
     const img = cloudTex((HL ? 'hcu' : 'cu') + 'x' + i, col, lit, { seed: i + 3, cover: i ? .58 : .8, base: i ? .78 : .9, top: i ? .08 : 0, shadow: .8, p: 3 + i });
     const roll = nz(t * .07, i * 7), billow = 1 + .1 * nz(t * .09 + 3, i * 3); // each layer drifts faster, bobs and swells on its own slow rhythm
     drawSheet(img, ch * y + roll * 16 + nz(t * .21, i + 11) * 4, ch * (h + .5) * billow, sp * 2.4 + nz(t * .05, i + 20) * 6, al * e * (.88 + .12 * nz(t * .11, i + 5)), sc * (1 + .05 * roll));
@@ -1476,12 +1580,13 @@ let shownScore = 0;
 let heatC = null;
 function draw() {
   ctx = mainCtx;
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height);
+  const skyOn = drawSky();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? 1 - skyE : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
   const sk = RM ? 0 : shake; ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * sk * scale, offY + (Math.random() - .5) * sk * scale);
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   const playing = state !== 'menu';
-  drawBackground(fxA * fxA);
-  drawDivider(Math.max(pulse * .5, fxA, state === 'menu' ? 0 : 0));
+  if (bgA > .004) { ctx.globalAlpha = bgA; drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
+  ctx.globalAlpha = 1 - skyE * .85; drawDivider(Math.max(pulse * .5, fxA, state === "menu" ? 0 : 0)); ctx.globalAlpha = 1; /* the divider melts into an event sky */
   if (!playing) { ctx.restore(); return; } // the home screen shows only the calm backdrop; the balls live in its preview
 
   // column guides
@@ -1492,7 +1597,7 @@ function draw() {
   drawBackWeather();
   drawRain();
   glassPane();
-  if (wx.kind === 'wind' && wx.a > .05 && !RM && qLevel < 2) { // wind warps the air behind the game: columns bend as pressure waves roll through in the wind's direction
+  if (wx.kind === 'wind' && wx.a > .05 && !RM && qLevel < 2 && !skyE) { // wind warps the air behind the game: columns bend as pressure waves roll through in the wind's direction
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const cw = Math.round(14 * dpr);
     if (!heatC || heatC.width !== cv.width || heatC.height !== cv.height) { heatC = document.createElement('canvas'); heatC.width = cv.width; heatC.height = cv.height; }
     const hx = heatC.getContext('2d'); hx.clearRect(0, 0, cv.width, cv.height); hx.drawImage(cv, 0, 0);
@@ -1500,7 +1605,7 @@ function draw() {
     ctx.restore();
   }
   drawWindRibbons();
-  if (wx.kind === 'heat' && wx.a > .05 && qLevel < 2) { // heat refraction on the background only: blocks and balls are drawn afterwards, crystal clear
+  if (wx.kind === 'heat' && wx.a > .05 && qLevel < 2 && !skyE) { // heat refraction on the background only: blocks and balls are drawn afterwards, crystal clear
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const hgt = Math.round(16 * dpr);
     if (!heatC || heatC.width !== cv.width || heatC.height !== cv.height) { heatC = document.createElement('canvas'); heatC.width = cv.width; heatC.height = cv.height; }
     const hx = heatC.getContext('2d'); hx.clearRect(0, 0, cv.width, cv.height); hx.drawImage(cv, 0, 0);
