@@ -136,9 +136,11 @@
   .best.swap{display:flex}
   @keyframes swap{from{opacity:.25;transform:translateY(4px)}to{opacity:1;transform:none}}
   /* players + leaderboard: one avatar on the home screen opens a sheet; nothing else is added to the home screen */
-  #pfp{position:absolute;top:max(14px,env(safe-area-inset-top));right:14px;width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);display:grid;place-items:center;padding:0;
+  .bestwrap{position:relative;width:min(330px,86vw)}
+  .bestwrap .card{width:100%;padding-left:52px;padding-right:52px;cursor:pointer}
+  #pfp{position:absolute;top:50%;right:10px;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);display:grid;place-items:center;padding:0;
     font-weight:900;font-size:17px;color:#fff;cursor:pointer;background:var(--pc,#2ec4d6);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 12px rgba(43,45,66,.16);transition:transform .22s var(--spring),background .3s}
-  #pfp:active{transform:scale(.9)}
+  #pfp:active{transform:translateY(-50%) scale(.9)}
   #pfp svg{position:absolute;right:-4px;bottom:-4px;width:19px;height:19px;padding:3px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(43,45,66,.22);fill:#e9a23b}
   #sheet{position:fixed;inset:0;z-index:30;display:none}
   #sheet.on{display:block}
@@ -234,14 +236,13 @@
 <canvas id="c"></canvas>
 
 <div class="screen" id="menu">
-  <button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button>
   <h1 class="logo" aria-label="Mirror Drop"><span class="p">MIRROR</span><span class="c">DROP</span></h1>
   <div class="sub">two balls. one tap.</div>
   <canvas id="pv" aria-hidden="true"></canvas>
   <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dticks"><span>Chill</span><span>Impossible</span></div></div>
   <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="mrow"><span class="label">MODE</span><div class="seg sm" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button></div></div></div>
   <button class="btn" id="play">PLAY</button>
-  <div class="card best" id="mbest"></div>
+  <div class="bestwrap"><div class="card best" id="mbest" role="button" tabindex="0" aria-label="Your best runs"></div><button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button></div>
   <div class="hint">tap to move the balls one step.<br>at the edge they turn around.</div>
 </div>
 
@@ -393,7 +394,7 @@ function syncDiffUI() {
   document.documentElement.style.setProperty('--sc', SECT_COL[bucket()]);
   document.querySelectorAll('.drange').forEach(r => { if (+r.value !== sliderV) r.value = sliderV; r.style.setProperty('--f', sliderV / 120); r.setAttribute('aria-valuetext', NAMES[bucket()]); });
   document.querySelectorAll('.dname').forEach(n => swapText(n, NAMES[bucket()]));
-  const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : ''}</i>` : `<span>BEST</span><b>–</b><i>no ${mode === 'infinite' ? 'infinite ' : ''}score yet on ${NAMES[bucket()]} · ${N} columns</i>`;
+  const bh = bestNow() ? `<span>BEST</span><b>${bestNow()}</b><i>${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : ''}</i>` : `<span>BEST</span><b>–</b><i>${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : ''}</i>`;
   ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
   document.querySelectorAll('.seg:not(#mode)').forEach(s => { s.dataset.sel = per; });
   document.querySelectorAll('.seg button[data-per]').forEach(b => b.classList.toggle('on', +b.dataset.per === per));
@@ -2119,7 +2120,7 @@ srows.addEventListener('click', e => {
 stabs.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.t === sTab) return; if (editName && !commitName()) return; sTab = b.dataset.t; lbSect = null; editPic = false; renderSheet(); });
 function openSheet(tab = 'p') { if (state !== 'menu') return; sTab = tab; editName = editPic = false; nameErr = ''; lbSect = null; renderSheet(); pSheet.classList.add('on'); pSheet.setAttribute('aria-hidden', 'false'); requestAnimationFrame(() => requestAnimationFrame(() => pSheet.classList.add('open'))); beep(520, .07, 'sine', .035, 160); }
 function closeSheet() { if (!pSheet.classList.contains('on')) return; if (editName) { const inp = $('#nmi'); if (inp && nameProblem(inp.value.trim())) { editName = false; nameErr = ''; } else commitName(); } pSheet.classList.remove('open'); pSheet.setAttribute('aria-hidden', 'true'); setTimeout(() => { if (!pSheet.classList.contains('open')) pSheet.classList.remove('on'); }, 380); }
-pfp.addEventListener('click', () => openSheet('p'));
+pfp.addEventListener('click', () => openSheet('p')); $('#mbest').addEventListener('click', () => openSheet('l'));
 $('#sdone').addEventListener('click', closeSheet); pSheet.querySelector('.bd').addEventListener('click', closeSheet);
 addEventListener('online', flushGc);
 syncPfp();
