@@ -1108,9 +1108,9 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
     aurora: `/* Apple's aurora, by its principles: layered translucent ribbons at different depths, continuous green-cyan-purple-pink gradients, very soft edges, slow flow, subdued light over a near-black blue sky, bright spots placed unevenly */
 vec3 grad(float k){vec3 g=vec3(.55,.96,1.),c=vec3(.16,.58,1.),p=vec3(.1,.66,.62),k2=vec3(.34,.3,.82);  /* green at the hem, cyan, purple, then pink at the top */
   return k<.33?mix(g,c,k/.33):k<.66?mix(c,p,(k-.33)/.33):mix(p,k2,(k-.66)/.34);}
-vec3 ribbon(vec2 p,float asp,float base,float amp,float freq,float spd,float seed,float height,float bright){
+vec3 ribbon(vec2 p,float asp,float base,float amp,float freq,float spd,float seed,float height,float bright,float slope){
   float x=p.x*asp;
-  float y0=base-.5*(p.x-.5)+amp*sin(x*freq+t*spd+seed)+amp*.55*sin(x*freq*2.3-t*spd*1.3+seed*2.)+.06*(fbm3(vec2(x*.9+t*.02,seed))-.5); /* the ribbon's flowing lower edge */
+  float y0=base-slope*(p.x-.5)+amp*sin(x*freq+t*spd+seed)+amp*.55*sin(x*freq*2.3-t*spd*1.3+seed*2.)+.06*(fbm3(vec2(x*.9+t*.02,seed))-.5); /* the ribbon's flowing lower edge */
   float d=y0-p.y;                                                    /* height above that edge */
   float body=smoothstep(-.07,.05,d)*exp(-max(d,0.)/height);         /* rises from a soft hem and fades upward: no outline anywhere */
   float rays=.06+.94*pow(fbm3(vec2(x*18.+seed*3.+d*1.2,d*.5-t*.05)),2.6); /* visible rays rising through the light */            /* faint vertical texture inside the light */
@@ -1121,11 +1121,12 @@ void main(){vec2 p=UV();float asp=res.x/res.y;
   vec3 bg=mix(vec3(.004,.012,.035),vec3(.02,.05,.13),smoothstep(0.,.7,p.y));bg=mix(bg,vec3(.05,.08,.22),smoothstep(.7,1.,p.y)); /* a near-black blue foundation */
   bg+=starfield(vec2(p.x*asp,p.y),.3)*(1.-p.y*.8);
   vec3 col=vec3(0.);
-  col+=ribbon(p,asp,.42,.1,1.9,.05,1.,.2,.3);   /* far: high, faint, slow */
-  col+=ribbon(p,asp,.52,.12,2.4,.07,4.,.22,.45);
-  col+=ribbon(p,asp,.63,.13,2.,.09,7.,.26,.95);   /* middle */
-  col+=ribbon(p,asp,.76,.14,1.5,.11,11.,.3,1.35);   /* near: low, bright, prominent */
-  col+=vec3(.3,.9,1.)*.4*exp(-pow((p.x-.42)/.12,2.)-pow((p.y-.6)/.24,2.))*(.9+.1*sin(t*.3));  /* the bright cyan heart */
+  /* Apple's composition: a blue curtain hanging down the left, a main curtain on the right with teal rising to the upper right, a bright heart where they meet */
+  col+=ribbon(p,asp,.70,.04,2.2,.06,3.,.30,.40,.10)*vec3(.5,.75,1.3)*(1.-smoothstep(.28,.5,p.x));          /* far left, faint */
+  col+=ribbon(p,asp,.90,.05,1.8,.08,5.,.50,1.10,.12)*vec3(.55,.8,1.35)*(1.-smoothstep(.36,.56,p.x));       /* left blue curtain, tall, to the bottom-left */
+  col+=ribbon(p,asp,.40,.06,2.0,.05,9.,.28,.55,.28)*vec3(.6,1.15,.95)*smoothstep(.4,.66,p.x);              /* far right, teal, high */
+  col+=ribbon(p,asp,.62,.06,1.6,.09,13.,.30,1.30,.30)*smoothstep(.26,.46,p.x);                             /* the main curtain on the right */
+  col+=vec3(.3,.9,1.)*.55*exp(-pow((p.x-.45)/.11,2.)-pow((p.y-.6)/.2,2.))*(.9+.1*sin(t*.3));  /* the bright cyan heart */
   col*=mix(vec3(1.),vec3(.6,1.15,.95),smoothstep(.45,.95,p.x)*smoothstep(.6,.1,p.y));   /* teal toward the upper right */
   col*=mix(vec3(1.),vec3(.5,.8,1.5),smoothstep(.55,.0,p.x)*smoothstep(.4,.95,p.y));   /* blue toward the lower left */
   col*=1.-.7*smoothstep(.55,.0,length((p-vec2(0.,0.))*vec2(1.1,1.3)));                 /* the top-left stays dark */
