@@ -269,11 +269,11 @@ const crash = { ball: [null, null], shards: [], waves: [], tmpl: null };
 // weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
 // per-second chances once the cooldown has passed; warn = seconds of notice before it starts (longer for events that affect play)
 const WX = {
-  fog: { dur: 15, p: 1 / 40, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 22, p: 1 / 380, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
-  hail: { dur: 12, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 4.5, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
-  heat: { dur: 14, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.2, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
-  aurora: { dur: 16, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] },
-  meteor: { dur: 18, p: 1 / 320, warn: 1.2, note: ['Meteor shower', 'Look up'] },
+  fog: { dur: 14, p: 1 / 40, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 18, p: 1 / 380, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
+  hail: { dur: 12, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 5.5, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
+  heat: { dur: 12, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.8, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
+  aurora: { dur: 17, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] },
+  meteor: { dur: 16, p: 1 / 320, warn: 1.2, note: ['Meteor shower', 'Look up'] },
 };
 const HAIL = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1.8 + Math.random() * Math.random() * 3.6, s: .75 + Math.random() * .6 })), hailHits = [];
 const wx = { kind: '', phase: '', t: 0, p: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 };
@@ -628,7 +628,7 @@ function updateWeather(dt) {
     else if (wx.phase === 'on' && wx.t >= WX[wx.kind].dur) { wx.phase = 'out'; wx.t = 0; }
     else if (wx.phase === 'out' && wx.p <= 0) { wx.kind = ''; wx.phase = ''; wx.cool = 30 + Math.random() * 30; } // long quiet spell before the next one
   }
-  { const quick = wx.kind === 'sun' || wx.kind === 'wind', fin = quick ? .7 : 3.2, fout = quick ? .8 : 2.6; // seconds to fade in and out
+  { const quick = wx.kind === 'sun' || wx.kind === 'wind', slow = wx.kind === 'aurora' || wx.kind === 'meteor', fin = quick ? .7 : slow ? 4 : 3, fout = quick ? .8 : slow ? 3.2 : 2.6; // the night skies arrive and leave unhurried // seconds to fade in and out
     wx.p = wx.phase === 'on' ? Math.min(1, wx.p + dt / fin) : Math.max(0, wx.p - dt / fout); const p = wx.p; wx.a = p * p * p * (p * (p * 6 - 15) + 10); } // smootherstep: starts and settles gently, no pop
   for (const h of hailHits) h.t += dt; while (hailHits.length && hailHits[0].t > .4) hailHits.shift();
   wx.flash = Math.max(0, wx.flash - dt * 3);
@@ -878,7 +878,7 @@ function nightSky(a, starA) { // stars with a slow twinkle on top of the cached 
 }
 const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' ? wx.a : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'fog' ? wx.a * .8 : 0; // fog takes white text, as Apple's cloudy screen does
 const uiNight = () => smooth((nightK() - .3) / .3); // 0 = the Wind (day) style, 1 = the Aurora (night) style
-const hudInk = al => { const k = uiNight(); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .25})`; };
+const hudInk = al => { const k = uiNight(); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .5})`; };
 const SPR = {};
 const vignette = () => sprite('vig', 256, 512, (g, w, h) => { const r = g.createRadialGradient(w / 2, h * .45, h * .22, w / 2, h * .5, h * .72); r.addColorStop(0, 'rgba(4,6,18,0)'); r.addColorStop(1, 'rgba(4,6,18,.75)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
 function sprite(key, w, h, draw) { // offscreen textures rendered once and reused, so weather costs a few drawImage calls per frame
