@@ -1188,9 +1188,9 @@ void main(){vec2 p=UV();float asp=res.x/res.y;
 })();
 const toUV = (x, y) => [(offX + x * scale) / cv.width, (offY + y * scale) / cv.height]; // game coordinates to screen fractions, for the sky shaders
 const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, cloud shadow and light, and where the clouds gather
-  storm: () => ({ cTop: '58,70,92', cMid: '80,94,116', cBot: '108,122,142', cd: '72,84,106', cl: '172,182,200', cov: [0, .66, .9, .16], scl: 2.1, drift: [.05, 0], cloudA: 1, rain: 1 }),
-  hail: () => ({ cTop: '92,110,142', cMid: '114,134,166', cBot: '134,154,186', cd: '98,114,142', cl: '210,220,236', cov: [0, .6, .85, .18], scl: 2.2, drift: [.06, 0], cloudA: 1 }),
-  wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '120,146,192', cl: '255,255,255', cov: [-.04, .78, .74, .06], scl: 1.25, drift: [.1 * windDir, 0], cloudA: 1 }),
+  storm: () => ({ cTop: '52,62,82', cMid: '76,90,112', cBot: '104,118,138', cd: '58,68,90', cl: '186,196,212', cov: [0, .74, .95, .13], scl: 1.8, drift: [.05, 0], cloudA: 1, rain: 1 }),
+  hail: () => ({ cTop: '104,124,158', cMid: '124,144,178', cBot: '146,164,196', cd: '112,130,162', cl: '226,234,246', cov: [0, .8, .9, .2], scl: 1.7, drift: [.06, 0], cloudA: 1 }),
+  wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '104,130,180', cl: '255,255,255', cov: [-.04, .82, .8, .08], scl: 1.05, drift: [.1 * windDir, 0], cloudA: 1 }),
   heat: () => ({ cTop: '40,92,170', cMid: '70,130,204', cBot: '108,156,214', hazeC: '90,60,30', hazeK: .22, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
   sun: () => { const q = clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // Apple-style: the glare slides in from the edge, peaks, then dissolves
     const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
