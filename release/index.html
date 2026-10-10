@@ -284,7 +284,7 @@ document.documentElement.style.setProperty('--gaps', [1, 2, 3, 4, 5].map(k => `l
 // per = ball positions per side (2 or 3). Columns N = per * 2; the two balls always mirror each other.
 // saved progress lives on the device, so it needs no internet. In the App Store app it is also mirrored into iOS's own app storage,
 // which survives the low-storage clean-ups that can empty a web view's storage, and is restored from there if that ever happens.
-const SAVE_KEYS = ['mirrorBests', 'mirrorProfile', 'mirrorBoard', 'mirrorPer', 'mirrorMode', 'mirrorSlider', 'mirrorQ2'];
+const SAVE_KEYS = ['mirrorBests', 'mirrorProfile', 'mirrorBoard', 'mirrorPer', 'mirrorMode', 'mirrorSlider', 'mirrorQ3'];
 // native calls go straight through Capacitor's bridge (this single-file game has no JavaScript bundle, so Capacitor.Plugins is never filled in)
 const IS_NATIVE = (() => { try { const C = window.Capacitor; return !!(C && C.isNativePlatform && C.isNativePlatform() && C.nativePromise); } catch (e) { return false; } })();
 const capCall = (plugin, method, opts = {}) => { try { return Promise.resolve(window.Capacitor.nativePromise(plugin, method, opts)); } catch (e) { return Promise.reject(e); } };
@@ -307,11 +307,11 @@ function layout() { W = per === 2 ? 480 : 520; N = per * 2; LX = Array.from({ le
 const bw = () => Math.min(70, W / N * .82);
 let scale = 1, offX = 0, offY = 0, dpr = 1;
 // self-tuning quality: the game watches its own frame time and steps down resolution and the costliest extras until it runs smoothly, then remembers that for this device
-const QDPR = [2, 1.5, 1.2]; let qLevel = 0; try { qLevel = Math.min(2, Math.max(0, +localStorage.mirrorQ2 || 0)); } catch (e) {}
+const QDPR = [3, 2, 1.5]; let qLevel = 0; try { qLevel = Math.min(2, Math.max(0, +localStorage.mirrorQ3 || 0)); } catch (e) {}
 let qEma = 16.7, qSlow = 0, qFast = 0, qRaised = false;
 function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return; qEma += (ms - qEma) * .05;
-  if (qEma > 21 && qLevel < 2) { if ((qSlow += ms) > 1500) { qLevel++; qSlow = 0; qEma = 16.7; resize(); saveKey('mirrorQ2', qLevel); } } else qSlow = Math.max(0, qSlow - ms * .5);
-  if (qEma < 13 && qLevel > 0 && !qRaised) { if ((qFast += ms) > 9000) { qLevel--; qFast = 0; qRaised = true; resize(); saveKey('mirrorQ2', qLevel); } } else qFast = 0; }
+  if (qEma > 21 && qLevel < 2) { if ((qSlow += ms) > 1500) { qLevel++; qSlow = 0; qEma = 16.7; resize(); saveKey('mirrorQ3', qLevel); } } else qSlow = Math.max(0, qSlow - ms * .5);
+  if (qEma < 13 && qLevel > 0 && !qRaised) { if ((qFast += ms) > 9000) { qLevel--; qFast = 0; qRaised = true; resize(); saveKey('mirrorQ3', qLevel); } } else qFast = 0; }
 let hudDY = 0, satProbe = null;
 function safeTopPx() { try { if (!satProbe) { satProbe = document.createElement('div'); satProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top)'; document.body.appendChild(satProbe); } return parseFloat(getComputedStyle(satProbe).paddingTop) || 0; } catch (e) { return 0; } }
 function resize() {
