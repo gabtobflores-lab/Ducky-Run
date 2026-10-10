@@ -1293,21 +1293,31 @@ float streaks(vec2 p,float asp){float x=p.x*asp,y=p.y;float xs=x-y*.16;         
   float a=pow(fbm3(vec2(xs*11.,y*.7-t*.04)),2.);float b2=vn(vec2(xs*40.,y*1.1-t*.06));float c=vn(vec2(xs*110.,y*1.8-t*.09));float d=vn(vec2(xs*260.,y*2.6-t*.12));
   return a*(.3+.7*b2)*(.6+.4*c)*(.8+.2*d)*2.6;}
 uniform sampler2D fld;
-vec3 field(vec2 q){return texture2D(fld,q).rgb;} /* Apple's colour layout, smoothly interpolated */
+vec3 fieldL(vec2 q){return texture2D(fld,q).rgb;}
+vec3 field(vec2 uv){ /* Apple's picture enlarged with a sharp bicubic (Catmull-Rom) filter, so it never looks blocky or smeared at any size */
+  vec2 sz=vec2(1206.,2622.),sp=uv*sz,tc=floor(sp-.5)+.5,f=sp-tc;
+  vec2 w0=f*(-.5+f*(1.-.5*f)),w1=1.+f*f*(-2.5+1.5*f),w2=f*(.5+f*(2.-1.5*f)),w3=f*f*(-.5+.5*f),w12=w1+w2;
+  vec2 t0=(tc-1.)/sz,t3=(tc+2.)/sz,t12=(tc+w2/w12)/sz;
+  vec3 r=(fieldL(vec2(t0.x,t0.y))*w0.x+fieldL(vec2(t12.x,t0.y))*w12.x+fieldL(vec2(t3.x,t0.y))*w3.x)*w0.y
+        +(fieldL(vec2(t0.x,t12.y))*w0.x+fieldL(t12)*w12.x+fieldL(vec2(t3.x,t12.y))*w3.x)*w12.y
+        +(fieldL(vec2(t0.x,t3.y))*w0.x+fieldL(vec2(t12.x,t3.y))*w12.x+fieldL(t3)*w3.x)*w3.y;
+  return max(r,0.);}
+vec2 cover(vec2 p){vec2 q=p-.5;float ia=1206./2622.,sa=res.x/res.y;if(sa>ia)q.y*=ia/sa;else q.x*=sa/ia;return q+.5;} /* keeps the picture's proportions on any screen, like a wallpaper */
 void main(){vec2 p=UV();float asp=res.x/res.y;
   /* Apple's aurora, drawn straight to the screen at the phone's full sharpness. Every motion is large and smooth, so the picture never softens:
      folds roll down the curtains, light surges along them and the rays shimmer gently */
   float xs=p.x-p.y*.19/asp;                                                              /* along Apple's streak lean (about 11 degrees, whatever the screen shape) */
   float w=sin(p.y*6.5-t*.9+p.x*5.)*.008+sin(p.y*2.6+t*.31-p.x*3.)*.008+sin(p.y*4.1-t*.55-p.x*7.)*.004;
-  vec2 q=clamp(p+vec2(w,.005*sin(t*.2+p.x*4.)),0.,1.);
+  vec2 q=clamp(cover(p+vec2(w,.005*sin(t*.2+p.x*4.))),0.,1.);
   vec2 tx=vec2(1./1206.,1./2622.);                                                        /* one pixel of Apple's picture */
-  vec3 F=field(q), N=(field(q+vec2(tx.x,0.))+field(q-vec2(tx.x,0.))+field(q+vec2(0.,tx.y))+field(q-vec2(0.,tx.y)))*.25;
-  vec3 C=(field(q+vec2(tx.x*6.,0.))+field(q-vec2(tx.x*6.,0.))+field(q+vec2(0.,tx.y*6.))+field(q-vec2(0.,tx.y*6.)))*.25;
-  F=max(F+(F-N)*.4+(F-C)*.18,0.);                                                        /* crisp fine rays, plus clarity: the curtains gain depth and definition */
+  vec3 F=field(q);
+  vec3 C=(fieldL(q+vec2(tx.x*6.,0.))+fieldL(q-vec2(tx.x*6.,0.))+fieldL(q+vec2(0.,tx.y*6.))+fieldL(q-vec2(0.,tx.y*6.)))*.25;
+  F=max(F+(F-C)*.2,0.);                                                        /* crisp fine rays, plus clarity: the curtains gain depth and definition */
   float surge=.82+.36*vn(vec2(xs*3.2-t*.2,t*.08+p.y*.6));                                /* surges roll along the curtains */
   float ray=.93+.14*vn(vec2(xs*34.,p.y*1.4+t*.5));                                       /* the rays shimmer */
   float lum=dot(F,vec3(.3,.5,.2));
-  float fil=pow(vn(vec2(xs*150.,p.y*.8-t*.06)),10.)+pow(vn(vec2(xs*330.+7.,p.y*1.2-t*.09)),12.)*.7; /* hair-fine filaments of light along the rays */
+  float xp=xs*res.x/1179.; /* filaments are made at the screen's own resolution, so they stay hair-thin even full screen */
+  float fil=pow(vn(vec2(xp*150.,p.y*.8-t*.06)),10.)+pow(vn(vec2(xp*330.+7.,p.y*1.2-t*.09)),12.)*.7+pow(vn(vec2(xp*720.+3.,p.y*1.6-t*.12)),14.)*.45; /* hair-fine filaments of light along the rays */
   F*=1.+fil*smoothstep(.2,.6,lum)*.45;                                                   /* only inside the lit curtains */
   vec3 col=F*surge*ray*1.08;
   col+=starfield(vec2(p.x*asp,p.y),.3)*(1.-smoothstep(.04,.18,lum));                   /* stars only in the dark sky */
