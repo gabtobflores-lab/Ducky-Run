@@ -1314,7 +1314,7 @@ void main(){vec2 p=UV();float asp=res.x/res.y;vec2 q=p;vec3 F;
     F=mix(A,B,a);}
   float lum=dot(F,vec3(.3,.5,.2));
   vec3 col=F;
-  col+=starfield(vec2(p.x*asp,p.y),.3)*(1.-smoothstep(.04,.18,lum));                   /* stars only in the dark sky */
+  col+=starfield(vec2(p.x*asp,p.y),.3)*(1.-smoothstep(.04,.18,lum))*(1.-an.y);         /* stars only in the dark sky (Apple's video has its own) */
   gl_FragColor=vec4(col+dith(),1.);}
 `
   };
