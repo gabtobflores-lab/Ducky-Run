@@ -43,6 +43,7 @@ class ViewController: UIViewController {
         web.allowsLinkPreview = false
         view.addSubview(web)
         bridge.webView = web
+        ProMotion.shared.start()
 
         if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
             web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
@@ -133,8 +134,38 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
             }
             return ([String: Any](), nil)
 
+        // Haptics: the Taptic Engine, at the same moments as the game's sounds
+        case ("Haptics", "feedback"):
+            feedback(opts["kind"] as? String ?? "light")
+            return ([String: Any](), nil)
+
         default:
             return (nil, "\(plugin).\(method) is not available")
+        }
+    }
+
+    private var impacts: [String: UIImpactFeedbackGenerator] = [:]
+    private var selection: UISelectionFeedbackGenerator?
+    private var notification: UINotificationFeedbackGenerator?
+
+    /// light / medium / heavy / soft / rigid taps, a selection tick, or success / warning / error. Needs iOS 17.5; older phones simply stay silent.
+    private func feedback(_ kind: String) {
+        guard #available(iOS 17.5, *), let view = webView else { return }
+        let at = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
+        switch kind {
+        case "selection":
+            let g = selection ?? UISelectionFeedbackGenerator(view: view)
+            selection = g
+            g.selectionChanged(at: at)
+        case "success", "warning", "error":
+            let g = notification ?? UINotificationFeedbackGenerator(view: view)
+            notification = g
+            g.notificationOccurred(kind == "success" ? .success : kind == "warning" ? .warning : .error, at: at)
+        default:
+            let styles: [String: UIImpactFeedbackGenerator.FeedbackStyle] = ["light": .light, "medium": .medium, "heavy": .heavy, "soft": .soft, "rigid": .rigid]
+            let g = impacts[kind] ?? UIImpactFeedbackGenerator(style: styles[kind] ?? .light, view: view)
+            impacts[kind] = g
+            g.impactOccurred(intensity: 1, at: at)
         }
     }
 
@@ -176,4 +207,22 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
         while let presented = vc?.presentedViewController { vc = presented }
         return vc
     }
+}
+
+/// Asks the screen to run at its full ProMotion rate (120 Hz) while the app is open,
+/// for everything iOS lets run that fast (system animations, scrolling, the game's sliding and fading menus).
+@MainActor
+final class ProMotion: NSObject {
+    static let shared = ProMotion()
+    private var link: CADisplayLink?
+
+    func start() {
+        guard link == nil else { return }
+        let l = CADisplayLink(target: self, selector: #selector(tick(_:)))
+        l.preferredFrameRateRange = CAFrameRateRange(minimum: 80, maximum: 120, preferred: 120)
+        l.add(to: .main, forMode: .common)
+        link = l
+    }
+
+    @objc private func tick(_ link: CADisplayLink) {}
 }
