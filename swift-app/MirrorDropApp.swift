@@ -143,6 +143,12 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
             }
             return ([String: Any](), nil)
 
+        // The exact safe area (the Dynamic Island and the home indicator), so the score never sits under the island
+        case ("App", "safeArea"):
+            let w = webView?.window
+            let ins = w?.safeAreaInsets ?? webView?.safeAreaInsets ?? .zero
+            return (["top": Double(ins.top), "bottom": Double(ins.bottom)], nil)
+
         // Haptics: the Taptic Engine, at the same moments as the game's sounds
         case ("Haptics", "feedback"):
             feedback(opts["kind"] as? String ?? "light")
@@ -189,8 +195,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
         if GKLocalPlayer.local.isAuthenticated { return currentPlayer() }
         return await withCheckedContinuation { (continuation: CheckedContinuation<PlayerInfo, Never>) in
             waitingForSignIn.append(continuation)
-            guard !authHandlerSet else { return }
-            authHandlerSet = true
+            // set the handler again on every attempt: this is what makes iOS try again after a failed or cancelled sign-in
             let bridge = self   // a constant reference: safe to hand to the main-thread task below
             GKLocalPlayer.local.authenticateHandler = { @Sendable viewController, error in
                 let message = error?.localizedDescription

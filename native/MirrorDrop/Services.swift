@@ -50,8 +50,7 @@ final class GameCenter: ObservableObject {
     /// Apple asks games to sign in at launch; iOS shows a small "Welcome back" banner
     func signIn() {
         if GKLocalPlayer.local.isAuthenticated { refresh(); return }
-        guard !started else { return }
-        started = true
+        // setting the handler again makes iOS retry, so tapping Sign in after a failure works
         let gc = self
         GKLocalPlayer.local.authenticateHandler = { @Sendable viewController, _ in
             Task { @MainActor in

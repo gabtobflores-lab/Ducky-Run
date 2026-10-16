@@ -128,6 +128,7 @@ final class GameScene: SKScene {
     private var guides: Pool<SKSpriteNode>!, blocks: Pool<BlockNode>!, gems: Pool<GemNode>!, parts: Pool<SKSpriteNode>!, floaters: Pool<SKLabelNode>!
     private var shardShapes: Pool<SKShapeNode>!, dropSprites: Pool<SKSpriteNode>!, waveNodes: Pool<SKNode>!, streaks: Pool<SKSpriteNode>!
     private var rainPool: Pool<SKSpriteNode>!, hailPool: Pool<SKSpriteNode>!, glowPool: Pool<SKSpriteNode>!
+    private var weather: WeatherFX!
     private let balls = [BallNode(), BallNode()]
     private let trails = [SKShapeNode(), SKShapeNode(), SKShapeNode(), SKShapeNode()]
     private let arrows = [SKShapeNode(), SKShapeNode()]
@@ -207,6 +208,7 @@ final class GameScene: SKScene {
         hailPool = Pool(weatherBack) { let s = SKSpriteNode(texture: t.blob((240, 246, 255))); return s }
         glowPool = Pool(frontLayer) { let s = SKSpriteNode(texture: t.blob((205, 222, 255))); s.blendMode = .screen; return s }
         boltLayer.removeAllChildren(); boltLayer.removeFromParent(); frontLayer.addChild(boltLayer); boltLayer.zPosition = 2
+        weather = WeatherFX(scene: self, tex: t, backLayer: weatherBack, midLayer: thingLayer, frontLayer: frontLayer)
         boltShapes = Pool(boltLayer) { let s = SKShapeNode(); s.lineCap = .round; s.lineJoin = .round; s.fillColor = .clear; return s }
         flashOverlay.texture = t.blob((200, 215, 255)); flashOverlay.blendMode = .screen; flashOverlay.size = CGSize(width: W * 1.6, height: H * 1.2); flashOverlay.position = CGPoint(x: W / 2, y: H / 2); frontLayer.addChild(flashOverlay)
 
@@ -414,6 +416,7 @@ final class GameScene: SKScene {
         floaters.end()
 
         renderStorm()
+        weather.render()
         renderSpeedStreaks()
         renderPauseFog()
         renderCountdown()
@@ -567,12 +570,7 @@ final class GameScene: SKScene {
                 let s = rainPool.next(); s.position = P(x, y); s.size = CGSize(width: 1.2 + d.z * 0.8, height: d.l); s.zRotation = -0.02; s.alpha = CGFloat(min(1, e * (0.14 + d.z * 0.46) * (0.55 + 0.45 * d.v) * lit))
             }
         }
-        if m.wxKind == .hail && a > 0.01 {   // ice beads of uneven size and speed, drifting slightly
-            for d in WeatherBits.hail {
-                let sway = nz(t * 0.8, d.x * 40) * 14, x = (d.x * (W + 40) + t * 40 * d.s).truncatingRemainder(dividingBy: W + 40) - 20 + sway, y = (d.y * (H + 60) + t * 600 * d.s).truncatingRemainder(dividingBy: H + 60) - 30
-                let s = hailPool.next(); s.position = P(x, y); s.size = CGSize(width: d.r * 2.6, height: d.r * 2.85); s.alpha = CGFloat(0.8 * a)
-            }
-        }
+        // hail, wind, fog and the rest of the storm are drawn by WeatherFX
         rainPool.end(); hailPool.end()
     }
     private func renderStorm() {
