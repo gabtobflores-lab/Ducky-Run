@@ -70,90 +70,115 @@ struct GameView: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {}
 }
 
-final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, GKGameCenterControllerDelegate {
-    weak var webView: WKWebView?
-    private var signInReplies: [([String: Any]) -> Void] = []
-    private var authHandlerSet = false
-    private let store = UserDefaults.standard
+/// What the game learns about the Game Center player.
+struct PlayerInfo: Sendable {
+    var authenticated = false
+    var alias = ""
+    var displayName = ""
+    var playerId = ""
+    var underage = false
+    var error: String?
 
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
-        let reply: (Any?, String?) -> Void = { value, error in DispatchQueue.main.async { replyHandler(value, error) } }
+    var dictionary: [String: Any] {
+        var d: [String: Any] = ["authenticated": authenticated]
+        if authenticated { d["alias"] = alias; d["displayName"] = displayName; d["playerId"] = playerId; d["underage"] = underage }
+        if let error { d["error"] = error }
+        return d
+    }
+}
+
+/// Answers the game's calls. Everything runs on the main thread; Game Center work is awaited.
+@MainActor
+final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
+    weak var webView: WKWebView?
+    private var waitingForSignIn: [CheckedContinuation<PlayerInfo, Never>] = []
+    private var authHandlerSet = false
+    private let closer = LeaderboardCloser()
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) async -> (Any?, String?) {
         guard let body = message.body as? [String: Any],
               let plugin = body["plugin"] as? String,
-              let method = body["method"] as? String else { reply(nil, "bad call"); return }
+              let method = body["method"] as? String else { return (nil, "bad call") }
         let opts = body["opts"] as? [String: Any] ?? [:]
+        let store = UserDefaults.standard
 
         switch (plugin, method) {
 
         // Saving: a backup of the scores and profile in the app's own storage
         case ("Preferences", "get"):
             let key = "CapacitorStorage." + (opts["key"] as? String ?? "")
-            if let value = store.string(forKey: key) { reply(["value": value], nil) } else { reply(["value": NSNull()], nil) }
+            if let value = store.string(forKey: key) { return (["value": value], nil) }
+            return (["value": NSNull()], nil)
         case ("Preferences", "set"):
             if let key = opts["key"] as? String { store.set(opts["value"] as? String, forKey: "CapacitorStorage." + key) }
-            reply([String: Any](), nil)
+            return ([String: Any](), nil)
 
         // Game Center
         case ("GameCenter", "signIn"):
-            signIn { info in reply(info, nil) }
+            let info = await signIn()
+            return (info.dictionary, nil)
         case ("GameCenter", "player"):
-            reply(playerInfo(), nil)
+            return (currentPlayer().dictionary, nil)
         case ("GameCenter", "photo"):
-            guard GKLocalPlayer.local.isAuthenticated else { reply([String: Any](), nil); return }
-            GKLocalPlayer.local.loadPhoto(for: .normal) { image, _ in
-                guard let image = image, let data = image.jpegData(compressionQuality: 0.85) else { reply([String: Any](), nil); return }
-                reply(["dataUrl": "data:image/jpeg;base64," + data.base64EncodedString()], nil)
-            }
+            guard GKLocalPlayer.local.isAuthenticated,
+                  let image = try? await GKLocalPlayer.local.loadPhoto(for: .normal),
+                  let data = image.jpegData(compressionQuality: 0.85) else { return ([String: Any](), nil) }
+            return (["dataUrl": "data:image/jpeg;base64," + data.base64EncodedString()], nil)
         case ("GameCenter", "submitScore"):
-            guard let id = opts["leaderboardId"] as? String, let score = (opts["score"] as? NSNumber)?.intValue else { reply(nil, "leaderboardId and score are required"); return }
-            guard GKLocalPlayer.local.isAuthenticated else { reply(nil, "not signed in"); return }
-            GKLeaderboard.submitScore(score, context: 0, player: GKLocalPlayer.local, leaderboardIDs: [id]) { error in
-                if let error = error { reply(nil, error.localizedDescription) } else { reply([String: Any](), nil) }
+            guard let id = opts["leaderboardId"] as? String, let score = (opts["score"] as? NSNumber)?.intValue else { return (nil, "leaderboardId and score are required") }
+            guard GKLocalPlayer.local.isAuthenticated else { return (nil, "not signed in") }
+            do {
+                try await GKLeaderboard.submitScore(score, context: 0, player: GKLocalPlayer.local, leaderboardIDs: [id])
+                return ([String: Any](), nil)
+            } catch {
+                return (nil, error.localizedDescription)
             }
         case ("GameCenter", "showLeaderboard"):
-            DispatchQueue.main.async {
-                guard GKLocalPlayer.local.isAuthenticated else { reply(nil, "not signed in"); return }
-                let vc: GKGameCenterViewController
-                if let id = opts["leaderboardId"] as? String {
-                    vc = GKGameCenterViewController(leaderboardID: id, playerScope: .global, timeScope: .allTime)
-                } else {
-                    vc = GKGameCenterViewController(state: .leaderboards)
-                }
-                vc.gameCenterDelegate = self
-                self.topViewController()?.present(vc, animated: true)
-                reply([String: Any](), nil)
+            guard GKLocalPlayer.local.isAuthenticated else { return (nil, "not signed in") }
+            let vc: GKGameCenterViewController
+            if let id = opts["leaderboardId"] as? String {
+                vc = GKGameCenterViewController(leaderboardID: id, playerScope: .global, timeScope: .allTime)
+            } else {
+                vc = GKGameCenterViewController(state: .leaderboards)
             }
+            vc.gameCenterDelegate = closer
+            topViewController()?.present(vc, animated: true)
+            return ([String: Any](), nil)
 
         default:
-            reply(nil, "\(plugin).\(method) is not available")
+            return (nil, "\(plugin).\(method) is not available")
         }
     }
 
-    private func playerInfo() -> [String: Any] {
+    private func currentPlayer(error: String? = nil) -> PlayerInfo {
         let p = GKLocalPlayer.local
-        guard p.isAuthenticated else { return ["authenticated": false] }
-        return ["authenticated": true, "alias": p.alias, "displayName": p.displayName, "playerId": p.gamePlayerID, "underage": p.isUnderage]
+        guard p.isAuthenticated else { return PlayerInfo(error: error) }
+        return PlayerInfo(authenticated: true, alias: p.alias, displayName: p.displayName, playerId: p.gamePlayerID, underage: p.isUnderage, error: error)
     }
 
     /// Signs in with the Apple ID's Game Center account. iOS shows its own sign-in sheet only if the player has never signed in.
-    private func signIn(_ done: @escaping ([String: Any]) -> Void) {
-        DispatchQueue.main.async {
-            if GKLocalPlayer.local.isAuthenticated { done(self.playerInfo()); return }
-            self.signInReplies.append(done)
-            guard !self.authHandlerSet else { return }
-            self.authHandlerSet = true
-            GKLocalPlayer.local.authenticateHandler = { [weak self] vc, error in
-                guard let self = self else { return }
-                DispatchQueue.main.async {
-                    if let vc = vc { self.topViewController()?.present(vc, animated: true); return }
-                    var info = self.playerInfo()
-                    if let error = error { info["error"] = error.localizedDescription }
-                    let waiting = self.signInReplies
-                    self.signInReplies.removeAll()
-                    waiting.forEach { $0(info) }
-                }
+    private func signIn() async -> PlayerInfo {
+        if GKLocalPlayer.local.isAuthenticated { return currentPlayer() }
+        return await withCheckedContinuation { (continuation: CheckedContinuation<PlayerInfo, Never>) in
+            waitingForSignIn.append(continuation)
+            guard !authHandlerSet else { return }
+            authHandlerSet = true
+            GKLocalPlayer.local.authenticateHandler = { @Sendable [weak self] viewController, error in
+                let message = error?.localizedDescription
+                Task { @MainActor in self?.finishSignIn(viewController, message) }
             }
         }
+    }
+
+    private func finishSignIn(_ viewController: UIViewController?, _ error: String?) {
+        if let viewController {
+            topViewController()?.present(viewController, animated: true)
+            return
+        }
+        let info = currentPlayer(error: error)
+        let waiting = waitingForSignIn
+        waitingForSignIn.removeAll()
+        waiting.forEach { $0.resume(returning: info) }
     }
 
     private func topViewController() -> UIViewController? {
@@ -162,8 +187,11 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, GKGameCente
         while let presented = vc?.presentedViewController { vc = presented }
         return vc
     }
+}
 
-    func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
-        gameCenterViewController.dismiss(animated: true)
+/// Closes Apple's leaderboard screen when the player taps Done.
+final class LeaderboardCloser: NSObject, GKGameCenterControllerDelegate {
+    nonisolated func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
+        Task { @MainActor in gameCenterViewController.dismiss(animated: true) }
     }
 }
