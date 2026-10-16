@@ -55,7 +55,7 @@ Apple needs a real app, not an HTML page. [`swift-app/MirrorDropApp.swift`](swif
 **Xcode (Mac):**
 1. *File → New → Project → iOS → App*, interface **SwiftUI**.
 2. Replace everything in the `…App.swift` file with `MirrorDropApp.swift`, and delete `ContentView.swift`.
-3. Drag `release/index.html` into the project, ticking *Copy items if needed* and your app target.
+3. Drag `release/index.html` into the project, ticking *Copy items if needed* and your app target. To check it is in the app: click the project → your target → *Build Phases* → *Copy Bundle Resources*, and `index.html` must be listed there (about 10 MB). That file is the whole game; the Swift file only opens it.
 4. *Signing & Capabilities → + Capability → Game Center*. Under *General*, set iPhone only and Portrait only.
 5. Archive and upload as in Option 2, step 6.
 

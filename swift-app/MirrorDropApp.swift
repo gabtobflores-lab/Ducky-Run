@@ -93,7 +93,6 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
     weak var webView: WKWebView?
     private var waitingForSignIn: [CheckedContinuation<PlayerInfo, Never>] = []
     private var authHandlerSet = false
-    private let closer = LeaderboardCloser()
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) async -> (Any?, String?) {
         guard let body = message.body as? [String: Any],
@@ -135,14 +134,12 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
             }
         case ("GameCenter", "showLeaderboard"):
             guard GKLocalPlayer.local.isAuthenticated else { return (nil, "not signed in") }
-            let vc: GKGameCenterViewController
-            if let id = opts["leaderboardId"] as? String {
-                vc = GKGameCenterViewController(leaderboardID: id, playerScope: .global, timeScope: .allTime)
+            // Apple's own Game Center screen, opened on this leaderboard (worldwide, all time)
+            if #available(iOS 18.0, *), let id = opts["leaderboardId"] as? String {
+                GKAccessPoint.shared.trigger(leaderboardID: id, playerScope: .global, timeScope: .allTime) {}
             } else {
-                vc = GKGameCenterViewController(state: .leaderboards)
+                GKAccessPoint.shared.trigger(state: .leaderboards) {}
             }
-            vc.gameCenterDelegate = closer
-            topViewController()?.present(vc, animated: true)
             return ([String: Any](), nil)
 
         default:
@@ -186,12 +183,5 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
         var vc = (windows.first { $0.isKeyWindow } ?? windows.first)?.rootViewController
         while let presented = vc?.presentedViewController { vc = presented }
         return vc
-    }
-}
-
-/// Closes Apple's leaderboard screen when the player taps Done.
-final class LeaderboardCloser: NSObject, GKGameCenterControllerDelegate {
-    nonisolated func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
-        Task { @MainActor in gameCenterViewController.dismiss(animated: true) }
     }
 }
