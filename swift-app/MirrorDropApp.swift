@@ -160,9 +160,10 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
             waitingForSignIn.append(continuation)
             guard !authHandlerSet else { return }
             authHandlerSet = true
-            GKLocalPlayer.local.authenticateHandler = { @Sendable [weak self] viewController, error in
+            let bridge = self   // a constant reference: safe to hand to the main-thread task below
+            GKLocalPlayer.local.authenticateHandler = { @Sendable viewController, error in
                 let message = error?.localizedDescription
-                Task { @MainActor in self?.finishSignIn(viewController, message) }
+                Task { @MainActor in bridge.finishSignIn(viewController, message) }
             }
         }
     }
