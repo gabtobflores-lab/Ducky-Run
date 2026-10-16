@@ -45,6 +45,11 @@ The iOS project is already set up in `ios/`: iPhone only, portrait only, full sc
 
 Apple needs a real app, not an HTML page. [`swift-app/MirrorDropApp.swift`](swift-app/MirrorDropApp.swift) is that app in one Swift file. It shows the game full screen and provides saving and Game Center itself, so you only need two files: that Swift file and `release/index.html`.
 
+**Easiest: the ready-made Xcode project (Mac).** Run `bash tools/build-xcode-zip.sh` (or use the zip you were sent). It makes `Mirror Drop Xcode.zip` with the project, the game, the icon and every iPhone setting already inside.
+1. Unzip it and double-click `MirrorDrop.xcodeproj`.
+2. Click *MirrorDrop* at the top of the left sidebar → *Signing & Capabilities* → choose your **Team**, and change the Bundle Identifier from `com.yourname.mirrordrop` to your own.
+3. Plug in your iPhone, pick it at the top, and press ▶. To publish, use *Product → Archive* as in Option 2, step 6.
+
 **Swift Playgrounds (iPad or Mac):**
 1. Make a new **App** project.
 2. Open `MyApp.swift`, select everything, and paste in the whole of `MirrorDropApp.swift`. Delete `ContentView.swift`.
