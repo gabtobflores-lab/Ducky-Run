@@ -53,6 +53,8 @@ Apple needs a real app, not an HTML page. [`swift-app/MirrorDropApp.swift`](swif
 5. Press ▶ to try it, then use **Upload to App Store Connect** in App Settings.
 
 **Xcode (Mac):**
+If your project was made with the **Storyboard** interface (it has `AppDelegate.swift`, `SceneDelegate.swift` and `ViewController.swift`), use [`swift-app/ViewController.swift`](swift-app/ViewController.swift) instead: replace everything in `ViewController.swift` with it, do not add `MirrorDropApp.swift`, then do step 3 onwards. For a **SwiftUI** project:
+
 1. *File → New → Project → iOS → App*, interface **SwiftUI**.
 2. Replace everything in the `…App.swift` file with `MirrorDropApp.swift`, and delete `ContentView.swift`.
 3. Drag `release/index.html` into the project, ticking *Copy items if needed* and your app target. To check it is in the app: click the project → your target → *Build Phases* → *Copy Bundle Resources*, and `index.html` must be listed there (about 10 MB). That file is the whole game; the Swift file only opens it.
