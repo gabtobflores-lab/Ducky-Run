@@ -22,7 +22,7 @@ final class Pool<T: SKNode> {
 
 /// a label in the rounded system font; rebuilt only when its text, size or colour changes
 @MainActor
-final class Text {
+final class TextNode {
     let node = SKLabelNode()
     private var key = ""
     init(_ align: SKLabelHorizontalAlignmentMode = .center, _ v: SKLabelVerticalAlignmentMode = .baseline) { node.horizontalAlignmentMode = align; node.verticalAlignmentMode = v }
@@ -134,7 +134,7 @@ final class GameScene: SKScene {
     private let link = SKShapeNode(), twinPulse = SKShapeNode()
     private let elecGlows = [SKSpriteNode(), SKSpriteNode()], elecArcs = [SKShapeNode(), SKShapeNode()]
     // finish line
-    private let gateNode = SKNode(), gateCurtain = SKSpriteNode(), gateBlob = SKSpriteNode(), gateRibbon = SKSpriteNode(), gateCrop = SKCropNode(), gateShine = SKSpriteNode(), gateLabel = Text()
+    private let gateNode = SKNode(), gateCurtain = SKSpriteNode(), gateBlob = SKSpriteNode(), gateRibbon = SKSpriteNode(), gateCrop = SKCropNode(), gateShine = SKSpriteNode(), gateLabel = TextNode()
     private var gateMotes: [SKSpriteNode] = []
     // win light
     private let winBand = SKSpriteNode(), winWash = SKSpriteNode(), winRings = SKShapeNode()
@@ -143,13 +143,13 @@ final class GameScene: SKScene {
     private let desat = CIFilter(name: "CIColorControls")
     // pause fog and countdown
     private let fogBody = SKShapeNode(), fogFall = SKSpriteNode(), fogLip = SKShapeNode(), fogLipShadow = SKShapeNode()
-    private let cdNode = SKNode(), cdDisc = SKShapeNode(), cdTrack = SKShapeNode(), cdArc = SKShapeNode(), cdNum = Text(), cdLabel = Text()
+    private let cdNode = SKNode(), cdDisc = SKShapeNode(), cdTrack = SKShapeNode(), cdArc = SKShapeNode(), cdNum = TextNode(), cdLabel = TextNode()
     // lightning
     private let boltLayer = SKNode()
     private var boltShapes: Pool<SKShapeNode>!
     private let flashOverlay = SKSpriteNode()
     // HUD
-    private let scoreShadow = Text(), scoreText = Text(), levelText = Text(), bestLabel = Text(.right), bestValue = Text(.right), comboText = Text(.center, .center)
+    private let scoreShadow = TextNode(), scoreText = TextNode(), levelText = TextNode(), bestLabel = TextNode(.right), bestValue = TextNode(.right), comboText = TextNode(.center, .center)
     private let scoreNode = SKNode(), comboNode = SKNode(), comboPill = SKSpriteNode(), comboGlow = SKSpriteNode(), barTrack = SKSpriteNode(), barCrop = SKCropNode(), barFill = SKSpriteNode(), barMask = SKSpriteNode()
     private var shownScore = 0
     // menu preview
@@ -366,7 +366,10 @@ final class GameScene: SKScene {
 
         // the balls: identical size, timing, glow and squash; highlight mirrored
         let fx = m.fx
-        let glow = min(1, 0.15 + min(0.35, abs(m.bv[0]) / 3000) + fx.gem * 0.5 + fx.near * 0.45 + fx.squash * 0.35 + m.fxA * 0.3)
+        let speedGlow: Double = min(0.35, abs(m.bv[0]) / 3000)
+        var glowSum: Double = 0.15 + speedGlow + fx.gem * 0.5   // summed in steps: one long expression is too slow to type-check
+        glowSum += fx.near * 0.45; glowSum += fx.squash * 0.35; glowSum += m.fxA * 0.3
+        let glow = min(1, glowSum)
         let st = min(0.16, abs(m.bv[0]) / 4500)
         let sx = (1 + st) * (1 - 0.12 * fx.squash), sy = (1 - st * 0.7) * (1 + 0.09 * fx.squash)
         let r = 20 * (1 + m.pulse * 0.04 + fx.gem * 0.08)
@@ -480,7 +483,7 @@ final class GameScene: SKScene {
             if let c = n.childNode(withName: "w") as? SKShapeNode { c.path = CGPath(ellipseIn: CGRect(x: -R, y: -R, width: R * 2, height: R * 2), transform: nil); c.strokeColor = rgba(255, 255, 255, CGFloat(0.8 * (1 - k))); c.lineWidth = CGFloat(2.4 * (1 - k) + 0.4) }
             if let c = n.childNode(withName: "a") as? SKShapeNode {
                 let ga = (w.i == 1 ? Double.pi - 1.2 : -1.2) + (w.i == 1 ? -1 : 1) * k * 5, p = CGMutablePath()
-                p.addArc(center: .zero, radius: R * 0.78, startAngle: -ga, endAngle: -(ga + 0.8), clockwise: true)
+                p.addArc(center: .zero, radius: CGFloat(R * 0.78), startAngle: CGFloat(-ga), endAngle: CGFloat(-(ga + 0.8)), clockwise: true)
                 c.path = p; c.strokeColor = rgba(255, 255, 255, CGFloat(0.7 * (1 - k))); c.lineWidth = CGFloat(5 * (1 - k))
             }
             if let f = n.childNode(withName: "f") as? SKSpriteNode { f.isHidden = w.t >= 0.12; f.alpha = CGFloat(1 - w.t / 0.12); f.position = CGPoint(x: 0, y: -12) }
@@ -515,7 +518,12 @@ final class GameScene: SKScene {
         let m = model, fogVis = m.resumeT > 0 || m.state == .paused ? 1 : clamp01(m.fogT / 0.8)
         guard m.fog > 0 && fogVis > 0 else { for n in [fogBody, fogLip, fogLipShadow] { n.isHidden = true }; fogFall.isHidden = true; return }
         let t = m.t, fy = min(m.BY - 110, (m.BY - 60) * min(0.88, 0.3 * Double(m.fog) + 0.15))
-        let edge: (Double) -> Double = { x in fy + sin((abs(x - self.W / 2) / self.W) * 9 - t * 1.1) * 7 + sin(t * 0.7) * 3 }
+        let edge: (Double) -> Double = { (x: Double) -> Double in
+            let dx: Double = abs(x - self.W / 2) / self.W
+            let ph: Double = dx * 9 - t * 1.1
+            let wave: Double = sin(ph) * 7, drift: Double = sin(t * 0.7) * 3
+            return fy + wave + drift
+        }
         let body = CGMutablePath(); body.move(to: P(-20, -20)); body.addLine(to: P(W + 20, -20))
         var x = W + 20; while x >= -20 { body.addLine(to: P(x, edge(x))); x -= 10 }
         body.closeSubpath()
@@ -528,8 +536,11 @@ final class GameScene: SKScene {
         let m = model
         guard m.state == .play && m.resumeT > 0 else { cdNode.isHidden = true; return }
         cdNode.isHidden = false; cdNode.position = P(W / 2, H * 0.42)
-        let frac = m.resumeT - floor(m.resumeT), pop = 1 + 0.22 * max(0, frac - 0.7) / 0.3
-        let p = CGMutablePath(); p.addArc(center: .zero, radius: 56, startAngle: .pi / 2, endAngle: .pi / 2 - .pi * 2 * CGFloat(m.resumeT / 3), clockwise: true); cdArc.path = p
+        let frac: Double = m.resumeT - floor(m.resumeT)
+        let popK: Double = max(0, frac - 0.7)
+        let pop: Double = 1 + 0.22 * popK / 0.3
+        let sweep: CGFloat = .pi * 2 * CGFloat(m.resumeT / 3)
+        let p = CGMutablePath(); p.addArc(center: .zero, radius: 56, startAngle: .pi / 2, endAngle: .pi / 2 - sweep, clockwise: true); cdArc.path = p
         cdNum.set("\(Int(ceil(m.resumeT)))", 64, rgb(0x2b2d42)); cdNum.node.position = CGPoint(x: 0, y: -22); cdNum.node.setScale(CGFloat(pop))
         cdLabel.set("get ready", 18, rgba(43, 45, 66, 0.5), .bold); cdLabel.node.position = CGPoint(x: 0, y: -96)
     }
@@ -661,8 +672,9 @@ final class GameScene: SKScene {
         let lp = CGMutablePath(); lp.move(to: CGPoint(x: Double(r.minX) + m.bx[0] * s, y: cy)); lp.addLine(to: CGPoint(x: Double(r.minX) + m.bx[1] * s, y: cy))
         pvLink.path = lp.copy(dashingWithPhase: 0, lengths: [1, 7])
         let st = min(0.14, abs(m.bv[0]) / 4500), breathe = 0.2 + 0.12 * (sin(m.t * 1.8) * 0.5 + 0.5)
+        let pvGlow: Double = breathe + min(0.3, abs(m.bv[0]) / 3000)
         for i in 0..<2 {
-            pvBalls[i].draw(tex, at: CGPoint(x: Double(r.minX) + m.bx[i] * s, y: cy), r: CGFloat(rad), P: PAL[i], side: i == 1 ? 1 : -1, sx: CGFloat(1 + st), sy: CGFloat(1 - st * 0.7), glow: CGFloat(breathe + min(0.3, abs(m.bv[0]) / 3000)), t: m.t, rimA: 0)
+            pvBalls[i].draw(tex, at: CGPoint(x: Double(r.minX) + m.bx[i] * s, y: cy), r: CGFloat(rad), P: PAL[i], side: i == 1 ? 1 : -1, sx: CGFloat(1 + st), sy: CGFloat(1 - st * 0.7), glow: CGFloat(pvGlow), t: m.t, rimA: 0)
         }
     }
 }

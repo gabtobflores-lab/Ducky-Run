@@ -116,7 +116,7 @@ struct ProfileSheet: View {
     /// a small square crop from the middle, kept on the phone
     private func setPhoto(_ img: UIImage) {
         let z: CGFloat = 192, m = min(img.size.width, img.size.height)
-        let fmt = UIGraphicsImageRendererFormat.default(); fmt.scale = 1
+        let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1
         let out = UIGraphicsImageRenderer(size: CGSize(width: z, height: z), format: fmt).image { _ in
             img.draw(in: CGRect(x: -(img.size.width - m) / 2 * z / m, y: -(img.size.height - m) / 2 * z / m, width: img.size.width * z / m, height: img.size.height * z / m))
         }

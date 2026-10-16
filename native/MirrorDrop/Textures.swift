@@ -33,7 +33,7 @@ final class Textures {
     /// paints `size` game units into a texture at full screen sharpness
     func paint(_ key: String, _ size: CGSize, _ draw: (CGContext, CGSize) -> Void) -> SKTexture {
         if let t = cache[key] { return t }
-        let fmt = UIGraphicsImageRendererFormat.default(); fmt.scale = k; fmt.opaque = false
+        let fmt = UIGraphicsImageRendererFormat(); fmt.scale = k; fmt.opaque = false
         let img = UIGraphicsImageRenderer(size: size, format: fmt).image { c in draw(c.cgContext, size) }
         let t = SKTexture(image: img); t.filteringMode = .linear
         cache[key] = t
