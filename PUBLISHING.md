@@ -41,6 +41,26 @@ The iOS project is already set up in `ios/`: iPhone only, portrait only, full sc
 9. **Privacy and support links.** Apple needs both. Put your email into `release/privacy.html`, upload the `release` folder (Option 1), and use `https://your-site/privacy.html` for both.
 10. **Submit for review.** Reviews usually take one to two days.
 
+## Option 3: the App Store with plain Swift code (no npm, works on iPad)
+
+Apple needs a real app, not an HTML page. [`swift-app/MirrorDropApp.swift`](swift-app/MirrorDropApp.swift) is that app in one Swift file. It shows the game full screen and provides saving and Game Center itself, so you only need two files: that Swift file and `release/index.html`.
+
+**Swift Playgrounds (iPad or Mac):**
+1. Make a new **App** project.
+2. Open `MyApp.swift`, select everything, and paste in the whole of `MirrorDropApp.swift`. Delete `ContentView.swift`.
+3. Add the game: use the **+** button in the sidebar to insert a file, and pick `index.html` from the `release` folder. Keep the name `index.html`.
+4. In **App Settings**: set the name, the icon (`release/app-store-icon-1024.png`), portrait orientation, and your bundle ID. Add **Game Center** under Capabilities if it is offered. If it is not, the game still works; only the world leaderboards stay off.
+5. Press ▶ to try it, then use **Upload to App Store Connect** in App Settings.
+
+**Xcode (Mac):**
+1. *File → New → Project → iOS → App*, interface **SwiftUI**.
+2. Replace everything in the `…App.swift` file with `MirrorDropApp.swift`, and delete `ContentView.swift`.
+3. Drag `release/index.html` into the project, ticking *Copy items if needed* and your app target.
+4. *Signing & Capabilities → + Capability → Game Center*. Under *General*, set iPhone only and Portrait only.
+5. Archive and upload as in Option 2, step 6.
+
+Then create the listing and leaderboards in App Store Connect as in Option 2, steps 7 to 10.
+
 ## After you change the game
 
 The game's source is `mirror.html`. After editing it, run
