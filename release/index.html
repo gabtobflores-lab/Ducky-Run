@@ -238,7 +238,16 @@
 
   /* ---------- unlocks: locks on the menu, the Daily Challenge row, the purchase sheet, Supporter touches ---------- */
   .dlocks{position:relative;height:0}
-  .dlocks i{position:absolute;top:-27px;width:16px;height:16px;margin-left:-8px;color:rgba(43,45,66,.42);pointer-events:none}
+  .dlocks i{position:absolute;top:-27px;width:18px;height:18px;margin-left:-9px;border-radius:50%;display:grid;place-items:center;pointer-events:none;color:rgba(43,45,66,.55);
+    background:rgba(255,255,255,.94);box-shadow:0 0 0 .5px rgba(43,45,66,.1),0 2px 6px rgba(43,45,66,.16)}
+  .dlocks i svg{width:9px!important;height:9px!important}
+  .btn .bl{display:inline-block;width:15px;height:15px;margin-right:9px;vertical-align:-1px}
+  .btn .bl svg{width:100%;height:100%;fill:currentColor}
+  .btn small{display:block;margin-top:3px;font-size:11.5px;font-weight:800;letter-spacing:.06em;opacity:.78}
+  .btn.locked{color:#fff;background:linear-gradient(180deg,#4a4d68,#2b2d42 55%,#1f2133);box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 -2px 0 rgba(0,0,0,.18) inset,0 10px 22px rgba(31,33,51,.3),0 2px 4px rgba(31,33,51,.2)}
+  .btn.locked .bl{color:#f5cf6a}
+  .btn.locked small{color:#f5dfa0;opacity:1}
+  .daily .dpill{flex:none;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.1em;color:#7d520a;background:linear-gradient(180deg,#fff7dc,#ffe29a);box-shadow:0 0 0 .5px rgba(168,112,15,.35)}
   .dlocks svg,.lk svg,.dname svg,.daily .dlk svg{width:100%;height:100%;fill:currentColor}
   .dname.locked::after{content:'';display:inline-block;width:13px;height:13px;margin-left:6px;vertical-align:-1px;background:currentColor;opacity:.55;
     -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='2'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='black' stroke-width='1.8'/%3E%3C/svg%3E") center/contain no-repeat;
@@ -419,7 +428,7 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
   <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div></div>
   <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="mrow"><span class="label">MODE</span><div class="seg sm" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button><button data-mode="zen">Zen</button></div></div></div>
   <button class="btn" id="play">PLAY</button>
-  <button class="daily" id="daily" type="button"><span class="dic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="dtx"><b>Daily Challenge</b><small id="dsub">A new run every day</small></span><span class="dlk" id="dlk"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="dgo" id="dgo" aria-hidden="true">›</span></button>
+  <button class="daily" id="daily" type="button"><span class="dic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="dtx"><b>Daily Challenge</b><small id="dsub">A new run every day</small></span><span class="dpill" id="dlk">MAX</span><span hidden><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="dgo" id="dgo" aria-hidden="true">›</span></button>
   <div class="bestwrap"><div class="card best" id="mbest" role="button" tabindex="0" aria-label="Your best runs"></div><button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button></div>
   <div class="hint">tap to move the balls one step.<br>at the edge they turn around.</div>
 </div>
@@ -623,12 +632,18 @@ function syncDiffUI() {
   syncLocks();
 }
 const LOCK_SVG = '<svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+function tierPrice(t) { let p = ''; try { p = storePrices['mirrordrop.' + TIERS[t]] || ''; } catch (e) {} return p || ['', '$0.99', '$1.79', '$1.99', '$4.99'][t]; }
+function setBtn(el, main, cap, locked) { // PLAY, or a premium dark Unlock button that says which pack and its price
+  const h = `${locked ? `<span class="bl" aria-hidden="true">${LOCK_SVG}</span>` : ''}<span class="bt">${main}</span>${cap ? `<small>${esc(cap)}</small>` : ''}`;
+  if (el.dataset.h !== h) { el.dataset.h = h; el.innerHTML = h; bump(el); } el.classList.toggle('locked', locked); }
 function syncLocks() { // locked difficulties and modes stay visible with a small lock; PLAY says what it will do
   document.querySelectorAll('.dlocks').forEach(d => { const h = [0, 1, 2, 3, 4, 5].map(i => sectOpen(i) ? '' : `<i style="left:calc(11px + (100% - 22px) * ${(i * 20 + 10) / 120})">${LOCK_SVG}</i>`).join(''); if (d.innerHTML !== h) d.innerHTML = h; });
   document.querySelectorAll('.dname').forEach(n => n.classList.toggle('locked', !sectOpen(bucket()) && mode !== 'daily'));
   document.querySelectorAll('#mode button').forEach(b => { const lk = !modeOpen(b.dataset.mode); b.classList.toggle('lk', lk); const has = !!b.querySelector('.lk'); if (lk && !has) b.insertAdjacentHTML('beforeend', `<span class="lk">${LOCK_SVG}</span>`); else if (!lk && has) b.querySelector('.lk').remove(); });
-  const free = canStart() && !sectOpen(bucket()) && mode !== 'daily', label = canStart() ? (free ? 'FREE HARD RUN' : 'PLAY') : 'UNLOCK ' + (!modeOpen(mode) ? mode : NAMES[bucket()]).toUpperCase();
-  swapText($('#play'), label); swapText($('#retry'), canStart() ? (free ? 'FREE HARD RUN' : 'TRY AGAIN') : label);
+  const free = canStart() && !sectOpen(bucket()) && mode !== 'daily', need = needFor(), what = (!modeOpen(mode) ? mode : NAMES[bucket()]).toUpperCase();
+  const cap = canStart() ? (free ? '1 free run today' : '') : `with ${TIER_NAMES[need]} · ${tierPrice(need)}`;
+  setBtn($('#play'), canStart() ? (free ? 'FREE HARD RUN' : 'PLAY') : 'UNLOCK ' + what, cap, !canStart());
+  setBtn($('#retry'), canStart() ? (free ? 'FREE HARD RUN' : 'TRY AGAIN') : 'UNLOCK ' + what, cap, !canStart());
   $('#dlk').style.display = ent >= 3 ? 'none' : ''; $('#dgo').style.display = ent >= 3 ? '' : 'none';
   const db = bests['daily_' + dayKey()]; swapText($('#dsub'), ent < 3 ? 'Unlock with Max' : db ? `Today's best: ${db}` : 'Today\'s run is ready');
   $('#over').classList.toggle('daily', mode === 'daily');
@@ -1152,7 +1167,7 @@ function glow(g, rgb, x, y, rx, ry, al) { const b = softBlob(rgb); g.globalAlpha
 const SKY = {
   storm: g => { skyGrad(g, [[0, '60,72,94'], [.4, '80,94,116'], [.8, '98,112,134'], [1, '110,124,144']]); /* Apple's rain: slate blue-grey */ for (let k = 0; k < 5; k++) { const sd = SEEDS[k]; glow(g, '30,36,52', ((sd.x * W * 1.6 + t * 9 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .16, .7); } glow(g, '170,185,210', W * .5, H * .95, W * .9, H * .25, .35); },
   hail: g => { skyGrad(g, [[0, '94,112,144'], [.45, '116,136,168'], [1, '134,154,186']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 5]; glow(g, '56,70,94', ((sd.x * W * 1.6 + t * 14 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .2), W * .45, H * .14, .6); } },
-  fog: g => { skyGrad(g, [[0, '102,110,126'], [.5, '116,124,140'], [1, '128,136,150']]); /* Apple's fog: smoky blue-grey */ for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, k % 2 ? '86,94,112' : '146,154,170', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .55, H * .22, .55); } }, // soft darker and lighter patches drifting
+  fog: g => { skyGrad(g, [[0, '153,163,178'], [.5, '172,180,192'], [1, '186,192,202']]); /* Apple-style fog: pale and milky */ for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 9]; glow(g, k % 2 ? '160,168,182' : '214,219,226', ((sd.x * W * 1.6 + t * 6 * sd.k) % (W * 1.6)) - W * .3, H * sd.y, W * .55, H * .22, .55); } }, // soft darker and lighter patches drifting
   heat: g => { // a blazing clear day: deep cobalt overhead, bleaching to a white-hot haze along the ground
     skyGrad(g, [[0, '36,90,174'], [.4, '64,126,204'], [.74, '112,162,220'], [.92, '196,190,196'], [1, '232,198,168']]); // Apple's rich blue, warming only near the ground
     glow(g, '255,236,214', W * .5, H * 1.02, W * 1.2, H * .18, .35); },
@@ -1306,7 +1321,7 @@ const MOON = () => sprite("moon19", 768, 768, (g) => { // the full moon as Apple
   g.putImageData(img, 0, 0);
 });
 setTimeout(() => { const jobs = [() => SKYGL.warm(), () => rainTile(), () => { for (let q = 0; q < 6; q++) rainStreak(q); }, () => glassFilm(0), () => glassFilm(1), () => beadSprite(), () => dropSprite(), () => ICE(), () => hailWake(), () => frost(), () => SUNSTAR(), () => HALO(),
-  ...[0, 1, 2, 3].map(i => () => sheet('fogp' + i, 512, 180, '140,148,164', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '166,174,190' }))];
+  ...[0, 1, 2, 3].map(i => () => sheet('fogq' + i, 512, 180, '196,202,210', 22, { holes: 7, blur: 12, sc: 1.2, y0: .2, yr: .5, lit: '226,230,236' }))];
   const next = () => { const j = jobs.shift(); if (!j) return; try { j(); } catch (e) {} setTimeout(next, 60); }; next(); }, 900); // one piece at a time, so the menu stays smooth // build it once while the menu is up, so the shower never stutters
 const MET = [], TRAINS = []; let metT = 0, metFlash = 0;
 function meteors(rate, a) { // Apple-style shower: meteors glide from one radiant, each a luminous streak with a soft bloom; bright ones leave a glow that slowly fades
@@ -1341,7 +1356,7 @@ function nightSky(a, starA) { // stars with a slow twinkle on top of the cached 
     ctx.globalAlpha = a * tw * .25; ctx.fillRect(sd.x * W - 3, sd.y * H * .7 + .3, 7.6, 1); ctx.fillRect(sd.x * W + .3, sd.y * H * .7 - 3, 1, 7.6); }
   ctx.globalAlpha = 1;
 }
-const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' ? wx.a : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'fog' ? wx.a * .8 : 0; // fog takes white text, as Apple's cloudy screen does
+const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' ? wx.a : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'fog' ? wx.a * .15 : 0; // the pale fog keeps dark text
 const uiNight = () => smooth((nightK() - .3) / .3); // 0 = the Wind (day) style, 1 = the Aurora (night) style
 const hudInk = al => { const k = uiNight(); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .5})`; };
 const SPR = {};
@@ -1563,11 +1578,18 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
   sky=mix(sky,far.rgb,far.a*.72*cloudA);sky=mix(sky,near.rgb,near.a*cloudA);
   if(rain>0.)sky+=vec3(.82,.88,.98)*(rainL(uv,asp,70.,9.,1.)*.15+rainL(uv,asp,125.,6.5,2.)*.09)*rain*(1.+bolt.z*.8); /* the distant rain curtain */
   gl_FragColor=vec4(sky+dith(),1.);}`,
-    fog: `void main(){vec2 uv=UV();vec2 p=vec2(uv.x*res.x/res.y,uv.y)*2.2;
-  vec2 q=vec2(fbm(p+vec2(t*.07,t*.02)),fbm(p+vec2(5.2,1.3)-vec2(t*.055,-t*.02)));float f=fbm(p+1.8*q+vec2(t*.09,t*.025)); /* the fog churns and rolls */
-  vec3 dark=vec3(.36,.4,.48),mid=vec3(.45,.49,.57),lite=vec3(.57,.61,.69);vec3 c=mix(dark,mid,smoothstep(.22,.55,f));c=mix(c,lite,smoothstep(.55,.88,f));
-  float f2=fbm(p*.45+vec2(-t*.02,t*.006)+q*.6);c=mix(c,lite*1.04,.28*smoothstep(.45,.85,f2));c=mix(c,dark*.92,.22*(1.-smoothstep(.2,.55,f2))*uv.y); /* a larger, slower layer: depth */
-  c+=.05*exp(-((uv.x-.5)*(uv.x-.5))*5.-((uv.y-.36)*(uv.y-.36))*4.);c=mix(c,lite,.18*uv.y);gl_FragColor=vec4(c+dith(),1.);}`,
+    fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
+float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
+void main(){vec2 uv=UV();float asp=res.x/res.y;
+  vec3 c=mix(vec3(.6,.64,.7),vec3(.72,.75,.79),smoothstep(0.,1.,uv.y));
+  c+=vec3(.1,.095,.085)*exp(-pow((uv.x-.66)*1.7,2.)-pow((uv.y-.16)*2.6,2.)); /* the sun, diffused to a soft bright patch */
+  for(int i=0;i<3;i++){float fi=float(i),dir=mod(fi,2.)<.5?1.:-1.;
+    vec2 p=vec2(uv.x*asp*(.9+fi*.45)+t*(.010+fi*.008)*dir+fi*3.1,uv.y*(4.2+fi*1.8)+fi*5.7);
+    float n=fbm(p+vec2(fbm(p*.5+vec2(t*.006,0.))*.8,0.));n=smoothstep(.38,.82,n); /* soft wisps, stretched sideways like real fog */
+    float h=bandF(uv.y,.24+fi*.26,.24+fi*.07);
+    c=mix(c,vec3(.83,.85,.88)+fi*.02,n*h*(.34+fi*.14));}
+  c=mix(c,vec3(.8,.82,.85),.24*smoothstep(.45,1.,uv.y)); /* fog pools low */
+  gl_FragColor=vec4(c+dith(),1.);}`,
     blurH: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
     blurV: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
     comp: `uniform sampler2D tex;uniform sampler2D tex2;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 s=texture2D(tex,uv).rgb;vec3 b=texture2D(tex2,uv).rgb;vec3 c=clamp(s+(s-b)*.16+b*.03,0.,1.); /* a light unsharp mask brings out the fine rays */gl_FragColor=vec4(c+dith(),1.);}`,
@@ -1762,7 +1784,6 @@ function drawFrontWeather() { // light and glass in front of the scene
     ctx.save(); ctx.globalCompositeOperation = 'screen';
     ctx.restore();
   }
-  if (wx.kind === 'fog' && wx.a > .01) { const f = frost(); ctx.globalAlpha = .12 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1; } // the original condensation at the corners, lighter
   if (wx.kind === 'hail' && wx.a > .01) { // cold frost gathering in the corners of the glass
     const f = frost(); ctx.globalAlpha = .3 * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
   }
@@ -2000,9 +2021,9 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
   if (wx.kind !== 'fog' || wx.a < .01) return;
   const a = wx.a, e = a * a * (3 - 2 * a); // eased in and out
   lowres(() => {
-  const L = [[-.05, .4, 4, 2.2, .2], [.18, .4, -6, 1.8, .26], [.42, .4, 5, 2.4, .32], [.64, .42, -8, 1.9, .38]]; // thin up high, pooling low; slow, as real fog drifts
+  const L = [[-.05, .4, 4, 2.2, .2], [.18, .4, -6, 1.8, .26], [.42, .4, 5, 2.4, .32], [.6, .46, -8, 1.9, .5]]; // thin up high, pooling low; slow, as real fog drifts
   L.forEach(([y, h, sp, sc, al], i) => { if (skyE && i !== 3) return; // over the GPU fog, one front layer keeps the blocks veiled // over the GPU fog, two front layers are enough
-    const img = sheet('fogp' + i, 512, 180, '140,148,164', 22, { holes: 7, blur: 9, sc: 1.2, y0: .2, yr: .5, lit: '166,174,190' }); // shaded bellies, bright crowns: reads as volume
+    const img = sheet('fogq' + i, 512, 180, '196,202,210', 22, { holes: 7, blur: 12, sc: 1.2, y0: .2, yr: .5, lit: '226,230,236' }); // milky, soft-edged banks: the blocks fade into them
     const breath = .78 + .22 * nz(t * .13, i * 5), yy = H * y + nz(t * .07, i * 3) * 18;
     drawSheet(img, yy, H * h * (1 + .06 * nz(t * .1, i)), sp, al * e * breath, sc);
   });
