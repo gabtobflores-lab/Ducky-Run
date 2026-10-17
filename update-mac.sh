@@ -65,7 +65,7 @@ fix_template() {  # $1 = the Swift file with a pasted copy of the game's app cod
   d=$(dirname "$f"); root=""
   for c in "$d" "$(dirname "$d")" "$(dirname "$(dirname "$d")")"; do ls "$c"/*.xcodeproj >/dev/null 2>&1 && { root="$c"; break; }; done
   [ -n "$root" ] || return
-  app=$(grep -rlE '^@main|^@UIApplicationMain' --include=AppDelegate.swift "$root" 2>/dev/null | grep -v -e DerivedData -e backup | head -1)
+  app=$(find "$root" -name AppDelegate.swift -not -path "*DerivedData*" -not -path "* backup *" 2>/dev/null | head -1)
   [ -n "$app" ] || return
   app=$(dirname "$app")
   if ! grep -q FileSystemSynchronized "$root"/*.xcodeproj/project.pbxproj 2>/dev/null; then
@@ -87,6 +87,14 @@ fix_template() {  # $1 = the Swift file with a pasted copy of the game's app cod
   [ -f "$app/index.html" ] || : > "$app/index.html"   # update_web fills it in
   [ -f "$app/MirrorDropApp.swift" ] || : > "$app/MirrorDropApp.swift"
 }
+if pgrep -x Xcode >/dev/null 2>&1; then
+  echo "Closing Xcode first, so it can't save its old copies over the fixed files..."
+  osascript -e 'tell application "Xcode" to quit' >/dev/null 2>&1; sleep 3
+  reopen_xcode=1
+fi
+for f in Desktop Documents Downloads; do
+  ls "$HOME/$f" >/dev/null 2>&1 || echo "  ⚠️ Terminal isn't allowed to look in your $f folder. Allow it in System Settings → Privacy & Security → Files and Folders → Terminal, then run this again."
+done
 while IFS= read -r f; do
   [ "$(basename "$f")" = MirrorDropApp.swift ] && continue
   fix_template "$f"
@@ -114,4 +122,7 @@ if [ "$updated" = 0 ]; then
   else echo "That folder has no index.html inside, so nothing was changed."; exit 1; fi
 fi
 echo
-echo "✅ Updated. In Xcode press ▶ (if it asks, choose 'Use Version on Disk')."
+if [ "${reopen_xcode:-0}" = 1 ]; then
+  echo "✅ Updated. Reopening Xcode: press ⇧⌘K (Clean Build Folder), then ▶."
+  open -a Xcode >/dev/null 2>&1
+else echo "✅ Updated. In Xcode press ⇧⌘K (Clean Build Folder), then ▶ (if it asks, choose 'Use Version on Disk')."; fi
