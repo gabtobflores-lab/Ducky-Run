@@ -84,10 +84,10 @@ Free download, four one-time purchases on one screen (design preview: appstore/u
 
 | Tier | Price | Role | Unlocks |
 |---|---|---|---|
-| Free | $0 | hook | Easy and Normal, all weather, Game Center, Share score, one free Hard run per day, Daily Challenge leaderboard visible (locked) |
+| Free | $0 | hook | Easy and Normal with fog only, Game Center, Share score, one free Hard run per day, Daily Challenge leaderboard visible (locked) |
 | Plus | $0.99 | real but looks small | Chill and Zen mode |
-| Pro | $1.79 | decoy | Chill, Zen, Hard and Infinite |
-| Max | $1.99 | main pick | Everything: Chill, Zen, Hard, Insane, Impossible, Infinite, Daily Challenge |
+| Pro | $1.79 | decoy | Chill, Zen, Hard, plus storms (lightning) and hail |
+| Max | $1.99 | main pick | Everything: Chill, Zen, Hard, Insane, Impossible, Infinite, every weather event (aurora, meteors, wind, sun, heat), Daily Challenge |
 | Supporter | $4.99 | for fans | All of Max, plus the Golden Run, a gold app icon, gold share cards, and a gold profile ring with a Founding Supporter badge (launch year only) |
 
 Golden Run (Supporter): the moment the score passes the old best there is a soft white flash and a ring of light with sparks around each ball; both balls turn to liquid gold (moving reflection, bright rim, twinkling glints, warm halo) and leave a trail of gold dust; the score turns gold, a 'Golden Run · New best' tag appears, and a warm chime and success haptic play.
