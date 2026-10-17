@@ -15,7 +15,7 @@ struct MirrorDropApp: App {
                 .ignoresSafeArea()
                 .statusBarHidden(true)
                 .hideHomeIndicator()
-                .background(Color.black)
+                .background(Color(red: 0xf6 / 255, green: 0xf1 / 255, blue: 0xea / 255)) // the cream of the loading screen, so launch never flashes black
                 .onAppear { UIApplication.shared.isIdleTimerDisabled = true } // the screen stays on while playing
         }
     }
@@ -35,6 +35,7 @@ struct GameView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true                // the aurora video plays inside the game
         config.mediaTypesRequiringUserActionForPlayback = []
         config.websiteDataStore = .default()                   // scores saved by the game survive app restarts
+        ProMotion.unlockWebFrameRate(config.preferences)       // let the game draw at 120 fps instead of WebKit's usual 60
 
         // The game looks for Capacitor's bridge; this tiny stand-in sends its calls to NativeBridge below.
         let shim = """
@@ -51,8 +52,9 @@ struct GameView: UIViewRepresentable {
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.isOpaque = false
-        web.backgroundColor = .black
-        web.scrollView.backgroundColor = .black
+        let cream = UIColor(red: 0xf6 / 255, green: 0xf1 / 255, blue: 0xea / 255, alpha: 1)
+        web.backgroundColor = cream
+        web.scrollView.backgroundColor = cream
         web.scrollView.isScrollEnabled = false
         web.scrollView.bounces = false
         web.scrollView.contentInsetAdjustmentBehavior = .never
@@ -149,6 +151,16 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
             let ins = w?.safeAreaInsets ?? webView?.safeAreaInsets ?? .zero
             return (["top": Double(ins.top), "bottom": Double(ins.bottom)], nil)
 
+        // The aurora video, handed to the game after launch so the game file itself stays small and opens fast
+        case ("App", "aurora"):
+            let data = await Task.detached(priority: .utility) { () -> String? in
+                guard let url = Bundle.main.url(forResource: "aurora", withExtension: "mp4"),
+                      let bytes = try? Data(contentsOf: url) else { return nil }
+                return bytes.base64EncodedString()
+            }.value
+            guard let data else { return (nil, "aurora.mp4 is not in the app") }
+            return (["data": data], nil)
+
         // Haptics: the Taptic Engine, at the same moments as the game's sounds
         case ("Haptics", "feedback"):
             feedback(opts["kind"] as? String ?? "light")
@@ -239,4 +251,19 @@ final class ProMotion: NSObject {
     }
 
     @objc private func tick(_ link: CADisplayLink) {}
+
+    /// WebKit keeps web pages near 60 fps unless its "Prefer Page Rendering Updates near 60fps" setting is off
+    /// (the same switch as Safari's Feature Flags). If a future iOS drops the switch, the game simply stays at 60.
+    static func unlockWebFrameRate(_ prefs: WKPreferences) {
+        let listSel = NSSelectorFromString("_features"), setSel = NSSelectorFromString("_setEnabled:forFeature:")
+        guard let list = class_getClassMethod(WKPreferences.self, listSel),
+              let setM = class_getInstanceMethod(WKPreferences.self, setSel) else { return }
+        typealias Features = @convention(c) (AnyClass, Selector) -> Unmanaged<NSArray>?
+        typealias SetEnabled = @convention(c) (WKPreferences, Selector, Bool, NSObject) -> Void
+        let features = unsafeBitCast(method_getImplementation(list), to: Features.self)(WKPreferences.self, listSel)?.takeUnretainedValue() ?? []
+        let setEnabled = unsafeBitCast(method_getImplementation(setM), to: SetEnabled.self)
+        for case let f as NSObject in features where (f.value(forKey: "key") as? String) == "PreferPageRenderingUpdatesNear60FPSEnabled" {
+            setEnabled(prefs, setSel, false, f)
+        }
+    }
 }

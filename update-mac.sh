@@ -14,11 +14,31 @@ dirs_of() {
 }
 get() { curl -fsSL "$BASE/$1" -o "$2.new" && mv "$2.new" "$2" || { echo "  ⚠️ download failed: $1"; rm -f "$2.new"; }; }
 
+synced() { grep -q FileSystemSynchronized "$1"/../*.xcodeproj/project.pbxproj 2>/dev/null; }  # Xcode 16 projects pick up new files by themselves
+
 update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swift
   echo "Updating: $1"
-  mkdir -p "$1/../Mirror Drop backup $STAMP"; cp "$1/MirrorDropApp.swift" "$1/index.html" "$1/../Mirror Drop backup $STAMP/" 2>/dev/null
+  local bk="$1/../Mirror Drop backup $STAMP"
+  mkdir -p "$bk"; cp "$1/MirrorDropApp.swift" "$1/index.html" "$bk/" 2>/dev/null; cp "$1/aurora.mp4" "$bk/" 2>/dev/null
   get app-update/MirrorDropApp.swift "$1/MirrorDropApp.swift"
-  get app-update/index.html "$1/index.html"
+  if synced "$1"; then
+    # the small, fast-opening game file plus the aurora video beside it
+    get app-update/index.html "$1/index.html"
+    get app-update/aurora.mp4 "$1/aurora.mp4"
+  else
+    get app-update/index-inline.html "$1/index.html"
+  fi
+  # iOS's launch screen in the loading screen's cream, so opening the app flows straight into the game
+  local plist="$1/../Info.plist"
+  if [ -d "$1/Assets.xcassets" ] && [ -f "$plist" ] && [ -x /usr/libexec/PlistBuddy ]; then
+    mkdir -p "$1/Assets.xcassets/LaunchCream.colorset"
+    cat > "$1/Assets.xcassets/LaunchCream.colorset/Contents.json" <<'JSON'
+{ "colors" : [ { "color" : { "color-space" : "srgb", "components" : { "alpha" : "1.000", "red" : "0xF6", "green" : "0xF1", "blue" : "0xEA" } }, "idiom" : "universal" } ],
+  "info" : { "author" : "xcode", "version" : 1 } }
+JSON
+    /usr/libexec/PlistBuddy -c "Delete :UILaunchScreen" "$plist" >/dev/null 2>&1
+    /usr/libexec/PlistBuddy -c "Add :UILaunchScreen dict" -c "Add :UILaunchScreen:UIColorName string LaunchCream" "$plist" >/dev/null 2>&1
+  fi
   updated=1
 }
 
