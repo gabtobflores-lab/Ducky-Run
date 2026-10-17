@@ -25,8 +25,10 @@ update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swi
     # the small, fast-opening game file plus the aurora video beside it
     get app-update/index.html "$1/index.html"
     get app-update/aurora.mp4 "$1/aurora.mp4"
+    echo "  fast-launch version installed"
   else
     get app-update/index-inline.html "$1/index.html"
+    echo "  all-in-one version installed (this project doesn't pick up new files, so the video stays inside the game file)"
   fi
   # iOS's launch screen in the loading screen's cream, so opening the app flows straight into the game
   local plist="$1/../Info.plist"

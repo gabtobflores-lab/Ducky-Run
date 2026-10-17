@@ -218,10 +218,11 @@
   .chev{font-size:22px;font-weight:700;color:var(--ink-3)}
   .lbt{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);padding:6px 4px 0}
   .foot{text-align:center;color:var(--ink-3);font-size:12px;line-height:1.45;padding:6px 10px 0}
-  /* loading screen: identical to the iOS launch screen (two balls on cream), so opening the app flows straight into it */
-  #boot{position:fixed;inset:0;z-index:60;background:#f6f1ea;display:grid;place-items:center;transition:opacity .4s var(--ease)}
+  /* loading screen: plain cream like the iOS launch screen, so opening the app flows straight into the menu; the balls only appear if loading takes a while */
+  #boot{position:fixed;inset:0;z-index:60;background:#f6f1ea;display:grid;place-items:center;transition:opacity .25s var(--ease)}
   #boot.gone{opacity:0;pointer-events:none}
-  #boot .bb{position:relative;width:130px;height:48px}
+  #boot .bb{position:relative;width:130px;height:48px;opacity:0;transition:opacity .3s}
+  #boot.slow .bb{opacity:1}
   #boot .bb i{position:absolute;top:0;width:48px;height:48px;border-radius:50%;animation:bootsway 1.6s var(--ease) infinite alternate}
   #boot .bb i.p{left:0;background:radial-gradient(circle at 36% 32%,#ffb3bf,#ff6b81 45%,#d93f5c)}
   #boot .bb i.t{right:0;background:radial-gradient(circle at 64% 32%,#a6eef5,#2ec4d6 45%,#1595a8);animation-name:bootsway2}
@@ -2163,12 +2164,13 @@ syncPfp();
 setTimeout(gcSignIn, 1200); // Apple asks games to sign in at launch; iOS shows a small "Welcome back" banner
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(true); }
   if (document.hidden && (state === 'play' || state === 'paused') && score > bestNow()) { bests[bkey()] = score; bestBanked = true; saveBests(); } /* if iOS closes the app in the background, a new best is already safe */ if (!document.hidden && ac && ac.state !== 'running') ac.resume().catch(() => {}); }); // leaving the app pauses without the fog penalty
-// the loading screen leaves once the heavy pictures are decoded and the first frame is on screen; it only shows a progress bar if that takes a while
+// the loading screen leaves as soon as the first frame is on screen; the moon picture finishes decoding in the background
 (() => { const boot = document.getElementById('boot'); if (!boot) return; const slow = setTimeout(() => boot.classList.add('slow'), 600);
   const dec = im => (im.decode ? im.decode() : Promise.resolve()).catch(() => {});
   const vidOK = !!document.createElement('video').canPlayType(AURVID.type); if (!vidOK) needFrames();
-  Promise.race([Promise.all(vidOK ? [dec(MOONIMG)] : [dec(AURIMG), dec(MOONIMG), dec(FLOWIMG)]), new Promise(r => setTimeout(r, 6000))]).then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
-    clearTimeout(slow); boot.classList.add('gone'); setTimeout(() => boot.remove(), 450); }))); })();
+  dec(MOONIMG); // without the video (old phones, some browsers) the backup aurora pictures must be ready first
+  Promise.race([vidOK ? Promise.resolve() : Promise.all([dec(AURIMG), dec(FLOWIMG)]), new Promise(r => setTimeout(r, 6000))]).then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+    clearTimeout(slow); boot.classList.add('gone'); setTimeout(() => boot.remove(), 300); }))); })();
 </script>
 <script>if ('serviceWorker' in navigator && (location.protocol === 'https:' || (location.protocol === 'http:' && location.hostname === 'localhost'))) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>

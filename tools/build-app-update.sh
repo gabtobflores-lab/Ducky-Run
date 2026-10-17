@@ -15,6 +15,10 @@ s = open(sys.argv[1]).read(); out = sys.argv[2]
 for name in ('AURSRC', 'FLOWSRC'):
     s, n = re.subn(name + r" = 'data:[^']*'", name + " = ''", s)
     assert n == 1, name
+# the app needs neither the web install manifest, the offline helper nor the home-screen icons (iOS uses the app's own icon)
+s = s.replace('<link rel="manifest" href="manifest.webmanifest">\n', '', 1)
+s = re.sub(r'<link rel="(apple-touch-icon|icon)"[^>]*>\n?', '', s)
+s = re.sub(r"<script>if \('serviceWorker' in navigator[^\n]*</script>\n", '', s)
 open(out + '/index-inline.html', 'w').write(s)
 m = re.search(r"(const AURVID = \{ type: '[^']*', )data: '([A-Za-z0-9+/=]+)'", s)
 assert m, 'AURVID'
