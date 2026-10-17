@@ -238,20 +238,16 @@
 
   /* ---------- unlocks: locks on the menu, the Daily Challenge row, the purchase sheet, Supporter touches ---------- */
   .dlocks{position:relative;height:0}
-  .dlocks i{position:absolute;top:-27px;width:18px;height:18px;margin-left:-9px;border-radius:50%;display:grid;place-items:center;pointer-events:none;color:rgba(43,45,66,.55);
-    background:rgba(255,255,255,.94);box-shadow:0 0 0 .5px rgba(43,45,66,.1),0 2px 6px rgba(43,45,66,.16)}
-  .dlocks i svg{width:9px!important;height:9px!important}
+  .dlocks i{position:absolute;top:-28px;height:8px;border-radius:99px;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(43,45,66,.13) 0 1.5px,rgba(255,255,255,.55) 1.5px 4.5px);box-shadow:0 0 0 .5px rgba(43,45,66,.06) inset}
   .btn .bl{display:inline-block;width:15px;height:15px;margin-right:9px;vertical-align:-1px}
   .btn .bl svg{width:100%;height:100%;fill:currentColor}
   .btn small{display:block;margin-top:3px;font-size:11.5px;font-weight:800;letter-spacing:.06em;opacity:.78}
   .btn.locked{color:#fff;background:linear-gradient(180deg,#4a4d68,#2b2d42 55%,#1f2133);box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 -2px 0 rgba(0,0,0,.18) inset,0 10px 22px rgba(31,33,51,.3),0 2px 4px rgba(31,33,51,.2)}
-  .btn.locked .bl{color:#f5cf6a}
-  .btn.locked small{color:#f5dfa0;opacity:1}
-  .daily .dpill{flex:none;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.1em;color:#7d520a;background:linear-gradient(180deg,#fff7dc,#ffe29a);box-shadow:0 0 0 .5px rgba(168,112,15,.35)}
+  .btn.locked .bl{color:rgba(255,255,255,.92)}
+  .btn.locked small{color:rgba(255,255,255,.66);opacity:1}
+  .daily .dpill{flex:none;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--teal-lo);background:rgba(46,196,214,.12);box-shadow:0 0 0 .5px rgba(46,196,214,.35) inset}
   .dlocks svg,.lk svg,.dname svg,.daily .dlk svg{width:100%;height:100%;fill:currentColor}
-  .dname.locked::after{content:'';display:inline-block;width:13px;height:13px;margin-left:6px;vertical-align:-1px;background:currentColor;opacity:.55;
-    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='2'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='black' stroke-width='1.8'/%3E%3C/svg%3E") center/contain no-repeat;
-    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='2'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='black' stroke-width='1.8'/%3E%3C/svg%3E") center/contain no-repeat}
+  .dname.locked::after{content:attr(data-tag);display:inline-block;margin-left:8px;padding:3px 7px;border-radius:999px;vertical-align:4px;font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--ink-2);background:rgba(43,45,66,.07);box-shadow:0 0 0 .5px rgba(43,45,66,.08) inset}
   #mode .pill{width:calc(33.333% - 2px)}
   #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   #mode[data-mode="zen"] .pill{transform:translateX(200%)}
@@ -637,8 +633,8 @@ function setBtn(el, main, cap, locked) { // PLAY, or a premium dark Unlock butto
   const h = `${locked ? `<span class="bl" aria-hidden="true">${LOCK_SVG}</span>` : ''}<span class="bt">${main}</span>${cap ? `<small>${esc(cap)}</small>` : ''}`;
   if (el.dataset.h !== h) { el.dataset.h = h; el.innerHTML = h; bump(el); } el.classList.toggle('locked', locked); }
 function syncLocks() { // locked difficulties and modes stay visible with a small lock; PLAY says what it will do
-  document.querySelectorAll('.dlocks').forEach(d => { const h = [0, 1, 2, 3, 4, 5].map(i => sectOpen(i) ? '' : `<i style="left:calc(11px + (100% - 22px) * ${(i * 20 + 10) / 120})">${LOCK_SVG}</i>`).join(''); if (d.innerHTML !== h) d.innerHTML = h; });
-  document.querySelectorAll('.dname').forEach(n => n.classList.toggle('locked', !sectOpen(bucket()) && mode !== 'daily'));
+  document.querySelectorAll('.dlocks').forEach(d => { const h = [0, 1, 2, 3, 4, 5].map(i => sectOpen(i) ? '' : `<i style="left:calc(${i * 100 / 6}% + 2px);width:calc(${100 / 6}% - 4px)"></i>`).join(''); if (d.innerHTML !== h) d.innerHTML = h; }); // locked sections of the track are softly hatched
+  document.querySelectorAll('.dname').forEach(n => { n.classList.toggle('locked', !sectOpen(bucket()) && mode !== 'daily'); n.dataset.tag = TIER_NAMES[SECT_NEED[bucket()]].toUpperCase(); });
   document.querySelectorAll('#mode button').forEach(b => { const lk = !modeOpen(b.dataset.mode); b.classList.toggle('lk', lk); const has = !!b.querySelector('.lk'); if (lk && !has) b.insertAdjacentHTML('beforeend', `<span class="lk">${LOCK_SVG}</span>`); else if (!lk && has) b.querySelector('.lk').remove(); });
   const free = canStart() && !sectOpen(bucket()) && mode !== 'daily', need = needFor(), what = (!modeOpen(mode) ? mode : NAMES[bucket()]).toUpperCase();
   const cap = canStart() ? (free ? '1 free run today' : '') : `with ${TIER_NAMES[need]} · ${tierPrice(need)}`;
@@ -2029,6 +2025,14 @@ function drawHaze() { // fog: four big, blurred mist layers, each with its own h
   });
   if (!skyE) atmos('190,198,212', .1 * e, { n: 4, y0: .1, y1: .9, sp: 3, off: 13 }); // faint ambient veil that ties the layers together
   }, skyE ? .22 : 0);
+  // visibility drops a little: the mist is thickest far up the screen and clears toward the balls, so blocks emerge from it as they fall
+  const top = BY - 90, vg = ctx.createLinearGradient(0, 0, 0, top);
+  vg.addColorStop(0, `rgba(222,226,232,${.62 * e})`); vg.addColorStop(.55, `rgba(222,226,232,${.38 * e})`); vg.addColorStop(1, 'rgba(222,226,232,0)');
+  ctx.fillStyle = vg; ctx.fillRect(-W, -80, W * 3, top + 80);
+  for (let k = 0; k < 3; k++) { // denser patches drift through, so some blocks fade more than others
+    const span = W * 1.8, x = ((t * (7 + k * 4) * (k % 2 ? -1 : 1) + k * W * .55) % span + span) % span - W * .4, y = H * (.16 + k * .13) + nz(t * .05, k + 2) * 24, R = W * .42;
+    ctx.save(); ctx.translate(x, y); ctx.scale(1.7, .5); const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    rg.addColorStop(0, `rgba(232,235,240,${.3 * e})`); rg.addColorStop(1, 'rgba(232,235,240,0)'); ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fill(); ctx.restore(); }
 }
 function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lightning glows through it softly (screen blend), never a white flash
   if ((wx.kind !== 'storm' && wx.kind !== 'hail') || wx.a < .01) return; // hail shares the storm's cloud deck
