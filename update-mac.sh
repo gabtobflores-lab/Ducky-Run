@@ -119,7 +119,15 @@ while IFS= read -r d; do
     fi
   done
   grep -q FileSystemSynchronized "$d"/../*.xcodeproj/project.pbxproj 2>/dev/null && [ -f "$d/index.html" ] && mv "$d/index.html" "$nb/"
-  [ -f "$d/AppDelegate.swift" ] && perl -pi -e 'next if /^\s*\/\//; s/(?<!\w)\@(main|UIApplicationMain)\b/\/* \@$1 *\//g' "$d/AppDelegate.swift"
+  # files from Xcode's Game, App and Storyboard templates: not part of Mirror Drop, and they clash with it, so they're emptied
+  for t in AppDelegate.swift SceneDelegate.swift ViewController.swift GameViewController.swift ContentView.swift; do
+    [ -f "$d/$t" ] && ! grep -q "^// Not used" "$d/$t" && printf '// Not used: the native Mirror Drop starts from App.swift.\n' > "$d/$t"
+  done
+  # and the template's storyboard start-up is switched off, so the game's own window is the one you see
+  for pl in "$d/Info.plist" "$d/../Info.plist"; do
+    [ -f "$pl" ] && /usr/libexec/PlistBuddy -c "Delete :UIMainStoryboardFile" -c "Delete :UIApplicationSceneManifest:UISceneConfigurations" "$pl" >/dev/null 2>&1
+  done
+  for pbx in "$d"/../*.xcodeproj/project.pbxproj; do [ -f "$pbx" ] && perl -ni -e 'print unless /INFOPLIST_KEY_UIMainStoryboardFile/' "$pbx"; done
   for f in $(curl -fsSL "$BASE/app-update/native-files.txt"); do get "native/MirrorDrop/$f" "$d/$f"; done
   updated=1
 done < <(dirs_of GameScene.swift)

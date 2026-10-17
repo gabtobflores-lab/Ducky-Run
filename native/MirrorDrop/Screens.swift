@@ -12,7 +12,7 @@ enum Theme {
     static let cyan = Color(red: 0x2e / 255, green: 0xc4 / 255, blue: 0xd6 / 255)
     static let gold = Color(red: 0xe9 / 255, green: 0xa2 / 255, blue: 0x3b / 255)
     static let sect: [Color] = ([0x2ec4d6, 0x3fb4dc, 0x6a9fdf, 0xa58ad9, 0xe07aa8, 0xff6b81] as [Int]).map(hex)
-    static func hex(_ v: Int) -> Color {
+    nonisolated static func hex(_ v: Int) -> Color {
         let r: Double = Double((v >> 16) & 255) / 255, g: Double = Double((v >> 8) & 255) / 255, b: Double = Double(v & 255) / 255
         return Color(red: r, green: g, blue: b)
     }
