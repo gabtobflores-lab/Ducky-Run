@@ -29,21 +29,22 @@ jobs:
           xcodebuild -project MirrorDrop.xcodeproj -target MirrorDrop -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error|warning: .*MirrorDropApp|BUILD" | tail -60
           ls build/Debug-iphonesimulator/
       - name: Run in the simulator
+        timeout-minutes: 12
         run: |
           DEV=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; c=[(k,x) for k,v in d.items() if 'iOS' in k for x in v if 'iPhone' in x['name']]; c.sort(key=lambda t:t[0]); print(c[-1][1]['udid']); print(c[-1][0], c[-1][1]['name'], file=sys.stderr)")
-          xcrun simctl boot "$DEV"; xcrun simctl bootstatus "$DEV" -b
+          echo "booting $DEV"; xcrun simctl boot "$DEV"
+          for i in $(seq 1 60); do xcrun simctl list devices | grep "$DEV" | grep -q Booted && break; sleep 5; done
+          sleep 20; echo "booted"
           APP=build/proj/build/Debug-iphonesimulator/MirrorDrop.app
-          xcrun simctl install "$DEV" "$APP"
+          xcrun simctl install "$DEV" "$APP"; echo "installed"
           BID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")
-          (xcrun simctl launch --console-pty "$DEV" "$BID" > launch.log 2>&1 &)
+          T0=$(date "+%Y-%m-%d %H:%M:%S")
+          xcrun simctl launch "$DEV" "$BID" < /dev/null; echo "launched"
           for t in 3 8 15; do
-            sleep $([ $t = 3 ] && echo 3 || echo 5)
-            xcrun simctl io "$DEV" screenshot "shot$t.png" >/dev/null 2>&1
-            sips -Z 360 "shot$t.png" --out "s$t.png" >/dev/null
-            echo "SHOT-$t-BEGIN"; base64 -i "s$t.png"; echo "SHOT-$t-END"
+            sleep $([ $t = 3 ] && echo 3 || echo 6)
+            xcrun simctl io "$DEV" screenshot "shot$t.png" >/dev/null 2>&1 && sips -Z 360 "shot$t.png" --out "s$t.png" >/dev/null && { echo "SHOT-$t-BEGIN"; base64 -i "s$t.png"; echo "SHOT-$t-END"; }
           done
           echo "== running?"; xcrun simctl spawn "$DEV" launchctl list | grep -i "$BID" || echo "APP NOT RUNNING"
-          echo "== console"; tail -60 launch.log
           echo "== crash reports"; ls ~/Library/Logs/DiagnosticReports/ 2>/dev/null | tail
           for f in ~/Library/Logs/DiagnosticReports/MirrorDrop*; do [ -f "$f" ] && head -150 "$f"; done
-          echo "== app log"; xcrun simctl spawn "$DEV" log show --last 3m --style compact --predicate 'process == "MirrorDrop"' 2>/dev/null | grep -v -i "fault\b" | tail -80
+          echo "== app log"; xcrun simctl spawn "$DEV" log show --start "$T0" --style compact --predicate 'process == "MirrorDrop"' 2>/dev/null | tail -120
