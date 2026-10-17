@@ -94,3 +94,4 @@ Golden Run (Supporter): the moment the score passes the old best there is a soft
 Upgrades cost only the difference (for example Pro → Max $0.20, Max → Supporter $3.00).
 The offer appears only when tapping a locked difficulty, after the free daily Hard run, and once after a new best on Normal.
 No fake timers or fake "was" prices. No ads; the game stays fully offline. Locked difficulties stay visible on the slider with a lock.
+Supporter settings (profile, Supporters only): switches for Golden Run, gold profile ring, Supporter badge and gold share cards, plus an App Icon picker (Classic / Gold, via iOS alternate app icons). Turning them off changes only the look; the purchase stays.

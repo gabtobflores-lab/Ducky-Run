@@ -107,10 +107,64 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
 .sheet.sup .cta{color:var(--gold-ink);background:linear-gradient(180deg,#fff2c6 0%,#f5d06e 45%,#dca232 100%);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 10px 26px rgba(227,173,58,.38)}
 .fine{display:flex;justify-content:center;gap:4px 10px;flex-wrap:wrap;font-size:12px;color:var(--ink-3)}
 .fine button{border:0;background:none;padding:0;font:inherit;color:var(--teal-deep);cursor:pointer}
+
+/* view switch above the sheets */
+.views{max-width:300px;margin:0 auto 14px;display:grid;grid-template-columns:1fr 1fr;padding:3px;border-radius:12px;background:rgba(31,33,51,.07);position:relative}
+.views button{position:relative;z-index:1;border:0;background:none;padding:8px 6px;font:800 13.5px var(--round);color:var(--ink-2);cursor:pointer;border-radius:9px}
+.views button[aria-selected="true"]{color:var(--ink);background:#fff;box-shadow:0 1px 3px rgba(31,33,51,.12),0 0 0 .5px rgba(31,33,51,.05)}
+.views button:focus-visible{outline:3px solid rgba(24,179,198,.5)}
+
+/* Supporter settings: the profile sheet as a Supporter sees it */
+.prof{padding:10px 20px 22px;display:flex;flex-direction:column;gap:18px}
+.phd{display:flex;align-items:center;justify-content:space-between;padding-top:10px}
+.phd b{font:900 26px var(--round);letter-spacing:-.02em}
+.phd button{border:0;background:none;font:800 16px var(--round);color:var(--teal-deep);cursor:pointer}
+.who{display:flex;flex-direction:column;align-items:center;gap:8px}
+.ava{position:relative;width:96px;height:96px;border-radius:50%;display:grid;place-items:center}
+.ava i{position:relative;z-index:1;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font:900 36px var(--round);color:#fff;background:linear-gradient(160deg,#5fd6e3,#18b3c6);box-shadow:0 0 0 3px var(--sheet)}
+.ava::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 210deg,#fff4cc,#e9b343,#a86f12,#f7d36b,#fff4cc,#c88a1a,#fff4cc);opacity:0;transition:opacity .4s var(--ease);animation:turn 8s linear infinite}
+.ava.ring::before{opacity:1}
+@keyframes turn{to{transform:rotate(1turn)}}
+.uname{font:900 22px var(--round)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font:900 11px var(--round);letter-spacing:.1em;color:var(--gold-ink);
+  background:linear-gradient(180deg,#fff7dc,#ffe6a0);box-shadow:0 0 0 .5px rgba(168,112,15,.35);transition:opacity .3s,transform .4s var(--spring)}
+.badge.off{opacity:0;transform:scale(.9);pointer-events:none}
+.mini{position:relative;height:120px;border-radius:20px;overflow:hidden;background:linear-gradient(90deg,#f8dfe3,#f3ede6 50%,#d8eeed);box-shadow:0 0 0 .5px var(--hair)}
+.mini canvas{position:absolute;inset:0;width:100%;height:100%}
+.mini small{position:absolute;left:14px;top:11px;font:800 10.5px var(--round);letter-spacing:.14em;color:var(--ink-3)}
+.grp{display:flex;flex-direction:column;gap:6px}
+.grp h2{margin:0 0 0 16px;font:800 12px var(--round);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.list{border-radius:18px;background:var(--row);box-shadow:0 0 0 .5px var(--hair);overflow:hidden}
+.opt{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer}
+.opt+.opt{border-top:.5px solid var(--hair)}
+.opt .tx{flex:1;min-width:0}
+.opt .tx b{display:block;font:800 15.5px var(--round)}
+.opt .tx span{display:block;font-size:12.5px;color:var(--ink-2);line-height:1.35}
+.sw{position:relative;flex:none;width:51px;height:31px}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw span{position:absolute;inset:0;border-radius:999px;background:rgba(120,120,128,.16);transition:background .25s var(--ease)}
+.sw span::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15),0 1px 1px rgba(0,0,0,.08);transition:transform .3s var(--spring)}
+.sw input:checked+span{background:linear-gradient(180deg,#f2c14e,#d9a028)}
+.sw input:checked+span::after{transform:translateX(20px)}
+.sw input:focus-visible+span{outline:3px solid rgba(227,173,58,.5);outline-offset:2px}
+.icons{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 16px}
+.icon{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;position:relative}
+.icon input{position:absolute;opacity:0}
+.icon canvas{width:72px;height:72px;border-radius:17px;box-shadow:0 0 0 .5px rgba(0,0,0,.08),0 6px 16px rgba(31,33,51,.14);transition:box-shadow .25s,transform .3s var(--spring)}
+.icon span{font:800 13px var(--round);color:var(--ink-2)}
+.icon:has(input:checked) canvas{box-shadow:0 0 0 3px var(--sheet),0 0 0 5.5px var(--gold),0 8px 20px rgba(227,173,58,.3);transform:scale(1.03)}
+.icon:has(input:checked) span{color:var(--ink)}
+.icon:has(input:focus-visible) canvas{outline:3px solid rgba(227,173,58,.5);outline-offset:6px}
+.pfoot{margin:0;text-align:center;font-size:12px;line-height:1.45;color:var(--ink-3);text-wrap:balance}
+@media (prefers-reduced-motion:reduce){.ava::before{animation:none}.sw span,.sw span::after,.badge{transition:none}}
 .note{max-width:420px;margin:14px auto 0;text-align:center;font-size:12px;color:var(--ink-3)}
 @media (prefers-reduced-motion:reduce){.p-sup::before{animation:none}.plan,.cta,.feat,.chk,.dot::after,.tag{transition:none}}
 </style>
 
+<div class="views" role="tablist" aria-label="Preview">
+  <button type="button" role="tab" id="v-unlock" aria-selected="true" aria-controls="sheet">Unlock</button>
+  <button type="button" role="tab" id="v-prof" aria-selected="false" aria-controls="profile">Supporter</button>
+</div>
 <main class="sheet" id="sheet" aria-labelledby="ttl">
   <div class="hero" id="hero" aria-hidden="true">
     <canvas id="cv"></canvas>
@@ -160,6 +214,34 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
     <div class="fine"><span>One-time purchase</span><span aria-hidden="true">·</span><button type="button" id="restore">Restore Purchases</button></div>
   </div>
 </main>
+<section class="sheet" id="profile" aria-labelledby="ptl" hidden>
+  <div class="prof">
+    <div class="phd"><b id="ptl">Profile</b><button type="button">Done</button></div>
+    <div class="who">
+      <div class="ava ring" id="ava"><i>G</i></div>
+      <div class="uname">gab</div>
+      <span class="badge" id="badge"><span class="orb" aria-hidden="true"></span>FOUNDING SUPPORTER</span>
+    </div>
+    <div class="mini" aria-hidden="true"><canvas id="mcv"></canvas><small id="mlbl">GOLDEN RUN ON</small></div>
+    <div class="grp">
+      <h2>Supporter</h2>
+      <div class="list">
+        <label class="opt"><span class="tx"><b>Golden Run</b><span>Balls turn to gold when you pass your best.</span></span><span class="sw"><input type="checkbox" id="s-run" checked><span></span></span></label>
+        <label class="opt"><span class="tx"><b>Gold profile ring</b><span>Around your picture here and on the leaderboard.</span></span><span class="sw"><input type="checkbox" id="s-ring" checked><span></span></span></label>
+        <label class="opt"><span class="tx"><b>Supporter badge</b><span>Shown on your profile and share cards.</span></span><span class="sw"><input type="checkbox" id="s-badge" checked><span></span></span></label>
+        <label class="opt"><span class="tx"><b>Gold share cards</b><span>Your best scores shared in gold.</span></span><span class="sw"><input type="checkbox" id="s-cards" checked><span></span></span></label>
+      </div>
+    </div>
+    <div class="grp">
+      <h2>App Icon</h2>
+      <div class="list icons" role="radiogroup" aria-label="App icon">
+        <label class="icon"><input type="radio" name="icon" id="i-classic" value="classic"><canvas id="ic1" width="216" height="216"></canvas><span>Classic</span></label>
+        <label class="icon"><input type="radio" name="icon" id="i-gold" value="gold" checked><canvas id="ic2" width="216" height="216"></canvas><span>Gold</span></label>
+      </div>
+    </div>
+    <p class="pfoot">These only change how Mirror Drop looks for you. You keep Supporter and everything in Max either way.</p>
+  </div>
+</section>
 <p class="note" id="note">Design preview. Tap Supporter to see the Golden Run. Nothing is charged.</p>
 
 <script>
@@ -191,36 +273,57 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
   const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   const PINK = [[255, 179, 191], [255, 107, 129], [217, 63, 92]], TEAL = [[166, 238, 245], [46, 196, 214], [21, 149, 168]], GOLD = [[255, 246, 214], [242, 193, 78], [138, 90, 14]];
 
-  function star(x, y, s, a) { if (s < .5) return; g.save(); g.globalAlpha = a; g.fillStyle = '#fffbe8'; g.beginPath();
-    for (let i = 0; i < 8; i++) { const rr = i % 2 ? s * .18 : s, an = i * Math.PI / 4; g.lineTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr); }
-    g.closePath(); g.fill(); g.restore(); }
-  function ball(x, y, r, pal, k, t, side) {
-    const c = [0, 1, 2].map(i => mix(pal[i], GOLD[i], k));
-    g.save();
-    g.fillStyle = 'rgba(31,33,51,.10)'; g.beginPath(); g.ellipse(x, y + r * 1.15, r * .8, r * .18, 0, 0, 7); g.fill();
-    if (k > 0) { const halo = g.createRadialGradient(x, y, r * .5, x, y, r * 2.8); halo.addColorStop(0, `rgba(255,214,120,${.5 * k})`); halo.addColorStop(1, 'rgba(255,214,120,0)');
-      g.fillStyle = halo; g.beginPath(); g.arc(x, y, r * 2.8, 0, 7); g.fill(); }
-    g.shadowColor = rgb(c[1], .42); g.shadowBlur = 22; g.shadowOffsetY = 8;
-    const body = g.createRadialGradient(x - r * .35 * side, y - r * .4, r * .08, x, y, r);
-    body.addColorStop(0, rgb(c[0])); body.addColorStop(.48, rgb(c[1])); body.addColorStop(1, rgb(c[2]));
-    g.fillStyle = body; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.shadowColor = 'transparent';
-    if (k > 0) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); g.clip(); g.globalAlpha = k;
-      // polished gold: a bright sky reflection on top, a dark horizon band, warm light bouncing up from below
-      const metal = g.createLinearGradient(x, y - r, x, y + r);
-      metal.addColorStop(0, '#fffbe6'); metal.addColorStop(.2, '#ffe28c'); metal.addColorStop(.44, '#d39a26'); metal.addColorStop(.53, '#7c4e08');
-      metal.addColorStop(.62, '#b07a14'); metal.addColorStop(.82, '#f3c752'); metal.addColorStop(1, '#fff0b3');
-      g.fillStyle = metal; g.fillRect(x - r, y - r, r * 2, r * 2);
-      const shade = g.createRadialGradient(x - r * .25 * side, y - r * .3, r * .2, x, y, r * 1.05);
-      shade.addColorStop(0, 'rgba(255,255,255,0)'); shade.addColorStop(.75, 'rgba(120,70,0,0)'); shade.addColorStop(1, 'rgba(90,50,0,.55)');
-      g.fillStyle = shade; g.fillRect(x - r, y - r, r * 2, r * 2); g.globalAlpha = 1;
-      const sweep = Math.sin(t / 700 + side) * r * .5, band = g.createLinearGradient(x - r, y - r + sweep, x + r, y + r + sweep);
-      band.addColorStop(.35, 'rgba(255,255,255,0)'); band.addColorStop(.5, `rgba(255,250,230,${.6 * k})`); band.addColorStop(.64, 'rgba(255,255,255,0)');
-      g.fillStyle = band; g.fillRect(x - r, y - r, r * 2, r * 2);
-      g.strokeStyle = `rgba(255,236,170,${.85 * k})`; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r - 1, Math.PI * .9, Math.PI * 1.9); g.stroke(); g.restore(); }
-    g.fillStyle = 'rgba(255,255,255,.62)'; g.beginPath(); g.ellipse(x - r * .3 * side, y - r * .45, r * .3, r * .16, 0, 0, 7); g.fill();
-    if (k > .5) for (let i = 0; i < 2; i++) { const a = t / 900 + i * 2.6 + side, s = (Math.sin(t / 260 + i * 3) * .5 + .5) * k; star(x + Math.cos(a) * r * .55, y + Math.sin(a) * r * .5, r * .32 * s, s); }
-    g.restore();
+  function star(x, y, s, a, c = g) { if (s < .5) return; c.save(); c.globalAlpha = a; c.fillStyle = '#fffbe8'; c.beginPath();
+    for (let i = 0; i < 8; i++) { const rr = i % 2 ? s * .16 : s, an = i * Math.PI / 4; c.lineTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr); }
+    c.closePath(); c.fill(); c.restore(); }
+  // one ball; k blends it from its own colour (0) to polished gold (1)
+  function ball(x, y, r, pal, k, t, side, c = g) {
+    const col = [0, 1, 2].map(i => mix(pal[i], GOLD[i], k));
+    c.save();
+    c.fillStyle = `rgba(31,33,51,${.1 - .04 * k})`; c.beginPath(); c.ellipse(x, y + r * 1.15, r * .8, r * .18, 0, 0, 7); c.fill();
+    if (k > 0) {
+      // gold throws warm light onto the floor beneath it, and glows softly around it
+      c.save(); c.translate(x, y + r * 1.12); c.scale(1, .24); const pool = c.createRadialGradient(0, 0, 0, 0, 0, r * 1.6);
+      pool.addColorStop(0, `rgba(255,196,90,${.55 * k})`); pool.addColorStop(1, 'rgba(255,196,90,0)'); c.fillStyle = pool; c.beginPath(); c.arc(0, 0, r * 1.6, 0, 7); c.fill(); c.restore();
+      const halo = c.createRadialGradient(x, y, r * .6, x, y, r * 2.6); halo.addColorStop(0, `rgba(255,214,120,${.42 * k})`); halo.addColorStop(1, 'rgba(255,214,120,0)');
+      c.fillStyle = halo; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
+    c.shadowColor = rgb(col[1], .4); c.shadowBlur = 22; c.shadowOffsetY = 8;
+    const body = c.createRadialGradient(x - r * .35 * side, y - r * .4, r * .08, x, y, r);
+    body.addColorStop(0, rgb(col[0])); body.addColorStop(.48, rgb(col[1])); body.addColorStop(1, rgb(col[2]));
+    c.fillStyle = body; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.shadowColor = 'transparent';
+    if (k > 0) {
+      c.save(); c.beginPath(); c.arc(x, y, r, 0, 7); c.clip(); c.globalAlpha = k;
+      // polished gold reflecting a studio: bright sky above, a dark horizon, warm floor light below
+      const metal = c.createLinearGradient(x, y - r, x, y + r);
+      metal.addColorStop(0, '#fffcef'); metal.addColorStop(.16, '#ffe9a6'); metal.addColorStop(.38, '#e8b440'); metal.addColorStop(.52, '#a8711a');
+      metal.addColorStop(.6, '#c48a22'); metal.addColorStop(.78, '#eebd4a'); metal.addColorStop(.93, '#ffe7a1'); metal.addColorStop(1, '#fff6d6');
+      c.fillStyle = metal; c.fillRect(x - r, y - r, r * 2, r * 2);
+      // the horizon curves with the sphere
+      c.save(); c.translate(x, y + r * .05); c.scale(1, .32); const hz = c.createRadialGradient(0, 0, r * .5, 0, 0, r * 1.05);
+      hz.addColorStop(0, 'rgba(90,52,4,0)'); hz.addColorStop(.85, 'rgba(90,52,4,.14)'); hz.addColorStop(1, 'rgba(90,52,4,0)'); c.fillStyle = hz; c.fillRect(-r, -r * 3, r * 2, r * 6); c.restore();
+      // a big soft studio light top left, a small fill light lower right
+      c.save(); c.translate(x - r * .3 * side, y - r * .44); c.rotate(-.55 * side); c.scale(1, .45);
+      const box = c.createRadialGradient(0, 0, 0, 0, 0, r * .55); box.addColorStop(0, 'rgba(255,255,255,.95)'); box.addColorStop(.55, 'rgba(255,252,235,.55)'); box.addColorStop(1, 'rgba(255,250,230,0)');
+      c.fillStyle = box; c.beginPath(); c.arc(0, 0, r * .55, 0, 7); c.fill(); c.restore();
+      const fill = c.createRadialGradient(x + r * .45 * side, y + r * .38, 0, x + r * .45 * side, y + r * .38, r * .32);
+      fill.addColorStop(0, 'rgba(255,248,220,.7)'); fill.addColorStop(1, 'rgba(255,248,220,0)'); c.fillStyle = fill; c.fillRect(x - r, y - r, r * 2, r * 2);
+      // edges: darker toward the sides, then a bright rim where light wraps round
+      const edge = c.createRadialGradient(x - r * .2 * side, y - r * .25, r * .3, x, y, r);
+      edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(.8, 'rgba(110,62,0,.18)'); edge.addColorStop(.93, 'rgba(110,62,0,.32)'); edge.addColorStop(1, 'rgba(255,236,180,.9)');
+      c.fillStyle = edge; c.fillRect(x - r, y - r, r * 2, r * 2);
+      // a slow sheen slides across, like turning a gold coin in the light
+      const sweep = Math.sin(t / 900 + side) * r * .7, band = c.createLinearGradient(x - r, y - r + sweep, x + r, y + r + sweep);
+      band.addColorStop(.4, 'rgba(255,255,255,0)'); band.addColorStop(.5, 'rgba(255,252,238,.5)'); band.addColorStop(.6, 'rgba(255,255,255,0)');
+      c.fillStyle = band; c.fillRect(x - r, y - r, r * 2, r * 2);
+      c.restore();
+      // pinpoint highlight and twinkling glints
+      c.fillStyle = `rgba(255,255,255,${.95 * k})`; c.beginPath(); c.arc(x - r * .36 * side, y - r * .5, r * .07, 0, 7); c.fill();
+      if (k > .5) for (let i = 0; i < 2; i++) { const a = t / 1100 + i * 2.6 + side, s = Math.pow(Math.sin(t / 380 + i * 3) * .5 + .5, 3) * k; star(x + Math.cos(a) * r * .55, y + Math.sin(a) * r * .48, r * .4 * s, s, c); }
+    }
+    if (k < 1) { c.fillStyle = `rgba(255,255,255,${.62 * (1 - k)})`; c.beginPath(); c.ellipse(x - r * .3 * side, y - r * .45, r * .3, r * .16, 0, 0, 7); c.fill(); }
+    c.restore();
   }
+  window.mdBall = ball; window.mdPal = { PINK, TEAL };
 
   function frame(now) {
     const t = still ? 2600 : now - t0, sup = tier === 'sup', cycle = sup ? t % 7000 : 0;
@@ -266,5 +369,37 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
   }
   requestAnimationFrame(frame);
   pick(document.getElementById('plan-max'));
+
+  // view switch
+  const vU = document.getElementById('v-unlock'), vP = document.getElementById('v-prof'), prof = document.getElementById('profile');
+  const show = p => { vU.setAttribute('aria-selected', !p); vP.setAttribute('aria-selected', p); sheet.hidden = p; prof.hidden = !p;
+    note.textContent = p ? 'Design preview. Only Supporters see this section in their profile.' : 'Design preview. Tap Supporter to see the Golden Run. Nothing is charged.'; if (p) { fitM(); } };
+  vU.addEventListener('click', () => show(false)); vP.addEventListener('click', () => show(true));
+
+  // live settings
+  const $ = id => document.getElementById(id);
+  $('s-ring').addEventListener('change', e => $('ava').classList.toggle('ring', e.target.checked));
+  $('s-badge').addEventListener('change', e => $('badge').classList.toggle('off', !e.target.checked));
+  $('s-run').addEventListener('change', e => { $('mlbl').textContent = e.target.checked ? 'GOLDEN RUN ON' : 'GOLDEN RUN OFF'; });
+
+  // mini preview: the two balls, gold or not, following the Golden Run switch
+  const mcv = $('mcv'), mg = mcv.getContext('2d'); let MW = 0, MH = 0, mk = 1;
+  const fitM = () => { const r = mcv.getBoundingClientRect(); MW = r.width; MH = r.height; mcv.width = MW * dpr; mcv.height = MH * dpr; };
+  (function mframe(now) {
+    if (!prof.hidden && MW) { mk += (($('s-run').checked ? 1 : 0) - mk) * (still ? 1 : .1);
+      mg.setTransform(dpr, 0, 0, dpr, 0, 0); mg.clearRect(0, 0, MW, MH);
+      const r = 24, y = MH * .58, sway = still ? 0 : Math.sin(now / 900) * 14;
+      ball(MW / 2 - 46 - sway, y, r, PINK, mk, now, 1, mg); ball(MW / 2 + 46 + sway, y, r, TEAL, mk, now, -1, mg); }
+    if (!still) requestAnimationFrame(mframe); })(performance.now());
+
+  // the two app icons
+  const icon = (id, goldIcon) => { const c = $(id).getContext('2d'), S = 216;
+    const bg = c.createLinearGradient(0, 0, S, S);
+    if (goldIcon) { bg.addColorStop(0, '#3a2a10'); bg.addColorStop(1, '#14100a'); } else { bg.addColorStop(0, '#fbe3e6'); bg.addColorStop(.5, '#f6f1ea'); bg.addColorStop(1, '#dcefee'); }
+    c.fillStyle = bg; c.fillRect(0, 0, S, S);
+    if (goldIcon) { const glow = c.createRadialGradient(S / 2, S * .55, 0, S / 2, S * .55, S * .55); glow.addColorStop(0, 'rgba(255,200,90,.35)'); glow.addColorStop(1, 'rgba(255,200,90,0)'); c.fillStyle = glow; c.fillRect(0, 0, S, S); }
+    c.fillStyle = goldIcon ? 'rgba(255,220,150,.12)' : 'rgba(31,33,51,.08)'; c.fillRect(S / 2 - 2, 24, 4, S - 48);
+    ball(S / 2 - 44, S / 2 + 6, 34, PINK, goldIcon ? 1 : 0, 1600, 1, c); ball(S / 2 + 44, S / 2 + 6, 34, TEAL, goldIcon ? 1 : 0, 1600, -1, c); };
+  icon('ic1', false); icon('ic2', true);
 })();
 </script>
