@@ -117,7 +117,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
     // MARK: start-up check
     // If the game hasn't shown its menu 6 seconds after launch, a small panel says what happened, so a stuck start can be fixed.
 
-    static let appBuild = "5d8a312"   // replaced with the release's version by tools/build-app-update.sh
+    static let appBuild = "2d5ce71"   // replaced with the release's version by tools/build-app-update.sh
     private var ready = false
     private var events: [String] = []
     private var panel: UIView?

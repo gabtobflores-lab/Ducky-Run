@@ -244,20 +244,27 @@
   .btn .bl{display:inline-block;width:15px;height:15px;margin-right:9px;vertical-align:-1px}
   .btn .bl svg{width:100%;height:100%;fill:currentColor}
   .btn small{display:block;margin-top:3px;font-size:11.5px;font-weight:800;letter-spacing:.06em;opacity:.78}
-  .btn.locked{color:#fff;background:linear-gradient(180deg,#4a4d68,#2b2d42 55%,#1f2133);box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 -2px 0 rgba(0,0,0,.18) inset,0 10px 22px rgba(31,33,51,.3),0 2px 4px rgba(31,33,51,.2)}
+  .btn.locked{}
   .btn.locked .bl{color:rgba(255,255,255,.92)}
-  .btn.locked small{color:rgba(255,255,255,.66);opacity:1}
+  .btn.locked small{color:rgba(255,255,255,.85);opacity:1}
+  .daily .dlk{flex:none;width:14px;height:14px;color:var(--ink-3)}
   .daily .dpill{flex:none;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--teal-lo);background:rgba(46,196,214,.12);box-shadow:0 0 0 .5px rgba(46,196,214,.35) inset}
   .dlocks svg,.lk svg,.dname svg,.daily .dlk svg{width:100%;height:100%;fill:currentColor}
-  .dname.locked{display:inline-flex;align-items:center}
-  .dname.locked::after{content:attr(data-tag);display:inline-flex;align-items:center;margin-left:8px;padding:3px 7px;border-radius:999px;line-height:1;font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--ink-2);background:rgba(43,45,66,.07);box-shadow:0 0 0 .5px rgba(43,45,66,.08) inset}
+  .dname{display:inline-flex;align-items:center;gap:7px}
+  .dname.locked::after{content:'';width:13px;height:13px;flex:none;background:currentColor;opacity:.75;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 7V5.2a3 3 0 0 1 6 0V7h.4A1.6 1.6 0 0 1 13 8.6v4.8a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 13.4V8.6A1.6 1.6 0 0 1 4.6 7zm1.6 0h2.8V5.2a1.4 1.4 0 0 0-2.8 0z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 7V5.2a3 3 0 0 1 6 0V7h.4A1.6 1.6 0 0 1 13 8.6v4.8a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 13.4V8.6A1.6 1.6 0 0 1 4.6 7zm1.6 0h2.8V5.2a1.4 1.4 0 0 0-2.8 0z'/%3E%3C/svg%3E") center/contain no-repeat}
+  /* in context, like an iOS Settings footer: what it comes with, and a link to see it */
+  .dfoot{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease),opacity .3s;opacity:0}
+  .dfoot.on{grid-template-rows:1fr;opacity:1}
+  .dfoot>div{overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+  .dfoot.on>div{padding-top:8px;margin-top:6px;border-top:.5px solid rgba(43,45,66,.08)}
+  .dfoot button{border:0;background:none;padding:2px 0;font:inherit;font-weight:800;color:var(--teal-lo);cursor:pointer;white-space:nowrap}
   #mode .pill{width:calc(33.333% - 2px)}
   #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   #mode[data-mode="zen"] .pill{transform:translateX(200%)}
   #mode button.lk{color:var(--ink-3)}
   #mode button.lk.on{color:#fff}
   #mode button{white-space:nowrap;padding-left:2px;padding-right:2px}
-  #mode button .lk{display:inline-block;width:9px;height:9px;margin-left:3px;vertical-align:0;opacity:.7}
+  #mode button .lk{display:inline-block;width:10px;height:10px;margin-left:4px;vertical-align:-1px;opacity:.55}
   .seg.sm#mode{flex-basis:70%}
   .daily{width:min(300px,80vw);display:flex;align-items:center;gap:12px;border:0;border-radius:18px;padding:10px 14px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);
     background:rgba(255,255,255,.66);box-shadow:var(--sh-card);transition:transform .22s var(--spring)}
@@ -383,7 +390,7 @@
   .uplan .pn2 b{font-size:16px;font-weight:800;display:flex;align-items:center;gap:7px}
   .uplan .pn2 small{font-size:12px;font-weight:600;color:var(--ink-2)}
   .uplan .pp{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
-  .uplan .best{font-size:10px;font-weight:800;letter-spacing:.08em;color:#14a3b6}
+  .uplan .ubv{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:9.5px;line-height:1;font-weight:900;letter-spacing:.08em;color:#14a3b6;background:rgba(24,179,198,.12)}
   .uplan.sel{box-shadow:0 0 0 2px #18b3c6,0 10px 26px rgba(24,179,198,.16)}
   .uplan.sel .dot{background:#18b3c6;box-shadow:none}
   .uplan.sel .dot::after{transform:scale(1)}
@@ -404,8 +411,9 @@
   .ucta:active{transform:scale(.975)}
   .ucta:disabled{opacity:.55;cursor:default}
   #unl.sup .ucta{color:#7d520a;background:linear-gradient(180deg,#fff2c6,#f5d06e 45%,#dca232);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 10px 26px rgba(227,173,58,.38)}
-  .ufine{display:flex;justify-content:center;gap:4px 10px;flex-wrap:wrap;font-size:12px;font-weight:600;color:var(--ink-3)}
+  .ufine{display:flex;flex-direction:column;align-items:center;gap:4px;flex-wrap:wrap;font-size:12px;font-weight:600;color:var(--ink-3)}
   .ufine button{border:0;background:none;padding:0;font:inherit;color:#14a3b6;cursor:pointer}
+  .unot{border:0;background:none;padding:4px;font:inherit;font-size:15px;font-weight:700;color:var(--ink-2);cursor:pointer}
   .umsg{font-size:12.5px;font-weight:700;color:var(--pink-lo);text-align:center}
   .umsg:empty{display:none}
   @media (prefers-reduced-motion:reduce){ *{animation-duration:.01ms!important;transition-duration:.01ms!important} }
@@ -424,10 +432,10 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
   <h1 class="logo" aria-label="Mirror Drop"><span class="p">MIRROR</span><span class="c">DROP</span></h1>
   <div class="sub">two balls. one tap.</div>
   <canvas id="pv" aria-hidden="true"></canvas>
-  <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div></div>
+  <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div><div class="dfoot"><div><span class="dft"></span><button type="button" class="dfl">See Packs</button></div></div></div>
   <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="mrow"><span class="label">MODE</span><div class="seg sm" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button><button data-mode="zen">Zen</button></div></div></div>
   <button class="btn" id="play">PLAY</button>
-  <button class="daily" id="daily" type="button"><span class="dic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="dtx"><b>Daily Challenge</b><small id="dsub">A new run every day</small></span><span class="dpill" id="dlk">MAX</span><span hidden><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="dgo" id="dgo" aria-hidden="true">›</span></button>
+  <button class="daily" id="daily" type="button"><span class="dic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="dtx"><b>Daily Challenge</b><small id="dsub">A new run every day</small></span><span class="dlk" id="dlk" aria-hidden="true"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="dgo" id="dgo" aria-hidden="true">›</span></button>
   <div class="bestwrap"><div class="card best" id="mbest" role="button" tabindex="0" aria-label="Your best runs"></div><button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button></div>
   <div class="hint">tap to move the balls one step.<br>at the edge they turn around.</div>
 </div>
@@ -448,7 +456,7 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
   <div id="ocombo"></div>
   <div id="onote"></div>
   <div class="card best" id="obest"></div>
-  <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div></div>
+  <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div><div class="dfoot"><div><span class="dft"></span><button type="button" class="dfl">See Packs</button></div></div></div>
   <button class="btn" id="retry">TRY AGAIN</button>
   <button class="btn alt" id="tomenu">RETURN TO MENU</button>
 </div>
@@ -460,12 +468,13 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
     <div class="uhud" aria-hidden="true"><small id="ubest">BEST 141</small><b id="usc">128</b></div><div class="utag" aria-hidden="true">✦ GOLDEN RUN · NEW BEST</div></div>
   <div class="ubody">
     <div class="uhead"><div class="uword"><span class="p">MIRROR</span> <span class="c">DROP</span></div><h2 id="utl">Play every mode.</h2>
-      <p>The free game has Easy and Normal with fog. Pay once to unlock the rest. No ads, no subscription, works offline.</p></div>
+      <p id="usub">The free game has Easy and Normal with fog. Pay once to unlock the rest. No ads, no subscription, works offline.</p></div>
     <ul class="ufeats" id="ufeats" aria-label="What you get"><li class="f1" data-k="1"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 14c2.5-3.5 5.5-3.5 8 0s5.5 3.5 8 0M3 9.5c2.5-3.5 5.5-3.5 8 0s5.5 3.5 8 0"/></svg></span><span class="ft"><b>Chill and Zen</b><span>Slow down, or play a calm run you can't lose.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li><li class="f2" data-k="2"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.6 1.2 2.6 2.3 3 0-3 .7-5.8.7-8.5z"/></svg></span><span class="ft"><b>Hard, storms and hail</b><span>Faster blocks, lightning and hail.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li><li class="f3" data-k="3"><span class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 5 13.5h6L10 22l8-11.5h-6z"/></svg></span><span class="ft"><b>Insane, Impossible and Infinite</b><span>For when Hard feels easy, and a run that never ends.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li><li class="f4" data-k="3"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 17c3-6 6-9 9-9s6 3 9 9M7 12c1.5-3 3-4.5 5-4.5"/><circle cx="17" cy="5" r="1.6"/></svg></span><span class="ft"><b>Every weather event</b><span>Aurora, meteor showers, wind, sun glare and heat.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li><li class="f5" data-k="3"><span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="ft"><b>Daily Challenge</b><span>A new run every day, the same for everyone, with its own leaderboard.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li><li class="f6" data-k="4"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span><span class="ft"><b>Golden Run</b><span>Beat your best and the balls turn to liquid gold. Plus a gold app icon, gold share cards and a Supporter badge.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li></ul>
     <div class="uplans" id="uplans" role="radiogroup" aria-label="Choose a pack"></div>
   </div>
   <div class="udock"><button class="ucta" id="ucta" type="button">Get Max for $1.99</button>
-    <div class="ufine"><span>One-time purchase</span><span aria-hidden="true">·</span><button type="button" id="urestore">Restore Purchases</button></div>
+    <button type="button" class="unot" id="unot">Not Now</button>
+    <div class="ufine"><span>One-time purchase · Family Sharing</span><button type="button" id="urestore">Restore Purchases</button></div>
     <div class="umsg" id="umsg" role="status"></div></div>
 </div></div>
 <div id="sheet" aria-hidden="true"><div class="bd"></div><div class="pn" role="dialog" aria-modal="true" aria-labelledby="stitle"><div class="grab"></div>
@@ -631,7 +640,7 @@ function syncDiffUI() {
   syncLocks();
 }
 const LOCK_IMG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='2' fill='%23878a99'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='%23878a99' stroke-width='1.8'/%3E%3C/svg%3E")`;
-const LOCK_SVG = '<svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+const LOCK_SVG = '<svg viewBox="0 0 16 16"><path d="M5 7V5.2a3 3 0 0 1 6 0V7h.4A1.6 1.6 0 0 1 13 8.6v4.8a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 13.4V8.6A1.6 1.6 0 0 1 4.6 7zm1.6 0h2.8V5.2a1.4 1.4 0 0 0-2.8 0z"/></svg>';
 function tierPrice(t) { let p = ''; try { p = storePrices['mirrordrop.' + TIERS[t]] || ''; } catch (e) {} return p || ['', '$0.99', '$1.79', '$1.99', '$4.99'][t]; }
 function setBtn(el, main, cap, locked) { // PLAY, or a premium dark Unlock button that says which pack and its price
   const h = `${locked ? `<span class="bl" aria-hidden="true">${LOCK_SVG}</span>` : ''}<span class="bt">${main}</span>${cap ? `<small>${esc(cap)}</small>` : ''}`;
@@ -641,16 +650,18 @@ function syncLocks() { // locked difficulties and modes stay visible with a smal
     const at = k => k <= 0 ? '0%' : k >= 6 ? '100%' : `calc(11px + (100% - 22px) * ${k} / 6)`; // the same edges as the section gaps
     const imgs = locked.map(i => `${LOCK_IMG} calc(11px + (100% - 22px) * ${i + .5} / 6 - 3.5px) 50% / 7px 7px no-repeat`), bands = locked.map(i => `transparent ${at(i)}, rgba(238,234,228,.97) ${at(i)}, rgba(238,234,228,.97) ${at(i + 1)}, transparent ${at(i + 1)}`);
     const v = locked.length ? [...imgs, `linear-gradient(90deg, ${bands.join(', ')})`].join(', ') : 'linear-gradient(transparent,transparent)';
-    document.querySelectorAll('.drange').forEach(r => { if (r.style.getPropertyValue('--locks') !== v) r.style.setProperty('--locks', v); }); }
-  document.querySelectorAll('.drange').forEach(r => r.classList.toggle('lockd', !sectOpen(bucket()) && mode !== 'daily'));
-  document.querySelectorAll('.dname').forEach(n => { n.classList.toggle('locked', !sectOpen(bucket()) && mode !== 'daily'); n.dataset.tag = TIER_NAMES[SECT_NEED[bucket()]].toUpperCase(); });
+    void v; }
+    document.querySelectorAll('.dname').forEach(n => { n.classList.toggle('locked', !sectOpen(bucket()) && mode !== 'daily'); n.dataset.tag = TIER_NAMES[SECT_NEED[bucket()]].toUpperCase(); });
   document.querySelectorAll('#mode button').forEach(b => { const lk = !modeOpen(b.dataset.mode); b.classList.toggle('lk', lk); const has = !!b.querySelector('.lk'); if (lk && !has) b.insertAdjacentHTML('beforeend', `<span class="lk">${LOCK_SVG}</span>`); else if (!lk && has) b.querySelector('.lk').remove(); });
   const free = canStart() && !sectOpen(bucket()) && mode !== 'daily', need = needFor(), what = (!modeOpen(mode) ? mode : NAMES[bucket()]).toUpperCase();
-  const cap = canStart() ? (free ? '1 free run today' : '') : `with ${TIER_NAMES[need]} · ${tierPrice(need)}`;
+  const cap = canStart() ? (free ? '1 free run today' : '') : `Included with ${TIER_NAMES[need]} · ${tierPrice(need)}`;
+  const lockedWhat = !modeOpen(mode) ? mode[0].toUpperCase() + mode.slice(1) : !sectOpen(bucket()) && mode !== 'daily' ? NAMES[bucket()] : '';
+  document.querySelectorAll('.dfoot').forEach(f => { const on = !!lockedWhat || free; f.classList.toggle('on', on); const tx = free ? 'Try Hard free once a day.' : lockedWhat ? `${lockedWhat} is included with ${TIER_NAMES[need]}.` : ''; const el = f.querySelector('.dft'); if (on && el.textContent !== tx) el.textContent = tx; });
   setBtn($('#play'), canStart() ? (free ? 'FREE HARD RUN' : 'PLAY') : 'UNLOCK ' + what, cap, !canStart());
+  document.querySelectorAll('.dfl').forEach(b => b.onclick = () => openUnlock(Math.max(needFor(), 2)));
   setBtn($('#retry'), canStart() ? (free ? 'FREE HARD RUN' : 'TRY AGAIN') : 'UNLOCK ' + what, cap, !canStart());
-  $('#dlk').style.display = ent >= 3 ? 'none' : ''; $('#dgo').style.display = ent >= 3 ? '' : 'none';
-  const db = bests['daily_' + dayKey()]; swapText($('#dsub'), ent < 3 ? 'Unlock with Max' : db ? `Today's best: ${db}` : 'Today\'s run is ready');
+  $('#dlk').style.display = ent >= 3 ? 'none' : ''; $('#dlk').innerHTML = LOCK_SVG;
+  const db = bests['daily_' + dayKey()]; swapText($('#dsub'), ent < 3 ? 'Included with Max' : db ? `Today's best: ${db}` : 'Today\'s run is ready');
   $('#over').classList.toggle('daily', mode === 'daily');
 }
 // thumb grows while a finger is on the slider
@@ -753,12 +764,12 @@ const show = (id, on) => {
 };
 const fresh = () => performance.now() - shownAt < 350;
 function startGame() {
-  if (!canStart()) { openUnlock(needFor()); return; }
+  if (!canStart()) { openUnlock(needFor(), { what: !modeOpen(mode) ? mode[0].toUpperCase() + mode.slice(1) : NAMES[bucket()] }); return; }
   freeHardRun = mode !== 'daily' && !sectOpen(bucket()); if (freeHardRun) { freeHardDay = dayKey(); saveKey('mirrorFreeHard', freeHardDay); }
   show('#menu', false); show('#over', false); state = 'play'; reset(); beep(520, .15, 'triangle', .06, 300); haptic('medium'); }
 let beforeDaily = null;
 function startDaily() { // Hard, 3 per side, the day's seed; the player's own settings come back afterwards
-  if (ent < 3) { openUnlock(3); return; }
+  if (ent < 3) { openUnlock(3, { what: 'the Daily Challenge', title: 'The Daily Challenge.', sub: 'A new run every day, the same for everyone, with its own leaderboard. Included with Max.' }); return; }
   if (!beforeDaily) beforeDaily = { sliderV, per, mode };
   sliderV = 70; diff = SECT_DIFF[3]; mode = 'daily'; if (per !== 3) { per = 3; layout(); } startGame(); }
 function endDaily() { if (!beforeDaily) return; ({ sliderV, mode } = beforeDaily); diff = SECT_DIFF[section()]; if (per !== beforeDaily.per) { per = beforeDaily.per; layout(); } beforeDaily = null; }
@@ -781,9 +792,9 @@ function showOver() {
   $('#onew').textContent = newBest ? 'NEW BEST' : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo x${fx.maxCombo}` : '';
   syncDiffUI(); show('#over', true);
   $('#onote').textContent = freeHardRun ? 'That was today\'s free Hard run. Unlock Hard to play it any time.' : '';
-  if (freeHardRun) setTimeout(() => { if (state === 'dead') openUnlock(3); }, 1500); // the offer appears only at moments like this
+  if (freeHardRun) setTimeout(() => { if (state === 'dead') openUnlock(3, { title: 'Liked Hard?', sub: 'Play it any time with Pro or Max. Pay once, keep it forever. No ads, no subscription.' }); }, 1500); // the offer appears only at moments like this
   else if (newBest && mode === 'normal' && bucket() === 2 && ent < 3) { let shown = false; try { shown = localStorage.mirrorNudged === '1'; } catch (e) {}
-    if (!shown) { saveKey('mirrorNudged', '1'); setTimeout(() => { if (state === 'dead') openUnlock(2, 'You\'ve mastered Normal.'); }, 1500); } }
+    if (!shown) { saveKey('mirrorNudged', '1'); setTimeout(() => { if (state === 'dead') openUnlock(2, { title: 'You\'ve mastered Normal.', sub: 'Ready for Hard? It\'s included with Pro and Max. Pay once, keep it forever.' }); }, 1500); } }
   const ob = $('#obest'); ob.classList.remove('celebrate'); if (newBest) { void ob.offsetWidth; ob.classList.add('celebrate'); }
   // quick count-up of the final score
   const el = $('#oscore'), target = score, t0 = performance.now();
@@ -2554,7 +2565,7 @@ syncPfp();
 const PLANS = [
   { t: 1, name: 'Plus', sub: 'Chill and Zen', price: '$0.99', cls: 'plus' },
   { t: 2, name: 'Pro', sub: 'Hard, storms and hail', price: '$1.79', cls: '' },
-  { t: 3, name: 'Max', sub: 'Every mode, every event, the Daily Challenge', price: '$1.99', cls: '', best: true },
+  { t: 3, name: 'Max', sub: 'Every mode and every event', price: '$1.99', cls: '', best: true },
   { t: 4, name: 'Supporter', sub: 'Every mode, plus the Golden Run', price: '$4.99', cls: 'sup' },
 ];
 const prodId = (to, from) => from > 0 ? `mirrordrop.upgrade.${TIERS[to]}.from.${TIERS[from]}` : `mirrordrop.${TIERS[to]}`;
@@ -2566,7 +2577,7 @@ function planPrice(p) { // upgrades cost the difference; the App Store's own pri
 function renderUnlock() {
   if (unlSel <= ent) unlSel = Math.min(4, Math.max(3, ent + 1));
   $('#uplans').innerHTML = PLANS.map(p => { const own = p.t <= ent, pr = planPrice(p);
-    return `<button type="button" role="radio" aria-checked="${p.t === unlSel}" class="uplan ${p.cls}${p.t === unlSel ? ' sel' : ''}${own ? ' own' : ''}" data-t="${p.t}"${own ? ' aria-disabled="true"' : ''}><span class="dot" aria-hidden="true"></span><span class="pn2"><b>${p.t === 4 ? '<span class="orb" aria-hidden="true"></span>' : ''}<span class="nm">${p.name}</span>${p.best && !own ? '<span class="best">BEST VALUE</span>' : ''}</b><small>${own ? 'Owned' : p.sub}</small></span><span class="pp">${own ? '✓' : pr.price}</span></button>`; }).join('');
+    return `<button type="button" role="radio" aria-checked="${p.t === unlSel}" class="uplan ${p.cls}${p.t === unlSel ? ' sel' : ''}${own ? ' own' : ''}" data-t="${p.t}"${own ? ' aria-disabled="true"' : ''}><span class="dot" aria-hidden="true"></span><span class="pn2"><b>${p.t === 4 ? '<span class="orb" aria-hidden="true"></span>' : ''}<span class="nm">${p.name}</span>${p.best && !own ? '<span class="ubv">BEST VALUE</span>' : ''}</b><small>${own ? 'Owned' : p.sub}</small></span><span class="pp">${own ? '✓' : pr.price}</span></button>`; }).join('');
   document.querySelectorAll('#ufeats li').forEach(li => li.classList.toggle('on', +li.dataset.k <= Math.max(unlSel, ent)));
   unl.classList.toggle('sup', unlSel === 4);
   const p = PLANS[unlSel - 1], cta = $('#ucta');
@@ -2575,15 +2586,19 @@ function renderUnlock() {
   else { cta.textContent = unlBusy ? 'Connecting to the App Store…' : `${ent ? 'Upgrade to' : 'Get'} ${p.name} for ${planPrice(p).price}`; cta.disabled = unlBusy; }
   $('#ubest').textContent = 'BEST ' + (bestNow() || 141); }
 let unlT0 = 0, unlRaf = 0, unlGold = 0, unlBurst = -1, unlDust = [];
-function openUnlock(tier, msg) {
+function openUnlock(tier, ctx) { // ctx: { what } when a locked item was tapped, or { title, sub } for a moment like a new best
   if (unl.classList.contains('on')) return;
-  unlSel = Math.min(4, Math.max(3, tier || 3, ent + 1)); $('#umsg').textContent = msg || ''; renderUnlock();
+  unlSel = Math.min(4, Math.max(3, tier || 3, ent + 1)); $('#umsg').textContent = ''; ctx = ctx || {};
+  const need = Math.max(1, tier || 3);
+  $('#utl').textContent = ctx.title || (ctx.what ? `Unlock ${ctx.what}.` : 'Play every mode.');
+  $('#usub').textContent = ctx.sub || (ctx.what ? `${ctx.what} is included with ${TIER_NAMES[need]}${need < 3 ? ' and Max' : ''}. Pay once, keep it forever. No ads, no subscription, works offline.` : 'The free game has Easy and Normal with fog. Pay once to unlock the rest. No ads, no subscription, works offline.');
+  renderUnlock();
   unl.classList.add('on'); unl.setAttribute('aria-hidden', 'false'); requestAnimationFrame(() => requestAnimationFrame(() => unl.classList.add('open')));
   unlT0 = performance.now(); unlGold = 0; unlBurst = -1; unlDust = []; cancelAnimationFrame(unlRaf); unlRaf = requestAnimationFrame(unlFrame); beep(520, .07, 'sine', .035, 160);
   if (IS_NATIVE) loadPrices(); }
 function closeUnlock() { if (!unl.classList.contains('on')) return; unl.classList.remove('open'); unl.setAttribute('aria-hidden', 'true');
   setTimeout(() => { if (!unl.classList.contains('open')) { unl.classList.remove('on'); cancelAnimationFrame(unlRaf); } }, 420); }
-$('#uclose').onclick = closeUnlock; unl.querySelector('.bd').onclick = closeUnlock;
+$('#uclose').onclick = closeUnlock; $('#unot').onclick = closeUnlock; unl.querySelector('.bd').onclick = closeUnlock;
 $('#uplans').addEventListener('click', e => { const b = e.target.closest('.uplan'); if (!b || +b.dataset.t <= ent) return; unlSel = +b.dataset.t; unlT0 = performance.now(); unlGold = 0; unlBurst = -1; unlDust = []; haptic('selection'); renderUnlock(); });
 $('#ucta').onclick = () => { if (unlBusy || ent >= 4 || !IS_NATIVE) return; const pr = planPrice(PLANS[unlSel - 1]); unlBusy = true; $('#umsg').textContent = ''; renderUnlock();
   capCall('Store', 'buy', { id: pr.id }).then(r => { unlBusy = false; if (r && r.tier > ent) { setEnt(r.tier, true); closeUnlock(); } else { if (r && r.error && r.error !== 'cancelled') $('#umsg').textContent = r.error; renderUnlock(); } })

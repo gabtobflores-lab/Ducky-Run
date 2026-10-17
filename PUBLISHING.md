@@ -114,3 +114,4 @@ Supporter settings (profile, Supporters only): switches for Golden Run, gold pro
 The app reads the real prices from the App Store, so changing a price there needs no app update.
 Game Center: add one more leaderboard, `mirrordrop.daily` (Daily Challenge, high score).
 Founding Supporter: `Store.foundingUntil` in MirrorDropApp.swift, set it to one year after launch.
+Family Sharing: turn it on for each pack in App Store Connect (the purchase screen says it is included).
