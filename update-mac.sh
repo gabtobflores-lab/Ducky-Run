@@ -4,6 +4,9 @@
 # It finds your Xcode project's MirrorDrop folder(s), keeps a backup, and downloads the newest game files.
 set -uo pipefail
 BASE="https://raw.githubusercontent.com/gabtobflores-lab/ducky-run/claude/ducky-run-game"
+# GitHub caches files on the branch for a few minutes, so files come from the newest commit itself: never a stale copy
+SHA=$(curl -fsSL -H "Accept: application/vnd.github.sha" "https://api.github.com/repos/gabtobflores-lab/ducky-run/commits/claude/ducky-run-game" 2>/dev/null)
+[[ "$SHA" =~ ^[0-9a-f]{40}$ ]] && BASE="https://raw.githubusercontent.com/gabtobflores-lab/ducky-run/$SHA"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
 # folders holding the given file: Spotlight, then a search of the home folder (iCloud Desktop/Documents included)
