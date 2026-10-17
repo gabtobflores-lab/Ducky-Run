@@ -65,6 +65,9 @@ fix_template() {  # $1 = the Swift file with a pasted copy of the game's app cod
   d=$(dirname "$f"); root=""
   for c in "$d" "$(dirname "$d")" "$(dirname "$(dirname "$d")")"; do ls "$c"/*.xcodeproj >/dev/null 2>&1 && { root="$c"; break; }; done
   [ -n "$root" ] || return
+  if [ -n "$(find "$root" -name GameScene.swift -not -path "* backup *" 2>/dev/null | head -1)" ]; then
+    cp "$f" "$root/Mirror Drop backup $STAMP-$(basename "$f")" 2>/dev/null
+    printf '// Not used: the native Mirror Drop starts from App.swift.\n' > "$f"; return; fi
   app=$(find "$root" -name AppDelegate.swift -not -path "*DerivedData*" -not -path "* backup *" 2>/dev/null | head -1)
   [ -n "$app" ] || return
   app=$(dirname "$app")
@@ -93,7 +96,7 @@ if pgrep -x Xcode >/dev/null 2>&1; then
   reopen_xcode=1
 fi
 for f in Desktop Documents Downloads; do
-  ls "$HOME/$f" >/dev/null 2>&1 || echo "  ⚠️ Terminal isn't allowed to look in your $f folder. Allow it in System Settings → Privacy & Security → Files and Folders → Terminal, then run this again."
+  [ -e "$HOME/$f" ] && ! ls "$HOME/$f" >/dev/null 2>&1 && echo "  ⚠️ Terminal isn't allowed to look in your $f folder. Allow it in System Settings → Privacy & Security → Files and Folders → Terminal, then run this again."
 done
 while IFS= read -r f; do
   [ "$(basename "$f")" = MirrorDropApp.swift ] && continue
@@ -103,11 +106,20 @@ done < <(find "$HOME/Desktop" "$HOME/Documents" "$HOME/Downloads" -maxdepth 4 -n
 
 updated=0
 echo "Looking for your Mirror Drop project (this can take a minute)..."
-while IFS= read -r d; do [ -f "$d/index.html" ] && update_web "$d"; done < <(dirs_of MirrorDropApp.swift)
+while IFS= read -r d; do [ -f "$d/GameScene.swift" ] && continue; [ -f "$d/index.html" ] && update_web "$d"; done < <(dirs_of MirrorDropApp.swift)
 while IFS= read -r d; do
   [ -f "$d/Weather.swift" ] || continue
   echo "Updating native: $d"
-  mkdir -p "$d/../Mirror Native backup $STAMP"; cp "$d"/*.swift "$d/../Mirror Native backup $STAMP/"
+  nb="$d/../Mirror Native backup $STAMP"; mkdir -p "$nb"; cp "$d"/*.swift "$nb/"
+  # only one file may start the app: App.swift. The web version's files and the Xcode template's start-up are moved aside.
+  for w in "$d"/*.swift; do
+    [ "$(basename "$w")" = App.swift ] && continue
+    if grep -qE 'struct MirrorDropApp *: *App' "$w" 2>/dev/null; then
+      if grep -q FileSystemSynchronized "$d"/../*.xcodeproj/project.pbxproj 2>/dev/null; then mv "$w" "$nb/"; else printf '// Not used: the native Mirror Drop starts from App.swift.\n' > "$w"; fi
+    fi
+  done
+  grep -q FileSystemSynchronized "$d"/../*.xcodeproj/project.pbxproj 2>/dev/null && [ -f "$d/index.html" ] && mv "$d/index.html" "$nb/"
+  [ -f "$d/AppDelegate.swift" ] && perl -pi -e 'next if /^\s*\/\//; s/(?<!\w)\@(main|UIApplicationMain)\b/\/* \@$1 *\//g' "$d/AppDelegate.swift"
   for f in $(curl -fsSL "$BASE/app-update/native-files.txt"); do get "native/MirrorDrop/$f" "$d/$f"; done
   updated=1
 done < <(dirs_of GameScene.swift)

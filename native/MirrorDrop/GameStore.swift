@@ -2,6 +2,7 @@
 // The game runs every frame inside SpriteKit; SwiftUI only hears about things that change rarely (a new screen, a toast, a banner).
 
 import SwiftUI
+import Combine
 import UIKit
 
 enum Screen: Equatable { case menu, play, paused, over }

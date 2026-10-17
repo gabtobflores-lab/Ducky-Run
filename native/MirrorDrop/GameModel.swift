@@ -4,6 +4,7 @@
 // This is a faithful port of the original web game: same numbers, same timings, same fairness rules.
 
 import Foundation
+import Combine
 
 // MARK: - Small helpers
 

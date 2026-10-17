@@ -1,6 +1,7 @@
 // Mirror Drop, native: SwiftUI app with the game in SpriteKit at 120 fps.
 
 import SwiftUI
+import Combine
 
 @main
 struct MirrorDropApp: App {

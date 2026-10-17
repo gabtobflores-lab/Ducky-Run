@@ -1,6 +1,7 @@
 // Profile and leaderboard, as a native iOS sheet.
 
 import SwiftUI
+import Combine
 import PhotosUI
 import UIKit
 

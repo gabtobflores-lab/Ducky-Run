@@ -3,6 +3,7 @@
 // the first launch picks up what the earlier version of the app saved (it mirrored everything under "CapacitorStorage.").
 
 import Foundation
+import Combine
 
 struct RunEntry: Equatable { var s: Int; var d: Double }   // score, date (ms since 1970)
 

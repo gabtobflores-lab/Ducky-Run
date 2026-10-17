@@ -1,6 +1,7 @@
 // Haptics (the Taptic Engine) and Game Center (sign-in, profile picture, leaderboards).
 
 import UIKit
+import Combine
 import GameKit
 
 // MARK: - Haptics
