@@ -75,7 +75,7 @@ fix_template() {  # $1 = the Swift file with a pasted copy of the game's app cod
   local bk="$root/Mirror Drop backup $STAMP"; mkdir -p "$bk"
   cp "$app/AppDelegate.swift" "$f" "$bk/" 2>/dev/null
   # the template's start-up file stays in the project but no longer starts the app
-  perl -pi -e 's/^\@(main|UIApplicationMain)[ \t]*$/\/\/ \@$1 (Mirror Drop starts from MirrorDropApp.swift)/' "$app/AppDelegate.swift"
+  perl -pi -e 'next if /^\s*\/\//; s/(?<!\w)\@(main|UIApplicationMain)\b/\/* \@$1 (Mirror Drop starts from MirrorDropApp.swift) *\//g' "$app/AppDelegate.swift"
   # the pasted copy stays in the project (Xcode lists it) but is emptied; the real file goes in the app folder
   [ "$(basename "$f")" != MirrorDropApp.swift ] && printf '// Mirror Drop now lives in MirrorDropApp.swift, in the app folder.\n' > "$f"
   # no storyboard or scene delegate at launch: the game's own SwiftUI app opens the window
