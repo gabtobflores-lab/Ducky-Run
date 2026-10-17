@@ -60,11 +60,19 @@ struct GameView: UIViewRepresentable {
         web.allowsLinkPreview = false
         context.coordinator.webView = web
         web.navigationDelegate = context.coordinator           // if iOS ever stops the game's page, it is reloaded instead of staying blank
+        context.coordinator.startWatch()
+        #if DEBUG
+        if #available(iOS 16.4, *) { web.isInspectable = true } // builds run from Xcode can be inspected in Safari's Develop menu
+        #endif
         ProMotion.shared.start()
 
         if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
             web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+            let kb = ((try? FileManager.default.attributesOfItem(atPath: url.path)[.size]) as? NSNumber)?.intValue ?? 0
+            let video = Bundle.main.url(forResource: "aurora", withExtension: "mp4") != nil
+            context.coordinator.note("game file \(kb / 1024) KB, aurora video in app: \(video ? "yes" : "no")")
         } else {
+            context.coordinator.note("index.html is missing from the app")
             web.loadHTMLString("<body style='background:#000;color:#fff;font:20px -apple-system;padding:80px 24px'>Add the game file <b>index.html</b> to this app's resources.</body>", baseURL: nil)
         }
         return web
@@ -95,8 +103,52 @@ struct PlayerInfo: Sendable {
 final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDelegate {
     weak var webView: WKWebView?
 
+    // MARK: start-up check
+    // If the game hasn't shown its menu 6 seconds after launch, a small panel says what happened, so a stuck start can be fixed.
+
+    static let appBuild = "dev"   // replaced with the release's version by tools/build-app-update.sh
+    private var ready = false
+    private var events: [String] = []
+    private var panel: UIView?
+
+    func note(_ s: String) { events.append(s); if events.count > 12 { events.removeFirst() } }
+
+    func startWatch() {
+        note("app \(NativeBridge.appBuild) started")
+        Task { @MainActor [weak self] in try? await Task.sleep(nanoseconds: 6_000_000_000); self?.showPanelIfStuck() }
+    }
+
+    private func startWatchAgain() { Task { @MainActor [weak self] in try? await Task.sleep(nanoseconds: 6_000_000_000); self?.showPanelIfStuck() } }
+
+    private func showPanelIfStuck() {
+        guard !ready, panel == nil, let web = webView else { return }
+        let box = UIView(); box.backgroundColor = UIColor(white: 1, alpha: 0.94); box.layer.cornerRadius = 18
+        box.translatesAutoresizingMaskIntoConstraints = false
+        let text = UILabel(); text.numberOfLines = 0; text.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        text.textColor = UIColor(white: 0.25, alpha: 1); text.translatesAutoresizingMaskIntoConstraints = false
+        text.text = "Mirror Drop didn't finish starting.\nPlease screenshot this.\n\n" + events.joined(separator: "\n")
+        let again = UIButton(type: .system); again.setTitle("Reload", for: .normal); again.titleLabel?.font = .boldSystemFont(ofSize: 17)
+        again.translatesAutoresizingMaskIntoConstraints = false
+        again.addAction(UIAction { [weak self] _ in self?.panel?.removeFromSuperview(); self?.panel = nil; self?.note("reload tapped"); web.reload()
+            self?.startWatchAgain() }, for: .touchUpInside)
+        box.addSubview(text); box.addSubview(again); web.addSubview(box)
+        NSLayoutConstraint.activate([
+            box.leadingAnchor.constraint(equalTo: web.leadingAnchor, constant: 16), box.trailingAnchor.constraint(equalTo: web.trailingAnchor, constant: -16),
+            box.bottomAnchor.constraint(equalTo: web.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            text.topAnchor.constraint(equalTo: box.topAnchor, constant: 16), text.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 16),
+            text.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -16),
+            again.topAnchor.constraint(equalTo: text.bottomAnchor, constant: 8), again.centerXAnchor.constraint(equalTo: box.centerXAnchor),
+            again.bottomAnchor.constraint(equalTo: box.bottomAnchor, constant: -10)])
+        panel = box
+    }
+
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) { note("page loading") }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { note("page loaded") }
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { note("page failed: \(error.localizedDescription)") }
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { note("page failed to open: \(error.localizedDescription)") }
+
     /// iOS can stop a web page's process (for example under memory pressure); show the game again instead of a blank screen
-    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { webView.reload() }
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { note("page process stopped, reloading"); webView.reload() }
     private var waitingForSignIn: [CheckedContinuation<PlayerInfo, Never>] = []
     private var authHandlerSet = false
 
@@ -149,6 +201,14 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
             return ([String: Any](), nil)
 
         // The exact safe area (the Dynamic Island and the home indicator), so the score never sits under the island
+        // Start-up check: the game reports when its menu is up, and anything that goes wrong on the way
+        case ("App", "ready"):
+            ready = true; panel?.removeFromSuperview(); panel = nil
+            return ([String: Any](), nil)
+        case ("App", "log"):
+            note(String((opts["msg"] as? String ?? "").prefix(220)))
+            return ([String: Any](), nil)
+
         case ("App", "safeArea"):
             let w = webView?.window
             let ins = w?.safeAreaInsets ?? webView?.safeAreaInsets ?? .zero

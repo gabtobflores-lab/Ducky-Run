@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
+<meta name="build" content="f7539ef">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -233,7 +234,10 @@
 </head>
 <body>
 <div id="boot" aria-hidden="true"><div class="bb"><i class="p"></i><i class="t"></i></div><div class="bar"><span></span></div></div>
-<script>/* if something breaks while loading, say so on the loading screen instead of leaving it up silently */ addEventListener('error', e => { const b = document.getElementById('boot'); if (!b || b.dataset.err) return; b.dataset.err = 1; const d = document.createElement('div'); d.style.cssText = 'position:absolute;left:24px;right:24px;bottom:64px;font:13px/1.4 -apple-system,system-ui;color:#8a8d9a;text-align:center'; d.textContent = 'Something went wrong while loading: ' + (e.message || 'unknown error') + (e.lineno ? ' (line ' + e.lineno + ')' : ''); b.appendChild(d); });</script>
+<script>/* if something breaks while loading, say so on the loading screen instead of leaving it up silently */ const bootLog = m => { try { window.webkit.messageHandlers.native.postMessage({ plugin: 'App', method: 'log', opts: { msg: String(m) } }).catch(() => {}); } catch (e) {} };
+bootLog('game script started (build ' + (document.querySelector('meta[name=build]') || { content: 'web' }).content + ')');
+addEventListener('error', e => { bootLog('error: ' + (e.message || 'unknown') + (e.lineno ? ' (line ' + e.lineno + ')' : '')); }); addEventListener('unhandledrejection', e => bootLog('promise error: ' + ((e.reason && e.reason.message) || e.reason)));
+addEventListener('error', e => { const b = document.getElementById('boot'); if (!b || b.dataset.err) return; b.dataset.err = 1; const d = document.createElement('div'); d.style.cssText = 'position:absolute;left:24px;right:24px;bottom:64px;font:13px/1.4 -apple-system,system-ui;color:#8a8d9a;text-align:center'; d.textContent = 'Something went wrong while loading: ' + (e.message || 'unknown error') + (e.lineno ? ' (line ' + e.lineno + ')' : ''); b.appendChild(d); });</script>
 <canvas id="sky" aria-hidden="true" style="visibility:hidden"></canvas>
 <canvas id="c"></canvas>
 
@@ -2166,9 +2170,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && sta
   const dec = im => (im.decode ? im.decode() : Promise.resolve()).catch(() => {});
   const vidOK = !!document.createElement('video').canPlayType(AURVID.type); if (!vidOK) needFrames();
   dec(MOONIMG); // without the video (old phones, some browsers) the backup aurora pictures must be ready first
-  let left = false; const leave = () => { if (left) return; left = true; clearTimeout(slow); boot.classList.add('gone'); setTimeout(() => boot.remove(), 300); };
-  setTimeout(leave, vidOK ? 2500 : 6500); // never stay on the loading screen, even if the first frame is late
-  Promise.race([vidOK ? Promise.resolve() : Promise.all([dec(AURIMG), dec(FLOWIMG)]), new Promise(r => setTimeout(r, 6000))]).then(() => requestAnimationFrame(() => requestAnimationFrame(leave))); })();
+  let left = false; const leave = how => { if (left) return; left = true; clearTimeout(slow); boot.classList.add('gone'); setTimeout(() => boot.remove(), 300); bootLog('menu shown (' + how + ', ' + Math.round(performance.now()) + ' ms)'); if (IS_NATIVE) capCall('App', 'ready'); };
+  setTimeout(() => leave('timer'), vidOK ? 2500 : 6500); // never stay on the loading screen, even if the first frame is late
+  Promise.race([vidOK ? Promise.resolve() : Promise.all([dec(AURIMG), dec(FLOWIMG)]), new Promise(r => setTimeout(r, 6000))]).then(() => requestAnimationFrame(() => requestAnimationFrame(() => leave('first frame')))); })();
 </script>
 </body>
 </html>

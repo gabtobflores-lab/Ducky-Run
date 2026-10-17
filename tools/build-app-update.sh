@@ -7,10 +7,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p app-update
-cp swift-app/MirrorDropApp.swift app-update/MirrorDropApp.swift
+ver=$(git rev-parse --short HEAD 2>/dev/null || date +%s)
+# both halves carry the version, so the start-up check shows whether the iPhone really runs the newest build
+sed "s/static let appBuild = \"dev\"/static let appBuild = \"$ver\"/" swift-app/MirrorDropApp.swift > app-update/MirrorDropApp.swift
+export VER="$ver"
 python3 - release/index.html app-update <<'PY'
 import base64, re, sys
 s = open(sys.argv[1]).read(); out = sys.argv[2]
+import os
+s = s.replace('<title>Mirror Drop</title>', '<title>Mirror Drop</title>\n<meta name="build" content="' + os.environ.get('VER', 'dev') + '">', 1)
 # iPhones always play the aurora video, so the app leaves out the 16-frame backup aurora
 for name in ('AURSRC', 'FLOWSRC'):
     s, n = re.subn(name + r" = 'data:[^']*'", name + " = ''", s)
