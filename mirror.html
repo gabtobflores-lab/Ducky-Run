@@ -197,6 +197,10 @@
   .psub.gcok::before{content:'✓ ';color:#22b07d;font-weight:900}
   .pnrow{display:flex;gap:8px;width:min(300px,100%);margin-top:4px}
   .perr{font-size:13px;font-weight:700;color:var(--pink-lo)}
+  .gcbtn:disabled{opacity:.6;cursor:default}
+  .gchelp{max-width:270px;font-size:12px;line-height:1.45;color:var(--ink-2);text-align:center}
+  .sharebtn{display:inline-flex;align-items:center;gap:7px;margin-top:2px;border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:800;font-size:14px;color:#fff;cursor:pointer;background:linear-gradient(180deg,var(--teal-hi),var(--teal) 55%,var(--teal-lo));box-shadow:0 4px 12px rgba(46,196,214,.3)}
+  .sharebtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
   .gcbtn{margin-top:4px;border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:800;font-size:14px;color:#fff;cursor:pointer;background:linear-gradient(180deg,#3a3d58,#2b2d42);box-shadow:0 4px 12px rgba(43,45,66,.2)}
   .pick{display:flex;flex-direction:column;gap:10px;background:#fff;border-radius:18px;padding:12px;box-shadow:var(--sh-card);flex:none}
   .sw,.sy{display:grid;gap:8px}
@@ -382,7 +386,7 @@ bests = prof.bests;
 let board = {}; try { board = JSON.parse(localStorage.mirrorBoard || '{}') || {}; } catch (e) {} if (typeof board !== 'object' || Array.isArray(board)) board = {};
 for (const k in board) board[k] = Array.isArray(board[k]) ? board[k].filter(x => x && x.s > 0 && (!x.id || !prof.oid || x.id === prof.oid)).map(x => ({ s: x.s | 0, d: +x.d || Date.now() })) : [];
 if (migrated) { for (const k in bests) if (bests[k] > 0 && !(board[k] && board[k].length)) board[k] = [{ s: bests[k], d: Date.now() }]; } // scores from before start the board
-const gc = { ok: false, alias: '', photo: '', busy: false }; // Game Center, this session
+const gc = { ok: false, alias: '', photo: '', busy: false, err: '' }; // Game Center, this session
 const shownName = () => gc.ok ? gc.alias : prof.name;
 let lastRank = 0;
 function saveBests() { prof.bests = bests; saveKey('mirrorProfile', JSON.stringify(prof)); saveKey('mirrorBests', JSON.stringify(bests)); }
@@ -2108,7 +2112,9 @@ function renderSheet() {
     if (gc.ok) h += `<div class="pname">${esc(gc.alias)}</div><div class="psub gcok">Game Center · signed in</div>`;
     else if (editName) h += `<div class="pnrow"><input class="nmi" id="nmi" maxlength="16" value="${esc(nameErr ? nameDraft : prof.name)}" enterkeyhint="done" autocomplete="nickname" autocorrect="off" spellcheck="false" aria-label="Nickname"><button class="mini" data-act="save">Save</button></div>${nameErr ? `<div class="perr">${esc(nameErr)}</div>` : ''}`;
     else h += `<button class="pname edit" data-act="name">${esc(prof.name)}<i aria-hidden="true">✎</i></button>`;
-    if (!gc.ok) h += IS_NATIVE ? `<button class="gcbtn" data-act="signin">Sign in with Game Center</button>` : `<div class="psub">Saved on this device</div>`;
+    if (!gc.ok) h += IS_NATIVE ? `<button class="gcbtn" data-act="signin"${gc.busy ? ' disabled' : ''}>${gc.busy ? 'Connecting…' : 'Sign in with Game Center'}</button>`
+      + (gc.err && !gc.busy ? `<div class="gchelp">Game Center didn't connect. On your iPhone, open <b>Settings → Game Center</b> and sign in, then come back: Mirror Drop connects by itself.</div>` : '') : `<div class="psub">Saved on this device</div>`;
+    if (bestNow()) h += `<button class="sharebtn" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>${shareNote || 'Share best score'}</button>`;
     h += `</div>`;
     if (editPic) {
       h += `<div class="pick"><div class="sw">${PCOL.map((c, i) => `<button data-act="col" data-i="${i}" style="background:${c}" class="${!prof.photo && !(prof.useGc && gc.photo) && i === prof.c ? 'on' : ''}" aria-label="Colour ${i + 1}"></button>`).join('')}</div>
@@ -2138,10 +2144,50 @@ photoIn.addEventListener('change', () => { const f = photoIn.files && photoIn.fi
   im.onload = () => { const z = 192, c = document.createElement('canvas'); c.width = c.height = z; const g = c.getContext('2d'), m = Math.min(im.naturalWidth, im.naturalHeight); // a small square crop from the middle, kept on the phone
     g.drawImage(im, (im.naturalWidth - m) / 2, (im.naturalHeight - m) / 2, m, m, 0, 0, z, z); URL.revokeObjectURL(url); prof.photo = c.toDataURL('image/jpeg', .85); saveBests(); syncPfp(); renderSheet(); };
   im.onerror = () => URL.revokeObjectURL(url); im.src = url; });
-function gcSignIn() { if (!IS_NATIVE) return Promise.resolve(); return capCall('GameCenter', 'signIn').then(r => {
-  gc.ok = !!(r && r.authenticated); gc.alias = gc.ok ? String(r.alias || r.displayName || 'Player') : '';
-  if (gc.ok) { flushGc(); capCall('GameCenter', 'photo').then(p => { gc.photo = p && p.dataUrl || ''; syncPfp(); if (pSheet.classList.contains('on')) renderSheet(); }).catch(() => {}); }
-  syncPfp(); if (pSheet.classList.contains('on')) renderSheet(); }).catch(() => {}); }
+function gcApply(r) { // the Game Center player as the app reports it: at launch, after the sign-in sheet, or when the player signs in from Settings
+  const was = gc.ok; gc.ok = !!(r && r.authenticated); gc.alias = gc.ok ? String(r.alias || r.displayName || 'Player') : '';
+  if (gc.ok) { gc.err = ''; if (!was) { flushGc(); capCall('GameCenter', 'photo').then(p => { gc.photo = p && p.dataUrl || ''; syncPfp(); if (pSheet.classList.contains('on')) renderSheet(); }).catch(() => {}); } }
+  syncPfp(); if (pSheet.classList.contains('on')) renderSheet(); }
+window.onGameCenter = gcApply; // the app calls this whenever Game Center signs the player in or out
+function gcSignIn(fromTap) { if (!IS_NATIVE) return Promise.resolve();
+  const sheetOn = () => pSheet.classList.contains('on');
+  if (fromTap) { if (gc.busy) return Promise.resolve(); gc.busy = true; gc.err = ''; if (sheetOn()) renderSheet(); }
+  const call = capCall('GameCenter', 'signIn').then(r => { gcApply(r); if (!gc.ok && fromTap) { gc.err = (r && r.error) || 'not signed in'; if (!gc.busy && sheetOn()) renderSheet(); } })
+    .catch(e => { if (fromTap) gc.err = String((e && e.message) || e || 'failed'); });
+  // Apple's sign-in sheet can stay up while the player types, so the button frees itself after a while; a later answer still counts
+  return Promise.race([call, new Promise(r => setTimeout(r, 20000))]).then(() => { if (!fromTap) return; gc.busy = false; if (!gc.ok && !gc.err) gc.err = 'no answer'; if (sheetOn()) renderSheet(); }); }
+// sharing the best score: a picture of it plus a line of text, through the iPhone's share sheet
+const SHARE_URL = ''; // the App Store link, once the game is live
+let shareNote = '';
+function shareCard(sc) {
+  const w = 1080, h = 1350, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  const F = '-apple-system, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif';
+  let bg = g.createLinearGradient(0, 0, w, 0); bg.addColorStop(0, '#fbe9ea'); bg.addColorStop(.5, '#f6f1ea'); bg.addColorStop(1, '#e4f2f1'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(43,45,66,.06)'; g.fillRect(w / 2 - 1, 0, 2, h);
+  const word = (t, x, y, top, mid, low) => { const gr = g.createLinearGradient(0, y - 120, 0, y); gr.addColorStop(0, top); gr.addColorStop(.55, mid); gr.addColorStop(1, low);
+    g.save(); g.shadowColor = 'rgba(43,45,66,.12)'; g.shadowBlur = 18; g.shadowOffsetY = 6; g.fillStyle = gr; g.fillText(t, x, y); g.restore(); };
+  g.textBaseline = 'alphabetic'; g.textAlign = 'center'; let fs = 132; g.font = `900 ${fs}px ${F}`;
+  const full = g.measureText('MIRROR DROP').width; if (full > 880) { fs = Math.floor(fs * 880 / full); g.font = `900 ${fs}px ${F}`; } // margins on every phone font
+  const mw = g.measureText('MIRROR ').width, dw = g.measureText('DROP').width, x0 = (w - mw - dw) / 2;
+  g.textAlign = 'left'; word('MIRROR', x0, 250, '#ff8c9d', '#ff6b81', '#ec4f6a'); word('DROP', x0 + mw, 250, '#5fd6e3', '#2ec4d6', '#1aa9bc');
+  const ball = (x, y, r, hi, mid, lo) => { g.save(); g.shadowColor = mid + '66'; g.shadowBlur = 40; const gr = g.createRadialGradient(x - r * .3, y - r * .35, r * .1, x, y, r);
+    gr.addColorStop(0, hi); gr.addColorStop(.5, mid); gr.addColorStop(1, lo); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.restore();
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(x - r * .28, y - r * .42, r * .3, r * .17, 0, 0, 7); g.fill(); };
+  ball(w / 2 - 120, 420, 58, '#ffb3bf', '#ff6b81', '#d93f5c'); ball(w / 2 + 120, 420, 58, '#a6eef5', '#2ec4d6', '#1595a8');
+  g.textAlign = 'center'; g.fillStyle = '#e9a23b'; g.font = `800 44px ${F}`; if ('letterSpacing' in g) g.letterSpacing = '14px'; g.fillText('BEST', w / 2 + 7, 620); if ('letterSpacing' in g) g.letterSpacing = '0px';
+  g.fillStyle = '#2b2d42'; g.font = `900 ${sc > 9999 ? 230 : 300}px ${F}`; g.fillText(String(sc), w / 2, 900);
+  g.fillStyle = 'rgba(43,45,66,.62)'; g.font = `700 48px ${F}`; g.fillText(`${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · Infinite' : ''}`, w / 2, 1000);
+  g.fillStyle = 'rgba(43,45,66,.38)'; g.font = `600 40px ${F}`; g.fillText(shownName(), w / 2, 1070);
+  g.fillStyle = '#2b2d42'; g.font = `800 56px ${F}`; g.fillText('Can you beat it?', w / 2, 1240);
+  return c.toDataURL('image/jpeg', .92); }
+async function shareScore() { const sc = bestNow(); if (!sc) return;
+  const text = `I scored ${sc} on ${NAMES[bucket()]} in Mirror Drop. Can you beat it?` + (SHARE_URL ? ' ' + SHARE_URL : ''), img = shareCard(sc);
+  if (IS_NATIVE) { capCall('App', 'share', { text, image: img }).catch(() => {}); return; }
+  try { const file = new File([await (await fetch(img)).blob()], 'mirror-drop-score.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); shareNote = 'Copied ✓'; } catch (e) { shareNote = 'Sharing isn\'t available here'; }
+  if (pSheet.classList.contains('on')) renderSheet(); setTimeout(() => { shareNote = ''; if (pSheet.classList.contains('on')) renderSheet(); }, 2000); }
 srows.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, i = +b.dataset.i;
   if (a === 'pic') { editPic = !editPic; renderSheet(); }
@@ -2151,7 +2197,8 @@ srows.addEventListener('click', e => {
   else if (a === 'sym') { prof.sym = i; prof.photo = ''; prof.useGc = false; saveBests(); syncPfp(); renderSheet(); }
   else if (a === 'photo') photoIn.click();
   else if (a === 'gcpic') { prof.photo = ''; prof.useGc = true; saveBests(); syncPfp(); renderSheet(); }
-  else if (a === 'signin') gcSignIn();
+  else if (a === 'signin') gcSignIn(true);
+  else if (a === 'share') shareScore();
   else if (a === 'world') capCall('GameCenter', 'showLeaderboard', { leaderboardId: lbId(lbSect === null ? bucket() : lbSect) }).catch(() => {});
   else if (a === 'prev' || a === 'next') { const sc = lbSect === null ? bucket() : lbSect; lbSect = Math.max(0, Math.min(5, sc + (a === 'next' ? 1 : -1))); renderSheet(); }
 });
@@ -2163,7 +2210,8 @@ $('#sdone').addEventListener('click', closeSheet); pSheet.querySelector('.bd').a
 addEventListener('online', flushGc);
 addEventListener('pointerdown', e => { if (e.target.closest && e.target.closest('button')) haptic('selection'); }, { passive: true, capture: true }); // every button answers with a light tick
 syncPfp();
-setTimeout(gcSignIn, 1200); // Apple asks games to sign in at launch; iOS shows a small "Welcome back" banner
+setTimeout(() => gcSignIn(false), 1200); // Apple asks games to sign in at launch; iOS shows a small "Welcome back" banner
+document.addEventListener('visibilitychange', () => { if (!document.hidden && IS_NATIVE && !gc.ok) capCall('GameCenter', 'player').then(gcApply).catch(() => {}); }); // signed in from Settings meanwhile: picked up on return
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && resumeT <= 0) { pauseGame(true); }
   if (document.hidden && (state === 'play' || state === 'paused') && score > bestNow()) { bests[bkey()] = score; bestBanked = true; saveBests(); } /* if iOS closes the app in the background, a new best is already safe */ if (!document.hidden && ac && ac.state !== 'running') ac.resume().catch(() => {}); }); // leaving the app pauses without the fog penalty
 // the loading screen leaves as soon as the first frame is on screen; the moon picture finishes decoding in the background

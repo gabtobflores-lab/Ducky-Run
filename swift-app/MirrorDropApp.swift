@@ -230,6 +230,20 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
             guard let data else { return (nil, "aurora.mp4 is not in the app") }
             return (["data": data], nil)
 
+        // Sharing: the iPhone's own share sheet with the score picture and a line of text
+        case ("App", "share"):
+            var items: [Any] = []
+            if let url = opts["image"] as? String, let comma = url.firstIndex(of: ","),
+               let data = Data(base64Encoded: String(url[url.index(after: comma)...])), let image = UIImage(data: data) { items.append(image) }
+            if let text = opts["text"] as? String, !text.isEmpty { items.append(text) }
+            guard !items.isEmpty, let top = topViewController(), let web = webView else { return (nil, "nothing to share") }
+            let sheet = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            if let pop = sheet.popoverPresentationController { // iPad: the sheet points at the bottom of the screen
+                pop.sourceView = web; pop.sourceRect = CGRect(x: web.bounds.midX, y: web.bounds.maxY - 120, width: 1, height: 1)
+            }
+            top.present(sheet, animated: true)
+            return ([String: Any](), nil)
+
         // Haptics: the Taptic Engine, at the same moments as the game's sounds
         case ("Haptics", "feedback"):
             feedback(opts["kind"] as? String ?? "light")
@@ -291,6 +305,10 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
             return
         }
         let info = currentPlayer(error: error)
+        // tell the game straight away, also when Game Center signs the player in later on its own (for example from Settings)
+        if let data = try? JSONSerialization.data(withJSONObject: info.dictionary), let json = String(data: data, encoding: .utf8) {
+            webView?.evaluateJavaScript("window.onGameCenter && window.onGameCenter(\(json))", completionHandler: nil)
+        }
         let waiting = waitingForSignIn
         waitingForSignIn.removeAll()
         waiting.forEach { $0.resume(returning: info) }
