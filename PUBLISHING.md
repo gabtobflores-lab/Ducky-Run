@@ -80,7 +80,7 @@ to rebuild `release/`, then upload the folder again. For the App Store, run `npm
 
 ## Pricing plan (agreed, to build once the Apple Developer account exists)
 
-Free download, four one-time purchases on one screen (mockup: appstore/paywall-mockup.png). Max is highlighted "Best value" and pre-selected.
+Free download, four one-time purchases on one screen (design preview: appstore/unlock.html). Max is highlighted "Best value" and pre-selected.
 
 | Tier | Price | Role | Unlocks |
 |---|---|---|---|
@@ -88,9 +88,9 @@ Free download, four one-time purchases on one screen (mockup: appstore/paywall-m
 | Plus | $0.99 | real but looks small | Chill and Zen mode |
 | Pro | $1.79 | decoy | Chill, Zen, Hard and Infinite |
 | Max | $1.99 | main pick | Everything: Chill, Zen, Hard, Insane, Impossible, Infinite, Daily Challenge |
-| Supporter | $4.99 | for fans | All of Max, plus golden balls once a run passes your old best, a gold profile ring and a Supporter badge |
+| Supporter | $4.99 | for fans | All of Max, plus the Golden Run, a gold app icon, gold share cards, and a gold profile ring with a Founding Supporter badge (launch year only) |
 
-Supporter's golden run: the moment the score passes the old best, both balls turn gold with a soft shimmer and glow, their trail turns gold, a warm chime and a success haptic play, and the score turns gold until the run ends. The share picture shows gold balls and the badge.
+Golden Run (Supporter): the moment the score passes the old best there is a soft white flash and a ring of light with sparks around each ball; both balls turn to liquid gold (moving reflection, bright rim, twinkling glints, warm halo) and leave a trail of gold dust; the score turns gold, a 'Golden Run · New best' tag appears, and a warm chime and success haptic play.
 Upgrades cost only the difference (for example Pro → Max $0.20, Max → Supporter $3.00).
 The offer appears only when tapping a locked difficulty, after the free daily Hard run, and once after a new best on Normal.
 No fake timers or fake "was" prices. No ads; the game stays fully offline. Locked difficulties stay visible on the slider with a lock.
