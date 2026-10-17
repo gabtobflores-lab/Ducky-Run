@@ -1,0 +1,49 @@
+# Builds the iPhone app exactly as tools/update-mac.sh leaves the Xcode project, runs it in the iOS simulator,
+# and prints a screenshot (base64, between SHOT markers), the app's console and any crash report.
+name: iPhone app check
+on:
+  push:
+    branches: [claude/ducky-run-game]
+    paths: ['app-update/**', 'xcode/**', '.github/workflows/app-check.yml']
+  workflow_dispatch:
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the project as the updater leaves it
+        run: |
+          mkdir -p build && cp -R xcode build/proj
+          cp app-update/MirrorDropApp.swift app-update/index.html app-update/aurora.mp4 build/proj/MirrorDrop/
+          cp -R app-update/LaunchBalls.imageset build/proj/MirrorDrop/Assets.xcassets/
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          cd build/proj
+          xcodebuild -project MirrorDrop.xcodeproj -target MirrorDrop -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error|warning: .*MirrorDropApp|BUILD" | tail -60
+          ls build/Debug-iphonesimulator/
+      - name: Run in the simulator
+        run: |
+          DEV=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; c=[(k,x) for k,v in d.items() if 'iOS' in k for x in v if 'iPhone' in x['name']]; c.sort(key=lambda t:t[0]); print(c[-1][1]['udid']); print(c[-1][0], c[-1][1]['name'], file=sys.stderr)")
+          xcrun simctl boot "$DEV"; xcrun simctl bootstatus "$DEV" -b
+          APP=build/proj/build/Debug-iphonesimulator/MirrorDrop.app
+          xcrun simctl install "$DEV" "$APP"
+          BID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")
+          (xcrun simctl launch --console-pty "$DEV" "$BID" > launch.log 2>&1 &)
+          for t in 3 8 15; do
+            sleep $([ $t = 3 ] && echo 3 || echo 5)
+            xcrun simctl io "$DEV" screenshot "shot$t.png" >/dev/null 2>&1
+            sips -Z 360 "shot$t.png" --out "s$t.png" >/dev/null
+            echo "SHOT-$t-BEGIN"; base64 -i "s$t.png"; echo "SHOT-$t-END"
+          done
+          echo "== running?"; xcrun simctl spawn "$DEV" launchctl list | grep -i "$BID" || echo "APP NOT RUNNING"
+          echo "== console"; tail -60 launch.log
+          echo "== crash reports"; ls ~/Library/Logs/DiagnosticReports/ 2>/dev/null | tail
+          for f in ~/Library/Logs/DiagnosticReports/MirrorDrop*; do [ -f "$f" ] && head -150 "$f"; done
+          echo "== app log"; xcrun simctl spawn "$DEV" log show --last 3m --style compact --predicate 'process == "MirrorDrop"' 2>/dev/null | grep -v -i "fault\b" | tail -80
