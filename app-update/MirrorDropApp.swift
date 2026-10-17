@@ -35,7 +35,6 @@ struct GameView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true                // the aurora video plays inside the game
         config.mediaTypesRequiringUserActionForPlayback = []
         config.websiteDataStore = .default()                   // scores saved by the game survive app restarts
-        ProMotion.unlockWebFrameRate(config.preferences)       // let the game draw at 120 fps instead of WebKit's usual 60
 
         // The game looks for Capacitor's bridge; this tiny stand-in sends its calls to NativeBridge below.
         let shim = """
@@ -60,6 +59,7 @@ struct GameView: UIViewRepresentable {
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.allowsLinkPreview = false
         context.coordinator.webView = web
+        web.navigationDelegate = context.coordinator           // if iOS ever stops the game's page, it is reloaded instead of staying blank
         ProMotion.shared.start()
 
         if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
@@ -92,8 +92,11 @@ struct PlayerInfo: Sendable {
 
 /// Answers the game's calls. Everything runs on the main thread; Game Center work is awaited.
 @MainActor
-final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply {
+final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDelegate {
     weak var webView: WKWebView?
+
+    /// iOS can stop a web page's process (for example under memory pressure); show the game again instead of a blank screen
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { webView.reload() }
     private var waitingForSignIn: [CheckedContinuation<PlayerInfo, Never>] = []
     private var authHandlerSet = false
 
@@ -251,19 +254,4 @@ final class ProMotion: NSObject {
     }
 
     @objc private func tick(_ link: CADisplayLink) {}
-
-    /// WebKit keeps web pages near 60 fps unless its "Prefer Page Rendering Updates near 60fps" setting is off
-    /// (the same switch as Safari's Feature Flags). If a future iOS drops the switch, the game simply stays at 60.
-    static func unlockWebFrameRate(_ prefs: WKPreferences) {
-        let listSel = NSSelectorFromString("_features"), setSel = NSSelectorFromString("_setEnabled:forFeature:")
-        guard let list = class_getClassMethod(WKPreferences.self, listSel),
-              let setM = class_getInstanceMethod(WKPreferences.self, setSel) else { return }
-        typealias Features = @convention(c) (AnyClass, Selector) -> Unmanaged<NSArray>?
-        typealias SetEnabled = @convention(c) (WKPreferences, Selector, Bool, NSObject) -> Void
-        let features = unsafeBitCast(method_getImplementation(list), to: Features.self)(WKPreferences.self, listSel)?.takeUnretainedValue() ?? []
-        let setEnabled = unsafeBitCast(method_getImplementation(setM), to: SetEnabled.self)
-        for case let f as NSObject in features where (f.value(forKey: "key") as? String) == "PreferPageRenderingUpdatesNear60FPSEnabled" {
-            setEnabled(prefs, setSel, false, f)
-        }
-    }
 }

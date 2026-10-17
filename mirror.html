@@ -235,6 +235,7 @@
 </head>
 <body>
 <div id="boot" aria-hidden="true"><div class="bb"><i class="p"></i><i class="t"></i></div><div class="bar"><span></span></div></div>
+<script>/* if something breaks while loading, say so on the loading screen instead of leaving it up silently */ addEventListener('error', e => { const b = document.getElementById('boot'); if (!b || b.dataset.err) return; b.dataset.err = 1; const d = document.createElement('div'); d.style.cssText = 'position:absolute;left:24px;right:24px;bottom:64px;font:13px/1.4 -apple-system,system-ui;color:#8a8d9a;text-align:center'; d.textContent = 'Something went wrong while loading: ' + (e.message || 'unknown error') + (e.lineno ? ' (line ' + e.lineno + ')' : ''); b.appendChild(d); });</script>
 <canvas id="sky" aria-hidden="true" style="visibility:hidden"></canvas>
 <canvas id="c"></canvas>
 
@@ -2167,8 +2168,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && sta
   const dec = im => (im.decode ? im.decode() : Promise.resolve()).catch(() => {});
   const vidOK = !!document.createElement('video').canPlayType(AURVID.type); if (!vidOK) needFrames();
   dec(MOONIMG); // without the video (old phones, some browsers) the backup aurora pictures must be ready first
-  Promise.race([vidOK ? Promise.resolve() : Promise.all([dec(AURIMG), dec(FLOWIMG)]), new Promise(r => setTimeout(r, 6000))]).then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
-    clearTimeout(slow); boot.classList.add('gone'); setTimeout(() => boot.remove(), 300); }))); })();
+  let left = false; const leave = () => { if (left) return; left = true; clearTimeout(slow); boot.classList.add('gone'); setTimeout(() => boot.remove(), 300); };
+  setTimeout(leave, vidOK ? 2500 : 6500); // never stay on the loading screen, even if the first frame is late
+  Promise.race([vidOK ? Promise.resolve() : Promise.all([dec(AURIMG), dec(FLOWIMG)]), new Promise(r => setTimeout(r, 6000))]).then(() => requestAnimationFrame(() => requestAnimationFrame(leave))); })();
 </script>
 </body>
 </html>
