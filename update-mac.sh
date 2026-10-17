@@ -57,6 +57,42 @@ JSON
   updated=1
 }
 
+# A project made from Xcode's Storyboard template has its own AppDelegate marked @main, so pasting the game's app file
+# into it gives "'main' attribute can only apply to one type". This turns such a project into a normal Mirror Drop project:
+# the template's start-up is switched off, the pasted copy is emptied, and the game's files go into the app folder.
+fix_template() {  # $1 = the Swift file with a pasted copy of the game's app code
+  local f="$1" root d app pbx plist
+  d=$(dirname "$f"); root=""
+  for c in "$d" "$(dirname "$d")" "$(dirname "$(dirname "$d")")"; do ls "$c"/*.xcodeproj >/dev/null 2>&1 && { root="$c"; break; }; done
+  [ -n "$root" ] || return
+  app=$(grep -rlE '^@main|^@UIApplicationMain' --include=AppDelegate.swift "$root" 2>/dev/null | grep -v -e DerivedData -e backup | head -1)
+  [ -n "$app" ] || return
+  app=$(dirname "$app")
+  if ! grep -q FileSystemSynchronized "$root"/*.xcodeproj/project.pbxproj 2>/dev/null; then
+    echo "  ⚠️ $root was made from Xcode's Storyboard template and doesn't pick up new files by itself."
+    echo "     In Xcode, delete AppDelegate.swift and SceneDelegate.swift (Move to Trash), then run this again."; return; fi
+  echo "Fixing the project setup: $root"
+  local bk="$root/Mirror Drop backup $STAMP"; mkdir -p "$bk"
+  cp "$app/AppDelegate.swift" "$f" "$bk/" 2>/dev/null
+  # the template's start-up file stays in the project but no longer starts the app
+  perl -pi -e 's/^\@(main|UIApplicationMain)[ \t]*$/\/\/ \@$1 (Mirror Drop starts from MirrorDropApp.swift)/' "$app/AppDelegate.swift"
+  # the pasted copy stays in the project (Xcode lists it) but is emptied; the real file goes in the app folder
+  [ "$(basename "$f")" != MirrorDropApp.swift ] && printf '// Mirror Drop now lives in MirrorDropApp.swift, in the app folder.\n' > "$f"
+  # no storyboard or scene delegate at launch: the game's own SwiftUI app opens the window
+  for plist in "$app/Info.plist" "$root/Info.plist"; do
+    [ -f "$plist" ] && { cp "$plist" "$bk/" 2>/dev/null; /usr/libexec/PlistBuddy -c "Delete :UIApplicationSceneManifest:UISceneConfigurations" -c "Delete :UIMainStoryboardFile" "$plist" >/dev/null 2>&1; }
+  done
+  pbx=$(ls "$root"/*.xcodeproj/project.pbxproj 2>/dev/null | head -1)
+  if [ -f "$pbx" ]; then cp "$pbx" "$bk/project.pbxproj"; perl -ni -e 'print unless /INFOPLIST_KEY_UIMainStoryboardFile|INFOPLIST_KEY_UISceneDelegateClassName/' "$pbx"; fi
+  [ -f "$app/index.html" ] || : > "$app/index.html"   # update_web fills it in
+  [ -f "$app/MirrorDropApp.swift" ] || : > "$app/MirrorDropApp.swift"
+}
+while IFS= read -r f; do
+  [ "$(basename "$f")" = MirrorDropApp.swift ] && continue
+  fix_template "$f"
+done < <(find "$HOME/Desktop" "$HOME/Documents" "$HOME/Downloads" -maxdepth 4 -name "*.swift" -not -path "*/DerivedData/*" -not -path "* backup *" 2>/dev/null \
+          | while IFS= read -r f; do grep -lE 'struct MirrorDropApp *: *App' "$f" 2>/dev/null; done)
+
 updated=0
 echo "Looking for your Mirror Drop project (this can take a minute)..."
 while IFS= read -r d; do [ -f "$d/index.html" ] && update_web "$d"; done < <(dirs_of MirrorDropApp.swift)
