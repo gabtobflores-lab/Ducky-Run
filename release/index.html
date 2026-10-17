@@ -125,6 +125,7 @@
   .best{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 18px 11px}
   .best span{font-size:11px;font-weight:900;letter-spacing:.2em;background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
   .best b{font-size:28px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .best b.none{font-size:17px;font-weight:700;letter-spacing:0;color:var(--ink-3)}
   .best i{font-style:normal;font-size:12px;font-weight:600;color:var(--ink-3);width:100%;margin-top:-2px}
   .best.celebrate{animation:celebrate 1.6s var(--ease) both}
   @keyframes celebrate{0%{box-shadow:var(--sh-card),0 0 0 0 rgba(233,162,59,.55)}35%{box-shadow:var(--sh-card),0 0 0 10px rgba(233,162,59,0)}36%{box-shadow:var(--sh-card),0 0 0 0 rgba(233,162,59,.4)}80%,100%{box-shadow:var(--sh-card),0 0 0 12px rgba(233,162,59,0)}}
@@ -262,7 +263,11 @@
   @media (max-height:880px){#menu{gap:10px}}
   /* columns + mode read like an iOS grouped section: quiet secondary values, a hairline between the two rows */
   #pername,#modename{font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink-3);font-variant-numeric:tabular-nums}
-  .card.diff:has(#mode){padding-bottom:14px}
+  /* one column: every block on the menu shares the cards' width, radius and glass */
+  #menu .btn,#menu .daily{width:min(330px,86vw)}
+  #menu .daily{border-radius:var(--r-card);background:var(--card);box-shadow:var(--sh-card),0 0 0 1px rgba(255,255,255,.85) inset;padding:11px 16px}
+  #menu .card.diff{padding:14px 16px}
+  @media (max-height:700px){#menu .card.diff{padding:10px 14px 9px}}
   .mhd{margin-top:8px;padding-top:13px;border-top:1px solid rgba(43,45,66,.075)}
   #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   #mode[data-mode="zen"] .pill{transform:translateX(200%)}
@@ -362,6 +367,24 @@
   .utag{position:absolute;left:50%;top:102px;z-index:1;transform:translate(-50%,6px) scale(.96);opacity:0;padding:5px 11px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.14em;color:#7d520a;
     background:rgba(255,246,220,.92);box-shadow:0 0 0 .5px rgba(168,112,15,.3),0 6px 16px rgba(227,173,58,.3);transition:opacity .4s var(--ease),transform .5s var(--spring);white-space:nowrap}
   .uhero.gold .utag{opacity:1;transform:translate(-50%,0) scale(1)}
+  /* Supporter preview: the hero pages through what Supporter looks like, in the same space, with page dots like iOS */
+  .uhero canvas#ucv,.uhud{transition:opacity .45s var(--ease)}
+  .uhero:not([data-s="0"]) canvas#ucv,.uhero:not([data-s="0"]) .uhud,.uhero:not([data-s="0"]) .utag{opacity:0}
+  .usl{position:absolute;inset:20px 0 64px;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;pointer-events:none;opacity:0;transform:scale(.96);transition:opacity .45s var(--ease),transform .6s var(--ease)}
+  .uhero[data-s="1"] .usl1,.uhero[data-s="2"] .usl2,.uhero[data-s="3"] .usl3{opacity:1;transform:none}
+  .ucap{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .ucap b{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+  .ucap small{font-size:12px;font-weight:600;color:var(--ink-3)}
+  .uhero canvas.uicon{position:static;width:78px;height:78px;border-radius:17.5px;box-shadow:0 0 0 .5px rgba(0,0,0,.08),0 12px 28px rgba(120,80,10,.28),0 2px 6px rgba(43,45,66,.12)}
+  .uring.pav{width:66px;height:66px;cursor:default;pointer-events:none}
+  .uring>span{font-size:27px}
+  .usl2{gap:9px}
+  .ucard{height:108px;width:auto;border-radius:12px;box-shadow:0 0 0 .5px rgba(0,0,0,.06),0 12px 28px rgba(120,80,10,.22),0 2px 6px rgba(43,45,66,.1)}
+  .udots{position:absolute;left:50%;bottom:44px;z-index:3;transform:translateX(-50%);display:flex;gap:2px;transition:opacity .3s var(--ease)}
+  #unl:not(.sup) .udots{opacity:0;pointer-events:none}
+  .udots button{width:16px;height:16px;border:0;padding:0;background:none;cursor:pointer;display:grid;place-items:center}
+  .udots button::before{content:'';width:6px;height:6px;border-radius:3px;background:rgba(43,45,66,.24);transition:width .3s var(--ease),background .3s}
+  .udots button.on::before{width:16px;background:#c8902a}
   .ubody{position:relative;margin-top:-46px;padding:0 20px 14px;display:flex;flex-direction:column;gap:18px}
   .uhead{text-align:center;display:flex;flex-direction:column;gap:6px}
   .uword{font-size:11.5px;font-weight:900;letter-spacing:.24em}
@@ -442,7 +465,7 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
   <button class="btn" id="play">PLAY</button>
   <button class="daily" id="daily" type="button"><span class="dic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="dtx"><b>Daily Challenge</b><small id="dsub">A new run every day</small></span><span class="dlk" id="dlk" aria-hidden="true"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="dgo" id="dgo" aria-hidden="true">›</span></button>
   <div class="bestwrap"><div class="card best" id="mbest" role="button" tabindex="0" aria-label="Your best runs"></div><button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button></div>
-  <div class="hint">tap to move the balls one step.<br>at the edge they turn around.</div>
+  <div class="hint">Tap to move the balls one step.<br>At the edge, they turn around.</div>
 </div>
 
 <button id="pbtn" aria-label="Pause"><i></i><i></i></button>
@@ -470,7 +493,7 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
 <div id="unl" aria-hidden="true"><div class="bd"></div><div class="upn" role="dialog" aria-modal="true" aria-labelledby="utl">
   <div class="uhero" id="uhero"><canvas id="ucv" aria-hidden="true"></canvas><div class="grab"></div>
     <button class="uclose" id="uclose" type="button" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg></button>
-    <div class="uhud" aria-hidden="true"><small id="ubest">BEST 141</small><b id="usc">128</b></div><div class="utag" aria-hidden="true">✦ GOLDEN RUN · NEW BEST</div></div>
+    <div class="uhud" aria-hidden="true"><small id="ubest">BEST 141</small><b id="usc">128</b></div><div class="utag" aria-hidden="true">✦ GOLDEN RUN · NEW BEST</div><div class="usl usl1" aria-hidden="true"><canvas class="uicon" id="uicon" width="252" height="252"></canvas><div class="ucap"><b>Gold app icon</b><small>Switch it anytime in your profile</small></div></div><div class="usl usl2" aria-hidden="true"><span class="pav ring uring"><span id="uringi">P</span></span><span class="sbadge"><span class="orb"></span>SUPPORTER</span><div class="ucap"><b>Gold ring and badge</b><small>On your profile and the leaderboard</small></div></div><div class="usl usl3" aria-hidden="true"><img class="ucard" id="ucard" alt=""><div class="ucap"><b>Gold share cards</b><small>Every best you share, in gold</small></div></div><div class="udots" id="udots" role="tablist" aria-label="Supporter preview"><button type="button" aria-label="Golden Run"></button><button type="button" aria-label="Gold app icon"></button><button type="button" aria-label="Gold ring and badge"></button><button type="button" aria-label="Gold share cards"></button></div></div>
   <div class="ubody">
     <div class="uhead"><div class="uword"><span class="p">MIRROR</span> <span class="c">DROP</span></div><h2 id="utl">Play every mode.</h2>
       <p id="usub">The free game has Easy and Normal with fog. Pay once to unlock the rest. No ads, no subscription, works offline.</p></div>
@@ -637,7 +660,7 @@ function syncDiffUI() {
   document.querySelectorAll('.drange').forEach(r => { if (+r.value !== sliderV) r.value = sliderV; r.style.setProperty('--f', sliderV / 120); r.setAttribute('aria-valuetext', NAMES[bucket()]); });
   document.querySelectorAll('.dname').forEach(n => swapText(n, NAMES[bucket()]));
   const what = mode === 'daily' ? 'Daily Challenge · today' : `${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : mode === 'zen' ? ' · zen' : ''}`;
-  const bh = `<span>BEST</span><b>${bestNow() || '–'}</b><i>${what}</i>`;
+  const bh = `<span>BEST</span>${bestNow() ? `<b>${bestNow()}</b>` : '<b class="none">No runs yet</b>'}<i>${what}</i>`;
   ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
   document.querySelectorAll('.seg:not(#mode)').forEach(s => { s.dataset.sel = per; });
   document.querySelectorAll('.seg button[data-per]').forEach(b => b.classList.toggle('on', +b.dataset.per === per));
@@ -2509,7 +2532,7 @@ function gcSignIn(fromTap) { if (!IS_NATIVE) return Promise.resolve();
 // sharing the best score: a picture of it plus a line of text, through the iPhone's share sheet
 const SHARE_URL = ''; // the App Store link, once the game is live
 let shareNote = '';
-function shareCard(sc) {
+function shareCard(sc, preview) {
   const w = 1080, h = 1350, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
   const F = '-apple-system, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif';
   let bg = g.createLinearGradient(0, 0, w, 0); bg.addColorStop(0, '#fbe9ea'); bg.addColorStop(.5, '#f6f1ea'); bg.addColorStop(1, '#e4f2f1'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
@@ -2523,14 +2546,14 @@ function shareCard(sc) {
   const ball = (x, y, r, hi, mid, lo) => { g.save(); g.shadowColor = mid + '66'; g.shadowBlur = 40; const gr = g.createRadialGradient(x - r * .3, y - r * .35, r * .1, x, y, r);
     gr.addColorStop(0, hi); gr.addColorStop(.5, mid); gr.addColorStop(1, lo); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.restore();
     g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(x - r * .28, y - r * .42, r * .3, r * .17, 0, 0, 7); g.fill(); };
-  const goldCard = ent >= 4 && prof.sup.cards;
+  const goldCard = preview || (ent >= 4 && prof.sup.cards);
   if (goldCard) { ball(w / 2 - 120, 420, 58, '#fff3c4', '#f0bd45', '#8a5a0e'); ball(w / 2 + 120, 420, 58, '#fff3c4', '#f0bd45', '#8a5a0e'); }
   else { ball(w / 2 - 120, 420, 58, '#ffb3bf', '#ff6b81', '#d93f5c'); ball(w / 2 + 120, 420, 58, '#a6eef5', '#2ec4d6', '#1595a8'); }
   g.textAlign = 'center'; g.fillStyle = '#e9a23b'; g.font = `800 44px ${F}`; if ('letterSpacing' in g) g.letterSpacing = '14px'; g.fillText('BEST', w / 2 + 7, 620); if ('letterSpacing' in g) g.letterSpacing = '0px';
-  if (ent >= 4 && prof.sup.cards) { const sg = g.createLinearGradient(0, 640, 0, 900); sg.addColorStop(0, '#f5cf6a'); sg.addColorStop(1, '#a8700f'); g.fillStyle = sg; } else g.fillStyle = '#2b2d42';
+  if (goldCard) { const sg = g.createLinearGradient(0, 640, 0, 900); sg.addColorStop(0, '#f5cf6a'); sg.addColorStop(1, '#a8700f'); g.fillStyle = sg; } else g.fillStyle = '#2b2d42';
   g.font = `900 ${sc > 9999 ? 230 : 300}px ${F}`; g.fillText(String(sc), w / 2, 900);
   g.fillStyle = 'rgba(43,45,66,.62)'; g.font = `700 48px ${F}`; g.fillText(`${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · Infinite' : ''}`, w / 2, 1000);
-  g.fillStyle = 'rgba(43,45,66,.38)'; g.font = `600 40px ${F}`; g.fillText(shownName() + (goldCard && prof.sup.badge ? '  ✦ Supporter' : ''), w / 2, 1070);
+  g.fillStyle = 'rgba(43,45,66,.38)'; g.font = `600 40px ${F}`; g.fillText(shownName() + (goldCard && (preview || prof.sup.badge) ? '  ✦ Supporter' : ''), w / 2, 1070);
   if (goldCard) { g.strokeStyle = 'rgba(217,160,40,.55)'; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10); }
   g.fillStyle = '#2b2d42'; g.font = `800 56px ${F}`; g.fillText('Can you beat it?', w / 2, 1240);
   return c.toDataURL('image/jpeg', .92); }
@@ -2589,8 +2612,18 @@ function renderUnlock() {
   if (ent >= 4) { cta.textContent = 'You have everything. Thank you!'; cta.disabled = true; }
   else if (!IS_NATIVE) { cta.textContent = 'Available in the App Store app'; cta.disabled = true; }
   else { cta.textContent = unlBusy ? 'Connecting to the App Store…' : `${ent ? 'Upgrade to' : 'Get'} ${p.name} for ${planPrice(p).price}`; cta.disabled = unlBusy; }
-  $('#ubest').textContent = 'BEST ' + (bestNow() || 141); }
+  $('#ubest').textContent = 'BEST ' + (bestNow() || 141); $('.uring').innerHTML = avHTML(); }
 let unlT0 = 0, unlRaf = 0, unlGold = 0, unlBurst = -1, unlDust = [];
+const SHOW_AT = [0, 5200, 8400, 11600], SHOW_LEN = 14800; // Golden Run, gold icon, ring and badge, share card
+let showPrep = false;
+function prepShow() { if (showPrep) return; showPrep = true; drawIcon($('#uicon'), true);
+  try { $('#ucard').src = shareCard(Math.max(bestNow() || 0, 144), true); } catch (e) {} }
+function showPage(now) { if (unlSel !== 4) return 0; const t = (now - unlT0) % SHOW_LEN; let i = 3; while (i > 0 && t < SHOW_AT[i]) i--; return i; }
+$('#udots').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const i = [...b.parentNode.children].indexOf(b);
+  unlT0 = performance.now() - SHOW_AT[i] - (i ? 0 : 1); if (!i) { unlGold = 0; unlBurst = -1; unlDust = []; } haptic('selection'); });
+{ let sx = null; uhero.addEventListener('pointerdown', e => { sx = e.clientX; });
+  uhero.addEventListener('pointerup', e => { if (sx === null || unlSel !== 4) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) < 40) return;
+    const i = (showPage(performance.now()) + (dx < 0 ? 1 : 3)) % 4; unlT0 = performance.now() - SHOW_AT[i]; if (!i) { unlGold = 0; unlBurst = -1; unlDust = []; } haptic('selection'); }); }
 function openUnlock(tier, ctx) { // ctx: { what } when a locked item was tapped, or { title, sub } for a moment like a new best
   if (unl.classList.contains('on')) return;
   unlSel = Math.min(4, Math.max(3, tier || 3, ent + 1)); $('#umsg').textContent = ''; ctx = ctx || {};
@@ -2654,7 +2687,9 @@ function unlFrame(now) { // the hero: the two balls slide between lanes; with Su
   const W0 = ucv.clientWidth, H0 = ucv.clientHeight; if (W0 && H0) {
     if (ucv.width !== Math.round(W0 * dpr)) { ucv.width = Math.round(W0 * dpr); ucv.height = Math.round(H0 * dpr); }
     const g2 = ucv.getContext('2d'), saved = ctx; ctx = g2; g2.setTransform(dpr, 0, 0, dpr, 0, 0); g2.clearRect(0, 0, W0, H0);
-    const tt = now - unlT0, sup = unlSel === 4, cyc = sup ? tt % 7000 : 0, best = 141;
+    const tt = now - unlT0, sup = unlSel === 4, cyc = sup ? tt % SHOW_LEN : 0, best = 141, pg = showPage(now);
+    if (uhero.dataset.s !== String(pg)) { if (pg === 0) { unlGold = 0; unlBurst = -1; unlDust = []; } uhero.dataset.s = pg; document.querySelectorAll('#udots button').forEach((b, i) => b.classList.toggle('on', i === pg)); }
+    if (sup) prepShow();
     const sc = Math.floor(128 + Math.min(1, (sup ? cyc : tt % 5000) / (sup ? 2400 : 4000)) * (sup ? 16 : 12)); $('#usc').textContent = sc;
     const passed = sup && sc > best; if (passed && unlBurst < 0) unlBurst = cyc; if (!sup || cyc < 50) unlBurst = -1;
     unlGold += ((passed ? 1 : 0) - unlGold) * .08; uhero.classList.toggle('gold', passed);
