@@ -95,3 +95,22 @@ Upgrades cost only the difference (for example Pro → Max $0.20, Max → Suppor
 The offer appears only when tapping a locked difficulty, after the free daily Hard run, and once after a new best on Normal.
 No fake timers or fake "was" prices. No ads; the game stays fully offline. Locked difficulties stay visible on the slider with a lock.
 Supporter settings (profile, Supporters only): switches for Golden Run, gold profile ring, Supporter badge and gold share cards, plus an App Icon picker (Classic / Gold, via iOS alternate app icons). Turning them off changes only the look; the purchase stays.
+
+### In-app purchases to create in App Store Connect (all Non-Consumable)
+
+| Product ID | Price | Gives |
+|---|---|---|
+| mirrordrop.plus | $0.99 | Plus |
+| mirrordrop.pro | $1.79 | Pro |
+| mirrordrop.max | $1.99 | Max |
+| mirrordrop.supporter | $4.99 | Supporter |
+| mirrordrop.upgrade.pro.from.plus | $0.79 | Plus → Pro |
+| mirrordrop.upgrade.max.from.plus | $0.99 | Plus → Max |
+| mirrordrop.upgrade.max.from.pro | $0.29 | Pro → Max (Apple's lowest price; the true difference is $0.20) |
+| mirrordrop.upgrade.supporter.from.plus | $3.99 | Plus → Supporter |
+| mirrordrop.upgrade.supporter.from.pro | $3.29 | Pro → Supporter |
+| mirrordrop.upgrade.supporter.from.max | $2.99 | Max → Supporter |
+
+The app reads the real prices from the App Store, so changing a price there needs no app update.
+Game Center: add one more leaderboard, `mirrordrop.daily` (Daily Challenge, high score).
+Founding Supporter: `Store.foundingUntil` in MirrorDropApp.swift, set it to one year after launch.

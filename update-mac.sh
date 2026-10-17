@@ -44,6 +44,16 @@ JSON
     for f in Contents.json balls@2x.png balls@3x.png; do get "app-update/LaunchBalls.imageset/$f" "$1/Assets.xcassets/LaunchBalls.imageset/$f"; done
     /usr/libexec/PlistBuddy -c "Add :UILaunchScreen dict" -c "Add :UILaunchScreen:UIColorName string LaunchCream" -c "Add :UILaunchScreen:UIImageName string LaunchBalls" "$plist" >/dev/null 2>&1
   fi
+  # Supporter's gold app icon: the icon set, plus the project setting that lets iOS switch to it
+  if [ -d "$1/Assets.xcassets" ]; then
+    mkdir -p "$1/Assets.xcassets/AppIcon-Gold.appiconset"
+    for f in Contents.json icon-1024.png; do get "app-update/AppIcon-Gold.appiconset/$f" "$1/Assets.xcassets/AppIcon-Gold.appiconset/$f"; done
+    local pbx; pbx=$(ls "$1"/../*.xcodeproj/project.pbxproj 2>/dev/null | head -1)
+    if [ -f "$pbx" ] && ! grep -q ALTERNATE_APPICON_NAMES "$pbx"; then
+      cp "$pbx" "$bk/project.pbxproj"
+      perl -pi -e 's/^(\s*)ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;/$1ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;\n$1ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Gold";/' "$pbx"
+    fi
+  fi
   updated=1
 }
 

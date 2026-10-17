@@ -6,6 +6,7 @@
 import SwiftUI
 import WebKit
 import GameKit
+import StoreKit
 
 @main
 struct MirrorDropApp: App {
@@ -59,6 +60,8 @@ struct GameView: UIViewRepresentable {
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.allowsLinkPreview = false
         context.coordinator.webView = web
+        Store.shared.bridge = context.coordinator
+        Store.shared.start()
         web.navigationDelegate = context.coordinator           // if iOS ever stops the game's page, it is reloaded instead of staying blank
         context.coordinator.startWatch()
         #if DEBUG
@@ -109,10 +112,12 @@ struct PlayerInfo: Sendable {
 final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigationDelegate {
     weak var webView: WKWebView?
 
+    func tellGame(_ js: String) { webView?.evaluateJavaScript(js, completionHandler: nil) }
+
     // MARK: start-up check
     // If the game hasn't shown its menu 6 seconds after launch, a small panel says what happened, so a stuck start can be fixed.
 
-    static let appBuild = "0864d4c"   // replaced with the release's version by tools/build-app-update.sh
+    static let appBuild = "18afcb1"   // replaced with the release's version by tools/build-app-update.sh
     private var ready = false
     private var events: [String] = []
     private var panel: UIView?
@@ -244,6 +249,29 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
             top.present(sheet, animated: true)
             return ([String: Any](), nil)
 
+        // Purchases: Plus, Pro, Max and Supporter, bought once through the App Store
+        case ("Store", "products"):
+            await Store.shared.loadProducts()
+            return (["products": Store.shared.products.values.map { ["id": $0.id, "price": $0.displayPrice] }], nil)
+        case ("Store", "entitlement"):
+            await Store.shared.refresh()
+            return (["tier": Store.shared.tier, "founding": Store.shared.founding], nil)
+        case ("Store", "buy"):
+            let (tier, error) = await Store.shared.buy(opts["id"] as? String ?? "")
+            var reply: [String: Any] = ["tier": tier]
+            if let error { reply["error"] = error }
+            return (reply, nil)
+        case ("Store", "restore"):
+            await Store.shared.restore()
+            return (["tier": Store.shared.tier], nil)
+
+        // Supporter's app icon: Classic or Gold on the Home Screen
+        case ("App", "setIcon"):
+            let name = (opts["name"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            guard UIApplication.shared.supportsAlternateIcons else { return (nil, "alternate icons are not available") }
+            do { try await UIApplication.shared.setAlternateIconName(name); return ([String: Any](), nil) }
+            catch { return (nil, error.localizedDescription) }
+
         // Haptics: the Taptic Engine, at the same moments as the game's sounds
         case ("Haptics", "feedback"):
             feedback(opts["kind"] as? String ?? "light")
@@ -338,4 +366,83 @@ final class ProMotion: NSObject {
     }
 
     @objc private func tick(_ link: CADisplayLink) {}
+}
+
+/// The App Store side of the packs. Tiers: 0 free, 1 Plus, 2 Pro, 3 Max, 4 Supporter. Each pack is a one-time purchase
+/// (non-consumable); upgrades are their own products priced at the difference. Owning any product gives at least its tier.
+@MainActor
+final class Store {
+    static let shared = Store()
+    weak var bridge: NativeBridge?
+    private(set) var products: [String: Product] = [:]
+    private(set) var tier = 0
+    private(set) var founding = false
+    private var started = false
+    /// Supporters who buy before this date get the Founding Supporter badge (set it to one year after launch)
+    static let foundingUntil = DateComponents(calendar: Calendar(identifier: .gregorian), year: 2027, month: 12, day: 31).date ?? .distantFuture
+
+    static let ids = ["mirrordrop.plus", "mirrordrop.pro", "mirrordrop.max", "mirrordrop.supporter",
+                      "mirrordrop.upgrade.pro.from.plus", "mirrordrop.upgrade.max.from.plus", "mirrordrop.upgrade.max.from.pro",
+                      "mirrordrop.upgrade.supporter.from.plus", "mirrordrop.upgrade.supporter.from.pro", "mirrordrop.upgrade.supporter.from.max"]
+
+    static func tier(of id: String) -> Int {
+        let target = id.hasPrefix("mirrordrop.upgrade.") ? String(id.dropFirst("mirrordrop.upgrade.".count).prefix { $0 != "." }) : String(id.dropFirst("mirrordrop.".count))
+        switch target { case "plus": return 1; case "pro": return 2; case "max": return 3; case "supporter": return 4; default: return 0 }
+    }
+
+    func start() {
+        guard !started else { return }
+        started = true
+        // purchases that finish outside the purchase sheet: Ask to Buy approvals, Family Sharing, refunds
+        Task.detached(priority: .background) {
+            for await update in Transaction.updates {
+                if case .verified(let transaction) = update { await transaction.finish() }
+                await Store.shared.refresh(push: true)
+            }
+        }
+        Task { await loadProducts(); await refresh(push: true) }
+    }
+
+    func loadProducts() async {
+        guard products.isEmpty, let list = try? await Product.products(for: Store.ids) else { return }
+        for product in list { products[product.id] = product }
+    }
+
+    func refresh(push: Bool = false) async {
+        var best = 0, firstSupporter: Date?
+        for await result in Transaction.currentEntitlements {
+            guard case .verified(let transaction) = result, transaction.revocationDate == nil else { continue }
+            let t = Store.tier(of: transaction.productID)
+            best = max(best, t)
+            if t == 4 { firstSupporter = min(firstSupporter ?? transaction.purchaseDate, transaction.purchaseDate) }
+        }
+        let changed = best != tier
+        tier = best
+        founding = firstSupporter.map { $0 < Store.foundingUntil } ?? false
+        if push && changed { bridge?.tellGame("window.onStore && window.onStore({tier: \(best)})") }
+    }
+
+    func buy(_ id: String) async -> (Int, String?) {
+        await loadProducts()
+        guard let product = products[id] else { return (tier, "This pack isn't available right now. Try again in a moment.") }
+        do {
+            switch try await product.purchase() {
+            case .success(let verification):
+                guard case .verified(let transaction) = verification else { return (tier, "The App Store couldn't confirm this purchase.") }
+                await transaction.finish()
+                await refresh()
+                return (tier, nil)
+            case .userCancelled: return (tier, "cancelled")
+            case .pending: return (tier, "Waiting for approval. It unlocks as soon as it's approved.")
+            @unknown default: return (tier, nil)
+            }
+        } catch {
+            return (tier, error.localizedDescription)
+        }
+    }
+
+    func restore() async {
+        try? await AppStore.sync()
+        await refresh()
+    }
 }
