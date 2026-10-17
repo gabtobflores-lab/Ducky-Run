@@ -77,7 +77,7 @@
   .seg{position:relative;display:flex;background:rgba(43,45,66,.06);border-radius:14px;padding:4px}
   .seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:11px;background:linear-gradient(180deg,var(--teal-hi),var(--teal));box-shadow:0 3px 10px rgba(46,196,214,.35),0 1px 0 rgba(255,255,255,.4) inset;transition:transform .32s var(--spring)}
   .seg[data-sel="3"] .pill{transform:translateX(100%)}
-  .seg button{position:relative;flex:1;border:0;background:none;border-radius:11px;padding:10px 6px;font-weight:800;font-size:14px;cursor:pointer;color:var(--ink-2);transition:color .2s var(--ease),transform .15s var(--ease)}
+  .seg button{position:relative;flex:1;border:0;background:none;border-radius:11px;padding:8px 6px;font-weight:800;font-size:14px;cursor:pointer;color:var(--ink-2);transition:color .2s var(--ease),transform .15s var(--ease)}
   .seg button.on{color:#fff}
   .mrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px}
   .seg.sm{flex:0 0 64%;padding:3px;border-radius:12px} .seg.sm .pill{top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:9px}
@@ -257,14 +257,16 @@
   .dfoot>div{overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
   .dfoot.on>div{padding-top:8px;margin-top:6px;border-top:.5px solid rgba(43,45,66,.08)}
   .dfoot button{border:0;background:none;padding:2px 0;font:inherit;font-weight:800;color:var(--teal-lo);cursor:pointer;white-space:nowrap}
-  #mode .pill{width:calc(33.333% - 2px)}
+  #mode .pill{width:calc((100% - 8px) / 3)}
+  @media (max-height:880px){#menu{gap:10px}}
+  #modename{font-size:17px;font-weight:800;letter-spacing:.02em;color:var(--ink-2)}
   #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   #mode[data-mode="zen"] .pill{transform:translateX(200%)}
   #mode button.lk{color:var(--ink-3)}
   #mode button.lk.on{color:#fff}
-  #mode button{white-space:nowrap;padding-left:2px;padding-right:2px}
-  #mode button .lk{display:inline-block;width:10px;height:10px;margin-left:4px;vertical-align:-1px;opacity:.55}
-  .seg.sm#mode{flex-basis:70%}
+  #mode button{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+  #mode button .lk{display:inline-flex;width:11px;height:11px;opacity:.5}
+  #mode button .lk svg{width:100%;height:100%}
   .daily{width:min(300px,80vw);display:flex;align-items:center;gap:12px;border:0;border-radius:18px;padding:10px 14px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);
     background:rgba(255,255,255,.66);box-shadow:var(--sh-card);transition:transform .22s var(--spring)}
   .daily:active{transform:scale(.97)}
@@ -432,7 +434,7 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
   <div class="sub">two balls. one tap.</div>
   <canvas id="pv" aria-hidden="true"></canvas>
   <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div><div class="dfoot"><div><span class="dft"></span><button type="button" class="dfl">See Packs</button></div></div></div>
-  <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="mrow"><span class="label">MODE</span><div class="seg sm" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button><button data-mode="zen">Zen</button></div></div></div>
+  <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="dl mhd"><span class="label">MODE</span><b id="modename">Race to 1,000</b></div><div class="seg" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button><button data-mode="zen">Zen</button></div></div>
   <button class="btn" id="play">PLAY</button>
   <button class="daily" id="daily" type="button"><span class="dic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="dtx"><b>Daily Challenge</b><small id="dsub">A new run every day</small></span><span class="dlk" id="dlk" aria-hidden="true"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="dgo" id="dgo" aria-hidden="true">›</span></button>
   <div class="bestwrap"><div class="card best" id="mbest" role="button" tabindex="0" aria-label="Your best runs"></div><button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button></div>
@@ -635,7 +637,7 @@ function syncDiffUI() {
   ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
   document.querySelectorAll('.seg:not(#mode)').forEach(s => { s.dataset.sel = per; });
   document.querySelectorAll('.seg button[data-per]').forEach(b => b.classList.toggle('on', +b.dataset.per === per));
-  $('#mode').dataset.mode = mode === 'daily' ? 'normal' : mode; document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode)); swapText($('#pername'), N + ' columns');
+  $('#mode').dataset.mode = mode === 'daily' ? 'normal' : mode; document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode)); swapText($('#pername'), N + ' columns'); swapText($('#modename'), {normal:'Race to 1,000', infinite:'No finish line', zen:'No crashes', daily:'Daily Challenge'}[mode]);
   syncLocks();
 }
 const LOCK_IMG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='2' fill='%23878a99'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='%23878a99' stroke-width='1.8'/%3E%3C/svg%3E")`;
