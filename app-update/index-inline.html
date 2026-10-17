@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="da18f79">
+<meta name="build" content="5d8a312">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -62,8 +62,8 @@
 
   /* difficulty slider: six sections; the fill and thumb ring take the section's colour */
   .drange{-webkit-appearance:none;appearance:none;width:100%;height:36px;margin:0;background:transparent;outline:none;touch-action:none;--f:.4}
-  .drange::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:var(--gaps),linear-gradient(90deg,var(--teal),var(--sc) calc(11px + (100% - 22px) * var(--f)),rgba(43,45,66,.11) 0)}
-  .drange::-moz-range-track{height:8px;border-radius:99px;background:var(--gaps),linear-gradient(90deg,var(--teal),var(--sc) calc(11px + (100% - 22px) * var(--f)),rgba(43,45,66,.11) 0)}
+  .drange::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:var(--locks,linear-gradient(transparent,transparent)),var(--gaps),linear-gradient(90deg,var(--teal),var(--sc) calc(11px + (100% - 22px) * var(--f)),rgba(43,45,66,.11) 0)}
+  .drange::-moz-range-track{height:8px;border-radius:99px;background:var(--locks,linear-gradient(transparent,transparent)),var(--gaps),linear-gradient(90deg,var(--teal),var(--sc) calc(11px + (100% - 22px) * var(--f)),rgba(43,45,66,.11) 0)}
   .drange::-moz-range-progress{background:transparent}
   .drange::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-7px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#f3f1ee);border:3px solid var(--sc);box-shadow:0 2px 6px rgba(43,45,66,.22),0 0 0 0 rgba(0,0,0,0);transition:transform .18s var(--spring),box-shadow .18s var(--ease)}
   .drange::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--sc);box-shadow:0 2px 6px rgba(43,45,66,.22);transition:transform .18s var(--spring)}
@@ -236,7 +236,9 @@
 
   /* ---------- unlocks: locks on the menu, the Daily Challenge row, the purchase sheet, Supporter touches ---------- */
   .dlocks{position:relative;height:0}
-  .dlocks i{position:absolute;top:-28px;height:8px;border-radius:99px;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(43,45,66,.13) 0 1.5px,rgba(255,255,255,.55) 1.5px 4.5px);box-shadow:0 0 0 .5px rgba(43,45,66,.06) inset}
+  .dlocks{display:none}
+  .drange.lockd::-webkit-slider-thumb{border-color:rgba(43,45,66,.32);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='2' fill='%232b2d42'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='%232b2d42' stroke-width='1.8'/%3E%3C/svg%3E") center/9px no-repeat}
+  .drange.lockd::-moz-range-thumb{border-color:rgba(43,45,66,.32)}
   .btn .bl{display:inline-block;width:15px;height:15px;margin-right:9px;vertical-align:-1px}
   .btn .bl svg{width:100%;height:100%;fill:currentColor}
   .btn small{display:block;margin-top:3px;font-size:11.5px;font-weight:800;letter-spacing:.06em;opacity:.78}
@@ -245,7 +247,8 @@
   .btn.locked small{color:rgba(255,255,255,.66);opacity:1}
   .daily .dpill{flex:none;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--teal-lo);background:rgba(46,196,214,.12);box-shadow:0 0 0 .5px rgba(46,196,214,.35) inset}
   .dlocks svg,.lk svg,.dname svg,.daily .dlk svg{width:100%;height:100%;fill:currentColor}
-  .dname.locked::after{content:attr(data-tag);display:inline-block;margin-left:8px;padding:3px 7px;border-radius:999px;vertical-align:4px;font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--ink-2);background:rgba(43,45,66,.07);box-shadow:0 0 0 .5px rgba(43,45,66,.08) inset}
+  .dname.locked{display:inline-flex;align-items:center}
+  .dname.locked::after{content:attr(data-tag);display:inline-flex;align-items:center;margin-left:8px;padding:3px 7px;border-radius:999px;line-height:1;font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--ink-2);background:rgba(43,45,66,.07);box-shadow:0 0 0 .5px rgba(43,45,66,.08) inset}
   #mode .pill{width:calc(33.333% - 2px)}
   #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   #mode[data-mode="zen"] .pill{transform:translateX(200%)}
@@ -625,13 +628,19 @@ function syncDiffUI() {
   $('#mode').dataset.mode = mode === 'daily' ? 'normal' : mode; document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode)); swapText($('#pername'), N + ' columns');
   syncLocks();
 }
+const LOCK_IMG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='2' fill='%23878a99'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2' fill='none' stroke='%23878a99' stroke-width='1.8'/%3E%3C/svg%3E")`;
 const LOCK_SVG = '<svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
 function tierPrice(t) { let p = ''; try { p = storePrices['mirrordrop.' + TIERS[t]] || ''; } catch (e) {} return p || ['', '$0.99', '$1.79', '$1.99', '$4.99'][t]; }
 function setBtn(el, main, cap, locked) { // PLAY, or a premium dark Unlock button that says which pack and its price
   const h = `${locked ? `<span class="bl" aria-hidden="true">${LOCK_SVG}</span>` : ''}<span class="bt">${main}</span>${cap ? `<small>${esc(cap)}</small>` : ''}`;
   if (el.dataset.h !== h) { el.dataset.h = h; el.innerHTML = h; bump(el); } el.classList.toggle('locked', locked); }
 function syncLocks() { // locked difficulties and modes stay visible with a small lock; PLAY says what it will do
-  document.querySelectorAll('.dlocks').forEach(d => { const h = [0, 1, 2, 3, 4, 5].map(i => sectOpen(i) ? '' : `<i style="left:calc(${i * 100 / 6}% + 2px);width:calc(${100 / 6}% - 4px)"></i>`).join(''); if (d.innerHTML !== h) d.innerHTML = h; }); // locked sections of the track are softly hatched
+  { const locked = [0, 1, 2, 3, 4, 5].filter(i => !sectOpen(i)); // locked sections of the track: pale and frosted, a small lock in the middle, always under the thumb
+    const at = k => k <= 0 ? '0%' : k >= 6 ? '100%' : `calc(11px + (100% - 22px) * ${k} / 6)`; // the same edges as the section gaps
+    const imgs = locked.map(i => `${LOCK_IMG} calc(11px + (100% - 22px) * ${i + .5} / 6 - 3.5px) 50% / 7px 7px no-repeat`), bands = locked.map(i => `transparent ${at(i)}, rgba(238,234,228,.97) ${at(i)}, rgba(238,234,228,.97) ${at(i + 1)}, transparent ${at(i + 1)}`);
+    const v = locked.length ? [...imgs, `linear-gradient(90deg, ${bands.join(', ')})`].join(', ') : 'linear-gradient(transparent,transparent)';
+    document.querySelectorAll('.drange').forEach(r => { if (r.style.getPropertyValue('--locks') !== v) r.style.setProperty('--locks', v); }); }
+  document.querySelectorAll('.drange').forEach(r => r.classList.toggle('lockd', !sectOpen(bucket()) && mode !== 'daily'));
   document.querySelectorAll('.dname').forEach(n => { n.classList.toggle('locked', !sectOpen(bucket()) && mode !== 'daily'); n.dataset.tag = TIER_NAMES[SECT_NEED[bucket()]].toUpperCase(); });
   document.querySelectorAll('#mode button').forEach(b => { const lk = !modeOpen(b.dataset.mode); b.classList.toggle('lk', lk); const has = !!b.querySelector('.lk'); if (lk && !has) b.insertAdjacentHTML('beforeend', `<span class="lk">${LOCK_SVG}</span>`); else if (!lk && has) b.querySelector('.lk').remove(); });
   const free = canStart() && !sectOpen(bucket()) && mode !== 'daily', need = needFor(), what = (!modeOpen(mode) ? mode : NAMES[bucket()]).toUpperCase();
