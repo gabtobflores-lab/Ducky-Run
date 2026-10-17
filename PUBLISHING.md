@@ -77,3 +77,17 @@ bash tools/build-release.sh
 ```
 
 to rebuild `release/`, then upload the folder again. For the App Store, run `npm run ios`, raise the *Build* number in Xcode (*App → General*), and archive again. Every build gets a new version number, so players get the update the next time they open the game.
+
+## Pricing plan (agreed, to build once the Apple Developer account exists)
+
+Free download, with three one-time purchases laid out side by side (Max marked "Best value"; Pro is the decoy):
+
+| Tier | Price | Unlocks |
+|---|---|---|
+| Free | $0 | Easy and Normal, all weather, Game Center, Share score |
+| Plus | $0.99 | + Chill and Zen mode |
+| Pro | $1.49 | + Hard and Infinite |
+| Max | $1.99 | Everything: Chill, Zen, Hard, Insane, Impossible, Infinite, Daily Challenge |
+
+Upgrades cost only the difference: Plus → Max $1.00, Pro → Max $0.50.
+Locked difficulties stay visible on the slider with a lock. No ads; the game stays fully offline.
