@@ -21,6 +21,12 @@ jobs:
           mkdir -p build && cp -R xcode build/proj
           cp app-update/MirrorDropApp.swift app-update/index.html app-update/aurora.mp4 build/proj/MirrorDrop/
           cp -R app-update/LaunchBalls.imageset build/proj/MirrorDrop/Assets.xcassets/
+      - name: Use the newest Xcode on this Mac (so the newest iOS is tested too)
+        run: |
+          ls -d /Applications/Xcode*.app
+          NEWEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$NEWEST" ] && sudo xcode-select -s "$NEWEST/Contents/Developer"
+          xcodebuild -version; xcrun simctl list runtimes | grep iOS
       - name: Build
         run: |
           set -o pipefail
