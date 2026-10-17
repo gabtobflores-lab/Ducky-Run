@@ -268,7 +268,7 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
 
   const laneX = i => (i + .5) * W / lanes;
   const pos = t => { const k = (t / 820) | 0, f = Math.min(1, (t % 820) / 220), e = 1 - Math.pow(1 - f, 3);
-    const seq = [2, 1, 0, 1, 2, 1], a = seq[k % 6], b = seq[(k + 1) % 6]; return laneX(a) + (laneX(b) - laneX(a)) * e; };
+    const seq = [2, 1, 2, 1, 1, 2], a = seq[k % 6], b = seq[(k + 1) % 6]; return laneX(a) + (laneX(b) - laneX(a)) * e; };
   const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
   const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   const PINK = [[255, 179, 191], [255, 107, 129], [217, 63, 92]], TEAL = [[166, 238, 245], [46, 196, 214], [21, 149, 168]], GOLD = [[255, 246, 214], [242, 193, 78], [138, 90, 14]];
@@ -276,18 +276,47 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
   function star(x, y, s, a, c = g) { if (s < .5) return; c.save(); c.globalAlpha = a; c.fillStyle = '#fffbe8'; c.beginPath();
     for (let i = 0; i < 8; i++) { const rr = i % 2 ? s * .16 : s, an = i * Math.PI / 4; c.lineTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr); }
     c.closePath(); c.fill(); c.restore(); }
-  // one ball; k blends it from its own colour (0) to polished gold (1)
+  // the game's own glass ball (same drawing as drawBall in the game): glow, glass shell, breathing core, swirl, caustic, rim, highlight
+  const GPAL = [{ base: '#ff6b81', hi: '#ffa6b3', lo: '#e2496a', deep: '#b8304f', core: '255,228,234', rgb: '255,107,129' },
+                { base: '#2ec4d6', hi: '#8fe7f1', lo: '#169eb2', deep: '#0b7a8c', core: '222,250,255', rgb: '46,196,214' }];
+  function glassBall(c, x, y, r, P, side, t, a) {
+    const tt = t / 1000, glow = .2; c.save(); c.globalAlpha = a; c.translate(x, y);
+    const gr = r * (2 + glow * .55), gl = c.createRadialGradient(0, 0, r * .7, 0, 0, gr);
+    gl.addColorStop(0, `rgba(${P.rgb},${.18 + glow * .32})`); gl.addColorStop(1, `rgba(${P.rgb},0)`); c.fillStyle = gl; c.beginPath(); c.arc(0, 0, gr, 0, 7); c.fill();
+    c.fillStyle = 'rgba(43,45,66,.09)'; c.beginPath(); c.ellipse(0, r * .98, r * .72, r * .2, 0, 0, 7); c.fill();
+    const body = c.createRadialGradient(side * r * .3, -r * .36, r * .06, 0, r * .08, r * 1.04);
+    body.addColorStop(0, P.hi); body.addColorStop(.42, P.base); body.addColorStop(.82, P.lo); body.addColorStop(1, P.deep);
+    c.fillStyle = body; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill();
+    c.save(); c.beginPath(); c.arc(0, 0, r, 0, 7); c.clip();
+    const beat = .82 + .18 * Math.sin(tt * 2.6), cx = -side * r * .08, cy = r * .14, core = c.createRadialGradient(cx, cy, 0, cx, cy, r * .66);
+    core.addColorStop(0, `rgba(${P.core},${.62 * beat})`); core.addColorStop(.45, `rgba(${P.rgb},${.28 * beat})`); core.addColorStop(1, `rgba(${P.rgb},0)`);
+    c.fillStyle = core; c.beginPath(); c.arc(cx, cy, r * .66, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.16)'; c.lineWidth = r * .07; c.lineCap = 'round'; const sw = tt * 1.3 * -side;
+    c.beginPath(); c.arc(cx, cy, r * .5, sw, sw + 1.1); c.stroke(); c.beginPath(); c.arc(cx, cy, r * .32, sw + 3.3, sw + 4.1); c.stroke();
+    const cg = c.createRadialGradient(-side * r * .2, r * .62, 0, -side * r * .2, r * .62, r * .48);
+    cg.addColorStop(0, 'rgba(255,255,255,.30)'); cg.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = cg; c.beginPath(); c.ellipse(-side * r * .2, r * .62, r * .5, r * .2, 0, 0, 7); c.fill();
+    c.restore();
+    c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, r - .7, 0, 7); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.42)'; c.lineWidth = r * .09; c.lineCap = 'round';
+    const ra = side < 0 ? Math.PI * .18 : Math.PI * .82; c.beginPath(); c.arc(0, 0, r * .86, ra - .5, ra + .5); c.stroke();
+    c.save(); c.translate(side * r * .36, -r * .44); c.rotate(side * .65); c.scale(1, .55); const h = c.createRadialGradient(0, 0, 0, 0, 0, r * .42);
+    h.addColorStop(0, 'rgba(255,255,255,.85)'); h.addColorStop(.55, 'rgba(255,255,255,.25)'); h.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = h; c.beginPath(); c.arc(0, 0, r * .42, 0, 7); c.fill(); c.restore();
+    c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.arc(side * r * .5, -r * .5, r * .065, 0, 7); c.fill();
+    c.restore(); }
+  // one ball; k blends it from the game's glass ball (0) to polished gold (1)
   function ball(x, y, r, pal, k, t, side, c = g) {
-    const col = [0, 1, 2].map(i => mix(pal[i], GOLD[i], k));
+    if (k < 1) glassBall(c, x, y, r, GPAL[pal === PINK ? 0 : 1], -side, t, 1 - k * .6);
+    if (k <= 0) return;
+    const col = GOLD;
     c.save();
-    c.fillStyle = `rgba(31,33,51,${.1 - .04 * k})`; c.beginPath(); c.ellipse(x, y + r * 1.15, r * .8, r * .18, 0, 0, 7); c.fill();
+    c.fillStyle = `rgba(31,33,51,${.06 * k})`; c.beginPath(); c.ellipse(x, y + r * 1.15, r * .8, r * .18, 0, 0, 7); c.fill();
     if (k > 0) {
       // gold throws warm light onto the floor beneath it, and glows softly around it
       c.save(); c.translate(x, y + r * 1.12); c.scale(1, .24); const pool = c.createRadialGradient(0, 0, 0, 0, 0, r * 1.6);
       pool.addColorStop(0, `rgba(255,196,90,${.55 * k})`); pool.addColorStop(1, 'rgba(255,196,90,0)'); c.fillStyle = pool; c.beginPath(); c.arc(0, 0, r * 1.6, 0, 7); c.fill(); c.restore();
       const halo = c.createRadialGradient(x, y, r * .6, x, y, r * 2.6); halo.addColorStop(0, `rgba(255,214,120,${.42 * k})`); halo.addColorStop(1, 'rgba(255,214,120,0)');
       c.fillStyle = halo; c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fill(); }
-    c.shadowColor = rgb(col[1], .4); c.shadowBlur = 22; c.shadowOffsetY = 8;
+    c.globalAlpha = k; c.shadowColor = rgb(col[1], .4); c.shadowBlur = 22; c.shadowOffsetY = 8;
     const body = c.createRadialGradient(x - r * .35 * side, y - r * .4, r * .08, x, y, r);
     body.addColorStop(0, rgb(col[0])); body.addColorStop(.48, rgb(col[1])); body.addColorStop(1, rgb(col[2]));
     c.fillStyle = body; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.shadowColor = 'transparent';
@@ -320,7 +349,6 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
       c.fillStyle = `rgba(255,255,255,${.95 * k})`; c.beginPath(); c.arc(x - r * .36 * side, y - r * .5, r * .07, 0, 7); c.fill();
       if (k > .5) for (let i = 0; i < 2; i++) { const a = t / 1100 + i * 2.6 + side, s = Math.pow(Math.sin(t / 380 + i * 3) * .5 + .5, 3) * k; star(x + Math.cos(a) * r * .55, y + Math.sin(a) * r * .48, r * .4 * s, s, c); }
     }
-    if (k < 1) { c.fillStyle = `rgba(255,255,255,${.62 * (1 - k)})`; c.beginPath(); c.ellipse(x - r * .3 * side, y - r * .45, r * .3, r * .16, 0, 0, 7); c.fill(); }
     c.restore();
   }
   window.mdBall = ball; window.mdPal = { PINK, TEAL };
