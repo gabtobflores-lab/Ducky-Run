@@ -30,7 +30,7 @@ update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swi
     get app-update/index-inline.html "$1/index.html"
     echo "  all-in-one version installed (this project doesn't pick up new files, so the video stays inside the game file)"
   fi
-  # iOS's launch screen in the loading screen's cream, so opening the app flows straight into the game
+  # iOS's launch screen looks exactly like the game's loading screen, so opening the app flows straight into it
   local plist="$1/../Info.plist"
   if [ -d "$1/Assets.xcassets" ] && [ -f "$plist" ] && [ -x /usr/libexec/PlistBuddy ]; then
     mkdir -p "$1/Assets.xcassets/LaunchCream.colorset"
@@ -39,7 +39,10 @@ update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swi
   "info" : { "author" : "xcode", "version" : 1 } }
 JSON
     /usr/libexec/PlistBuddy -c "Delete :UILaunchScreen" "$plist" >/dev/null 2>&1
-    /usr/libexec/PlistBuddy -c "Add :UILaunchScreen dict" -c "Add :UILaunchScreen:UIColorName string LaunchCream" "$plist" >/dev/null 2>&1
+    # and the loading screen's two balls in the middle, so the game is visibly starting from the very first moment
+    mkdir -p "$1/Assets.xcassets/LaunchBalls.imageset"
+    for f in Contents.json balls@2x.png balls@3x.png; do get "app-update/LaunchBalls.imageset/$f" "$1/Assets.xcassets/LaunchBalls.imageset/$f"; done
+    /usr/libexec/PlistBuddy -c "Add :UILaunchScreen dict" -c "Add :UILaunchScreen:UIColorName string LaunchCream" -c "Add :UILaunchScreen:UIImageName string LaunchBalls" "$plist" >/dev/null 2>&1
   fi
   updated=1
 }

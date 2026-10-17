@@ -10,6 +10,8 @@
 	<dict>
 		<key>UIColorName</key>
 		<string>LaunchCream</string>
+		<key>UIImageName</key>
+		<string>LaunchBalls</string>
 	</dict>
 	<key>UIStatusBarHidden</key>
 	<true/>

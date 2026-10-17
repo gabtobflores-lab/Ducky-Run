@@ -9,8 +9,6 @@ import GameKit
 
 @main
 struct MirrorDropApp: App {
-    init() { _ = GameView.web } // start the web view (and its WebKit process) the moment the app launches, before the first screen is laid out
-
     var body: some Scene {
         WindowGroup {
             GameView()
@@ -30,12 +28,9 @@ extension View {
 }
 
 struct GameView: UIViewRepresentable {
-    @MainActor static let bridge = NativeBridge()
-    @MainActor static let web = makeWebView()
+    func makeCoordinator() -> NativeBridge { NativeBridge() }
 
-    func makeUIView(context: Context) -> WKWebView { GameView.web }
-
-    @MainActor private static func makeWebView() -> WKWebView {
+    func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true                // the aurora video plays inside the game
         config.mediaTypesRequiringUserActionForPlayback = []
@@ -53,7 +48,7 @@ struct GameView: UIViewRepresentable {
         };
         """
         config.userContentController.addUserScript(WKUserScript(source: shim, injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        config.userContentController.addScriptMessageHandler(bridge, contentWorld: .page, name: "native")
+        config.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "native")
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.isOpaque = false
@@ -64,7 +59,7 @@ struct GameView: UIViewRepresentable {
         web.scrollView.bounces = false
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.allowsLinkPreview = false
-        bridge.webView = web
+        context.coordinator.webView = web
         ProMotion.shared.start()
 
         if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
