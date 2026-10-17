@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="91deb99">
+<meta name="build" content="c4d8c2e">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -74,7 +74,7 @@
 
   /* columns segmented control with a sliding pill */
   .seg{position:relative;display:flex;background:rgba(43,45,66,.06);border-radius:14px;padding:4px}
-  .seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:11px;background:linear-gradient(180deg,var(--teal-hi),var(--teal));box-shadow:0 3px 10px rgba(46,196,214,.35),0 1px 0 rgba(255,255,255,.4) inset;transition:transform .32s var(--spring)}
+  .seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:11px;background:linear-gradient(180deg,var(--teal-hi),var(--teal));box-shadow:0 2px 6px rgba(26,169,188,.26),0 .5px 1px rgba(43,45,66,.08),0 1px 0 rgba(255,255,255,.4) inset;transition:transform .32s var(--spring)}
   .seg[data-sel="3"] .pill{transform:translateX(100%)}
   .seg button{position:relative;flex:1;border:0;background:none;border-radius:11px;padding:8px 6px;font-weight:800;font-size:14px;cursor:pointer;color:var(--ink-2);transition:color .2s var(--ease),transform .15s var(--ease)}
   .seg button.on{color:#fff}
@@ -258,13 +258,16 @@
   .dfoot button{border:0;background:none;padding:2px 0;font:inherit;font-weight:800;color:var(--teal-lo);cursor:pointer;white-space:nowrap}
   #mode .pill{width:calc((100% - 8px) / 3)}
   @media (max-height:880px){#menu{gap:10px}}
-  #modename{font-size:17px;font-weight:800;letter-spacing:.02em;color:var(--ink-2)}
+  /* columns + mode read like an iOS grouped section: quiet secondary values, a hairline between the two rows */
+  #pername,#modename{font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .card.diff:has(#mode){padding-bottom:14px}
+  .mhd{margin-top:8px;padding-top:13px;border-top:1px solid rgba(43,45,66,.075)}
   #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   #mode[data-mode="zen"] .pill{transform:translateX(200%)}
-  #mode button.lk{color:var(--ink-3)}
+  #mode button.lk{color:rgba(43,45,66,.5)}
   #mode button.lk.on{color:#fff}
   #mode button{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px}
-  #mode button .lk{display:inline-flex;width:11px;height:11px;opacity:.5}
+  #mode button .lk{display:inline-flex;width:10px;height:10px;opacity:.6;margin-top:-1px}
   #mode button .lk svg{width:100%;height:100%}
   .daily{width:min(300px,80vw);display:flex;align-items:center;gap:12px;border:0;border-radius:18px;padding:10px 14px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);
     background:rgba(255,255,255,.66);box-shadow:var(--sh-card);transition:transform .22s var(--spring)}
