@@ -63,6 +63,12 @@ struct GameView: UIViewRepresentable {
         context.coordinator.startWatch()
         #if DEBUG
         if #available(iOS 16.4, *) { web.isInspectable = true } // builds run from Xcode can be inspected in Safari's Develop menu
+        // builds run from Xcode show their version for a few seconds, so it's clear the newest one is on the phone
+        let tag = UILabel(); tag.text = "  build \(NativeBridge.appBuild)  "; tag.font = .monospacedSystemFont(ofSize: 11, weight: .medium)
+        tag.textColor = .white; tag.backgroundColor = UIColor(white: 0, alpha: 0.55); tag.layer.cornerRadius = 8; tag.clipsToBounds = true
+        tag.translatesAutoresizingMaskIntoConstraints = false; web.addSubview(tag)
+        NSLayoutConstraint.activate([tag.centerXAnchor.constraint(equalTo: web.centerXAnchor), tag.bottomAnchor.constraint(equalTo: web.safeAreaLayoutGuide.bottomAnchor, constant: -6), tag.heightAnchor.constraint(equalToConstant: 20)])
+        Task { @MainActor in try? await Task.sleep(nanoseconds: 6_000_000_000); UIView.animate(withDuration: 0.4, animations: { tag.alpha = 0 }) { _ in tag.removeFromSuperview() } }
         #endif
         ProMotion.shared.start()
 
