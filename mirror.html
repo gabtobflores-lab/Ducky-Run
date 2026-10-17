@@ -551,6 +551,7 @@ const bw = () => Math.min(70, W / N * .82);
 let scale = 1, offX = 0, offY = 0, dpr = 1;
 // self-tuning quality: the game watches its own frame time and steps down resolution and the costliest extras until it runs smoothly, then remembers that for this device
 const QDPR = [3, 2, 1.5]; let qLevel = 0; try { qLevel = Math.min(2, Math.max(0, +localStorage.mirrorQ3 || 0)); } catch (e) {}
+if (window.__mdSim) qLevel = Math.max(qLevel, 1); // Xcode's simulator draws on the Mac's CPU and GPU: 2x opens and runs much faster there (real iPhones keep 3x)
 let qEma = 16.7, qSlow = 0, qFast = 0, qRaised = false, qBase = 16.7, qN = 0, qJank = 0;
 function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return; qEma += (ms - qEma) * .05;
   qBase = Math.min(Math.max(ms, 4), qBase + .01); // the screen's own frame time (16.7 ms at 60 Hz, 8.3 at 120), learned from the fastest frames
@@ -1735,7 +1736,7 @@ void main(){vec2 p=UV();float asp=res.x/res.y;vec2 q=p;vec3 F;
     for (const k in ex) gl.uniform2fv(L(k), ex[k]);
     gl.drawArrays(gl.TRIANGLES, 0, 3); return true; };
   // Apple's look is soft: the aurora is drawn sharp, blurred twice, then the sharp and soft layers are blended
-  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 ? 2 : 3); // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
+  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 || window.__mdSim ? 2 : 3); // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
     const w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
     if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
     if (!prog('aurora')) { failed = true; return false; }

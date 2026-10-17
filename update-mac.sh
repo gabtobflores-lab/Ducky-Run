@@ -58,6 +58,7 @@ JSON
     fi
   fi
   updated=1
+  [ -n "${main_proj:-}" ] || main_proj=$(cd "$1/.." 2>/dev/null && ls -d "$PWD"/*.xcodeproj 2>/dev/null | head -1)
 }
 
 # A project made from Xcode's Storyboard template has its own AppDelegate marked @main, so pasting the game's app file
@@ -123,6 +124,9 @@ while IFS= read -r d; do
   done
   grep -q FileSystemSynchronized "$d"/../*.xcodeproj/project.pbxproj 2>/dev/null && [ -f "$d/index.html" ] && mv "$d/index.html" "$nb/"
   # files from Xcode's Game, App and Storyboard templates: not part of Mirror Drop, and they clash with it, so they're emptied
+  # there is one Mirror Drop app: the native test build is taken off the simulator so it doesn't show up as a second app
+  nbid=$(grep -h -m1 -o 'PRODUCT_BUNDLE_IDENTIFIER = [^;]*' "$d"/../*.xcodeproj/project.pbxproj 2>/dev/null | head -1 | sed 's/.*= //; s/"//g')
+  [ -n "$nbid" ] && native_ids="${native_ids:-} $nbid"
   for t in AppDelegate.swift SceneDelegate.swift ViewController.swift GameViewController.swift ContentView.swift; do
     [ -f "$d/$t" ] && ! grep -q "^// Not used" "$d/$t" && printf '// Not used: the native Mirror Drop starts from App.swift.\n' > "$d/$t"
   done
@@ -144,8 +148,16 @@ if [ "$updated" = 0 ]; then
   if [ -f "$d/index.html" ]; then update_web "$d"
   else echo "That folder has no index.html inside, so nothing was changed."; exit 1; fi
 fi
+main_id=""; [ -n "${main_proj:-}" ] && main_id=$(grep -h -m1 -o 'PRODUCT_BUNDLE_IDENTIFIER = [^;]*' "$main_proj/project.pbxproj" 2>/dev/null | sed 's/.*= //; s/"//g')
+for id in ${native_ids:-} com.yourname.mirrordrop.native; do
+  [ -n "$id" ] && [ "$id" != "$main_id" ] && xcrun simctl uninstall booted "$id" >/dev/null 2>&1 && echo "  Removed the separate test app ($id) from the simulator."
+done
 echo
-if [ "${reopen_xcode:-0}" = 1 ]; then
+if [ -n "${main_proj:-}" ]; then
+  echo "✅ Updated. Opening Mirror Drop in Xcode: press ⇧⌘K (Clean Build Folder), then ▶."
+  echo "   (Always run this project: $main_proj)"
+  open "$main_proj" >/dev/null 2>&1
+elif [ "${reopen_xcode:-0}" = 1 ]; then
   echo "✅ Updated. Reopening Xcode: press ⇧⌘K (Clean Build Folder), then ▶."
   open -a Xcode >/dev/null 2>&1
 else echo "✅ Updated. In Xcode press ⇧⌘K (Clean Build Folder), then ▶ (if it asks, choose 'Use Version on Disk')."; fi

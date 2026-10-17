@@ -48,6 +48,10 @@ struct GameView: UIViewRepresentable {
         };
         """
         config.userContentController.addUserScript(WKUserScript(source: shim, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        #if targetEnvironment(simulator)
+        // the simulator draws on the Mac, so the game opens at 2x there; iPhones get full 3x
+        config.userContentController.addUserScript(WKUserScript(source: "window.__mdSim = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        #endif
         config.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "native")
 
         let web = WKWebView(frame: .zero, configuration: config)
@@ -117,7 +121,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
     // MARK: start-up check
     // If the game hasn't shown its menu 6 seconds after launch, a small panel says what happened, so a stuck start can be fixed.
 
-    static let appBuild = "b5c056e"   // replaced with the release's version by tools/build-app-update.sh
+    static let appBuild = "d97c62c"   // replaced with the release's version by tools/build-app-update.sh
     private var ready = false
     private var events: [String] = []
     private var panel: UIView?

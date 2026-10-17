@@ -48,6 +48,10 @@ struct GameView: UIViewRepresentable {
         };
         """
         config.userContentController.addUserScript(WKUserScript(source: shim, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        #if targetEnvironment(simulator)
+        // the simulator draws on the Mac, so the game opens at 2x there; iPhones get full 3x
+        config.userContentController.addUserScript(WKUserScript(source: "window.__mdSim = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        #endif
         config.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "native")
 
         let web = WKWebView(frame: .zero, configuration: config)
