@@ -3,141 +3,167 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
 <style>
-/* Layout: one phone-width purchase sheet over the game's split pink/teal paper; a live canvas hero up top, a grouped tier list, one CTA.
+/* Layout: an Apple-style upgrade sheet. Full-bleed live game hero that fades into the paper, one big headline,
+   one "what you get" list that lights up per tier, slim plan rows, and a frosted bar holding the button.
    Single light look on purpose: it is a sheet inside the game, which is always cream. */
 :root{
   color-scheme:light;
-  --paper:#f6f1ea; --paper-pink:#fbe8ea; --paper-teal:#e3f1f0;
-  --ink:#2b2d42; --ink-2:rgba(43,45,66,.62); --ink-3:rgba(43,45,66,.4); --hair:rgba(43,45,66,.08);
-  --card:#fffdfa; --pink:#ff6b81; --pink-lo:#ec4f6a; --teal:#2ec4d6; --teal-hi:#5fd6e3; --teal-lo:#1aa9bc;
-  --gold:#d9a028; --gold-hi:#ffe7a3; --gold-mid:#f2c14e; --gold-lo:#9a6510; --gold-ink:#8a5a0e;
+  --paper:#f7f3ed; --sheet:#fbf8f4; --row:#ffffff;
+  --ink:#1f2133; --ink-2:rgba(31,33,51,.6); --ink-3:rgba(31,33,51,.36); --hair:rgba(31,33,51,.08);
+  --pink:#ff6b81; --teal:#2ec4d6; --teal-deep:#14a3b6; --accent:#18b3c6;
+  --gold:#e3ad3a; --gold-ink:#7d520a;
   --round:"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Nunito",system-ui,sans-serif;
-  --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  --text:-apple-system,BlinkMacSystemFont,"SF Pro Text","Nunito",system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.4,.64,1);
 }
 *{box-sizing:border-box}
-body{background:linear-gradient(90deg,var(--paper-pink),var(--paper) 50%,var(--paper-teal));color:var(--ink);font-family:var(--round);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 28px;min-height:100%;-webkit-font-smoothing:antialiased}
-.sheet{max-width:420px;margin:0 auto;background:color-mix(in srgb,var(--paper) 88%,white);border-radius:34px;box-shadow:0 30px 80px rgba(43,45,66,.14),0 1px 0 rgba(255,255,255,.9) inset;padding:10px 18px 22px;display:flex;flex-direction:column;gap:14px}
-.grab{width:38px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto}
-.top{display:flex;align-items:center;justify-content:space-between}
-.top b{font-size:13px;font-weight:800;letter-spacing:.14em;color:var(--ink-3)}
-.close{border:0;width:30px;height:30px;border-radius:50%;background:rgba(43,45,66,.07);color:var(--ink-2);font:800 15px var(--round);cursor:pointer}
-h1{margin:0;font-size:30px;line-height:1.05;font-weight:900;text-align:center;text-wrap:balance;letter-spacing:-.01em}
-h1 .p{color:var(--pink)} h1 .c{color:var(--teal)}
-.lede{margin:-6px 0 0;text-align:center;color:var(--ink-2);font-weight:700;font-size:15px}
+body{background:radial-gradient(120% 70% at 0% 0%,#fbe3e6 0,transparent 60%),radial-gradient(120% 70% at 100% 100%,#dcefee 0,transparent 60%),var(--paper);
+  color:var(--ink);font-family:var(--text);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 28px;min-height:100%}
+.sheet{position:relative;max-width:420px;margin:0 auto;background:var(--sheet);border-radius:38px;overflow:hidden;
+  box-shadow:0 40px 90px rgba(31,33,51,.16),0 2px 6px rgba(31,33,51,.05),0 0 0 .5px rgba(31,33,51,.06)}
 
-.hero{position:relative;height:210px;border-radius:24px;overflow:hidden;background:linear-gradient(90deg,#f9e1e4,#f4eee6 50%,#dcefee);box-shadow:0 1px 0 rgba(255,255,255,.8) inset}
+.hero{position:relative;height:300px;background:linear-gradient(90deg,#f8dfe3,#f3ede6 50%,#d8eeed)}
 .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hud{position:absolute;left:0;right:0;top:14px;display:flex;justify-content:center;gap:18px;align-items:baseline;pointer-events:none}
-.hud .best{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--ink-3)}
-.hud .sc{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink);transition:color .4s}
-.hero.gold .hud .sc{background:linear-gradient(180deg,#fff1c2,#f2c14e 45%,#b9801a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 6px rgba(217,160,40,.35))}
-.toast{position:absolute;left:50%;bottom:14px;transform:translate(-50%,8px);opacity:0;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.1em;color:var(--gold-ink);background:linear-gradient(180deg,#fff7dc,#ffe7a3);box-shadow:0 4px 14px rgba(217,160,40,.35);transition:opacity .35s var(--ease),transform .35s var(--ease);pointer-events:none;white-space:nowrap}
-.hero.gold .toast{opacity:1;transform:translate(-50%,0)}
+.hero::after{content:"";position:absolute;inset:auto 0 0;height:120px;background:linear-gradient(rgba(251,248,244,0),var(--sheet));pointer-events:none}
+.bar{position:absolute;top:12px;left:0;right:0;display:flex;justify-content:center;z-index:2}
+.bar i{width:36px;height:5px;border-radius:3px;background:rgba(31,33,51,.14)}
+.close{position:absolute;top:18px;right:18px;z-index:2;border:0;width:30px;height:30px;border-radius:50%;cursor:pointer;
+  background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);display:grid;place-items:center}
+.close svg{width:12px;height:12px;stroke:var(--ink-2);stroke-width:2.4;stroke-linecap:round}
+.close:focus-visible{outline:3px solid rgba(24,179,198,.5);outline-offset:2px}
+.hud{position:absolute;left:0;right:0;top:46px;z-index:1;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px}
+.hud small{font:800 11px var(--round);letter-spacing:.16em;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.hud b{font:900 52px/1 var(--round);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.hero.gold .hud b{background:linear-gradient(180deg,#fff6d8 0%,#f5cf6a 42%,#c88d1d 78%,#9a6510);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 10px rgba(227,173,58,.45))}
+.tag{position:absolute;left:50%;top:128px;z-index:1;transform:translate(-50%,6px) scale(.96);opacity:0;padding:5px 11px;border-radius:999px;
+  font:900 10.5px var(--round);letter-spacing:.14em;color:var(--gold-ink);background:rgba(255,246,220,.92);box-shadow:0 0 0 .5px rgba(168,112,15,.3),0 6px 16px rgba(227,173,58,.3);
+  transition:opacity .4s var(--ease),transform .5s var(--spring);white-space:nowrap}
+.hero.gold .tag{opacity:1;transform:translate(-50%,0) scale(1)}
 
-.tiers{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;border:0}
-.tiers legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.tier{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:14px 16px;border-radius:20px;background:var(--card);cursor:pointer;
-  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 6px 20px rgba(43,45,66,.06);transition:transform .25s var(--spring),box-shadow .25s var(--ease)}
-.tier input{position:absolute;opacity:0;pointer-events:none}
-.radio{grid-row:span 2;width:22px;height:22px;border-radius:50%;box-shadow:0 0 0 2px rgba(43,45,66,.18) inset;display:grid;place-items:center;transition:background .2s}
-.radio::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff;transform:scale(0);transition:transform .25s var(--spring)}
-.name{font-size:17px;font-weight:900;display:flex;align-items:center;gap:8px;min-width:0}
-.price{grid-row:span 2;font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;text-align:right}
-.what{font-size:13px;font-weight:700;color:var(--ink-2);line-height:1.35;min-width:0}
-.pill{font-size:10.5px;font-weight:900;letter-spacing:.09em;padding:3px 8px;border-radius:999px;white-space:nowrap}
-.more{grid-column:2 / 4;display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease)}
-.more>ul{overflow:hidden;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
-.more li{position:relative;padding-left:24px;font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.35}
-.more li::before{content:"";position:absolute;left:0;top:1px;width:16px;height:16px;border-radius:50%;background:var(--teal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8.2l2.3 2.3 4.7-5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat}
-.tier:has(input:checked) .more{grid-template-rows:1fr}
-.tier:has(input:checked) .more>ul{padding-top:10px}
-.tier:has(input:checked) .radio{background:var(--teal);box-shadow:none}
-.tier:has(input:checked) .radio::after{transform:scale(1)}
-.tier:has(input:focus-visible){outline:3px solid var(--teal-hi);outline-offset:2px}
+.body{position:relative;margin-top:-56px;padding:0 22px 18px;display:flex;flex-direction:column;gap:22px}
+.head{text-align:center;display:flex;flex-direction:column;gap:8px}
+.word{font:900 12px var(--round);letter-spacing:.24em}
+.word .p{color:var(--pink)} .word .c{color:var(--teal)}
+h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:balance}
+.lede{margin:0;font-size:15.5px;line-height:1.4;color:var(--ink-2);text-wrap:balance}
 
-/* Plus: real, but plain */
-.t-plus{background:rgba(255,253,250,.55);box-shadow:none}
-.t-plus .name,.t-plus .price{color:var(--ink-2)}
-/* Max: the one to pick */
-.t-max{box-shadow:0 0 0 2.5px var(--teal),0 12px 30px rgba(46,196,214,.22)}
-.t-max .pill{color:#fff;background:linear-gradient(180deg,var(--teal-hi),var(--teal))}
-.t-max .price{color:var(--teal-lo)}
-.save{grid-column:2 / 4;font-size:12px;font-weight:800;color:var(--teal-lo)}
-/* Supporter: precious, for fans */
-.t-sup{background:linear-gradient(160deg,#fffaf0,#fff3d9 60%,#fffaf0);box-shadow:0 0 0 1.5px rgba(217,160,40,.55),0 10px 28px rgba(217,160,40,.18);overflow:hidden}
-.t-sup::before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%);transform:translateX(-120%);animation:sheen 4.5s var(--ease) infinite 1.2s;pointer-events:none}
-.t-sup .name{color:var(--gold-ink)} .t-sup .price{color:var(--gold-ink)}
-.t-sup .pill{color:var(--gold-ink);background:linear-gradient(180deg,#fff7dc,#ffe29a);box-shadow:0 0 0 1px rgba(217,160,40,.35) inset}
-.t-sup .what{color:rgba(138,90,14,.75)}
-.t-sup .more li::before{background-color:var(--gold)}
-.t-sup:has(input:checked){box-shadow:0 0 0 2.5px var(--gold),0 14px 34px rgba(217,160,40,.3)}
-.t-sup:has(input:checked) .radio{background:linear-gradient(180deg,#f7d36b,#d9a028)}
-.gem{width:18px;height:18px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 30%,#fffbea 0 12%,#ffe39a 22%,#f2c14e 48%,#c88a1a 78%,#8a5a0e);box-shadow:0 0 10px rgba(242,193,78,.7)}
-@keyframes sheen{0%{transform:translateX(-120%)}35%,100%{transform:translateX(120%)}}
+.feats{list-style:none;margin:0;padding:4px 0;border-radius:22px;background:var(--row);box-shadow:0 0 0 .5px var(--hair),0 8px 24px rgba(31,33,51,.05)}
+.feat{display:grid;grid-template-columns:40px 1fr 22px;gap:12px;align-items:center;padding:11px 16px;transition:opacity .35s var(--ease),filter .35s var(--ease)}
+.feat .ft{border-bottom:.5px solid var(--hair);padding-bottom:11px;margin-bottom:-11px;align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+.feat:last-child .ft{border-bottom:0}
+.ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 10px rgba(31,33,51,.12)}
+.ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.f1 .ico{background:linear-gradient(160deg,#8fe0b8,#34b98a)}
+.f2 .ico{background:linear-gradient(160deg,#ffb38a,#ff7a4f)}
+.f3 .ico{background:linear-gradient(160deg,#ff8fa1,#e8435f)}
+.f4 .ico{background:linear-gradient(160deg,#7fd8ff,#3a8dff)}
+.f5 .ico{background:linear-gradient(160deg,#fff0bf,#f2c14e 45%,#c88a1a);color:#7d520a}
+.ft{min-width:0}
+.ft b{display:block;font:800 15.5px var(--round);letter-spacing:-.005em}
+.ft span{display:block;font-size:13px;line-height:1.35;color:var(--ink-2)}
+.chk{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;transition:background .3s,transform .4s var(--spring)}
+.chk svg{width:12px;height:12px;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.feat.on .chk{background:var(--accent)} .feat.on .chk svg{stroke:#fff}
+.feat:not(.on){opacity:.34;filter:saturate(.15)}
+.feat:not(.on) .chk{transform:scale(.85);box-shadow:0 0 0 1.5px var(--ink-3) inset} .feat:not(.on) .chk svg{stroke:transparent}
+.sheet.sup .feat.on .chk{background:linear-gradient(160deg,#f5cf6a,#c88d1d)}
 
-.cta{border:0;border-radius:999px;padding:16px 18px;font:900 17px var(--round);color:#fff;cursor:pointer;
-  background:linear-gradient(180deg,var(--teal-hi),var(--teal) 55%,var(--teal-lo));box-shadow:0 10px 24px rgba(46,196,214,.35),0 1px 0 rgba(255,255,255,.4) inset;transition:transform .2s var(--spring),background .3s}
-.cta:active{transform:scale(.97)}
-.cta:focus-visible{outline:3px solid var(--teal-hi);outline-offset:3px}
-.cta.gold{color:var(--gold-ink);background:linear-gradient(180deg,#fff3c4,#f7d36b 50%,#d9a028);box-shadow:0 10px 26px rgba(217,160,40,.4),0 1px 0 rgba(255,255,255,.7) inset}
-.fine{display:flex;justify-content:center;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;font-weight:700;color:var(--ink-3)}
-.fine button{border:0;background:none;padding:0;font:inherit;color:var(--teal-lo);cursor:pointer}
-.note{max-width:420px;margin:14px auto 0;text-align:center;font-size:12px;font-weight:700;color:var(--ink-3)}
-@media (prefers-reduced-motion:reduce){.t-sup::before{animation:none}.tier,.cta,.more,.radio::after{transition:none}}
+.plans{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:0}
+.plans legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.plan{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:var(--row);cursor:pointer;
+  box-shadow:0 0 0 .5px var(--hair);transition:box-shadow .3s var(--ease),transform .35s var(--spring)}
+.plan:active{transform:scale(.985)}
+.plan input{position:absolute;opacity:0;pointer-events:none}
+.dot{flex:none;width:22px;height:22px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(31,33,51,.2) inset;display:grid;place-items:center;transition:background .25s,box-shadow .25s}
+.dot::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff;transform:scale(0);transition:transform .35s var(--spring)}
+.pn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.pn b{font:800 16.5px var(--round);letter-spacing:-.01em;display:flex;align-items:center;gap:7px}
+.pn span{font-size:12.5px;color:var(--ink-2)}
+.pp{font:800 16.5px var(--round);font-variant-numeric:tabular-nums}
+.plan:has(input:checked){box-shadow:0 0 0 2px var(--accent),0 10px 26px rgba(24,179,198,.16)}
+.plan:has(input:checked) .dot{background:var(--accent);box-shadow:none}
+.plan:has(input:checked) .dot::after{transform:scale(1)}
+.plan:has(input:focus-visible){outline:3px solid rgba(24,179,198,.5);outline-offset:3px}
+.pn b .best{font:800 10.5px var(--round);letter-spacing:.08em;color:var(--teal-deep)}
+.p-plus{background:transparent}
+.p-plus .pn b,.p-plus .pp{color:var(--ink-2)}
+.p-sup{background:linear-gradient(135deg,#fffaf0 0%,#fff2d6 55%,#fffaf0 100%);box-shadow:0 0 0 .5px rgba(168,112,15,.35);overflow:hidden}
+.p-sup::before{content:"";position:absolute;inset:0;background:linear-gradient(105deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 62%);transform:translateX(-130%);animation:sheen 5s var(--ease) infinite 1.4s;pointer-events:none}
+.p-sup .pn b .nm{background:linear-gradient(180deg,#c8902a,#8a5a0e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.p-sup .pn span{color:rgba(125,82,10,.75)} .p-sup .pp{color:var(--gold-ink)}
+.orb{width:16px;height:16px;border-radius:50%;flex:none;background:radial-gradient(circle at 34% 28%,#fffdf0 0 10%,#ffe7a3 22%,#f2c14e 50%,#c88a1a 80%,#8a5a0e);box-shadow:0 0 8px rgba(242,193,78,.65)}
+.p-sup:has(input:checked){box-shadow:0 0 0 2px var(--gold),0 12px 30px rgba(227,173,58,.28)}
+.p-sup:has(input:checked) .dot{background:linear-gradient(160deg,#f5cf6a,#c88d1d)}
+@keyframes sheen{0%{transform:translateX(-130%)}32%,100%{transform:translateX(130%)}}
+
+.dock{position:sticky;bottom:0;z-index:3;padding:14px 22px 20px;background:rgba(251,248,244,.74);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);
+  border-top:.5px solid var(--hair);display:flex;flex-direction:column;gap:10px}
+.cta{border:0;border-radius:16px;height:54px;font:800 17.5px var(--round);letter-spacing:-.005em;color:#fff;cursor:pointer;
+  background:linear-gradient(180deg,#36cbdc,#16aec1);box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 10px 24px rgba(24,179,198,.32);transition:transform .25s var(--spring)}
+.cta:active{transform:scale(.975)}
+.cta:focus-visible{outline:3px solid rgba(24,179,198,.5);outline-offset:3px}
+.sheet.sup .cta{color:var(--gold-ink);background:linear-gradient(180deg,#fff2c6 0%,#f5d06e 45%,#dca232 100%);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 10px 26px rgba(227,173,58,.38)}
+.fine{display:flex;justify-content:center;gap:4px 10px;flex-wrap:wrap;font-size:12px;color:var(--ink-3)}
+.fine button{border:0;background:none;padding:0;font:inherit;color:var(--teal-deep);cursor:pointer}
+.note{max-width:420px;margin:14px auto 0;text-align:center;font-size:12px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){.p-sup::before{animation:none}.plan,.cta,.feat,.chk,.dot::after,.tag{transition:none}}
 </style>
 
-<main class="sheet" aria-labelledby="ttl">
-  <div class="grab" aria-hidden="true"></div>
-  <div class="top"><b>UNLOCK</b><button class="close" type="button" aria-label="Close">✕</button></div>
-  <h1 id="ttl"><span class="p">Mirror</span> <span class="c">Drop</span> Max</h1>
-  <p class="lede">Every mode, yours forever. Pay once.</p>
-
+<main class="sheet" id="sheet" aria-labelledby="ttl">
   <div class="hero" id="hero" aria-hidden="true">
     <canvas id="cv"></canvas>
-    <div class="hud"><span class="best" id="bestLbl">BEST 141</span><span class="sc" id="sc">128</span></div>
-    <div class="toast">✦ GOLDEN RUN · NEW BEST</div>
+    <div class="bar"><i></i></div>
+    <div class="hud"><small>BEST 141</small><b id="sc">128</b></div>
+    <div class="tag">✦ GOLDEN RUN · NEW BEST</div>
+  </div>
+  <button class="close" type="button" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg></button>
+
+  <div class="body">
+    <div class="head">
+      <div class="word"><span class="p">MIRROR</span> <span class="c">DROP</span></div>
+      <h1 id="ttl">Play every mode.</h1>
+      <p class="lede">Pay once and keep it forever. No ads, no subscription, works offline.</p>
+    </div>
+
+    <ul class="feats" id="feats" aria-label="What you get">
+      <li class="feat f1" data-k="1"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 14c2.5-3.5 5.5-3.5 8 0s5.5 3.5 8 0M3 9.5c2.5-3.5 5.5-3.5 8 0s5.5 3.5 8 0"/></svg></span>
+        <span class="ft"><b>Chill and Zen</b><span>Slow down, or play a calm run you can't lose.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li>
+      <li class="feat f2" data-k="2"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.6 1.2 2.6 2.3 3 0-3 .7-5.8.7-8.5z"/></svg></span>
+        <span class="ft"><b>Hard and Infinite</b><span>Faster blocks, and a run that never ends.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li>
+      <li class="feat f3" data-k="3"><span class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 5 13.5h6L10 22l8-11.5h-6z"/></svg></span>
+        <span class="ft"><b>Insane and Impossible</b><span>For when Hard feels easy.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li>
+      <li class="feat f4" data-k="4"><span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span>
+        <span class="ft"><b>Daily Challenge</b><span>A new run every day, the same for everyone, with its own leaderboard.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li>
+      <li class="feat f5" data-k="5"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>
+        <span class="ft"><b>Golden Run</b><span>Beat your best and the balls turn to liquid gold. Plus a gold app icon, gold share cards and a Founding Supporter badge.</span></span><span class="chk"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span></li>
+    </ul>
+
+    <fieldset class="plans" id="plans">
+      <legend>Choose a pack</legend>
+      <label class="plan p-plus"><input type="radio" name="plan" id="plan-plus" value="plus" data-k="1" data-price="$0.99" data-name="Plus">
+        <span class="dot" aria-hidden="true"></span><span class="pn"><b>Plus</b><span>1 of 5</span></span><span class="pp">$0.99</span></label>
+      <label class="plan p-pro"><input type="radio" name="plan" id="plan-pro" value="pro" data-k="2" data-price="$1.79" data-name="Pro">
+        <span class="dot" aria-hidden="true"></span><span class="pn"><b>Pro</b><span>2 of 5</span></span><span class="pp">$1.79</span></label>
+      <label class="plan p-max"><input type="radio" name="plan" id="plan-max" value="max" data-k="4" data-price="$1.99" data-name="Max" checked>
+        <span class="dot" aria-hidden="true"></span><span class="pn"><b>Max <span class="best">BEST VALUE</span></b><span>Every mode · $0.20 more than Pro</span></span><span class="pp">$1.99</span></label>
+      <label class="plan p-sup"><input type="radio" name="plan" id="plan-sup" value="sup" data-k="5" data-price="$4.99" data-name="Supporter">
+        <span class="dot" aria-hidden="true"></span><span class="pn"><b><span class="orb" aria-hidden="true"></span><span class="nm">Supporter</span></b><span>Every mode, plus the Golden Run</span></span><span class="pp">$4.99</span></label>
+    </fieldset>
   </div>
 
-  <fieldset class="tiers" id="tiers">
-    <legend>Choose a pack</legend>
-    <label class="tier t-plus"><input type="radio" name="tier" id="tier-plus" value="plus" data-price="$0.99" data-label="Plus">
-      <span class="radio" aria-hidden="true"></span><span class="name">Plus</span><span class="price">$0.99</span>
-      <span class="what">Chill and Zen</span>
-      <span class="more"><ul><li>Chill difficulty</li><li>Zen mode: a calm run you can't lose</li></ul></span></label>
-
-    <label class="tier t-pro"><input type="radio" name="tier" id="tier-pro" value="pro" data-price="$1.79" data-label="Pro">
-      <span class="radio" aria-hidden="true"></span><span class="name">Pro</span><span class="price">$1.79</span>
-      <span class="what">Chill, Zen, Hard and Infinite</span>
-      <span class="more"><ul><li>Everything in Plus</li><li>Hard difficulty</li><li>Infinite mode</li></ul></span></label>
-
-    <label class="tier t-max"><input type="radio" name="tier" id="tier-max" value="max" data-price="$1.99" data-label="Max" checked>
-      <span class="radio" aria-hidden="true"></span><span class="name">Max <span class="pill">BEST VALUE</span></span><span class="price">$1.99</span>
-      <span class="what">Every difficulty, every mode, the Daily Challenge</span>
-      <span class="save">Only $0.20 more than Pro, with 3 more modes</span>
-      <span class="more"><ul><li>Chill, Hard, <b>Insane</b> and <b>Impossible</b></li><li>Zen and Infinite modes</li><li><b>Daily Challenge</b>: one new run a day, same for everyone, with its own Game Center leaderboard</li></ul></span></label>
-
-    <label class="tier t-sup"><input type="radio" name="tier" id="tier-sup" value="sup" data-price="$4.99" data-label="Supporter">
-      <span class="radio" aria-hidden="true"></span><span class="name"><span class="gem" aria-hidden="true"></span>Supporter <span class="pill">FOR FANS</span></span><span class="price">$4.99</span>
-      <span class="what">All of Max, plus the Golden Run</span>
-      <span class="more"><ul>
-        <li>Everything in Max</li>
-        <li><b>Golden Run</b>: beat your best and both balls turn to liquid gold, with a burst of light and a trail of gold dust</li>
-        <li><b>Gold app icon</b> on your Home Screen</li>
-        <li><b>Gold share cards</b> for your best scores</li>
-        <li>Gold ring and <b>Founding Supporter</b> badge on your profile (launch year only)</li>
-      </ul></span></label>
-  </fieldset>
-
-  <button class="cta" id="cta" type="button">Get Max · $1.99</button>
-  <div class="fine"><span>One-time purchase</span><span>No subscription</span><button type="button" id="restore">Restore purchases</button></div>
+  <div class="dock">
+    <button class="cta" id="cta" type="button">Get Max for $1.99</button>
+    <div class="fine"><span>One-time purchase</span><span aria-hidden="true">·</span><button type="button" id="restore">Restore Purchases</button></div>
+  </div>
 </main>
-<p class="note" id="note">Design preview. Tap Supporter to see the Golden Run. Buttons don't charge anything.</p>
+<p class="note" id="note">Design preview. Tap Supporter to see the Golden Run. Nothing is charged.</p>
 
 <script>
 (() => {
-  const cv = document.getElementById('cv'), g = cv.getContext('2d'), hero = document.getElementById('hero');
+  const cv = document.getElementById('cv'), g = cv.getContext('2d'), hero = document.getElementById('hero'), sheet = document.getElementById('sheet');
   const scEl = document.getElementById('sc'), cta = document.getElementById('cta'), note = document.getElementById('note');
+  const feats = [...document.querySelectorAll('.feat')];
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let W = 0, H = 0, dpr = 1;
   const fit = () => { dpr = Math.min(3, devicePixelRatio || 1); const r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; };
@@ -145,84 +171,72 @@ h1 .p{color:var(--pink)} h1 .c{color:var(--teal)}
 
   let tier = 'max', t0 = performance.now(), gold = 0, burst = -1, dust = [], trail = [[], []];
   const lanes = 6, BEST = 141;
-  const pick = v => {
-    tier = v; const inp = document.querySelector(`input[value="${v}"]`);
-    cta.textContent = `Get ${inp.dataset.label} · ${inp.dataset.price}`; cta.classList.toggle('gold', v === 'sup');
+  const pick = inp => {
+    tier = inp.value; const k = +inp.dataset.k;
+    feats.forEach(f => f.classList.toggle('on', +f.dataset.k <= k));
+    cta.textContent = `Get ${inp.dataset.name} for ${inp.dataset.price}`; sheet.classList.toggle('sup', tier === 'sup');
     t0 = performance.now(); gold = 0; burst = -1; dust = []; hero.classList.remove('gold');
   };
-  document.getElementById('tiers').addEventListener('change', e => pick(e.target.value));
-  cta.addEventListener('click', () => { note.textContent = `Design preview: in the game this opens Apple's purchase sheet for ${document.querySelector('input:checked').dataset.label}.`; });
+  document.getElementById('plans').addEventListener('change', e => pick(e.target));
+  cta.addEventListener('click', () => { note.textContent = `Design preview: in the game this opens Apple's purchase sheet for ${document.querySelector('input:checked').dataset.name}.`; });
   document.getElementById('restore').addEventListener('click', () => { note.textContent = 'Design preview: in the game this restores earlier purchases from the App Store.'; });
 
-  // the two mirrored balls slide between lanes like in the game
   const laneX = i => (i + .5) * W / lanes;
   const pos = t => { const k = (t / 820) | 0, f = Math.min(1, (t % 820) / 220), e = 1 - Math.pow(1 - f, 3);
     const seq = [2, 1, 0, 1, 2, 1], a = seq[k % 6], b = seq[(k + 1) % 6]; return laneX(a) + (laneX(b) - laneX(a)) * e; };
-
   const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
-  const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
-  const PINK = [[255, 179, 191], [255, 107, 129], [217, 63, 92]], TEAL = [[166, 238, 245], [46, 196, 214], [21, 149, 168]];
-  const GOLD = [[255, 246, 214], [242, 193, 78], [138, 90, 14]];
+  const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  const PINK = [[255, 179, 191], [255, 107, 129], [217, 63, 92]], TEAL = [[166, 238, 245], [46, 196, 214], [21, 149, 168]], GOLD = [[255, 246, 214], [242, 193, 78], [138, 90, 14]];
 
-  function ball(x, y, r, pal, k, t, side) {
-    const c = [0, 1, 2].map(i => mix(pal[i], GOLD[i], k));
-    g.save();
-    if (k > 0) { // warm bloom
-      const halo = g.createRadialGradient(x, y, r * .6, x, y, r * 2.6); halo.addColorStop(0, `rgba(255,214,120,${.45 * k})`); halo.addColorStop(1, 'rgba(255,214,120,0)');
-      g.fillStyle = halo; g.beginPath(); g.arc(x, y, r * 2.6, 0, 7); g.fill(); }
-    g.shadowColor = `rgba(${c[1][0]},${c[1][1]},${c[1][2]},.42)`; g.shadowBlur = 18; g.shadowOffsetY = 6;
-    const body = g.createRadialGradient(x - r * .35 * side, y - r * .4, r * .08, x, y, r);
-    body.addColorStop(0, rgb(c[0])); body.addColorStop(.48, rgb(c[1])); body.addColorStop(1, rgb(c[2]));
-    g.fillStyle = body; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.shadowColor = 'transparent';
-    if (k > 0) { // liquid metal: a moving reflection band and a bright rim
-      g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); g.clip();
-      const sweep = Math.sin(t / 700 + side) * r * .5;
-      const band = g.createLinearGradient(x - r, y - r + sweep, x + r, y + r + sweep);
-      band.addColorStop(.35, 'rgba(255,255,255,0)'); band.addColorStop(.5, `rgba(255,250,230,${.55 * k})`); band.addColorStop(.62, 'rgba(255,255,255,0)');
-      g.fillStyle = band; g.fillRect(x - r, y - r, r * 2, r * 2);
-      g.strokeStyle = `rgba(255,236,170,${.8 * k})`; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r - 1, Math.PI * .9, Math.PI * 1.9); g.stroke();
-      g.restore(); }
-    g.fillStyle = 'rgba(255,255,255,.6)'; g.beginPath(); g.ellipse(x - r * .3 * side, y - r * .45, r * .3, r * .16, 0, 0, 7); g.fill();
-    if (k > .5) { // glints that twinkle across the surface
-      for (let i = 0; i < 2; i++) { const a = t / 900 + i * 2.6 + side, s = (Math.sin(t / 260 + i * 3) * .5 + .5) * k;
-        star(x + Math.cos(a) * r * .55, y + Math.sin(a) * r * .5, r * .32 * s, s); } }
-    g.restore();
-  }
   function star(x, y, s, a) { if (s < .5) return; g.save(); g.globalAlpha = a; g.fillStyle = '#fffbe8'; g.beginPath();
     for (let i = 0; i < 8; i++) { const rr = i % 2 ? s * .18 : s, an = i * Math.PI / 4; g.lineTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr); }
     g.closePath(); g.fill(); g.restore(); }
+  function ball(x, y, r, pal, k, t, side) {
+    const c = [0, 1, 2].map(i => mix(pal[i], GOLD[i], k));
+    g.save();
+    g.fillStyle = 'rgba(31,33,51,.10)'; g.beginPath(); g.ellipse(x, y + r * 1.15, r * .8, r * .18, 0, 0, 7); g.fill();
+    if (k > 0) { const halo = g.createRadialGradient(x, y, r * .5, x, y, r * 2.8); halo.addColorStop(0, `rgba(255,214,120,${.5 * k})`); halo.addColorStop(1, 'rgba(255,214,120,0)');
+      g.fillStyle = halo; g.beginPath(); g.arc(x, y, r * 2.8, 0, 7); g.fill(); }
+    g.shadowColor = rgb(c[1], .42); g.shadowBlur = 22; g.shadowOffsetY = 8;
+    const body = g.createRadialGradient(x - r * .35 * side, y - r * .4, r * .08, x, y, r);
+    body.addColorStop(0, rgb(c[0])); body.addColorStop(.48, rgb(c[1])); body.addColorStop(1, rgb(c[2]));
+    g.fillStyle = body; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.shadowColor = 'transparent';
+    if (k > 0) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); g.clip();
+      const sweep = Math.sin(t / 700 + side) * r * .5, band = g.createLinearGradient(x - r, y - r + sweep, x + r, y + r + sweep);
+      band.addColorStop(.35, 'rgba(255,255,255,0)'); band.addColorStop(.5, `rgba(255,250,230,${.6 * k})`); band.addColorStop(.64, 'rgba(255,255,255,0)');
+      g.fillStyle = band; g.fillRect(x - r, y - r, r * 2, r * 2);
+      g.strokeStyle = `rgba(255,236,170,${.85 * k})`; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r - 1, Math.PI * .9, Math.PI * 1.9); g.stroke(); g.restore(); }
+    g.fillStyle = 'rgba(255,255,255,.62)'; g.beginPath(); g.ellipse(x - r * .3 * side, y - r * .45, r * .3, r * .16, 0, 0, 7); g.fill();
+    if (k > .5) for (let i = 0; i < 2; i++) { const a = t / 900 + i * 2.6 + side, s = (Math.sin(t / 260 + i * 3) * .5 + .5) * k; star(x + Math.cos(a) * r * .55, y + Math.sin(a) * r * .5, r * .32 * s, s); }
+    g.restore();
+  }
 
   function frame(now) {
     const t = still ? 2600 : now - t0, sup = tier === 'sup', cycle = sup ? t % 7000 : 0;
-    // score climbs toward the old best; with Supporter it passes it and the Golden Run starts
     const score = Math.floor(128 + Math.min(1, (sup ? cycle : t % 5000) / (sup ? 2400 : 4000)) * (sup ? 16 : 12));
     scEl.textContent = score;
     const passed = sup && score > BEST;
     if (passed && burst < 0) burst = cycle;
-    if (!sup || cycle < 50) { burst = -1; }
-    const target = passed ? 1 : 0; gold += (target - gold) * (still ? 1 : .08);
+    if (!sup || cycle < 50) burst = -1;
+    gold += ((passed ? 1 : 0) - gold) * (still ? 1 : .08);
     hero.classList.toggle('gold', passed);
 
     g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-    // lanes
-    g.fillStyle = 'rgba(43,45,66,.05)'; for (let i = 1; i < lanes; i++) g.fillRect(i * W / lanes - .5, 0, 1, H);
-    g.fillStyle = 'rgba(43,45,66,.08)'; g.fillRect(W / 2 - .75, 0, 1.5, H);
-    const r = Math.min(26, W / 15), y = H * .62, xl = pos(t), xr = W - xl;
-    // trails: soft colour normally, gold dust during a Golden Run
+    for (let i = 1; i < lanes; i++) { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(31,33,51,0)'); gr.addColorStop(.5, 'rgba(31,33,51,.06)'); gr.addColorStop(1, 'rgba(31,33,51,0)'); g.fillStyle = gr; g.fillRect(i * W / lanes - .5, 0, 1, H); }
+    const r = Math.min(30, W / 13), y = H * .6, xl = pos(t), xr = W - xl;
     [xl, xr].forEach((x, i) => { trail[i].push(x); if (trail[i].length > 14) trail[i].shift();
-      trail[i].forEach((tx, j) => { const a = j / trail[i].length; g.fillStyle = gold > .3 ? `rgba(242,193,78,${.18 * a * gold})` : (i ? `rgba(46,196,214,${.07 * a})` : `rgba(255,107,129,${.07 * a})`);
-        g.beginPath(); g.arc(tx, y + (trail[i].length - j) * 2.2, r * (.4 + .6 * a), 0, 7); g.fill(); }); });
-    if (gold > .3 && !still) for (const x of [xl, xr]) if (Math.random() < .55) dust.push({ x: x + (Math.random() - .5) * r, y: y + r * .6, vx: (Math.random() - .5) * .4, vy: .5 + Math.random() * .9, l: 1, s: 1 + Math.random() * 2 });
+      trail[i].forEach((tx, j) => { const a = j / trail[i].length; g.fillStyle = gold > .3 ? `rgba(242,193,78,${.2 * a * gold})` : (i ? `rgba(46,196,214,${.07 * a})` : `rgba(255,107,129,${.07 * a})`);
+        g.beginPath(); g.arc(tx, y + (trail[i].length - j) * 2.4, r * (.4 + .6 * a), 0, 7); g.fill(); }); });
+    if (gold > .3 && !still) for (const x of [xl, xr]) if (Math.random() < .6) dust.push({ x: x + (Math.random() - .5) * r, y: y + r * .6, vx: (Math.random() - .5) * .4, vy: .5 + Math.random() * .9, l: 1, s: 1 + Math.random() * 2 });
     dust = dust.filter(p => (p.l -= .016) > 0); for (const p of dust) { p.x += p.vx; p.y += p.vy; g.fillStyle = `rgba(255,${200 + 40 * p.l | 0},120,${p.l * .9})`; g.beginPath(); g.arc(p.x, p.y, p.s * p.l, 0, 7); g.fill(); }
-    // the moment of passing the best: a ring of light and a spray of sparks
     if (burst >= 0 && !still) { const k = (cycle - burst) / 900; if (k < 1) { for (const x of [xl, xr]) {
         g.strokeStyle = `rgba(255,220,130,${(1 - k) * .9})`; g.lineWidth = 3 * (1 - k) + .5; g.beginPath(); g.arc(x, y, r + k * r * 3.2, 0, 7); g.stroke();
-        for (let i = 0; i < 10; i++) { const an = i / 10 * Math.PI * 2 + x; star(x + Math.cos(an) * (r + k * r * 2.6), y + Math.sin(an) * (r + k * r * 2.6), r * .45 * (1 - k), 1 - k); } } }
-      if (k < .18) { g.fillStyle = `rgba(255,248,225,${(.18 - k) * 2.2})`; g.fillRect(0, 0, W, H); } }
+        for (let i = 0; i < 10; i++) { const an = i / 10 * Math.PI * 2 + x; star(x + Math.cos(an) * (r + k * r * 2.6), y + Math.sin(an) * (r + k * r * 2.6), r * .45 * (1 - k), 1 - k); } }
+      if (k < .18) { g.fillStyle = `rgba(255,248,225,${(.18 - k) * 2.2})`; g.fillRect(0, 0, W, H); } } }
     ball(xl, y, r, PINK, gold, t, 1); ball(xr, y, r, TEAL, gold, t, -1);
     if (!still) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  pick('max');
+  pick(document.getElementById('plan-max'));
 })();
 </script>
