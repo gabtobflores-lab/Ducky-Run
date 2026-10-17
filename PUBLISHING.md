@@ -80,14 +80,15 @@ to rebuild `release/`, then upload the folder again. For the App Store, run `npm
 
 ## Pricing plan (agreed, to build once the Apple Developer account exists)
 
-Free download, with three one-time purchases laid out side by side (Max marked "Best value"; Pro is the decoy):
+Free download, with three one-time purchases shown side by side, Max in the middle, highlighted "Best value" and pre-selected:
 
 | Tier | Price | Unlocks |
 |---|---|---|
-| Free | $0 | Easy and Normal, all weather, Game Center, Share score |
-| Plus | $0.99 | + Chill and Zen mode |
-| Pro | $1.49 | + Hard and Infinite |
-| Max | $1.99 | Everything: Chill, Zen, Hard, Insane, Impossible, Infinite, Daily Challenge |
+| Free | $0 | Easy and Normal, all weather, Game Center, Share score, one free Hard run per day, Daily Challenge leaderboard visible (locked) |
+| Plus | $0.99 | Chill and Zen mode |
+| Max | $1.99 | Everything: Hard, Insane, Impossible, Infinite, Daily Challenge, Chill, Zen |
+| Supporter | $4.99 | Everything in Max, plus a gold ring on the profile picture and a "Supporter" badge |
 
-Upgrades cost only the difference: Plus → Max $1.00, Pro → Max $0.50.
-Locked difficulties stay visible on the slider with a lock. No ads; the game stays fully offline.
+Upgrade Plus → Max costs $1.00. The purchase screen says "$1 more = 5 more modes".
+The offer appears only when tapping a locked difficulty, after the free daily Hard run, and once after a new best on Normal.
+No fake timers or fake "was" prices. No ads; the game stays fully offline. Locked difficulties stay visible on the slider with a lock.
