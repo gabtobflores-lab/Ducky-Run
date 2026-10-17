@@ -149,7 +149,7 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
       <label class="plan p-pro"><input type="radio" name="plan" id="plan-pro" value="pro" data-k="2" data-price="$1.79" data-name="Pro">
         <span class="dot" aria-hidden="true"></span><span class="pn"><b>Pro</b><span>Hard, storms and hail</span></span><span class="pp">$1.79</span></label>
       <label class="plan p-max"><input type="radio" name="plan" id="plan-max" value="max" data-k="3" data-price="$1.99" data-name="Max" checked>
-        <span class="dot" aria-hidden="true"></span><span class="pn"><b>Max <span class="best">BEST VALUE</span></b><span>Everything · $0.20 more than Pro</span></span><span class="pp">$1.99</span></label>
+        <span class="dot" aria-hidden="true"></span><span class="pn"><b>Max <span class="best">BEST VALUE</span></b><span>Every mode, every event, the Daily Challenge</span></span><span class="pp">$1.99</span></label>
       <label class="plan p-sup"><input type="radio" name="plan" id="plan-sup" value="sup" data-k="4" data-price="$4.99" data-name="Supporter">
         <span class="dot" aria-hidden="true"></span><span class="pn"><b><span class="orb" aria-hidden="true"></span><span class="nm">Supporter</span></b><span>Every mode, plus the Golden Run</span></span><span class="pp">$4.99</span></label>
     </fieldset>
@@ -172,13 +172,13 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
   const fit = () => { dpr = Math.min(3, devicePixelRatio || 1); const r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; };
   fit(); addEventListener('resize', fit);
 
-  let tier = 'max', t0 = performance.now(), gold = 0, burst = -1, dust = [], trail = [[], []];
+  let tier = 'max', t0 = performance.now(), gold = 0, burst = -1, dust = [], leaf = [], trail = [[], []];
   const lanes = 6, BEST = 141;
   const pick = inp => {
     tier = inp.value; const k = +inp.dataset.k;
     feats.forEach(f => f.classList.toggle('on', +f.dataset.k <= k));
     cta.textContent = `Get ${inp.dataset.name} for ${inp.dataset.price}`; sheet.classList.toggle('sup', tier === 'sup');
-    t0 = performance.now(); gold = 0; burst = -1; dust = []; hero.classList.remove('gold');
+    t0 = performance.now(); gold = 0; burst = -1; dust = []; leaf = []; hero.classList.remove('gold');
   };
   document.getElementById('plans').addEventListener('change', e => pick(e.target));
   cta.addEventListener('click', () => { note.textContent = `Design preview: in the game this opens Apple's purchase sheet for ${document.querySelector('input:checked').dataset.name}.`; });
@@ -204,7 +204,15 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
     const body = g.createRadialGradient(x - r * .35 * side, y - r * .4, r * .08, x, y, r);
     body.addColorStop(0, rgb(c[0])); body.addColorStop(.48, rgb(c[1])); body.addColorStop(1, rgb(c[2]));
     g.fillStyle = body; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.shadowColor = 'transparent';
-    if (k > 0) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); g.clip();
+    if (k > 0) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); g.clip(); g.globalAlpha = k;
+      // polished gold: a bright sky reflection on top, a dark horizon band, warm light bouncing up from below
+      const metal = g.createLinearGradient(x, y - r, x, y + r);
+      metal.addColorStop(0, '#fffbe6'); metal.addColorStop(.2, '#ffe28c'); metal.addColorStop(.44, '#d39a26'); metal.addColorStop(.53, '#7c4e08');
+      metal.addColorStop(.62, '#b07a14'); metal.addColorStop(.82, '#f3c752'); metal.addColorStop(1, '#fff0b3');
+      g.fillStyle = metal; g.fillRect(x - r, y - r, r * 2, r * 2);
+      const shade = g.createRadialGradient(x - r * .25 * side, y - r * .3, r * .2, x, y, r * 1.05);
+      shade.addColorStop(0, 'rgba(255,255,255,0)'); shade.addColorStop(.75, 'rgba(120,70,0,0)'); shade.addColorStop(1, 'rgba(90,50,0,.55)');
+      g.fillStyle = shade; g.fillRect(x - r, y - r, r * 2, r * 2); g.globalAlpha = 1;
       const sweep = Math.sin(t / 700 + side) * r * .5, band = g.createLinearGradient(x - r, y - r + sweep, x + r, y + r + sweep);
       band.addColorStop(.35, 'rgba(255,255,255,0)'); band.addColorStop(.5, `rgba(255,250,230,${.6 * k})`); band.addColorStop(.64, 'rgba(255,255,255,0)');
       g.fillStyle = band; g.fillRect(x - r, y - r, r * 2, r * 2);
@@ -234,8 +242,25 @@ h1{margin:0;font:900 34px/1.04 var(--round);letter-spacing:-.025em;text-wrap:bal
     dust = dust.filter(p => (p.l -= .016) > 0); for (const p of dust) { p.x += p.vx; p.y += p.vy; g.fillStyle = `rgba(255,${200 + 40 * p.l | 0},120,${p.l * .9})`; g.beginPath(); g.arc(p.x, p.y, p.s * p.l, 0, 7); g.fill(); }
     if (burst >= 0 && !still) { const k = (cycle - burst) / 900; if (k < 1) { for (const x of [xl, xr]) {
         g.strokeStyle = `rgba(255,220,130,${(1 - k) * .9})`; g.lineWidth = 3 * (1 - k) + .5; g.beginPath(); g.arc(x, y, r + k * r * 3.2, 0, 7); g.stroke();
+        const k2 = Math.max(0, k - .2) / .8; if (k2 > 0) { g.strokeStyle = `rgba(255,245,210,${(1 - k2) * .7})`; g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, r + k2 * r * 4.4, 0, 7); g.stroke(); }
+        for (let i = 0; i < 8; i++) { const an = i / 8 * Math.PI * 2 + .3, a0 = r * (1 + k * 1.2), a1 = r * (1.4 + k * 3.4); g.strokeStyle = `rgba(255,236,180,${(1 - k) * .8})`; g.lineWidth = 2 * (1 - k); g.beginPath(); g.moveTo(x + Math.cos(an) * a0, y + Math.sin(an) * a0); g.lineTo(x + Math.cos(an) * a1, y + Math.sin(an) * a1); g.stroke(); }
         for (let i = 0; i < 10; i++) { const an = i / 10 * Math.PI * 2 + x; star(x + Math.cos(an) * (r + k * r * 2.6), y + Math.sin(an) * (r + k * r * 2.6), r * .45 * (1 - k), 1 - k); } }
       if (k < .18) { g.fillStyle = `rgba(255,248,225,${(.18 - k) * 2.2})`; g.fillRect(0, 0, W, H); } } }
+    if (gold > .02) {
+      const wash = g.createRadialGradient(W / 2, y, 0, W / 2, y, W * .8); wash.addColorStop(0, `rgba(255,214,140,${.28 * gold})`); wash.addColorStop(1, 'rgba(255,214,140,0)');
+      g.fillStyle = wash; g.fillRect(0, 0, W, H);
+      for (const x of [xl, xr]) { // slow light rays turning behind each ball
+        g.save(); g.translate(x, y); g.rotate(t / 4200 * (x < W / 2 ? 1 : -1));
+        for (let i = 0; i < 12; i++) { g.rotate(Math.PI / 6); const L = r * (3.4 + Math.sin(t / 500 + i) * .5), ray = g.createLinearGradient(0, 0, L, 0);
+          ray.addColorStop(0, `rgba(255,226,150,${.32 * gold})`); ray.addColorStop(1, 'rgba(255,226,150,0)');
+          g.fillStyle = ray; g.beginPath(); g.moveTo(0, 0); g.lineTo(L, -r * .2); g.lineTo(L, r * .2); g.closePath(); g.fill(); }
+        g.restore(); }
+      if (!still && Math.random() < .07 * gold) leaf.push({ x: Math.random() * W, y: -10, vy: .35 + Math.random() * .4, rot: Math.random() * 6, vr: (Math.random() - .5) * .06, ph: Math.random() * 6, s: 2 + Math.random() * 2.5 });
+    }
+    leaf = leaf.filter(f => f.y < H + 12); for (const f of leaf) { f.y += f.vy; f.rot += f.vr; f.ph += .05; const fx = f.x + Math.sin(f.ph) * 10;
+      g.save(); g.translate(fx, f.y); g.rotate(f.rot); g.scale(Math.cos(f.ph * 1.7), 1); // gold leaf flutters as it falls
+      const lg = g.createLinearGradient(-f.s, 0, f.s, 0); lg.addColorStop(0, '#fff1b8'); lg.addColorStop(.5, '#e9b343'); lg.addColorStop(1, '#a86f12');
+      g.fillStyle = lg; g.globalAlpha = .75 * Math.min(1, gold + .2); g.fillRect(-f.s, -f.s * .6, f.s * 2, f.s * 1.2); g.restore(); }
     ball(xl, y, r, PINK, gold, t, 1); ball(xr, y, r, TEAL, gold, t, -1);
     if (!still) requestAnimationFrame(frame);
   }
