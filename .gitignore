@@ -5,3 +5,4 @@ xcode/MirrorDrop/index.html
 xcode/MirrorDrop/MirrorDropApp.swift
 *.zip
 __pycache__/
+appstore/*.zip
