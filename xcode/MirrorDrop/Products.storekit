@@ -1,0 +1,167 @@
+{
+  "identifier": "5F1C2A7E",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": true,
+      "internalID": "6740000000",
+      "localizations": [
+        {
+          "description": "Chill and Zen modes.",
+          "displayName": "Plus",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.plus",
+      "referenceName": "Plus",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.79",
+      "familyShareable": true,
+      "internalID": "6740000001",
+      "localizations": [
+        {
+          "description": "Hard, storms and hail.",
+          "displayName": "Pro",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.pro",
+      "referenceName": "Pro",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": true,
+      "internalID": "6740000002",
+      "localizations": [
+        {
+          "description": "Every mode, every event and the Daily.",
+          "displayName": "Max",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.max",
+      "referenceName": "Max",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": true,
+      "internalID": "6740000003",
+      "localizations": [
+        {
+          "description": "Everything in Max, plus the Golden Run.",
+          "displayName": "Supporter",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.supporter",
+      "referenceName": "Supporter",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.79",
+      "familyShareable": true,
+      "internalID": "6740000004",
+      "localizations": [
+        {
+          "description": "Upgrade from Plus to Pro.",
+          "displayName": "Pro Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.pro.from.plus",
+      "referenceName": "Pro (upgrade from Plus)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": true,
+      "internalID": "6740000005",
+      "localizations": [
+        {
+          "description": "Upgrade from Plus to Max.",
+          "displayName": "Max Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.max.from.plus",
+      "referenceName": "Max (upgrade from Plus)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.29",
+      "familyShareable": true,
+      "internalID": "6740000006",
+      "localizations": [
+        {
+          "description": "Upgrade from Pro to Max.",
+          "displayName": "Max Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.max.from.pro",
+      "referenceName": "Max (upgrade from Pro)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "3.99",
+      "familyShareable": true,
+      "internalID": "6740000007",
+      "localizations": [
+        {
+          "description": "Upgrade from Plus to Supporter.",
+          "displayName": "Supporter Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.supporter.from.plus",
+      "referenceName": "Supporter (upgrade from Plus)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "3.29",
+      "familyShareable": true,
+      "internalID": "6740000008",
+      "localizations": [
+        {
+          "description": "Upgrade from Pro to Supporter.",
+          "displayName": "Supporter Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.supporter.from.pro",
+      "referenceName": "Supporter (upgrade from Pro)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": true,
+      "internalID": "6740000009",
+      "localizations": [
+        {
+          "description": "Upgrade from Max to Supporter.",
+          "displayName": "Supporter Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.supporter.from.max",
+      "referenceName": "Supporter (upgrade from Max)",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

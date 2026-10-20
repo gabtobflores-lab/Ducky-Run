@@ -1,0 +1,73 @@
+# Builds Mirror Drop with the newest Xcode, signs it in the cloud with an App Store Connect API key,
+# and uploads it to TestFlight. Needs these repository secrets (Settings → Secrets and variables → Actions):
+#   APPLE_TEAM_ID   10-character Team ID (developer.apple.com → Membership details)
+#   ASC_KEY_ID      the API key's Key ID
+#   ASC_ISSUER_ID   the Issuer ID shown above the keys list
+#   ASC_KEY_P8      the full text of the downloaded AuthKey_XXXX.p8 file
+#   BUNDLE_ID       optional, defaults to com.gabtobflores.mirrordrop
+# Without the secrets it still archives unsigned, to show the build itself is fine.
+name: TestFlight
+on:
+  push:
+    branches: [claude/ducky-run-game]
+    paths: ['app-update/**', 'xcode/**', '.github/workflows/testflight.yml']
+  workflow_dispatch:
+jobs:
+  upload:
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      TEAM: ${{ secrets.APPLE_TEAM_ID }}
+      KID: ${{ secrets.ASC_KEY_ID }}
+      ISS: ${{ secrets.ASC_ISSUER_ID }}
+      P8: ${{ secrets.ASC_KEY_P8 }}
+      BID: ${{ secrets.BUNDLE_ID || 'com.gabtobflores.mirrordrop' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use the newest Xcode
+        run: |
+          NEWEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$NEWEST" ] && sudo xcode-select -s "$NEWEST/Contents/Developer"; xcodebuild -version
+      - name: Assemble the project
+        run: |
+          mkdir -p build && cp -R xcode build/proj
+          cp app-update/MirrorDropApp.swift app-update/index.html app-update/aurora.mp4 build/proj/MirrorDrop/
+          cp -R app-update/LaunchBalls.imageset build/proj/MirrorDrop/Assets.xcassets/
+          [ -d app-update/AppIcon-Gold.appiconset ] && cp -R app-update/AppIcon-Gold.appiconset build/proj/MirrorDrop/Assets.xcassets/
+          cd build/proj && xcodebuild -list -project MirrorDrop.xcodeproj
+      - name: Archive
+        run: |
+          set -o pipefail
+          cd build/proj
+          BUILD=$(( ${{ github.run_number }} + 100 ))
+          if [ -n "$TEAM" ] && [ -n "$KID" ] && [ -n "$ISS" ] && [ -n "$P8" ]; then
+            mkdir -p ~/keys && printf '%s\n' "$P8" > ~/keys/AuthKey_$KID.p8
+            xcodebuild -project MirrorDrop.xcodeproj -scheme MirrorDrop -configuration Release -destination 'generic/platform=iOS' \
+              -archivePath $PWD/MD.xcarchive archive \
+              DEVELOPMENT_TEAM="$TEAM" PRODUCT_BUNDLE_IDENTIFIER="$BID" CURRENT_PROJECT_VERSION=$BUILD CODE_SIGN_STYLE=Automatic \
+              -allowProvisioningUpdates -authenticationKeyPath ~/keys/AuthKey_$KID.p8 -authenticationKeyID "$KID" -authenticationKeyIssuerID "$ISS" \
+              2>&1 | grep -E "error|warning: .*sign|ARCHIVE|BUILD" | tail -40
+          else
+            echo "No App Store Connect secrets yet: archiving unsigned to check the build."
+            xcodebuild -project MirrorDrop.xcodeproj -scheme MirrorDrop -configuration Release -destination 'generic/platform=iOS' \
+              -archivePath $PWD/MD.xcarchive archive CODE_SIGNING_ALLOWED=NO 2>&1 | grep -E "error|ARCHIVE|BUILD" | tail -40
+          fi
+      - name: Upload to TestFlight
+        if: ${{ env.TEAM != '' && env.KID != '' && env.ISS != '' && env.P8 != '' }}
+        run: |
+          set -o pipefail
+          cd build/proj
+          cat > export.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath $PWD/MD.xcarchive -exportOptionsPlist export.plist -exportPath $PWD/out \
+            -allowProvisioningUpdates -authenticationKeyPath ~/keys/AuthKey_$KID.p8 -authenticationKeyID "$KID" -authenticationKeyIssuerID "$ISS" \
+            2>&1 | grep -vE "^\s*$" | tail -40

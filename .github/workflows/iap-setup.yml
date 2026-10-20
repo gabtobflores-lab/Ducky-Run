@@ -1,0 +1,32 @@
+# Creates (or completes) Mirror Drop's in-app purchases in App Store Connect from appstore/products.json.
+# Uses the same API key secrets as the TestFlight workflow. Safe to run again: existing parts are skipped.
+name: In-app purchase setup
+on:
+  push:
+    branches: [claude/ducky-run-game]
+    paths: ['appstore/products.json', 'appstore/iap-review.png', 'tools/asc_iap.py', '.github/workflows/iap-setup.yml']
+  workflow_dispatch:
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the API key is there
+        id: keys
+        env:
+          KID: ${{ secrets.ASC_KEY_ID }}
+          ISS: ${{ secrets.ASC_ISSUER_ID }}
+          P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          if [ -n "$KID" ] && [ -n "$ISS" ] && [ -n "$P8" ]; then echo "ok=1" >> "$GITHUB_OUTPUT"; else echo "::warning::App Store Connect API key secrets are not set yet"; fi
+      - name: Create the packs
+        if: steps.keys.outputs.ok == '1'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
+        run: |
+          pip install --quiet pyjwt cryptography
+          python3 tools/asc_iap.py

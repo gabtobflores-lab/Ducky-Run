@@ -1,0 +1,12 @@
+{
+  "appId": "com.yourname.mirrordrop",
+  "appName": "Mirror Drop",
+  "webDir": "release",
+  "backgroundColor": "#f6f1ea",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#f6f1ea",
+    "scrollEnabled": false,
+    "allowsLinkPreview": false
+  }
+}
