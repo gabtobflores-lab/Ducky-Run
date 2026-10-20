@@ -4,3 +4,4 @@ ios/App/App/public/
 xcode/MirrorDrop/index.html
 xcode/MirrorDrop/MirrorDropApp.swift
 *.zip
+__pycache__/
