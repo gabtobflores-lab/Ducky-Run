@@ -57,6 +57,19 @@ JSON
       perl -pi -e 's/^(\s*)ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;/$1ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;\n$1ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Gold";/' "$pbx"
     fi
   fi
+  # purchases in the simulator: a local test store with every pack, and a shared scheme that turns it on when you press ▶
+  get xcode/MirrorDrop/Products.storekit "$1/Products.storekit"
+  local proj; proj=$(ls -d "$1"/../*.xcodeproj 2>/dev/null | head -1)
+  if [ -n "$proj" ] && [ ! -f "$proj/xcshareddata/xcschemes/.mirrordrop" ]; then
+    local tid tname
+    read -r tid tname < <(perl -0ne 'if (/(\w{24}) \/\* ([^*]+?) \*\/ = \{\s*isa = PBXNativeTarget;/) { print "$1 $2\n" }' "$proj/project.pbxproj")
+    if [ -n "$tid" ]; then
+      mkdir -p "$proj/xcshareddata/xcschemes"
+      curl -fsSL "$BASE/appstore/scheme.xcscheme" | sed -e "s/@TARGETID@/$tid/g; s/@TARGET@/$tname/g; s/@PRODUCT@/$tname/g; s/@PROJ@/$(basename "$proj")/g; s/@APPDIR@/$(basename "$1")/g" > "$proj/xcshareddata/xcschemes/$tname.xcscheme.new" \
+        && mv "$proj/xcshareddata/xcschemes/$tname.xcscheme.new" "$proj/xcshareddata/xcschemes/$tname.xcscheme" && touch "$proj/xcshareddata/xcschemes/.mirrordrop" \
+        && echo "  test store for in-app purchases switched on (simulator only)"
+    fi
+  fi
   updated=1
   [ -n "${main_proj:-}" ] || main_proj=$(cd "$1/.." 2>/dev/null && ls -d "$PWD"/*.xcodeproj 2>/dev/null | head -1)
 }
