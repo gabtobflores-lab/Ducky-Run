@@ -126,6 +126,7 @@
   .best span{font-size:11px;font-weight:900;letter-spacing:.2em;background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
   .best b{font-size:28px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
   #menu > .hint{display:none}
+  @media (min-height:700px){#menu .logo{margin-top:22px}}
   /* columns and mode: two self-explaining segmented controls, no headers, so the menu stays light */
   #menu .cm .dl{display:none} #menu .card.cm{gap:8px;padding:10px}
   .best i.how{font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:1px}
@@ -167,6 +168,34 @@
   .tabs button.on{color:var(--ink)}
   .tabs .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(43,45,66,.12);transition:transform .42s var(--ios)}
   .tabs[data-t=l] .pill{transform:translateX(100%)}
+  #srows.tout{opacity:0;transform:translateX(calc(var(--dx) * -.5));transition:opacity .14s ease-in,transform .14s ease-in}
+  #srows.tin{animation:tabin .42s var(--ios) both}
+  @keyframes tabin{from{opacity:0;transform:translateX(var(--dx))}to{opacity:1;transform:none}}
+  /* How to Play: a grouped iOS list with colour tiles; the row opens smoothly in place */
+  .guide .slist{display:flex;flex-direction:column}
+  .ghead{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:12px 14px;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+  .ghead b{flex:1;font-size:16px;font-weight:700}
+  .gchev{font-size:22px;font-weight:700;color:var(--ink-3);transition:transform .38s var(--ios)}
+  .guide.open .gchev{transform:rotate(90deg)}
+  .gbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .42s var(--ios)}
+  .guide.open .gbody{grid-template-rows:1fr}
+  .gbody>div{overflow:hidden;min-height:0}
+  .gitem{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;opacity:0;transform:translateY(-4px);transition:opacity .3s var(--ease),transform .4s var(--ios)}
+  .guide.open .gitem{opacity:1;transform:none}
+  .guide.open .gitem:nth-child(2){transition-delay:.03s} .guide.open .gitem:nth-child(3){transition-delay:.06s} .guide.open .gitem:nth-child(4){transition-delay:.09s}
+  .guide.open .gitem:nth-child(5){transition-delay:.12s} .guide.open .gitem:nth-child(6){transition-delay:.15s} .guide.open .gitem:nth-child(n+7){transition-delay:.18s}
+  .gitem+.gitem,.gbody .gitem:first-child{border-top:.5px solid rgba(43,45,66,.09)}
+  .gtx{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .gtx b{font-size:15px;font-weight:700;color:var(--ink)}
+  .gtx small{font-size:13px;font-weight:500;line-height:1.35;color:var(--ink-2)}
+  .gi{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 3px 8px rgba(43,45,66,.12)}
+  .gi svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .g0{background:linear-gradient(160deg,#5b5f7e,#2b2d42)}
+  .g1{background:linear-gradient(160deg,#5fd6e3,#1aa9bc)} .g2{background:linear-gradient(160deg,#ff8fa1,#e8435f)}
+  .g3{background:linear-gradient(160deg,#9ec5ff,#4a7dff)} .g4{background:linear-gradient(160deg,#c4b5ff,#7b5cf0)}
+  .g5{background:linear-gradient(160deg,#7fd8ff,#3a8dff)} .g6{background:linear-gradient(160deg,#c8d3e0,#7f8fa6)}
+  .g7{background:linear-gradient(160deg,#ffcf8a,#ff9f45)}
+  .g8{background:linear-gradient(160deg,#fff0bf,#f2c14e 45%,#c88a1a);color:#7d520a}
   .rows{overflow-y:auto;display:flex;flex-direction:column;gap:7px;touch-action:pan-y;-webkit-overflow-scrolling:touch;min-height:150px;padding:2px 2px 4px}
   .row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:#fff;border:0;width:100%;font:inherit;color:var(--ink);text-align:left;box-shadow:var(--sh-card);flex:none}
   button.row{cursor:pointer;transition:transform .4s var(--ios)}
@@ -2449,7 +2478,21 @@ let last = performance.now();
 syncDiffUI(); show('#menu', true);
 // profile + leaderboard sheet
 const pfp = $('#pfp'), pSheet = $('#sheet'), srows = $('#srows'), stabs = $('#stabs');
-let sTab = 'p', editName = false, editPic = false, lbSect = null, nameErr = '', nameDraft = '';
+let sTab = 'p', editName = false, editPic = false, lbSect = null, nameErr = '', nameDraft = '', guideOpen = false;
+// How to Play: one quiet row in the profile that opens into a short, illustrated guide to every control
+const GUIDE = [
+  ['g1', '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.5M12 18v2.5M3.5 12H6M18 12h2.5"/>', 'Tap', 'Each tap moves both balls one step, mirrored. At the edge, they turn around.'],
+  ['g2', '<path d="M4 16.5a8 8 0 0 1 16 0"/><path d="M12 16.5l4-5"/>', 'Difficulty', 'Six levels, from Chill to Impossible. Higher means faster blocks.'],
+  ['g3', '<path d="M5 4.5v15M9.7 4.5v15M14.3 4.5v15M19 4.5v15"/>', 'Columns', '2 or 3 per side: how many lanes each ball can use.'],
+  ['g4', '<path d="M8.5 9C5.5 9 4.5 10.6 4.5 12s1 3 4 3 4.5-6 7-6 4 1.6 4 3-1 3-4 3-4.5-6-7-6z"/>', 'Normal, Infinite and Zen', 'Normal races to 1,000. Infinite never ends. Zen is a calm run you can\'t lose.'],
+  ['g5', '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>', 'Daily Challenge', 'One run a day, the same for everyone, with its own leaderboard.'],
+  ['g6', '<path d="M7 18h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 11.2 3.5 3.5 0 0 0 7 18z"/>', 'Weather', 'Fog, storms, hail and more roll in during a run and change how it plays.'],
+  ['g7', '<path d="M9 6.5v11M15 6.5v11"/>', 'Pause', 'Top left during a run. Each pause brings in a little more fog.'],
+];
+function guideHTML() {
+  const items = GUIDE.concat(ent >= 4 ? [['g8', '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>', 'Golden Run', 'Pass your best and the balls turn to liquid gold.']] : []);
+  return `<div class="sgrp guide${guideOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="guide" aria-expanded="${guideOpen}"><span class="gi g0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><path d="M12 16.6v.1"/></svg></span><b>How to Play</b><span class="gchev" aria-hidden="true">›</span></button>`
+    + `<div class="gbody"><div>${items.map(([c, d, t, x]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${d}</svg></span><span class="gtx"><b>${t}</b><small>${x}</small></span></div>`).join('')}</div></div></div></div>`; }
 const BAD = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'cock', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'fag', 'retard', 'rape', 'nazi', 'hitler', 'porn', 'penis', 'vagina', 'boob', 'jizz', 'wank', 'twat', 'kike', 'spic', 'chink', 'dildo', 'anus', 'tits', 'piss', 'damn', 'hell'];
 function nameProblem(n) { // nicknames stay friendly: letters, numbers and a few marks, nothing rude even when spelled with numbers
   if (n.length < 2) return 'At least 2 characters.';
@@ -2483,6 +2526,7 @@ function renderSheet() {
     }
     const sc = bestNow();
     h += `<div class="pstats"><div><b>${sc || '–'}</b><small>Best · ${NAMES[bucket()]}</small></div><div><b>${prof.runs}</b><small>Runs</small></div><div><b>${prof.combo > 1 ? '×' + prof.combo : '–'}</b><small>Best combo</small></div></div>`;
+    h += guideHTML();
     if (ent < 4) h += `<button class="row unl" data-act="unlock"><span class="av">✦</span><span class="nm">${ent ? 'Your pack: ' + TIER_NAMES[ent] : 'Unlock more of Mirror Drop'}<small>${ent ? 'Upgrade any time, you only pay the difference' : 'Plus · Pro · Max · Supporter'}</small></span><span class="chev">›</span></button>`;
     else {
       const sw = (k, b, sm) => `<label class="sopt"><span class="tx"><b>${b}</b><small>${sm}</small></span><span class="sw"><input type="checkbox" data-sup="${k}"${prof.sup[k] ? ' checked' : ''}><span></span></span></label>`;
@@ -2575,7 +2619,8 @@ async function shareScore() { const sc = bestNow(); if (!sc) return;
   if (pSheet.classList.contains('on')) renderSheet(); setTimeout(() => { shareNote = ''; if (pSheet.classList.contains('on')) renderSheet(); }, 2000); }
 srows.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, i = +b.dataset.i;
-  if (a === 'pic') { editPic = !editPic; renderSheet(); }
+  if (a === 'guide') { guideOpen = !guideOpen; b.closest('.guide').classList.toggle('open', guideOpen); b.setAttribute('aria-expanded', guideOpen); haptic('selection'); }
+  else if (a === 'pic') { editPic = !editPic; renderSheet(); }
   else if (a === 'name') { editName = true; nameErr = ''; renderSheet(); }
   else if (a === 'save') commitName();
   else if (a === 'col') { prof.c = i; prof.photo = ''; prof.useGc = false; saveBests(); syncPfp(); renderSheet(); }
@@ -2589,7 +2634,12 @@ srows.addEventListener('click', e => {
   else if (a === 'world') capCall('GameCenter', 'showLeaderboard', { leaderboardId: lbId(lbSect === null ? bucket() : lbSect) }).catch(() => {});
   else if (a === 'prev' || a === 'next') { const sc = lbSect === null ? bucket() : lbSect; lbSect = Math.max(0, Math.min(5, sc + (a === 'next' ? 1 : -1))); renderSheet(); }
 });
-stabs.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.t === sTab) return; if (editName && !commitName()) return; sTab = b.dataset.t; lbSect = null; editPic = false; renderSheet(); });
+let tabT = 0;
+stabs.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.t === sTab) return; if (editName && !commitName()) return;
+  sTab = b.dataset.t; lbSect = null; editPic = false; haptic('selection');
+  const dx = sTab === 'l' ? 1 : -1; stabs.dataset.t = sTab; stabs.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.t === sTab));
+  srows.style.setProperty('--dx', dx * 26 + 'px'); srows.classList.remove('tin'); srows.classList.add('tout'); clearTimeout(tabT);
+  tabT = setTimeout(() => { renderSheet(); srows.scrollTop = 0; srows.classList.remove('tout'); void srows.offsetWidth; srows.classList.add('tin'); }, 140); });
 function openSheet(tab = 'p') { if (state !== 'menu') return; sTab = tab; editName = editPic = false; nameErr = ''; lbSect = null; renderSheet(); pSheet.classList.add('on'); pSheet.setAttribute('aria-hidden', 'false'); requestAnimationFrame(() => requestAnimationFrame(() => pSheet.classList.add('open'))); beep(520, .07, 'sine', .035, 160); }
 function closeSheet() { if (!pSheet.classList.contains('on')) return; if (editName) { const inp = $('#nmi'); if (inp && nameProblem(inp.value.trim())) { editName = false; nameErr = ''; } else commitName(); } pSheet.classList.remove('open'); pSheet.setAttribute('aria-hidden', 'true'); setTimeout(() => { if (!pSheet.classList.contains('open')) pSheet.classList.remove('on'); }, 380); }
 pfp.addEventListener('click', () => openSheet('p')); $('#mbest').addEventListener('click', () => openSheet('l'));
