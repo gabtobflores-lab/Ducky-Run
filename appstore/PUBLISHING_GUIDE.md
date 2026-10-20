@@ -117,7 +117,7 @@ Then on the version page, under **Game Center**, add all 13.
 
 ## 9. Version page (iOS App → 1.0 Prepare for Submission)
 
-**Screenshots:** upload the 8 images in `appstore/screenshots-2026/` in order to the **6.9" iPhone** slot (1320 × 2868). Apple scales them for every smaller iPhone.
+**Screenshots:** upload the 8 PNG images in `appstore/screenshots-2026/` in order to the **6.9" iPhone** slot (1320 × 2868). Apple scales them for every smaller iPhone.
 
 1. Chill to Impossible (menu)
 2. Play under the northern lights
