@@ -124,11 +124,14 @@
   .best{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 18px 11px}
   .best span{font-size:11px;font-weight:900;letter-spacing:.2em;background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
   .best b{font-size:28px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-  #menu > .hint{display:none}
-  @media (min-height:700px){#menu .logo{margin-top:22px}}
-  /* columns and mode: two self-explaining segmented controls, no headers, so the menu stays light */
-  #menu .cm .dl{display:none} #menu .card.cm{gap:8px;padding:10px}
-  .best i.how{font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:1px}
+  #menu .daily{display:none}
+  #dcal{position:absolute;top:50%;left:10px;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);padding:0;display:grid;place-items:center;cursor:pointer;color:#fff;
+    background:linear-gradient(160deg,#7fd8ff,#3a8dff);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 12px rgba(58,141,255,.28);transition:transform .4s var(--ios)}
+  #dcal:active{transform:translateY(-50%) scale(.9);transition-duration:.08s}
+  #dcal svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  #dcal i{position:absolute;left:-4px;bottom:-4px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(43,45,66,.22);display:none;place-items:center;color:var(--ink-3)}
+  #dcal.lk i{display:grid} #dcal.done i{display:grid;color:#22b07d}
+  #dcal i svg{width:11px;height:11px;fill:currentColor;stroke:none}
   .best b.none{font-size:17px;font-weight:700;letter-spacing:0;color:var(--ink-3)}
   .best i{font-style:normal;font-size:12px;font-weight:600;color:var(--ink-3);width:100%;margin-top:-2px}
   .best.celebrate{animation:celebrate 1.6s var(--ease) both}
@@ -291,16 +294,12 @@
   .dfoot>div{overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
   .dfoot.on>div{padding-top:8px;margin-top:6px;border-top:.5px solid rgba(43,45,66,.08)}
   .dfoot button{border:0;background:none;padding:2px 0;font:inherit;font-weight:800;color:var(--teal-lo);cursor:pointer;white-space:nowrap}
-  #mode .pill{width:calc((100% - 8px) / 3)}
+  #mode .pill{width:calc((100% - 6px) / 3)} .seg.sm#mode{flex-basis:72%}
   /* columns + mode read like an iOS grouped section: quiet secondary values, a hairline between the two rows */
-  #pername,#modename{font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  #modename{display:none!important}
   /* one column: every block on the menu shares the cards' width, radius and glass */
-  #menu .btn,#menu .daily{width:min(330px,86vw)}
   #menu .daily{border-radius:var(--r-card);background:var(--card);box-shadow:var(--sh-card),0 0 0 1px rgba(255,255,255,.85) inset;padding:9px 16px}
-  #menu .btn{padding:15px 20px}
   .best{padding:9px 18px 10px}
-  #menu .card.diff{padding:14px 16px}
-  @media (max-height:700px){#menu .card.diff{padding:10px 14px 9px}}
   .mhd{margin-top:7px;padding-top:11px;border-top:1px solid rgba(43,45,66,.075)}
   #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
   #mode[data-mode="zen"] .pill{transform:translateX(200%)}
@@ -494,10 +493,10 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
   <div class="sub">two balls. one tap.</div>
   <canvas id="pv" aria-hidden="true"></canvas>
   <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div><div class="dfoot"><div><span class="dft"></span><button type="button" class="dfl">See Packs</button></div></div></div>
-  <div class="card diff cm"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="dl mhd"><span class="label">MODE</span><b id="modename">Race to 1,000</b></div><div class="seg" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button><button data-mode="zen">Zen</button></div></div>
+  <div class="card diff"><div class="dl"><span class="label">COLUMNS</span><b id="pername">6 columns</b></div><div class="seg" data-sel="3"><span class="pill"></span><button data-per="2">2 per side</button><button data-per="3">3 per side</button></div><div class="mrow"><span class="label">MODE</span><div class="seg sm" id="mode" data-mode="normal"><span class="pill"></span><button data-mode="normal">Normal</button><button data-mode="infinite">Infinite</button><button data-mode="zen">Zen</button></div></div><b id="modename" hidden></b></div>
   <button class="btn" id="play">PLAY</button>
   <button class="daily" id="daily" type="button"><span class="dic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg></span><span class="dtx"><b>Daily Challenge</b><small id="dsub">A new run every day</small></span><span class="dlk" id="dlk" aria-hidden="true"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="dgo" id="dgo" aria-hidden="true">›</span></button>
-  <div class="bestwrap"><div class="card best" id="mbest" role="button" tabindex="0" aria-label="Your best runs"></div><button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button></div>
+  <div class="bestwrap"><button id="dcal" type="button" aria-label="Daily Challenge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M10 15l1.5 1.5L15 13"/></svg><i aria-hidden="true"></i></button><div class="card best" id="mbest" role="button" tabindex="0" aria-label="Your best runs"></div><button id="pfp" aria-label="Profile and leaderboard"><span id="pfpi"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3zm0 4H6v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 7 8.6zm10 0v1.6a6 6 0 0 1-.4 1.9A3 3 0 0 0 18 8V7z"/></svg></button></div>
   <div class="hint">Tap to move the balls one step.<br>At the edge, they turn around.</div>
 </div>
 
@@ -694,10 +693,9 @@ function syncDiffUI() {
   document.querySelectorAll('.drange').forEach(r => { if (+r.value !== sliderV) r.value = sliderV; r.style.setProperty('--f', sliderV / 120); r.setAttribute('aria-valuetext', NAMES[bucket()]); });
   document.querySelectorAll('.dname').forEach(n => swapText(n, NAMES[bucket()]));
   const what = mode === 'daily' ? 'Daily Challenge · today' : `${NAMES[bucket()]} · ${N} columns${mode === 'infinite' ? ' · infinite' : mode === 'zen' ? ' · zen' : ''}`;
-  const bh = `<span>BEST</span>${bestNow() ? `<b>${bestNow()}</b>` : '<b class="none">No runs yet</b>'}<i>${what}</i>`;
+  const bh = `<span>BEST</span><b>${bestNow() || '–'}</b><i>${what}</i>`;
   // before the first run, the menu's card teaches the one rule instead (no separate hint line, so the menu stays compact)
-  const fresh = !bestNow() && !(prof && prof.runs);
-  swapHTML($('#mbest'), fresh ? '<span>HOW TO PLAY</span><i class="how">Tap anywhere to move both balls.</i>' : bh); swapHTML($('#obest'), bh);
+  ['#mbest', '#obest'].forEach(id => swapHTML($(id), bh));
   document.querySelectorAll('.seg:not(#mode)').forEach(s => { s.dataset.sel = per; });
   document.querySelectorAll('.seg button[data-per]').forEach(b => b.classList.toggle('on', +b.dataset.per === per));
   $('#mode').dataset.mode = mode === 'daily' ? 'normal' : mode; document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode)); swapText($('#pername'), N + ' columns'); swapText($('#modename'), {normal:'Race to 1,000', infinite:'No finish line', zen:'No crashes', daily:'Daily Challenge'}[mode]);
@@ -725,6 +723,9 @@ function syncLocks() { // locked difficulties and modes stay visible with a smal
   document.querySelectorAll('.dfl').forEach(b => b.onclick = () => openUnlock(Math.max(needFor(), 2)));
   setBtn($('#retry'), canStart() ? (free ? 'FREE HARD RUN' : 'TRY AGAIN') : 'UNLOCK ' + what, cap, !canStart());
   $('#dlk').style.display = ent >= 3 ? 'none' : ''; $('#dlk').innerHTML = LOCK_SVG;
+  { const dc = $('#dcal'), done = ent >= 3 && !!bests['daily_' + dayKey()]; dc.classList.toggle('lk', ent < 3); dc.classList.toggle('done', done);
+    dc.querySelector('i').innerHTML = ent < 3 ? LOCK_SVG : done ? '<svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+    dc.setAttribute('aria-label', ent < 3 ? 'Daily Challenge, included with Max' : done ? 'Daily Challenge, played today' : 'Daily Challenge, today\'s run is ready'); }
   const db = bests['daily_' + dayKey()]; swapText($('#dsub'), ent < 3 ? 'Included with Max' : db ? `Today's best: ${db}` : 'Today\'s run is ready');
   $('#over').classList.toggle('daily', mode === 'daily');
 }
@@ -866,6 +867,7 @@ function showOver() {
 }
 document.querySelectorAll('#mode button').forEach(b => b.onclick = () => { mode = b.dataset.mode; saveKey('mirrorMode', mode); syncDiffUI(); });
 $('#daily').onclick = () => { if (!fresh()) startDaily(); };
+$('#dcal').onclick = e => { e.stopPropagation(); haptic('selection'); $('#daily').click(); };
 document.querySelectorAll('.seg button[data-per]').forEach(b => b.onclick = () => { per = +b.dataset.per; saveKey('mirrorPer', per); layout(); reset(); syncDiffUI(); });
 $('#play').onclick = () => { if (!fresh()) startGame(); }; $('#retry').onclick = () => { if (!fresh()) startGame(); }; $('#tomenu').onclick = () => { if (!fresh()) goMenu(); };
 
