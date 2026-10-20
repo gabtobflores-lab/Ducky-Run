@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="5cf969b">
+<meta name="build" content="8187bab">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -124,6 +124,7 @@
   .best span{font-size:11px;font-weight:900;letter-spacing:.2em;background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
   .best b{font-size:28px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
   #menu .daily{display:none}
+  @media (min-height:800px){#menu{padding-top:calc(max(24px,max(env(safe-area-inset-top),var(--sat,0px))) + 64px)}} /* the title sits lower on tall iPhones, like the original */
   #dcal{position:absolute;top:50%;left:10px;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);padding:0;display:grid;place-items:center;cursor:pointer;color:#fff;
     background:linear-gradient(160deg,#7fd8ff,#3a8dff);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 12px rgba(58,141,255,.28);transition:transform .4s var(--ios)}
   #dcal:active{transform:translateY(-50%) scale(.9);transition-duration:.08s}
@@ -243,6 +244,7 @@
   #oshare svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;margin-top:-2px}
   #oshare.hide{display:none}
   @keyframes oshin{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+  .sharebtn:disabled{opacity:.4;box-shadow:none;cursor:default}
   .sharebtn{display:inline-flex;align-items:center;gap:7px;margin-top:2px;border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:800;font-size:14px;color:#fff;cursor:pointer;background:linear-gradient(180deg,var(--teal-hi),var(--teal) 55%,var(--teal-lo));box-shadow:0 4px 12px rgba(46,196,214,.3)}
   .sharebtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
   .gcbtn{margin-top:4px;border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:800;font-size:14px;color:#fff;cursor:pointer;background:linear-gradient(180deg,#3a3d58,#2b2d42);box-shadow:0 4px 12px rgba(43,45,66,.2)}
@@ -2526,7 +2528,7 @@ function renderSheet() {
     if (ent >= 4 && prof.sup.badge) h += `<span class="sbadge"><span class="orb" aria-hidden="true"></span>${supFounding ? 'FOUNDING SUPPORTER' : 'SUPPORTER'}</span>`;
     if (!gc.ok) h += IS_NATIVE ? `<button class="gcbtn" data-act="signin"${gc.busy ? ' disabled' : ''}>${gc.busy ? 'Connecting…' : 'Sign in with Game Center'}</button>`
       + (gc.err && !gc.busy ? `<div class="gchelp">Game Center didn't connect. On your iPhone, open <b>Settings → Game Center</b> and sign in, then come back: Mirror Drop connects by itself.</div>` : '') : `<div class="psub">Saved on this device</div>`;
-    if (bestNow()) h += `<button class="sharebtn" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>${shareNote || 'Share best score'}</button>`;
+    h += `<button class="sharebtn" data-act="share"${bestNow() ? '' : ' disabled title="Finish a run to share your best"'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>${shareNote || 'Share best score'}</button>`;
     h += `</div>`;
     if (editPic) {
       h += `<div class="pick"><div class="sw">${PCOL.map((c, i) => `<button data-act="col" data-i="${i}" style="background:${c}" class="${!prof.photo && !(prof.useGc && gc.photo) && i === prof.c ? 'on' : ''}" aria-label="Colour ${i + 1}"></button>`).join('')}</div>
