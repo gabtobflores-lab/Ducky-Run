@@ -34,10 +34,10 @@ vec2 sheet(vec2 q,float depth,float hem0,float seed){
   float fold=.13*sin(x*4.1+t*.05+seed)+.05*sin(x*9.3-t*.08+seed*2.)+.08*(sfbm(vec2(x*2.+t*.015,seed))-.5);   /* deep folds: seen from below, the curtain becomes columns */
   float hem=hem0+fold;
   float d=q.y-hem;                                                         /* > 0 above the hem */
-  vec2 s=vec2((x+fold*.6)*3.5,q.y*.08);                                    /* stretched space: noise becomes vertical rays */
+  vec2 s=vec2((x+fold*.6)*2.,q.y*.08);                                     /* wider rays: the light diffuses like mist */                                    /* stretched space: noise becomes vertical rays */
   float L1=sfbm(s+vec2(.012,.005)*t+seed);                                 /* broad structure */
   float L2=sfbm(s*vec2(2.6,1.)+vec2(-.038*t+.3*sin(t*.23+seed),0.)+seed*3.); /* fine shimmer that tears and regroups */
-  float rays=pow(clamp(L1*(.35+.65*L2)*1.55,0.,1.),2.2);                   /* fine threads, with dark gaps between */
+  float rays=pow(clamp(L1*(.55+.45*L2)*1.45,0.,1.),1.8);                   /* soft, gaseous rays rather than hard streaks */                   /* fine threads, with dark gaps between */
   float soft=smoothstep(.36,.7,sfbm(vec2(x*3.2+t*.02,seed*1.7)));     /* curtains break apart: real dark sky between them */        /* the sheet is brighter in some stretches than others */
   float up=exp(-max(d,0.)/(.3*depth)),down=exp(-pow(max(-d,0.)/.15,1.3));
   float body=up*down;
@@ -50,16 +50,19 @@ void main(){vec2 p=UV();float asp=res.x/res.y;vec2 q=vec2(p.x*asp,1.-p.y);   /* 
     I+=sheet(q,depth,hem0,fi*7.3+1.).x*(1.-fi*.25);}
   /* the lower third is a pool of light around the player: a bright, slowly breathing glow along the horizon */
   float pool=exp(-pow(q.y/.3,2.))*(.55+.25*sfbm(vec2(q.x*1.4+t*.02,t*.01)));
-  I=I*1.35+pool*.7;
+  I=I*.8+pool*.45;
   /* 3. vignette: light gathers in the centre-left column and falls off with an inverse-square curve towards the sides and the top */
-  vec2 v=vec2((p.x-.44)/.75,max(q.y-.35,0.)/1.1);
-  float vig=1./(1.+2.2*dot(v,v));vig*=vig;
+  vec2 v=vec2((p.x-.42)/1.1,max(q.y-.4,0.)/1.15);
+  float vig=1./(1.+1.3*dot(v,v));vig*=vig;
   I*=vig;
   /* 2. colour chosen by brightness, not position (OKLab): dark sky -> violet envelope -> system blue -> neon cyan only in the hottest cores */
   vec3 cSky=lab(vec3(2.,11.,30.)),cVio=lab(vec3(58.,0.,125.)),cBlu=lab(vec3(0.,85.,255.)),cCya=lab(vec3(0.,240.,210.));
-  float n=1.-exp(-I*1.9);                                                     /* intensity, softly compressed to 0..1 */
+  float n=1.-exp(-I*1.5);                                                     /* intensity, softly compressed to 0..1 */
   vec3 c=n<.25?mix(cSky,cVio,smoothstep(0.,.25,n)):n<.55?mix(cVio,cBlu,smoothstep(.25,.55,n)):mix(cBlu,cCya,smoothstep(.55,.9,n));
-  vec3 lin=fromOklab(c);
+  float mist=sfbm(vec2(q.x*1.1-t*.015,q.y*.35+t*.008)+3.1);                       /* a broad, slowly drifting veil of teal light */
+  mist=smoothstep(.35,.75,mist)*smoothstep(.95,.25,q.y)*exp(-pow((p.x-.38)/.65,2.))*vig;   /* strongest through the middle and left, fading up into the dark */
+  c=mix(c,cCya,clamp(mist*.6*(.3+.7*n),0.,.6));                                   /* blended in OKLab, so it glows over the purple instead of muddying it */
+  vec3 lin=fromOklab(c)*(1.+mist*.25);
   /* the backdrop: pitch-dark midnight indigo at the top, lifting a little towards the glowing horizon */
   vec3 sky=toLin(vec3(2.,11.,30.)/255.)*mix(1.,2.2,smoothstep(.7,0.,q.y))*mix(.5,1.,smoothstep(1.,.75,q.y));
   lin=max(lin,sky);
