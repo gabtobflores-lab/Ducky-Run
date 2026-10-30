@@ -69,6 +69,14 @@ func upload(_ file: String, to iap: String) async throws -> (ok: Bool, why: Stri
     return (false, "Apple is still processing it after a minute")
 }
 
+if env["MODE"] == "bundle" { // used by upload-app.sh: print the Mirror Drop app's bundle ID
+    do {
+        var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []
+        if apps.isEmpty { apps = ((try await call("GET", "/v1/apps?limit=200"))["data"] as? [[String: Any]] ?? []).filter { (attrs($0)["name"] as? String ?? "").lowercased().contains("mirror") } }
+        if let b = attrs(apps.first)["bundleId"] as? String { print(b); exit(0) }
+        FileHandle.standardError.write(Data("No Mirror Drop app found in App Store Connect for this key.\n".utf8)); exit(1)
+    } catch { FileHandle.standardError.write(Data("\(error)\n".utf8)); exit(1) }
+}
 print("Connecting to App Store Connect…")
 do {
     var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []

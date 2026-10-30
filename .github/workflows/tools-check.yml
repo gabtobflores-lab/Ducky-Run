@@ -3,7 +3,7 @@ name: Screenshot fixer check
 on:
   push:
     branches: [claude/ducky-run-game]
-    paths: ['tools/fix_iap_screenshots.swift', 'fix-screenshots.sh', '.github/workflows/tools-check.yml']
+    paths: ['tools/fix_iap_screenshots.swift', 'fix-screenshots.sh', 'upload-app.sh', '.github/workflows/tools-check.yml']
   workflow_dispatch:
 jobs:
   check:
@@ -20,3 +20,7 @@ jobs:
           out=$(KEY_ID=TEST000000 ISSUER_ID=00000000-0000-0000-0000-000000000000 P8=AuthKey_TEST000000.p8 SHOTS=appstore/review/shot-1206x2622.png swift tools/fix_iap_screenshots.swift 2>&1 || true)
           echo "$out"
           echo "$out" | grep -q "Apple said (401)"
+      - name: Bundle-ID lookup with a throwaway key (must fail cleanly)
+        run: |
+          bash -n upload-app.sh
+          if MODE=bundle KEY_ID=TEST000000 ISSUER_ID=00000000-0000-0000-0000-000000000000 P8=AuthKey_TEST000000.p8 SHOTS= swift tools/fix_iap_screenshots.swift; then echo "should have failed"; exit 1; else echo "failed cleanly as expected"; fi
