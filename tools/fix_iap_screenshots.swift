@@ -89,6 +89,18 @@ if env["MODE"] == "bundle" { // used by upload-app.sh: print the Mirror Drop app
         FileHandle.standardError.write(Data("No Mirror Drop app found in App Store Connect for this key.\n".utf8)); exit(1)
     } catch { FileHandle.standardError.write(Data("\(error)\n".utf8)); exit(1) }
 }
+if env["MODE"] == "rights" { // used by rights-app.sh: saves the owner's own Content Rights answer (ANSWER=yes|no)
+    do {
+        let value = env["ANSWER"] == "yes" ? "USES_THIRD_PARTY_CONTENT" : "DOES_NOT_USE_THIRD_PARTY_CONTENT"
+        var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []
+        if apps.isEmpty { apps = ((try await call("GET", "/v1/apps?limit=200"))["data"] as? [[String: Any]] ?? []).filter { (attrs($0)["name"] as? String ?? "").lowercased().contains("mirror") } }
+        guard let appID = apps.first?["id"] as? String else { print("✗ No Mirror Drop app found."); exit(1) }
+        _ = try await call("PATCH", "/v1/apps/\(appID)", ["data": ["type": "apps", "id": appID, "attributes": ["contentRightsDeclaration": value]]])
+        print("✓ Content Rights saved: \(env["ANSWER"] == "yes" ? "Yes, it contains third-party content" : "No third-party content")")
+        exit(0)
+    } catch { print("✗ \(error)"); exit(1) }
+}
+
 if env["MODE"] == "sign" { // used by upload-app.sh: App Store signing for the app, created with the API key (no device needed)
     let out = env["OUT"] ?? "."
     func save(_ name: String, _ b64: String) throws { try Data(base64Encoded: b64)!.write(to: URL(fileURLWithPath: out + "/" + name)) }
