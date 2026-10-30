@@ -121,7 +121,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
     // MARK: start-up check
     // If the game hasn't shown its menu 6 seconds after launch, a small panel says what happened, so a stuck start can be fixed.
 
-    static let appBuild = "e987528"   // replaced with the release's version by tools/build-app-update.sh
+    static let appBuild = "755ba8b"   // replaced with the release's version by tools/build-app-update.sh
     private var ready = false
     private var events: [String] = []
     private var panel: UIView?
@@ -413,7 +413,7 @@ final class Store {
 
     func loadProducts() async {
         guard products.isEmpty, let list = try? await Product.products(for: Store.ids) else { return }
-        for product in list where products[base(product.id)] == nil || product.id.hasSuffix(".v2") { products[base(product.id)] = product } // the ".v2" pack wins when both exist
+        for product in list where products[Store.base(product.id)] == nil || product.id.hasSuffix(".v2") { products[Store.base(product.id)] = product } // the ".v2" pack wins when both exist
     }
 
     func refresh(push: Bool = false) async {

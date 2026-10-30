@@ -413,7 +413,7 @@ final class Store {
 
     func loadProducts() async {
         guard products.isEmpty, let list = try? await Product.products(for: Store.ids) else { return }
-        for product in list where products[base(product.id)] == nil || product.id.hasSuffix(".v2") { products[base(product.id)] = product } // the ".v2" pack wins when both exist
+        for product in list where products[Store.base(product.id)] == nil || product.id.hasSuffix(".v2") { products[Store.base(product.id)] = product } // the ".v2" pack wins when both exist
     }
 
     func refresh(push: Bool = false) async {
