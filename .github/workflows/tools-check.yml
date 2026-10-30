@@ -3,7 +3,7 @@ name: Screenshot fixer check
 on:
   push:
     branches: [claude/ducky-run-game]
-    paths: ['tools/fix_iap_screenshots.swift', 'fix-screenshots.sh', 'upload-app.sh', 'submit-app.sh', '.github/workflows/tools-check.yml']
+    paths: ['tools/fix_iap_screenshots.swift', 'fix-screenshots.sh', 'upload-app.sh', 'submit-app.sh', 'fill-app.sh', '.github/workflows/tools-check.yml']
   workflow_dispatch:
 jobs:
   check:

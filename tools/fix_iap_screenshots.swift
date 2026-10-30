@@ -128,6 +128,156 @@ if env["MODE"] == "sign" { // used by upload-app.sh: App Store signing for the a
         exit(0)
     } catch { print("✗ \(error)"); exit(1) }
 }
+if env["MODE"] == "fill" { // used by fill-app.sh: everything on the 1.0 page that the API can set
+    let siteBase = env["SITE"] ?? ""
+    let privacyURL = siteBase + "/privacy.html", supportURL = siteBase + "/index.html"
+    let desc = """
+Two balls. One tap.
+
+Mirror Drop is a calm-looking, fast-playing arcade game. Every tap moves both balls at once, mirrored across the screen. At the edge, they turn around. Thread them through the falling blocks, grab gems to build your combo, and every ten seconds the world speeds up.
+
+A SKY THAT'S ALIVE
+The weather changes while you play, and each event looks and feels different: shimmering northern lights, storms with lightning that charges the blocks, meteor showers under a real moon, rolling fog, hail, wind gusts that push you off course, heat haze and blinding sun.
+
+YOUR PACE
+• Six difficulties, from Chill to Impossible
+• Normal races to 1,000, Infinite never ends, and Zen is a calm run you can't lose
+• A Daily Challenge: one run a day, the same for everyone, with its own leaderboard
+• Two or three columns per side
+• Game Center leaderboards for every difficulty
+• Share your best with a beautiful score card
+
+FREE TO PLAY, FAIR TO PAY
+Easy and Normal are free forever. Unlock more with a one-time pack: no subscription, no ads, nothing to grind. Supporters get the Golden Run: beat your best and the balls turn to liquid gold.
+
+PLAYS ANYWHERE
+No Wi-Fi needed, no account, no tracking. Smooth on every iPhone, respects Reduce Motion, and pauses itself the moment you leave.
+
+One tap to learn. One more run, every time.
+"""
+    func step(_ label: String, _ f: () async throws -> Void) async { do { try await f(); print("✓ \(label)") } catch { print("✗ \(label): \(error)") } }
+    do {
+        var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []
+        if apps.isEmpty { apps = ((try await call("GET", "/v1/apps?limit=200"))["data"] as? [[String: Any]] ?? []).filter { (attrs($0)["name"] as? String ?? "").lowercased().contains("mirror") } }
+        guard let app = apps.first, let appID = app["id"] as? String else { print("✗ No Mirror Drop app found."); exit(1) }
+        let versions = (try await call("GET", "/v1/apps/\(appID)/appStoreVersions?filter[platform]=IOS&limit=20"))["data"] as? [[String: Any]] ?? []
+        guard let ver = versions.first(where: { (attrs($0)["appStoreState"] as? String ?? "") == "PREPARE_FOR_SUBMISSION" }) ?? versions.first, let verID = ver["id"] as? String else { print("✗ No version 1.0 found."); exit(1) }
+        let infos = (try await call("GET", "/v1/apps/\(appID)/appInfos"))["data"] as? [[String: Any]] ?? []
+        let info = infos.first(where: { ["PREPARE_FOR_SUBMISSION", "WAITING_FOR_REVIEW"].contains(attrs($0)["appStoreState"] as? String ?? attrs($0)["state"] as? String ?? "") }) ?? infos.first
+        guard let infoID = info?["id"] as? String else { print("✗ No app information found."); exit(1) }
+
+        await step("category: Games → Arcade") {
+            _ = try await call("PATCH", "/v1/appInfos/\(infoID)", ["data": ["type": "appInfos", "id": infoID, "relationships": [
+                "primaryCategory": ["data": ["type": "appCategories", "id": "GAMES"]], "primarySubcategoryOne": ["data": ["type": "appCategories", "id": "GAMES_ARCADE"]],
+                "secondaryCategory": ["data": ["type": "appCategories", "id": "GAMES"]], "secondarySubcategoryOne": ["data": ["type": "appCategories", "id": "GAMES_CASUAL"]]]]])
+        }
+        await step("privacy policy URL and subtitle") {
+            let locs = (try await call("GET", "/v1/appInfos/\(infoID)/appInfoLocalizations"))["data"] as? [[String: Any]] ?? []
+            guard let loc = locs.first(where: { (attrs($0)["locale"] as? String ?? "").hasPrefix("en") }) ?? locs.first, let lid = loc["id"] as? String else { throw AppleError(description: "no app info language") }
+            _ = try await call("PATCH", "/v1/appInfoLocalizations/\(lid)", ["data": ["type": "appInfoLocalizations", "id": lid, "attributes": ["privacyPolicyUrl": privacyURL, "subtitle": "Two balls. One tap."]]])
+        }
+        var verLocID = ""
+        await step("description, keywords, support and marketing URLs, promotional text") {
+            let locs = (try await call("GET", "/v1/appStoreVersions/\(verID)/appStoreVersionLocalizations"))["data"] as? [[String: Any]] ?? []
+            guard let loc = locs.first(where: { (attrs($0)["locale"] as? String ?? "").hasPrefix("en") }) ?? locs.first, let lid = loc["id"] as? String else { throw AppleError(description: "no version language") }
+            verLocID = lid
+            _ = try await call("PATCH", "/v1/appStoreVersionLocalizations/\(lid)", ["data": ["type": "appStoreVersionLocalizations", "id": lid, "attributes": [
+                "description": desc, "keywords": "offline,arcade,reflex,dodge,one tap,casual,weather,aurora,storm,mirror,endless,daily,zen,balls",
+                "supportUrl": supportURL, "marketingUrl": supportURL,
+                "promotionalText": "Two balls, one tap, eight living skies. Dodge falling blocks through storms, fog and the northern lights. No ads, no tracking, plays fully offline."]]])
+        }
+        await step("copyright") {
+            _ = try await call("PATCH", "/v1/appStoreVersions/\(verID)", ["data": ["type": "appStoreVersions", "id": verID, "attributes": ["copyright": "2026 " + (env["OWNER"] ?? "")]]])
+        }
+        await step("App Review contact and notes") {
+            let names = (env["OWNER"] ?? "").split(separator: " ", maxSplits: 1).map(String.init)
+            let a: [String: Any] = ["contactFirstName": names.first ?? "", "contactLastName": names.count > 1 ? names[1] : (names.first ?? ""),
+                "contactPhone": env["PHONE"] ?? "", "contactEmail": env["EMAIL"] ?? "", "demoAccountRequired": false,
+                "notes": "Mirror Drop is free; Easy and Normal are always playable. One-time packs unlock more difficulties, modes and weather (Plus, Pro, Max, Supporter, and upgrades that cost the difference). To see the packs, tap a locked difficulty on the slider, the Daily Challenge button, or the profile picture, then Unlock. Restore Purchases is on the same screen. The game needs no internet and no account."]
+            if let d = dataOf((try? await call("GET", "/v1/appStoreVersions/\(verID)/appStoreReviewDetail")) ?? [:]), let did = d["id"] as? String {
+                _ = try await call("PATCH", "/v1/appStoreReviewDetails/\(did)", ["data": ["type": "appStoreReviewDetails", "id": did, "attributes": a]])
+            } else {
+                _ = try await call("POST", "/v1/appStoreReviewDetails", ["data": ["type": "appStoreReviewDetails", "attributes": a,
+                    "relationships": ["appStoreVersion": ["data": ["type": "appStoreVersions", "id": verID]]]]])
+            }
+        }
+        await step("age rating: none of the content questions apply (4+)") {
+            let d = dataOf((try? await call("GET", "/v1/appInfos/\(infoID)/ageRatingDeclaration")) ?? [:]) ?? dataOf(try await call("GET", "/v1/appStoreVersions/\(verID)/ageRatingDeclaration"))
+            guard let aid = d?["id"] as? String else { throw AppleError(description: "no age rating found") }
+            let keys = ["alcoholTobaccoOrDrugUseOrReferences", "sexualContentOrNudity", "profanityOrCrudeHumor", "advertising", "gamblingSimulated", "contests",
+                        "violenceCartoonOrFantasy", "messagingAndChat", "gambling", "sexualContentGraphicAndNudity", "healthOrWellnessTopics", "gunsOrOtherWeapons",
+                        "violenceRealisticProlongedGraphicOrSadistic", "horrorOrFearThemes", "matureOrSuggestiveThemes", "socialMedia", "medicalOrTreatmentInformation",
+                        "userGeneratedContent", "lootBox", "ageAssurance", "parentalControls", "unrestrictedWebAccess", "violenceRealistic"]
+            var bad: [String] = []
+            for k in keys { // each is either a level ("NONE") or a yes/no question (false), depending on the question
+                let body: (Any) -> [String: Any] = { v in ["data": ["type": "ageRatingDeclarations", "id": aid, "attributes": [k: v]]] }
+                if (try? await call("PATCH", "/v1/ageRatingDeclarations/\(aid)", body("NONE"))) == nil, (try? await call("PATCH", "/v1/ageRatingDeclarations/\(aid)", body(false))) == nil { bad.append(k) }
+            }
+            if !bad.isEmpty { throw AppleError(description: "couldn't answer: " + bad.joined(separator: ", ")) }
+        }
+        await step("8 App Store screenshots (iPhone 6.9\")") {
+            guard !verLocID.isEmpty else { throw AppleError(description: "no version language") }
+            let sets = (try await call("GET", "/v1/appStoreVersionLocalizations/\(verLocID)/appScreenshotSets"))["data"] as? [[String: Any]] ?? []
+            var setID = sets.first(where: { (attrs($0)["screenshotDisplayType"] as? String) == "APP_IPHONE_67" })?["id"] as? String
+            if let sid = setID {
+                let have = (try await call("GET", "/v1/appScreenshotSets/\(sid)/appScreenshots"))["data"] as? [[String: Any]] ?? []
+                if have.count >= 8 { return }
+                for h in have { _ = try? await call("DELETE", "/v1/appScreenshots/\(h["id"] as! String)") }
+            } else {
+                setID = dataOf(try await call("POST", "/v1/appScreenshotSets", ["data": ["type": "appScreenshotSets", "attributes": ["screenshotDisplayType": "APP_IPHONE_67"],
+                    "relationships": ["appStoreVersionLocalization": ["data": ["type": "appStoreVersionLocalizations", "id": verLocID]]]]]))?["id"] as? String
+            }
+            guard let sid = setID else { throw AppleError(description: "couldn't make a screenshot set") }
+            for file in shots {
+                let bytes = try Data(contentsOf: URL(fileURLWithPath: file))
+                let res = dataOf(try await call("POST", "/v1/appScreenshots", ["data": ["type": "appScreenshots",
+                    "attributes": ["fileName": (file as NSString).lastPathComponent, "fileSize": bytes.count],
+                    "relationships": ["appScreenshotSet": ["data": ["type": "appScreenshotSets", "id": sid]]]]]))!
+                for op in attrs(res)["uploadOperations"] as? [[String: Any]] ?? [] {
+                    let off = op["offset"] as? Int ?? 0, len = op["length"] as? Int ?? bytes.count
+                    var r = URLRequest(url: URL(string: op["url"] as! String)!); r.httpMethod = op["method"] as? String ?? "PUT"
+                    for h in op["requestHeaders"] as? [[String: String]] ?? [] { r.setValue(h["value"], forHTTPHeaderField: h["name"] ?? "") }
+                    _ = try await URLSession.shared.upload(for: r, from: bytes.subdata(in: off..<min(off + len, bytes.count)))
+                }
+                let md5 = Insecure.MD5.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
+                _ = try await call("PATCH", "/v1/appScreenshots/\(res["id"] as! String)", ["data": ["type": "appScreenshots", "id": res["id"] as! String,
+                    "attributes": ["uploaded": true, "sourceFileChecksum": md5]]])
+                print("   uploaded \((file as NSString).lastPathComponent)")
+            }
+        }
+        await step("Game Center for this version") {
+            var gcd = dataOf((try? await call("GET", "/v1/apps/\(appID)/gameCenterDetail")) ?? [:])?["id"] as? String
+            if gcd == nil {
+                gcd = dataOf(try await call("POST", "/v1/gameCenterDetails", ["data": ["type": "gameCenterDetails",
+                    "relationships": ["app": ["data": ["type": "apps", "id": appID]]]]]))?["id"] as? String
+            }
+            do { _ = try await call("POST", "/v1/gameCenterAppVersions", ["data": ["type": "gameCenterAppVersions",
+                    "relationships": ["appStoreVersion": ["data": ["type": "appStoreVersions", "id": verID]]]]])
+            } catch { if !"\(error)".contains("409") { throw error } }
+            guard let detail = gcd else { return }
+            let boards: [(String, String)] = [("mirrordrop.chill", "Chill"), ("mirrordrop.easy", "Easy"), ("mirrordrop.normal", "Normal"), ("mirrordrop.hard", "Hard"),
+                ("mirrordrop.insane", "Insane"), ("mirrordrop.impossible", "Impossible"), ("mirrordrop.infinite.chill", "Chill · Infinite"),
+                ("mirrordrop.infinite.easy", "Easy · Infinite"), ("mirrordrop.infinite.normal", "Normal · Infinite"), ("mirrordrop.infinite.hard", "Hard · Infinite"),
+                ("mirrordrop.infinite.insane", "Insane · Infinite"), ("mirrordrop.infinite.impossible", "Impossible · Infinite"), ("mirrordrop.daily", "Daily Challenge")]
+            let existing = Set(((try? await call("GET", "/v1/gameCenterDetails/\(detail)/gameCenterLeaderboards?limit=200"))?["data"] as? [[String: Any]] ?? []).compactMap { attrs($0)["vendorIdentifier"] as? String })
+            for (vid, name) in boards where !existing.contains(vid) {
+                do {
+                    let lb = dataOf(try await call("POST", "/v1/gameCenterLeaderboards", ["data": ["type": "gameCenterLeaderboards",
+                        "attributes": ["referenceName": name, "vendorIdentifier": vid, "defaultFormatter": "INTEGER", "submissionType": "BEST_SCORE", "scoreSortType": "DESC",
+                                       "scoreRangeStart": "0", "scoreRangeEnd": "1000000"],
+                        "relationships": ["gameCenterDetail": ["data": ["type": "gameCenterDetails", "id": detail]]]]]))!
+                    _ = try? await call("POST", "/v1/gameCenterLeaderboardLocalizations", ["data": ["type": "gameCenterLeaderboardLocalizations",
+                        "attributes": ["locale": "en-US", "name": name], "relationships": ["gameCenterLeaderboard": ["data": ["type": "gameCenterLeaderboards", "id": lb["id"] as! String]]]]])
+                    print("   leaderboard \(name)")
+                } catch { print("   (leaderboard \(name) not added: \(error))") }
+            }
+        }
+        print("\nLeft for you on the website (Apple has no API for these two):")
+        print("  1. App Privacy → Get Started → \"No, we do not collect data from this app\" → Save → Publish")
+        print("  2. App Information → Content Rights → answer the question about third-party content")
+        exit(0)
+    } catch { print("✗ \(error)"); exit(1) }
+}
 if env["MODE"] == "submit" { // used by submit-app.sh: build on 1.0, packs into the review, version submitted
     do {
         var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []
