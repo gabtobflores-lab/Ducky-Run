@@ -38,16 +38,16 @@ void main(){
   /* ---- 1. shear and frequency remap ---- */
   vec2 uv=base;
   uv.x+=uv.y*.55;                                                  /* diagonal structural tilt (about 20 degrees on a phone) */
-  uv.x*=2.2;                                                       /* horizontal compression */
-  uv.y*=.08;                                                       /* vertical stretch: features become tall ribbons */
+  uv.x*=1.8;                                                       /* horizontal compression */
+  uv.y*=.03;                                                       /* strong vertical stretch: tall curtains */
 
   /* ---- 2. domain warping: a slow macro flow field bends the sheared grid ---- */
   vec2 warp=vec2(simplex(base*1.+vec2(t*.03,t*.015)),
                  simplex(base*.8-vec2(t*.01,t*.04)));
   vec2 warp2=vec2(simplex(base*2.1+warp*.6+vec2(-t*.02,t*.025)),     /* a second pass, warped by the first: folds inside folds */
                   simplex(base*1.7-warp*.5+vec2(t*.035,-t*.01)));
-  uv.x+=warp.x*.35+warp2.x*.12;
-  uv.y+=(warp.y*.12+warp2.y*.04)*.1;                               /* the vertical warp is scaled with the 0.08 stretch, so the ribbons stay tall */
+  uv.x+=warp.x*.12+warp2.x*.05;                                    /* gentle bending, no vortex */
+  uv.y+=(warp.y*.04+warp2.y*.015)*.4;
 
   /* ---- 3a. one detailed grayscale intensity mask ---- */
   float broad=sfbm(uv+vec2(t*.012,t*.005));                         /* the curtains */
@@ -55,9 +55,9 @@ void main(){
   float I=broad*(.6+.4*fine);
   /* shape the field over the screen: brightest through the centre-left, fading towards the top, a glow around the player low down */
   float colW=exp(-pow((P.x-.38)/.42,2.));
-  float vert=smoothstep(1.02,.35,base.y)*(.75+.25*smoothstep(0.,.25,base.y));
+  float vert=smoothstep(1.15,.55,base.y)*(.8+.2*smoothstep(0.,.25,base.y));   /* the light rises well into the upper half */
   I*=mix(.7,1.3,colW)*vert;
-  I=clamp((I-.2)/.5,0.,1.);                                       /* normalise to 0..1 */
+  I=clamp((I-.16)/.5,0.,1.);                                       /* normalise to 0..1 */
 
   /* ---- 3b. colour by luminance, in OKLab ---- */
   vec3 cSky=lab(vec3(2.,11.,30.)),    /* #020B1E midnight indigo */
