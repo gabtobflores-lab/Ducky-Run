@@ -39,25 +39,31 @@ vec2 sheet(vec2 q,float depth,float hem0,float seed){
   float L2=sfbm(s*vec2(2.6,1.)+vec2(-.038*t+.3*sin(t*.23+seed),0.)+seed*3.); /* fine shimmer that tears and regroups */
   float rays=pow(clamp(L1*(.35+.65*L2)*1.55,0.,1.),2.2);                   /* fine threads, with dark gaps between */
   float soft=smoothstep(.36,.7,sfbm(vec2(x*3.2+t*.02,seed*1.7)));     /* curtains break apart: real dark sky between them */        /* the sheet is brighter in some stretches than others */
-  float up=exp(-max(d,0.)/(.26*depth)),down=exp(-pow(max(-d,0.)/.15,1.3));
+  float up=exp(-max(d,0.)/(.3*depth)),down=exp(-pow(max(-d,0.)/.15,1.3));
   float body=up*down;
   return vec2(body*soft*(.22*soft+rays*1.5),d);}
-void main(){vec2 p=UV();float asp=res.x/res.y;vec2 q=vec2(p.x*asp,1.-p.y);
-  /* night sky: near-black overhead, deep indigo low down, a faint violet glow along the horizon */
-  vec3 sky=mix(vec3(.004,.008,.022),vec3(.02,.03,.09),smoothstep(1.,.25,q.y));
-  sky+=vec3(.07,.04,.2)*blob(vec2(p.x,q.y),vec2(.65,-.05),vec2(.7,.3));
-  /* colour by height above the hem, mixed in OKLab: violet-blue below, cyan at the hem, teal-green above, fading out */
-  vec3 cLow=lab(vec3(60.,70.,230.)),cHem=lab(vec3(120.,255.,250.)),cMid=lab(vec3(0.,215.,225.)),cTop=lab(vec3(20.,170.,130.));
-  vec3 lin=toLin(sky);float lum=0.;
+void main(){vec2 p=UV();float asp=res.x/res.y;vec2 q=vec2(p.x*asp,1.-p.y);   /* q.y: 0 = bottom, 1 = top */
+  /* 1. one detailed grayscale intensity map: three folded curtains of rays, summed */
+  float I=0.;
   for(int i=0;i<3;i++){float fi=float(i);
-    float depth=1.-fi*.22,hem0=.3+fi*.14+.04*sin(t*.03+fi*2.)+.05*sin(q.x*1.2+fi*3.+t*.02);   /* each curtain hangs at its own height and slant */
-    vec2 r=sheet(q,depth,hem0,fi*7.3+1.);
-    float k=r.y;
-    vec3 c=k<0.?mix(cHem,cLow,smoothstep(0.,-.12,k)):k<.12?mix(cHem,cMid,k/.12):mix(cMid,cTop,smoothstep(.1,.36,k));
-    float a=r.x*(1.-fi*.25);                                               /* nearer sheets are brighter */
-    lin+=fromOklab(c)*a*1.45;lum+=a;}
-  lin=lin/(1.+lin*.35);                                                    /* gentle highlight roll-off: bright, never clipped */
+    float depth=1.-fi*.22,hem0=.16+fi*.1+.04*sin(t*.03+fi*2.)+.05*sin(q.x*1.2+fi*3.+t*.02);
+    I+=sheet(q,depth,hem0,fi*7.3+1.).x*(1.-fi*.25);}
+  /* the lower third is a pool of light around the player: a bright, slowly breathing glow along the horizon */
+  float pool=exp(-pow(q.y/.3,2.))*(.55+.25*sfbm(vec2(q.x*1.4+t*.02,t*.01)));
+  I=I*1.35+pool*.7;
+  /* 3. vignette: light gathers in the centre-left column and falls off with an inverse-square curve towards the sides and the top */
+  vec2 v=vec2((p.x-.44)/.75,max(q.y-.35,0.)/1.1);
+  float vig=1./(1.+2.2*dot(v,v));vig*=vig;
+  I*=vig;
+  /* 2. colour chosen by brightness, not position (OKLab): dark sky -> violet envelope -> system blue -> neon cyan only in the hottest cores */
+  vec3 cSky=lab(vec3(2.,11.,30.)),cVio=lab(vec3(58.,0.,125.)),cBlu=lab(vec3(0.,85.,255.)),cCya=lab(vec3(0.,240.,210.));
+  float n=1.-exp(-I*1.9);                                                     /* intensity, softly compressed to 0..1 */
+  vec3 c=n<.25?mix(cSky,cVio,smoothstep(0.,.25,n)):n<.55?mix(cVio,cBlu,smoothstep(.25,.55,n)):mix(cBlu,cCya,smoothstep(.55,.9,n));
+  vec3 lin=fromOklab(c);
+  /* the backdrop: pitch-dark midnight indigo at the top, lifting a little towards the glowing horizon */
+  vec3 sky=toLin(vec3(2.,11.,30.)/255.)*mix(1.,2.2,smoothstep(.7,0.,q.y))*mix(.5,1.,smoothstep(1.,.75,q.y));
+  lin=max(lin,sky);
   vec3 col=toSrgb(lin);
-  col+=starfield(vec2(q.x,p.y),.28)*(1.-smoothstep(.0,.35,lum));
-  col+=(hs(gl_FragCoord.xy+fract(t*7.)*61.)-.5)*.01;                        /* fine grain against banding */
+  col+=starfield(vec2(q.x,p.y),.28)*(1.-smoothstep(.0,.3,n))*smoothstep(.25,.6,q.y);
+  col+=(hs(gl_FragCoord.xy+fract(t*7.)*61.)-.5)*.01;                          /* fine grain against banding */
   gl_FragColor=vec4(col,1.);}
