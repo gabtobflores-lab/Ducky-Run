@@ -12,13 +12,17 @@ do { key = try P256.Signing.PrivateKey(pemRepresentation: try String(contentsOfF
 catch { print("✗ Couldn't read the API key file: \(error.localizedDescription)"); exit(1) }
 
 func b64url(_ d: Data) -> String { d.base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "") }
+var individualKey = issuer.isEmpty // Apple's "Individual" keys sign in without an Issuer ID
 func token() throws -> String {
-    let now = Int(Date().timeIntervalSince1970)
+    let now = Int(Date().timeIntervalSince1970) - 30 // a little earlier, in case the Mac's clock runs slightly fast
     let head = try JSONSerialization.data(withJSONObject: ["alg": "ES256", "kid": keyID, "typ": "JWT"])
-    let body = try JSONSerialization.data(withJSONObject: ["iss": issuer, "iat": now, "exp": now + 1100, "aud": "appstoreconnect-v1"])
+    let claims: [String: Any] = individualKey ? ["sub": "user", "iat": now, "exp": now + 1100, "aud": "appstoreconnect-v1"]
+                                              : ["iss": issuer, "iat": now, "exp": now + 1100, "aud": "appstoreconnect-v1"]
+    let body = try JSONSerialization.data(withJSONObject: claims)
     let msg = b64url(head) + "." + b64url(body)
     return msg + "." + b64url(try key.signature(for: Data(msg.utf8)).rawRepresentation)
 }
+var triedIndividual = false
 struct AppleError: Error, CustomStringConvertible { let description: String }
 func call(_ method: String, _ path: String, _ body: Any? = nil) async throws -> [String: Any] {
     var req = URLRequest(url: URL(string: path.hasPrefix("http") ? path : "https://api.appstoreconnect.apple.com" + path)!)
@@ -28,6 +32,7 @@ func call(_ method: String, _ path: String, _ body: Any? = nil) async throws -> 
     if let body { req.httpBody = try JSONSerialization.data(withJSONObject: body) }
     let (data, resp) = try await URLSession.shared.data(for: req)
     let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+    if code == 401 && !individualKey && !triedIndividual { triedIndividual = true; individualKey = true; return try await call(method, path, body) } // maybe an Individual key
     let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
     if code >= 300 {
         let errs = (json["errors"] as? [[String: Any]] ?? []).map { "\($0["code"] ?? "") \($0["detail"] ?? $0["title"] ?? "")" }

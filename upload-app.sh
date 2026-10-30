@@ -7,15 +7,18 @@ BASE="https://raw.githubusercontent.com/gabtobflores-lab/ducky-run/claude/ducky-
 SHA=$(curl -fsSL -H "Accept: application/vnd.github.sha" "https://api.github.com/repos/gabtobflores-lab/ducky-run/commits/claude/ducky-run-game" 2>/dev/null)
 [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] && BASE="https://raw.githubusercontent.com/gabtobflores-lab/ducky-run/$SHA"
 CFG="$HOME/.mirrordrop"; mkdir -p "$CFG"
-ask() { # $1 file, $2 question: asks once, then remembers the answer
+ask() { # $1 file, $2 question, $3 pattern the answer must match: asks once (on screen), then remembers it
   local v=""; [ -s "$CFG/$1" ] && v=$(cat "$CFG/$1")
-  if [ -z "$v" ]; then echo "$2"; read -r v < /dev/tty; v=$(echo "$v" | tr -d '[:space:]'); echo "$v" > "$CFG/$1"; fi
-  echo "$v"; }
+  until [[ "$v" =~ $3 ]]; do
+    echo "$2" > /dev/tty; read -r v < /dev/tty; v=$(echo "$v" | tr -d '[:space:]')
+    [[ "$v" =~ $3 ]] || echo "That doesn't look right, try again." > /dev/tty
+  done
+  echo "$v" > "$CFG/$1"; echo "$v"; }
 
 P8=$(ls -t "$HOME"/Downloads/AuthKey_*.p8 "$HOME"/Desktop/AuthKey_*.p8 2>/dev/null | head -1)
 [ -n "$P8" ] || { echo "I can't find your API key file (AuthKey_….p8) in Downloads. Download it from App Store Connect → Users and Access → Integrations → App Store Connect API, then run this again."; exit 1; }
 KEY_ID=$(basename "$P8" .p8); KEY_ID=${KEY_ID#AuthKey_}
-ISSUER=$(ask issuer "Paste the Issuer ID (App Store Connect → Users and Access → Integrations, above the keys list), then press Return:" | tail -1)
+ISSUER=$(ask issuer "Paste the Issuer ID (App Store Connect → Users and Access → Integrations → App Store Connect API, shown above the Team Keys list; a long code with dashes), then press Return:" '^[0-9a-fA-F-]{36}$')
 
 # the Mirror Drop project (the one with index.html and MirrorDropApp.swift, not the native test one)
 PROJ=""
@@ -26,14 +29,14 @@ done < <({ mdfind -name MirrorDropApp.swift 2>/dev/null; find "$HOME/Downloads" 
 PROJ=$(cd "$(dirname "$PROJ")" && pwd)/$(basename "$PROJ")
 echo "Project: $PROJ"
 TEAM=$(grep -m1 -o 'DEVELOPMENT_TEAM = [A-Z0-9]\{10\}' "$PROJ/project.pbxproj" | awk '{print $3}')
-[ -n "$TEAM" ] || TEAM=$(ask team "Paste your Team ID (developer.apple.com/account → Membership details, 10 characters), then press Return:" | tail -1)
+[ -n "$TEAM" ] || TEAM=$(ask team "Paste your Team ID (developer.apple.com/account → Membership details, 10 letters and numbers), then press Return:" '^[A-Z0-9]{10}$')
 SCHEME=$(perl -0ne 'if (/\w{24} \/\* ([^*]+?) \*\/ = \{\s*isa = PBXNativeTarget;/) { print "$1" }' "$PROJ/project.pbxproj")
 
 # the bundle ID must match the app in App Store Connect: ask Apple for it
 W=$(mktemp -d)
 curl -fsSL "$BASE/tools/fix_iap_screenshots.swift" -o "$W/asc.swift" || { echo "Download failed. Check your internet and try again."; exit 1; }
 echo "Asking App Store Connect for the app's bundle ID…"
-BUNDLE=$(MODE=bundle KEY_ID="$KEY_ID" ISSUER_ID="$ISSUER" P8="$P8" SHOTS="" swift "$W/asc.swift") || { echo "App Store Connect didn't answer. If it mentions authentication, delete ~/.mirrordrop/issuer and run this again to re-enter the Issuer ID."; exit 1; }
+BUNDLE=$(MODE=bundle KEY_ID="$KEY_ID" ISSUER_ID="$ISSUER" P8="$P8" SHOTS="" swift "$W/asc.swift") || { rm -f "$CFG/issuer"; echo; echo "Apple didn't accept the key. Run this line again and paste the Issuer ID carefully."; echo "Also check that the newest AuthKey file in Downloads is the key you just made (the old one can be deleted)."; exit 1; }
 BUILD=$(date +%Y%m%d%H%M)
 echo "App: $BUNDLE · team $TEAM · version 1.0 ($BUILD)"
 AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$P8" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
