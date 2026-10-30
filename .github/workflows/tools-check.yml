@@ -1,0 +1,22 @@
+# Checks the Mac-side screenshot fixer: it must compile, read a .p8 key, sign a request and get Apple's answer.
+name: Screenshot fixer check
+on:
+  push:
+    branches: [claude/ducky-run-game]
+    paths: ['tools/fix_iap_screenshots.swift', 'fix-screenshots.sh', '.github/workflows/tools-check.yml']
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile
+        run: swiftc -typecheck tools/fix_iap_screenshots.swift
+      - name: Run with a throwaway key (Apple must answer 401)
+        run: |
+          openssl ecparam -name prime256v1 -genkey -noout | openssl pkcs8 -topk8 -nocrypt -out AuthKey_TEST000000.p8
+          head -1 AuthKey_TEST000000.p8
+          out=$(KEY_ID=TEST000000 ISSUER_ID=00000000-0000-0000-0000-000000000000 P8=AuthKey_TEST000000.p8 SHOTS=appstore/review/shot-1206x2622.png swift tools/fix_iap_screenshots.swift 2>&1 || true)
+          echo "$out"
+          echo "$out" | grep -q "Apple said (401)"
