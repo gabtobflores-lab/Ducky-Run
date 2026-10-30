@@ -121,6 +121,60 @@ if env["MODE"] == "sign" { // used by upload-app.sh: App Store signing for the a
         exit(0)
     } catch { print("✗ \(error)"); exit(1) }
 }
+if env["MODE"] == "submit" { // used by submit-app.sh: build on 1.0, packs into the review, version submitted
+    do {
+        var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []
+        if apps.isEmpty { apps = ((try await call("GET", "/v1/apps?limit=200"))["data"] as? [[String: Any]] ?? []).filter { (attrs($0)["name"] as? String ?? "").lowercased().contains("mirror") } }
+        guard let app = apps.first, let appID = app["id"] as? String else { print("✗ No Mirror Drop app found."); exit(1) }
+        print("App: \(attrs(app)["name"] ?? "")")
+        // the version waiting to be submitted
+        let versions = (try await call("GET", "/v1/apps/\(appID)/appStoreVersions?filter[platform]=IOS&limit=20"))["data"] as? [[String: Any]] ?? []
+        let editable = ["PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED", "INVALID_BINARY"]
+        guard let ver = versions.first(where: { editable.contains(attrs($0)["appStoreState"] as? String ?? attrs($0)["appVersionState"] as? String ?? "") }) ?? versions.first,
+              let verID = ver["id"] as? String else { print("✗ No app version found. Add version 1.0 in App Store Connect first."); exit(1) }
+        print("Version \(attrs(ver)["versionString"] ?? "") (\(attrs(ver)["appStoreState"] ?? attrs(ver)["appVersionState"] ?? ""))")
+        // newest processed build onto the version
+        let builds = (try await call("GET", "/v1/builds?filter[app]=\(appID)&filter[processingState]=VALID&sort=-uploadedDate&limit=1"))["data"] as? [[String: Any]] ?? []
+        guard let build = builds.first, let buildID = build["id"] as? String else { print("✗ No processed build yet. Wait a few minutes and run this again."); exit(1) }
+        _ = try await call("PATCH", "/v1/appStoreVersions/\(verID)/relationships/build", ["data": ["type": "builds", "id": buildID]])
+        print("✓ build \(attrs(build)["version"] ?? "") attached")
+        // every pack that is ready goes into the review together with the version
+        let iaps = (try await call("GET", "/v1/apps/\(appID)/inAppPurchasesV2?limit=200"))["data"] as? [[String: Any]] ?? []
+        var notReady: [String] = []
+        for iap in iaps {
+            let pid = attrs(iap)["productId"] as? String ?? "", state = attrs(iap)["state"] as? String ?? ""
+            if state == "READY_TO_SUBMIT" {
+                do { _ = try await call("POST", "/v1/inAppPurchaseSubmissions", ["data": ["type": "inAppPurchaseSubmissions",
+                        "relationships": ["inAppPurchaseV2": ["data": ["type": "inAppPurchases", "id": iap["id"] as! String]]]]])
+                     print("✓ \(pid) added to the review")
+                } catch { print("✗ \(pid): \(error)"); notReady.append(pid) }
+            } else if ["WAITING_FOR_REVIEW", "IN_REVIEW", "APPROVED"].contains(state) {
+                print("✓ \(pid) already in review (\(state))")
+            } else { print("✗ \(pid) is \(state): fix it in App Store Connect first"); notReady.append(pid) }
+        }
+        if !notReady.isEmpty && env["FORCE"] != "1" {
+            print("\nNot submitting yet: \(notReady.count) pack(s) aren't ready (above). Fix them, then run this again.")
+            print("To submit the app without them anyway, run it with FORCE=1."); exit(1)
+        }
+        // the review submission: reuse an open draft, or start one
+        let drafts = (try await call("GET", "/v1/reviewSubmissions?filter[app]=\(appID)&filter[platform]=IOS&filter[state]=READY_FOR_REVIEW"))["data"] as? [[String: Any]] ?? []
+        var subID = drafts.first?["id"] as? String
+        if subID == nil {
+            subID = dataOf(try await call("POST", "/v1/reviewSubmissions", ["data": ["type": "reviewSubmissions", "attributes": ["platform": "IOS"],
+                "relationships": ["app": ["data": ["type": "apps", "id": appID]]]]]))?["id"] as? String
+        }
+        guard let sub = subID else { print("✗ Couldn't start a review submission."); exit(1) }
+        do { _ = try await call("POST", "/v1/reviewSubmissionItems", ["data": ["type": "reviewSubmissionItems", "relationships": [
+                "reviewSubmission": ["data": ["type": "reviewSubmissions", "id": sub]], "appStoreVersion": ["data": ["type": "appStoreVersions", "id": verID]]]]])
+        } catch { if !"\(error)".contains("already") { print("note: \(error)") } }
+        _ = try await call("PATCH", "/v1/reviewSubmissions/\(sub)", ["data": ["type": "reviewSubmissions", "id": sub, "attributes": ["submitted": true]]])
+        print("\n✅ Submitted to App Review. Apple usually replies within 1–2 days (watch your email and App Store Connect).")
+        exit(0)
+    } catch {
+        print("\n✗ Apple didn't accept the submission:\n\(error)")
+        print("\nThat usually names a field that's still empty on the 1.0 page. Fill it in, then run this again."); exit(1)
+    }
+}
 print("Connecting to App Store Connect…")
 do {
     var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []
