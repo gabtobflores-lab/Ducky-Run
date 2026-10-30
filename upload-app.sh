@@ -41,6 +41,13 @@ BUILD=$(date +%Y%m%d%H%M)
 echo "App: $BUNDLE · team $TEAM · version 1.0 ($BUILD)"
 AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$P8" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
 
+# xcodebuild needs the full Xcode app; if Terminal points at the Command Line Tools, use the Xcode app directly (no settings changed)
+if ! xcodebuild -version >/dev/null 2>&1; then
+  XC=$( { mdfind "kMDItemCFBundleIdentifier == 'com.apple.dt.Xcode'" 2>/dev/null; ls -d /Applications/Xcode*.app 2>/dev/null; } | grep -v "^$" | head -1)
+  [ -n "$XC" ] || { echo "✗ I can't find the Xcode app. Is it in Applications?"; exit 1; }
+  export DEVELOPER_DIR="$XC/Contents/Developer"
+fi
+echo "Using $(xcodebuild -version 2>/dev/null | head -1)"
 echo; echo "Archiving (a few minutes)…"
 ARCH="$HOME/Desktop/MirrorDrop-$BUILD.xcarchive"
 xcodebuild -project "$PROJ" -scheme "$SCHEME" -configuration Release -destination 'generic/platform=iOS' -archivePath "$ARCH" archive \
