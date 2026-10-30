@@ -1,11 +1,5 @@
-/* ---------------------------------------------------------------------------------------------
-   Mirror Drop aurora, written from scratch to four rules:
-   1. colour is blended in OKLab (perceptually uniform), never in RGB
-   2. noise is sampled in a stretched space (x * 3.5, y * 0.08) so it forms thin vertical rays, not blobs
-   3. two multi-octave simplex layers with unrelated velocities are multiplied, so the light tears and regroups
-   4. a steep power curve keeps true black between rays; animated dither removes banding on OLED
-   --------------------------------------------------------------------------------------------- */
-
+/* Mirror Drop aurora: original, drawn entirely in code. Three folded curtains of light at different depths,
+   fine vertical rays from stretched simplex noise, colour blended in OKLab, soft glow and grain. */
 /* ---- 2D simplex noise (Gustavson's skewed-triangle lattice), returns about -1..1 ---- */
 vec3 sxPerm(vec3 x){return mod(((x*34.)+1.)*x,289.);}
 float simplex(vec2 v){
@@ -30,41 +24,40 @@ vec3 toOklab(vec3 c){vec3 l=vec3(dot(c,vec3(.4122214708,.5363325363,.0514459929)
   return vec3(dot(l,vec3(.2104542553,.7936177850,-.0040720468)),dot(l,vec3(1.9779984951,-2.4285922050,.4505937099)),dot(l,vec3(.0259040371,.7827717662,-.8086757660)));}
 vec3 fromOklab(vec3 c){vec3 l=vec3(c.x+.3963377774*c.y+.2158037573*c.z,c.x-.1055613458*c.y-.0638541728*c.z,c.x-.0894841775*c.y-1.2914855480*c.z);l=l*l*l;
   return vec3(dot(l,vec3(4.0767416621,-3.3077115913,.2309699292)),dot(l,vec3(-1.2684380046,2.6097574011,-.3413193965)),dot(l,vec3(-.0041960863,-.7034186147,1.7076147010)));}
-/* the four anchors, converted once per pixel (cheap) */
-vec3 ramp(float n){
-  vec3 sky=toOklab(toLin(vec3(2.,11.,30.)/255.)),    /* #020B1E deep sky backdrop  */
-       halo=toOklab(toLin(vec3(58.,0.,125.)/255.)),  /* #3A007D ambient halo       */
-       core=toOklab(toLin(vec3(0.,85.,255.)/255.)),  /* #0055FF core glow          */
-       peak=toOklab(toLin(vec3(0.,240.,210.)/255.)); /* #00F0D2 vibrant ray peak   */
-  vec3 c=n<.3?mix(sky,halo,n/.3):n<.62?mix(halo,core,(n-.3)/.32):mix(core,peak,(n-.62)/.38);
-  return fromOklab(c);}
 
-void main(){vec2 p=UV();float asp=res.x/res.y;
-  vec2 q=vec2(p.x*asp,1.-p.y);                                    /* aspect-correct, y up */
-  /* rule 2: the curtain bends gently, then the space is squashed so noise becomes vertical threads */
-  float bend=.05*sin(q.y*2.2+t*.05+q.x*.8)+.025*sin(q.y*5.1-t*.08);   /* a gentle fold, never a ribbon */
-  vec2 s=vec2((q.x+bend)*3.5,q.y*.08);
-  /* rule 3: two independent layers, unrelated speeds, multiplied */
-  float L1=sfbm(s+vec2(.012,.005)*t);                             /* broad structural drift */
-  float wave=sin(t*.23+q.y*3.)*.5+.5;                              /* non-linear shimmer modifier */
-  float L2=sfbm(s*vec2(3.1,1.)+vec2(-.038*t+.35*wave*wave,0.)+17.); /* fine horizontal shimmer and tearing */
-  L1=.4+.6*L1;                                                       /* the broad layer shapes the light but never switches the whole sky off */
-  L2=.3+.7*L2;
-  float n=L1*L2*1.25;
-  float group=.4+.6*smoothstep(.3,.62,sfbm(vec2((q.x+bend)*.9+t*.007,4.2+t*.003)));     /* strands gather into a few curtains with dark sky between */
-  float body=sfbm(vec2((q.x+bend)*1.6,q.y*.05)+vec2(.012,.005)*t+9.);             /* a wide, soft sheet of light behind the strands */
-  n=n*(.3+.9*group)+(.06+body*body*.4)*group;                                               /* multiplicative: rays appear only where both agree */
-  /* the light hangs as a curtain: brightest across the middle of the screen, fading up into the sky and down to the horizon */
-  float hem=.3+.06*sin(q.x*1.7+t*.04)+.04*sin(q.x*3.9-t*.06);
-  float env=mix(.35,1.,smoothstep(hem-.22,hem+.04,q.y))*exp(-max(q.y-hem-.04,0.)*1.9)*smoothstep(-.05,.25,q.y);  /* rays fall off slowly upward, a softer glow continues below the hem */
-  n=clamp(n*env,0.,1.);
-  /* rule 4: steep falloff keeps black pockets between rays */
-  float glow=pow(n,1.8)*.38;                                        /* the soft body the rays sit in */
-  n=pow(n,3.5)*1.6;
-  n=max(n,glow);
-  n=1.-exp(-n*1.1);                                                /* highlights roll off smoothly instead of flattening into one colour */
-  vec3 lin=ramp(clamp(n,0.,1.));   /* anything beyond the peak blooms a little */
+vec3 lab(vec3 srgb255){return toOklab(toLin(srgb255/255.));}
+float blob(vec2 p,vec2 c,vec2 r){vec2 d=(p-c)/r;return exp(-dot(d,d));}
+/* one curtain of light at one depth: a folded sheet hanging from a wavy lower hem.
+   returns x = light amount, y = height above the hem (for colour) */
+vec2 sheet(vec2 q,float depth,float hem0,float seed){
+  float x=q.x/depth;                                                       /* farther sheets look narrower and finer */
+  float fold=.13*sin(x*4.1+t*.05+seed)+.05*sin(x*9.3-t*.08+seed*2.)+.08*(sfbm(vec2(x*2.+t*.015,seed))-.5);   /* deep folds: seen from below, the curtain becomes columns */
+  float hem=hem0+fold;
+  float d=q.y-hem;                                                         /* > 0 above the hem */
+  vec2 s=vec2((x+fold*.6)*3.5,q.y*.08);                                    /* stretched space: noise becomes vertical rays */
+  float L1=sfbm(s+vec2(.012,.005)*t+seed);                                 /* broad structure */
+  float L2=sfbm(s*vec2(2.6,1.)+vec2(-.038*t+.3*sin(t*.23+seed),0.)+seed*3.); /* fine shimmer that tears and regroups */
+  float rays=pow(clamp(L1*(.35+.65*L2)*1.55,0.,1.),2.2);                   /* fine threads, with dark gaps between */
+  float soft=smoothstep(.36,.7,sfbm(vec2(x*3.2+t*.02,seed*1.7)));     /* curtains break apart: real dark sky between them */        /* the sheet is brighter in some stretches than others */
+  float up=exp(-max(d,0.)/(.26*depth)),down=exp(-pow(max(-d,0.)/.15,1.3));
+  float body=up*down;
+  return vec2(body*soft*(.22*soft+rays*1.5),d);}
+void main(){vec2 p=UV();float asp=res.x/res.y;vec2 q=vec2(p.x*asp,1.-p.y);
+  /* night sky: near-black overhead, deep indigo low down, a faint violet glow along the horizon */
+  vec3 sky=mix(vec3(.004,.008,.022),vec3(.02,.03,.09),smoothstep(1.,.25,q.y));
+  sky+=vec3(.07,.04,.2)*blob(vec2(p.x,q.y),vec2(.65,-.05),vec2(.7,.3));
+  /* colour by height above the hem, mixed in OKLab: violet-blue below, cyan at the hem, teal-green above, fading out */
+  vec3 cLow=lab(vec3(60.,70.,230.)),cHem=lab(vec3(120.,255.,250.)),cMid=lab(vec3(0.,215.,225.)),cTop=lab(vec3(20.,170.,130.));
+  vec3 lin=toLin(sky);float lum=0.;
+  for(int i=0;i<3;i++){float fi=float(i);
+    float depth=1.-fi*.22,hem0=.3+fi*.14+.04*sin(t*.03+fi*2.)+.05*sin(q.x*1.2+fi*3.+t*.02);   /* each curtain hangs at its own height and slant */
+    vec2 r=sheet(q,depth,hem0,fi*7.3+1.);
+    float k=r.y;
+    vec3 c=k<0.?mix(cHem,cLow,smoothstep(0.,-.12,k)):k<.12?mix(cHem,cMid,k/.12):mix(cMid,cTop,smoothstep(.1,.36,k));
+    float a=r.x*(1.-fi*.25);                                               /* nearer sheets are brighter */
+    lin+=fromOklab(c)*a*1.45;lum+=a;}
+  lin=lin/(1.+lin*.35);                                                    /* gentle highlight roll-off: bright, never clipped */
   vec3 col=toSrgb(lin);
-  col+=starfield(vec2(q.x,p.y),.25)*(1.-smoothstep(.0,.25,n));
-  col+=(hs(gl_FragCoord.xy+fract(t*7.)*61.)-.5)*.01;               /* rule 4: ~1% animated grain against banding */
+  col+=starfield(vec2(q.x,p.y),.28)*(1.-smoothstep(.0,.35,lum));
+  col+=(hs(gl_FragCoord.xy+fract(t*7.)*61.)-.5)*.01;                        /* fine grain against banding */
   gl_FragColor=vec4(col,1.);}
