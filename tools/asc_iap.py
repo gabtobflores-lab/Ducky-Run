@@ -58,7 +58,7 @@ def step(label, fn):
 
 def main():
     products = json.load(open(os.path.join(ROOT, "appstore", "products.json")))
-    shot = open(os.path.join(ROOT, "appstore", "iap-review.png"), "rb").read()
+    shot = open(os.path.join(ROOT, "appstore", "review-screenshot-1206x2622.png"), "rb").read()  # iPhone with Dynamic Island (medium display)
     apps = call("GET", f"/v1/apps?filter[bundleId]={BUNDLE}")["data"]
     if not apps:
         sys.exit(f"No app with bundle ID {BUNDLE} in App Store Connect. Create the app there first (My Apps → +).")
@@ -124,15 +124,20 @@ def main():
             print(f"   ✓ available in {len(territories)} countries and regions")
 
         def screenshot():
+            # a screenshot stuck in "processing" or failed blocks new uploads on the website: remove only that, keep the pack
             try:
-                have = call("GET", f"/v2/inAppPurchases/{iid}/appStoreReviewScreenshot")
-                if have.get("data"):
-                    print("   ✓ review screenshot already there"); return
+                have = call("GET", f"/v2/inAppPurchases/{iid}/appStoreReviewScreenshot").get("data")
+                if have:
+                    state = ((have.get("attributes") or {}).get("assetDeliveryState") or {}).get("state")
+                    if state == "COMPLETE":
+                        print("   ✓ review screenshot already there"); return
+                    call("DELETE", f"/v1/inAppPurchaseAppStoreReviewScreenshots/{have['id']}")
+                    print(f"   ✓ removed a stuck screenshot ({state or 'unknown state'})")
             except RuntimeError:
                 pass
             res = call("POST", "/v1/inAppPurchaseAppStoreReviewScreenshots", {"data": {
                 "type": "inAppPurchaseAppStoreReviewScreenshots",
-                "attributes": {"fileName": "mirror-drop-packs.png", "fileSize": len(shot)},
+                "attributes": {"fileName": "mirror-drop-packs-1206x2622.png", "fileSize": len(shot)},
                 "relationships": {"inAppPurchaseV2": ref}}})["data"]
             for op in res["attributes"]["uploadOperations"]:
                 part = shot[op["offset"]:op["offset"] + op["length"]]
