@@ -35,7 +35,14 @@ func call(_ method: String, _ path: String, _ body: Any? = nil) async throws -> 
     if code == 401 && !individualKey && !triedIndividual { triedIndividual = true; individualKey = true; return try await call(method, path, body) } // maybe an Individual key
     let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
     if code >= 300 {
-        let errs = (json["errors"] as? [[String: Any]] ?? []).map { "\($0["code"] ?? "") \($0["detail"] ?? $0["title"] ?? "")" }
+        var errs: [String] = []
+        for e in json["errors"] as? [[String: Any]] ?? [] {
+            errs.append("\(e["code"] ?? "") \(e["detail"] ?? e["title"] ?? "")")
+            // Apple's list of what's actually missing ("associated errors"), one per line
+            if let assoc = (e["meta"] as? [String: Any])?["associatedErrors"] as? [String: Any] {
+                for (_, list) in assoc { for a in list as? [[String: Any]] ?? [] { errs.append("\n      → \(a["detail"] ?? a["title"] ?? a["code"] ?? "")") } }
+            }
+        }
         throw AppleError(description: "Apple said (\(code)): " + (errs.isEmpty ? String(data: data, encoding: .utf8) ?? "" : errs.joined(separator: "; ")))
     }
     return json
