@@ -28,8 +28,6 @@ done < <({ mdfind -name MirrorDropApp.swift 2>/dev/null; find "$HOME/Downloads" 
 [ -n "$PROJ" ] || { echo "I couldn't find your Mirror Drop Xcode project."; exit 1; }
 PROJ=$(cd "$(dirname "$PROJ")" && pwd)/$(basename "$PROJ")
 echo "Project: $PROJ"
-TEAM=$(grep -m1 -o 'DEVELOPMENT_TEAM = [A-Z0-9]\{10\}' "$PROJ/project.pbxproj" | awk '{print $3}')
-[ -n "$TEAM" ] || TEAM=$(ask team "Paste your Team ID (developer.apple.com/account → Membership details, 10 letters and numbers), then press Return:" '^[A-Z0-9]{10}$')
 SCHEME=$(perl -0ne 'if (/\w{24} \/\* ([^*]+?) \*\/ = \{\s*isa = PBXNativeTarget;/) { print "$1" }' "$PROJ/project.pbxproj")
 
 # the bundle ID must match the app in App Store Connect: ask Apple for it
@@ -38,8 +36,34 @@ curl -fsSL "$BASE/tools/fix_iap_screenshots.swift" -o "$W/asc.swift" || { echo "
 echo "Asking App Store Connect for the app's bundle ID…"
 BUNDLE=$(MODE=bundle KEY_ID="$KEY_ID" ISSUER_ID="$ISSUER" P8="$P8" SHOTS="" swift "$W/asc.swift") || { rm -f "$CFG/issuer"; echo; echo "Apple didn't accept the key. Run this line again and paste the Issuer ID carefully."; echo "Also check that the newest AuthKey file in Downloads is the key you just made (the old one can be deleted)."; exit 1; }
 BUILD=$(date +%Y%m%d%H%M)
+AUTH=(-authenticationKeyPath "$P8" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
+
+# App Store signing: a distribution certificate (its private key is made here and stays on this Mac) and an App Store profile
+SIGN="$CFG/signing"; mkdir -p "$SIGN"
+if [ ! -s "$SIGN/dist.key" ]; then
+  openssl genrsa -out "$SIGN/dist.key" 2048 2>/dev/null
+  openssl req -new -key "$SIGN/dist.key" -out "$SIGN/dist.csr" -subj "/CN=Mirror Drop Distribution/C=US" 2>/dev/null
+fi
+echo "Setting up App Store signing with Apple…"
+SOUT=$(MODE=sign OUT="$SIGN" BUNDLE="$BUNDLE" KEY_ID="$KEY_ID" ISSUER_ID="$ISSUER" P8="$P8" SHOTS="" swift "$W/asc.swift" 2>/dev/null)
+echo "$SOUT" | grep -v "^PROFILE_"
+PROFILE_NAME=$(echo "$SOUT" | sed -n 's/^PROFILE_NAME=//p'); PROFILE_UUID=$(echo "$SOUT" | sed -n 's/^PROFILE_UUID=//p')
+[ -n "$PROFILE_NAME" ] && [ -s "$SIGN/app.mobileprovision" ] || { echo "✗ Signing setup failed (see above)."; exit 1; }
+TEAM=$(security cms -D -i "$SIGN/app.mobileprovision" 2>/dev/null | plutil -extract TeamIdentifier.0 raw -o - - 2>/dev/null)
+[[ "$TEAM" =~ ^[A-Z0-9]{10}$ ]] || { echo "✗ Couldn't read the team from Apple's profile."; exit 1; }
+# the certificate into the login keychain, plus Apple's intermediate certificate so the chain is complete
+if [ -s "$SIGN/dist.cer" ] && { [ ! -f "$SIGN/imported" ] || [ "$SIGN/dist.cer" -nt "$SIGN/imported" ]; }; then
+  openssl x509 -inform DER -in "$SIGN/dist.cer" -out "$SIGN/dist.pem" 2>/dev/null
+  openssl pkcs12 -export -inkey "$SIGN/dist.key" -in "$SIGN/dist.pem" -out "$SIGN/dist.p12" -passout pass:mirrordrop 2>/dev/null \
+    || openssl pkcs12 -legacy -export -inkey "$SIGN/dist.key" -in "$SIGN/dist.pem" -out "$SIGN/dist.p12" -passout pass:mirrordrop
+  curl -fsSL https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer -o "$SIGN/wwdr.cer" && security import "$SIGN/wwdr.cer" -k "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1
+  security import "$SIGN/dist.p12" -k "$HOME/Library/Keychains/login.keychain-db" -P mirrordrop -T /usr/bin/codesign -T /usr/bin/productbuild >/dev/null && touch "$SIGN/imported"
+  echo "✓ certificate added to your keychain (if a box asks to allow codesign, click Always Allow)"
+fi
+for pdir in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+  mkdir -p "$pdir"; cp "$SIGN/app.mobileprovision" "$pdir/$PROFILE_UUID.mobileprovision"
+done
 echo "App: $BUNDLE · team $TEAM · version 1.0 ($BUILD)"
-AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$P8" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
 
 # xcodebuild needs the full Xcode app; if Terminal points at the Command Line Tools, use the Xcode app directly (no settings changed)
 if ! xcodebuild -version >/dev/null 2>&1; then
@@ -52,7 +76,8 @@ echo; echo "Archiving (a few minutes)…"
 ARCH="$HOME/Desktop/MirrorDrop-$BUILD.xcarchive"
 xcodebuild -project "$PROJ" -scheme "$SCHEME" -configuration Release -destination 'generic/platform=iOS' -archivePath "$ARCH" archive \
   DEVELOPMENT_TEAM="$TEAM" PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE" MARKETING_VERSION=1.0 CURRENT_PROJECT_VERSION="$BUILD" \
-  CODE_SIGN_STYLE=Automatic INFOPLIST_KEY_ITSAppUsesNonExemptEncryption=NO "${AUTH[@]}" > "$W/archive.log" 2>&1
+  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+  INFOPLIST_KEY_ITSAppUsesNonExemptEncryption=NO > "$W/archive.log" 2>&1
 if [ ! -d "$ARCH" ]; then echo "✗ Archive failed. The important lines:"; grep -E "error:|failed" "$W/archive.log" | sort -u | head -20; exit 1; fi
 echo "✓ Archived"
 
@@ -63,12 +88,14 @@ cat > "$W/export.plist" <<PLIST
   <key>method</key><string>app-store-connect</string>
   <key>destination</key><string>upload</string>
   <key>teamID</key><string>$TEAM</string>
-  <key>signingStyle</key><string>automatic</string>
+  <key>signingStyle</key><string>manual</string>
+  <key>signingCertificate</key><string>Apple Distribution</string>
+  <key>provisioningProfiles</key><dict><key>$BUNDLE</key><string>$PROFILE_NAME</string></dict>
   <key>manageAppVersionAndBuildNumber</key><false/>
 </dict></plist>
 PLIST
 echo "Uploading to App Store Connect…"
-xcodebuild -exportArchive -archivePath "$ARCH" -exportOptionsPlist "$W/export.plist" -exportPath "$W/out" "${AUTH[@]}" > "$W/upload.log" 2>&1
+xcodebuild -exportArchive -archivePath "$ARCH" -exportOptionsPlist "$W/export.plist" -exportPath "$W/out" -allowProvisioningUpdates "${AUTH[@]}" > "$W/upload.log" 2>&1
 if grep -q "EXPORT SUCCEEDED\|Upload succeeded\|Uploaded" "$W/upload.log"; then
   echo "✅ Uploaded. Apple processes it in about 10–30 minutes; then pick it under Build on the 1.0 version page, and in TestFlight."
 else echo "✗ Upload failed. The important lines:"; grep -E "error|Error|failed" "$W/upload.log" | sort -u | head -20; exit 1; fi

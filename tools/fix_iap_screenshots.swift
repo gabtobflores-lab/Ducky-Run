@@ -82,6 +82,45 @@ if env["MODE"] == "bundle" { // used by upload-app.sh: print the Mirror Drop app
         FileHandle.standardError.write(Data("No Mirror Drop app found in App Store Connect for this key.\n".utf8)); exit(1)
     } catch { FileHandle.standardError.write(Data("\(error)\n".utf8)); exit(1) }
 }
+if env["MODE"] == "sign" { // used by upload-app.sh: App Store signing for the app, created with the API key (no device needed)
+    let out = env["OUT"] ?? "."
+    func save(_ name: String, _ b64: String) throws { try Data(base64Encoded: b64)!.write(to: URL(fileURLWithPath: out + "/" + name)) }
+    do {
+        // the app's ID, with Game Center switched on
+        var bid = ((try await call("GET", "/v1/bundleIds?filter[identifier]=\(bundleID)&limit=20"))["data"] as? [[String: Any]] ?? [])
+            .first { (attrs($0)["identifier"] as? String) == bundleID }?["id"] as? String
+        if bid == nil {
+            bid = dataOf(try await call("POST", "/v1/bundleIds", ["data": ["type": "bundleIds", "attributes": ["identifier": bundleID, "name": "Mirror Drop", "platform": "IOS"]]]))?["id"] as? String
+            print("✓ registered the app ID \(bundleID)")
+        }
+        guard let bundleRes = bid else { print("✗ couldn't find or register the app ID"); exit(1) }
+        let caps = (try await call("GET", "/v1/bundleIds/\(bundleRes)/bundleIdCapabilities"))["data"] as? [[String: Any]] ?? []
+        if !caps.contains(where: { (attrs($0)["capabilityType"] as? String) == "GAME_CENTER" }) {
+            _ = try? await call("POST", "/v1/bundleIdCapabilities", ["data": ["type": "bundleIdCapabilities", "attributes": ["capabilityType": "GAME_CENTER"],
+                "relationships": ["bundleId": ["data": ["type": "bundleIds", "id": bundleRes]]]]])
+            print("✓ Game Center switched on for the app ID")
+        }
+        // a distribution certificate made from this Mac's own key (the private key never leaves the Mac)
+        var certID = (try? String(contentsOfFile: out + "/cert.id", encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !certID.isEmpty, (try? await call("GET", "/v1/certificates/\(certID)")) == nil { certID = "" }
+        if certID.isEmpty {
+            let csr = try String(contentsOfFile: out + "/dist.csr", encoding: .utf8)
+            let cert = dataOf(try await call("POST", "/v1/certificates", ["data": ["type": "certificates", "attributes": ["certificateType": "DISTRIBUTION", "csrContent": csr]]]))!
+            certID = cert["id"] as! String
+            try save("dist.cer", attrs(cert)["certificateContent"] as! String)
+            try certID.write(toFile: out + "/cert.id", atomically: true, encoding: .utf8)
+            print("✓ created an Apple Distribution certificate")
+        }
+        // a fresh App Store profile for the app with that certificate
+        let name = "Mirror Drop App Store \(Int(Date().timeIntervalSince1970))"
+        let prof = dataOf(try await call("POST", "/v1/profiles", ["data": ["type": "profiles", "attributes": ["name": name, "profileType": "IOS_APP_STORE"],
+            "relationships": ["bundleId": ["data": ["type": "bundleIds", "id": bundleRes]], "certificates": ["data": [["type": "certificates", "id": certID]]]]]]))!
+        try save("app.mobileprovision", attrs(prof)["profileContent"] as! String)
+        print("PROFILE_NAME=\(name)")
+        print("PROFILE_UUID=\(attrs(prof)["uuid"] as? String ?? "")")
+        exit(0)
+    } catch { print("✗ \(error)"); exit(1) }
+}
 print("Connecting to App Store Connect…")
 do {
     var apps = (try await call("GET", "/v1/apps?filter[bundleId]=\(bundleID)"))["data"] as? [[String: Any]] ?? []
