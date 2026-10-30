@@ -12,7 +12,7 @@ do { key = try P256.Signing.PrivateKey(pemRepresentation: try String(contentsOfF
 catch { print("✗ Couldn't read the API key file: \(error.localizedDescription)"); exit(1) }
 
 func b64url(_ d: Data) -> String { d.base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "") }
-var individualKey = issuer.isEmpty // Apple's "Individual" keys sign in without an Issuer ID
+nonisolated(unsafe) var individualKey = issuer.isEmpty // Apple's "Individual" keys sign in without an Issuer ID
 func token() throws -> String {
     let now = Int(Date().timeIntervalSince1970) - 30 // a little earlier, in case the Mac's clock runs slightly fast
     let head = try JSONSerialization.data(withJSONObject: ["alg": "ES256", "kid": keyID, "typ": "JWT"])
@@ -22,7 +22,7 @@ func token() throws -> String {
     let msg = b64url(head) + "." + b64url(body)
     return msg + "." + b64url(try key.signature(for: Data(msg.utf8)).rawRepresentation)
 }
-var triedIndividual = false
+nonisolated(unsafe) var triedIndividual = false
 struct AppleError: Error, CustomStringConvertible { let description: String }
 func call(_ method: String, _ path: String, _ body: Any? = nil) async throws -> [String: Any] {
     var req = URLRequest(url: URL(string: path.hasPrefix("http") ? path : "https://api.appstoreconnect.apple.com" + path)!)
