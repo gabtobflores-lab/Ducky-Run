@@ -19,7 +19,7 @@ jobs:
       - name: Assemble the project as the updater leaves it
         run: |
           mkdir -p build && cp -R xcode build/proj
-          cp app-update/MirrorDropApp.swift app-update/index.html app-update/aurora.mp4 build/proj/MirrorDrop/
+          cp app-update/MirrorDropApp.swift app-update/index.html build/proj/MirrorDrop/
           cp -R app-update/LaunchBalls.imageset build/proj/MirrorDrop/Assets.xcassets/
       - name: Use the newest Xcode on this Mac (so the newest iOS is tested too)
         run: |

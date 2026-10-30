@@ -234,8 +234,9 @@ One tap to learn. One more run, every time.
             var setID = sets.first(where: { (attrs($0)["screenshotDisplayType"] as? String) == "APP_IPHONE_67" })?["id"] as? String
             if let sid = setID {
                 let have = (try await call("GET", "/v1/appScreenshotSets/\(sid)/appScreenshots"))["data"] as? [[String: Any]] ?? []
-                if have.count >= 8 { return }
-                for h in have { _ = try? await call("DELETE", "/v1/appScreenshots/\(h["id"] as! String)") }
+                let mine = try shots.map { f in Insecure.MD5.hash(data: try Data(contentsOf: URL(fileURLWithPath: f))).map { String(format: "%02x", $0) }.joined() }
+                if have.map({ attrs($0)["sourceFileChecksum"] as? String ?? "" }) == mine { print("   already up to date"); return } // exactly these 8, in this order
+                for h in have { _ = try? await call("DELETE", "/v1/appScreenshots/\(h["id"] as! String)") }                                 // anything else is replaced
             } else {
                 setID = dataOf(try await call("POST", "/v1/appScreenshotSets", ["data": ["type": "appScreenshotSets", "attributes": ["screenshotDisplayType": "APP_IPHONE_67"],
                     "relationships": ["appStoreVersionLocalization": ["data": ["type": "appStoreVersionLocalizations", "id": verLocID]]]]]))?["id"] as? String
@@ -304,8 +305,17 @@ if env["MODE"] == "submit" { // used by submit-app.sh: build on 1.0, packs into 
               let verID = ver["id"] as? String else { print("✗ No app version found. Add version 1.0 in App Store Connect first."); exit(1) }
         print("Version \(attrs(ver)["versionString"] ?? "") (\(attrs(ver)["appStoreState"] ?? attrs(ver)["appVersionState"] ?? ""))")
         // newest processed build onto the version
-        let builds = (try await call("GET", "/v1/builds?filter[app]=\(appID)&filter[processingState]=VALID&sort=-uploadedDate&limit=1"))["data"] as? [[String: Any]] ?? []
-        guard let build = builds.first, let buildID = build["id"] as? String else { print("✗ No processed build yet. Wait a few minutes and run this again."); exit(1) }
+        // always the newest upload: if Apple is still processing it, wait for it rather than submit an older build
+        var builds: [[String: Any]] = []
+        for i in 0..<80 {
+            builds = (try await call("GET", "/v1/builds?filter[app]=\(appID)&sort=-uploadedDate&limit=1"))["data"] as? [[String: Any]] ?? []
+            let state = attrs(builds.first)["processingState"] as? String ?? ""
+            if state != "PROCESSING" { break }
+            if i == 0 { print("Apple is still processing build \(attrs(builds.first)["version"] ?? "") (usually 5 to 30 minutes). Waiting for it…") }
+            try await Task.sleep(nanoseconds: 30_000_000_000)
+        }
+        guard let build = builds.first, let buildID = build["id"] as? String, (attrs(build)["processingState"] as? String) == "VALID" else {
+            print("✗ The newest build isn't ready (\(attrs(builds.first)["processingState"] ?? "no build")). Run this again in a few minutes."); exit(1) }
         _ = try await call("PATCH", "/v1/appStoreVersions/\(verID)/relationships/build", ["data": ["type": "builds", "id": buildID]])
         print("✓ build \(attrs(build)["version"] ?? "") attached")
         // every pack that is ready goes into the review together with the version

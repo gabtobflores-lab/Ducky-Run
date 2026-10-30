@@ -4,9 +4,9 @@ Work through this top to bottom in App Store Connect (appstore.apple.com → App
 
 ---
 
-## 0. Before you submit: one thing to change
+## 0. Artwork
 
-**The aurora uses Apple's own iOS wallpaper animation.** App Review guideline 5.2 (Intellectual Property) says apps can't use Apple's images, wallpapers or artwork, so this is a likely rejection. Ask Claude to replace it with an original aurora (same look and colours, drawn by the game itself) before you press Submit. The aurora screenshot will then be re-captured the same way the others were.
+Everything in the game is original: the aurora, the skies and the weather are drawn by the game's own code, and the moon is NASA's public-domain map. Nothing comes from Apple's wallpapers.
 
 ---
 
@@ -59,7 +59,7 @@ github.com/gabtobflores-lab/Ducky-Run/settings/pages → **Deploy from a branch*
 | Bundle ID | com.gabtobflores.mirrordrop |
 | Primary category | Games → **Arcade** |
 | Secondary category | Games → **Casual** |
-| Content Rights | "Does your app contain, show, or access third-party content?" **No** (after the aurora is replaced) |
+| Content Rights | "Does your app contain, show, or access third-party content?" Your answer (the game's artwork is all original) |
 | Age Rating | answer **None / No** to every question → **4+**. "In-App Purchases": Yes (it's listed automatically). |
 
 ## 5. Pricing and Availability

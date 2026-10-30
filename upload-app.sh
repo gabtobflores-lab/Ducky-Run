@@ -23,7 +23,7 @@ ISSUER=$(ask issuer "Paste the Issuer ID (App Store Connect → Users and Access
 # the Mirror Drop project (the one with index.html and MirrorDropApp.swift, not the native test one)
 PROJ=""
 while IFS= read -r f; do d=$(dirname "$f"); [ -f "$d/index.html" ] && [ ! -f "$d/GameScene.swift" ] || continue
-  PROJ=$(ls -d "$d"/../*.xcodeproj 2>/dev/null | head -1); [ -n "$PROJ" ] && break
+  PROJ=$(ls -d "$d"/../*.xcodeproj 2>/dev/null | head -1); [ -n "$PROJ" ] && { APPDIR="$d"; break; }
 done < <({ mdfind -name MirrorDropApp.swift 2>/dev/null; find "$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents" -maxdepth 4 -name MirrorDropApp.swift 2>/dev/null; } | grep -v -e DerivedData -e " backup ")
 [ -n "$PROJ" ] || { echo "I couldn't find your Mirror Drop Xcode project."; exit 1; }
 PROJ=$(cd "$(dirname "$PROJ")" && pwd)/$(basename "$PROJ")
@@ -64,6 +64,14 @@ for pdir in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/De
   mkdir -p "$pdir"; cp "$SIGN/app.mobileprovision" "$pdir/$PROFILE_UUID.mobileprovision"
 done
 echo "App: $BUNDLE · team $TEAM · version 1.0 ($BUILD)"
+
+# the newest game into the project before building: the aurora is drawn by the game itself, so the old video file goes
+curl -fsSL "$BASE/app-update/index.html" -o "$W/index.html" && [ "$(wc -c < "$W/index.html")" -gt 100000 ] && cp "$W/index.html" "$APPDIR/index.html" || { echo "✗ Couldn't download the game. Check your internet and try again."; exit 1; }
+curl -fsSL "$BASE/app-update/MirrorDropApp.swift" -o "$W/MirrorDropApp.swift" && [ -s "$W/MirrorDropApp.swift" ] && cp "$W/MirrorDropApp.swift" "$APPDIR/MirrorDropApp.swift"
+if [ -f "$APPDIR/aurora.mp4" ]; then
+  if grep -q "aurora.mp4" "$PROJ/project.pbxproj"; then : > "$APPDIR/aurora.mp4"; else rm -f "$APPDIR/aurora.mp4"; fi
+fi
+echo "✓ newest game copied into the project (original aurora, no video)"
 
 # xcodebuild needs the full Xcode app; if Terminal points at the Command Line Tools, use the Xcode app directly (no settings changed)
 if ! xcodebuild -version >/dev/null 2>&1; then

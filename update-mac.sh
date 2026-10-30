@@ -22,17 +22,11 @@ synced() { grep -q FileSystemSynchronized "$1"/../*.xcodeproj/project.pbxproj 2>
 update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swift
   echo "Updating: $1"
   local bk="$1/../Mirror Drop backup $STAMP"
-  mkdir -p "$bk"; cp "$1/MirrorDropApp.swift" "$1/index.html" "$bk/" 2>/dev/null; cp "$1/aurora.mp4" "$bk/" 2>/dev/null
+  mkdir -p "$bk"; cp "$1/MirrorDropApp.swift" "$1/index.html" "$bk/" 2>/dev/null
   get app-update/MirrorDropApp.swift "$1/MirrorDropApp.swift"
-  if synced "$1"; then
-    # the small, fast-opening game file plus the aurora video beside it
-    get app-update/index.html "$1/index.html"
-    get app-update/aurora.mp4 "$1/aurora.mp4"
-    echo "  fast-launch version installed"
-  else
-    get app-update/index-inline.html "$1/index.html"
-    echo "  all-in-one version installed (this project doesn't pick up new files, so the video stays inside the game file)"
-  fi
+  get app-update/index.html "$1/index.html"   # the aurora is drawn by the game itself now: no video file any more
+  if [ -f "$1/aurora.mp4" ]; then if grep -q "aurora.mp4" "$1"/../*.xcodeproj/project.pbxproj 2>/dev/null; then : > "$1/aurora.mp4"; else rm -f "$1/aurora.mp4"; fi; fi
+  echo "  game installed"
   # iOS's launch screen looks exactly like the game's loading screen, so opening the app flows straight into it
   local plist="$1/../Info.plist"
   if [ -d "$1/Assets.xcassets" ] && [ -f "$plist" ] && [ -x /usr/libexec/PlistBuddy ]; then

@@ -31,7 +31,7 @@ jobs:
       - name: Assemble the project
         run: |
           mkdir -p build && cp -R xcode build/proj
-          cp app-update/MirrorDropApp.swift app-update/index.html app-update/aurora.mp4 build/proj/MirrorDrop/
+          cp app-update/MirrorDropApp.swift app-update/index.html build/proj/MirrorDrop/
           cp -R app-update/LaunchBalls.imageset build/proj/MirrorDrop/Assets.xcassets/
           [ -d app-update/AppIcon-Gold.appiconset ] && cp -R app-update/AppIcon-Gold.appiconset build/proj/MirrorDrop/Assets.xcassets/
           cd build/proj && xcodebuild -list -project MirrorDrop.xcodeproj
