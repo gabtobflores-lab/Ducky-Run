@@ -121,7 +121,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
     // MARK: start-up check
     // If the game hasn't shown its menu 6 seconds after launch, a small panel says what happened, so a stuck start can be fixed.
 
-    static let appBuild = "8b8e264"   // replaced with the release's version by tools/build-app-update.sh
+    static let appBuild = "e987528"   // replaced with the release's version by tools/build-app-update.sh
     private var ready = false
     private var events: [String] = []
     private var panel: UIView?
@@ -256,7 +256,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
         // Purchases: Plus, Pro, Max and Supporter, bought once through the App Store
         case ("Store", "products"):
             await Store.shared.loadProducts()
-            return (["products": Store.shared.products.values.map { ["id": $0.id, "price": $0.displayPrice] }], nil)
+            return (["products": Store.shared.products.map { ["id": $0.key, "price": $0.value.displayPrice] }], nil)
         case ("Store", "entitlement"):
             await Store.shared.refresh()
             return (["tier": Store.shared.tier, "founding": Store.shared.founding], nil)
@@ -385,11 +385,15 @@ final class Store {
     /// Supporters who buy before this date get the Founding Supporter badge (set it to one year after launch)
     static let foundingUntil = DateComponents(calendar: Calendar(identifier: .gregorian), year: 2027, month: 12, day: 31).date ?? .distantFuture
 
-    static let ids = ["mirrordrop.plus", "mirrordrop.pro", "mirrordrop.max", "mirrordrop.supporter",
-                      "mirrordrop.upgrade.pro.from.plus", "mirrordrop.upgrade.max.from.plus", "mirrordrop.upgrade.max.from.pro",
-                      "mirrordrop.upgrade.supporter.from.plus", "mirrordrop.upgrade.supporter.from.pro", "mirrordrop.upgrade.supporter.from.max"]
+    static let baseIds = ["mirrordrop.plus", "mirrordrop.pro", "mirrordrop.max", "mirrordrop.supporter",
+                          "mirrordrop.upgrade.pro.from.plus", "mirrordrop.upgrade.max.from.plus", "mirrordrop.upgrade.max.from.pro",
+                          "mirrordrop.upgrade.supporter.from.plus", "mirrordrop.upgrade.supporter.from.pro", "mirrordrop.upgrade.supporter.from.max"]
+    /// a pack recreated in App Store Connect gets ".v2" on its ID (Apple never reuses a deleted ID); either one works
+    static let ids = baseIds + baseIds.map { $0 + ".v2" }
+    static func base(_ id: String) -> String { id.hasSuffix(".v2") ? String(id.dropLast(3)) : id }
 
-    static func tier(of id: String) -> Int {
+    static func tier(of rawId: String) -> Int {
+        let id = base(rawId)
         let target = id.hasPrefix("mirrordrop.upgrade.") ? String(id.dropFirst("mirrordrop.upgrade.".count).prefix { $0 != "." }) : String(id.dropFirst("mirrordrop.".count))
         switch target { case "plus": return 1; case "pro": return 2; case "max": return 3; case "supporter": return 4; default: return 0 }
     }
@@ -409,7 +413,7 @@ final class Store {
 
     func loadProducts() async {
         guard products.isEmpty, let list = try? await Product.products(for: Store.ids) else { return }
-        for product in list { products[product.id] = product }
+        for product in list where products[base(product.id)] == nil || product.id.hasSuffix(".v2") { products[base(product.id)] = product } // the ".v2" pack wins when both exist
     }
 
     func refresh(push: Bool = false) async {
@@ -428,7 +432,7 @@ final class Store {
 
     func buy(_ id: String) async -> (Int, String?) {
         await loadProducts()
-        guard let product = products[id] else { return (tier, "This pack isn't available right now. Try again in a moment.") }
+        guard let product = products[Store.base(id)] else { return (tier, "This pack isn't available right now. Try again in a moment.") }
         do {
             switch try await product.purchase() {
             case .success(let verification):
