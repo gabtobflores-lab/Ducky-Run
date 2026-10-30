@@ -174,7 +174,7 @@ One tap to learn. One more run, every time.
         await step("privacy policy URL and subtitle") {
             let locs = (try await call("GET", "/v1/appInfos/\(infoID)/appInfoLocalizations"))["data"] as? [[String: Any]] ?? []
             guard let loc = locs.first(where: { (attrs($0)["locale"] as? String ?? "").hasPrefix("en") }) ?? locs.first, let lid = loc["id"] as? String else { throw AppleError(description: "no app info language") }
-            _ = try await call("PATCH", "/v1/appInfoLocalizations/\(lid)", ["data": ["type": "appInfoLocalizations", "id": lid, "attributes": ["privacyPolicyUrl": privacyURL, "subtitle": "Two balls. One tap."]]])
+            _ = try await call("PATCH", "/v1/appInfoLocalizations/\(lid)", ["data": ["type": "appInfoLocalizations", "id": lid, "attributes": ["privacyPolicyUrl": privacyURL, "subtitle": "Two balls. One tap. Wild skies"]]])
         }
         var verLocID = ""
         await step("description, keywords, support and marketing URLs, promotional text") {
@@ -202,7 +202,8 @@ One tap to learn. One more run, every time.
             }
         }
         await step("age rating: none of the content questions apply (4+)") {
-            let d = dataOf((try? await call("GET", "/v1/appInfos/\(infoID)/ageRatingDeclaration")) ?? [:]) ?? dataOf(try await call("GET", "/v1/appStoreVersions/\(verID)/ageRatingDeclaration"))
+            var d = dataOf((try? await call("GET", "/v1/appInfos/\(infoID)/ageRatingDeclaration")) ?? [:])
+            if d == nil { d = dataOf(try await call("GET", "/v1/appStoreVersions/\(verID)/ageRatingDeclaration")) }
             guard let aid = d?["id"] as? String else { throw AppleError(description: "no age rating found") }
             let keys = ["alcoholTobaccoOrDrugUseOrReferences", "sexualContentOrNudity", "profanityOrCrudeHumor", "advertising", "gamblingSimulated", "contests",
                         "violenceCartoonOrFantasy", "messagingAndChat", "gambling", "sexualContentGraphicAndNudity", "healthOrWellnessTopics", "gunsOrOtherWeapons",

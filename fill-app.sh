@@ -26,4 +26,4 @@ for n in 01-menu 02-aurora 03-wind 04-fog 05-offline 06-meteor 07-storm 08-sun; 
 done
 echo "Filling in Mirror Drop's 1.0 page…"
 MODE=fill SITE="$SITE" OWNER="$OWNER" PHONE="$PHONE" EMAIL="$EMAIL" BUNDLE=com.claudineaguilera.mirrordrop \
-  KEY_ID="$KEY_ID" ISSUER_ID="$ISSUER" P8="$P8" SHOTS="$SHOTS" swift "$W/asc.swift" 2>/dev/null
+  KEY_ID="$KEY_ID" ISSUER_ID="$ISSUER" P8="$P8" SHOTS="$SHOTS" swift "$W/asc.swift"
