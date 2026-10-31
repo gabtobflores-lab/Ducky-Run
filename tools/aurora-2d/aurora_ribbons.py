@@ -18,24 +18,57 @@ def n1(t, seed, smooth=8):                                   # smooth 1D noise, 
     r = nd.gaussian_filter1d(r, smooth, mode='wrap'); r /= r.std() + 1e-6
     return np.interp(np.mod(t, 1.0) * 2047, np.arange(2048), r).astype(np.float32)
 
-def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5):
-    """Intensity field of one ribbon. x0: centre at the ribbon's middle (screen widths); slope: drift right per screen height
-    downward; v0..v1: top and bottom; width: core half-width (screen widths); curve: how much the line bends."""
+def noise2(scale, seed, stretch=1.0):                       # smooth 2D noise in screen units, unit variance; stretch > 1 elongates it vertically
+    r = np.random.default_rng(seed).standard_normal((H // 4 + 1, W // 4 + 1)).astype(np.float32)
+    r = nd.gaussian_filter(r, (scale * W / 4 * stretch, scale * W / 4), mode='wrap')
+    r = nd.zoom(r, 4, order=1)[:H, :W]
+    return (r - r.mean()) / (r.std() + 1e-6)
+# one shared flow field bends every formation the same way, so they feel like parts of one sky
+FLOWX = noise2(0.14, 501, 3.5) * 0.045 + noise2(0.05, 502, 5.0) * 0.01
+FLOWY = noise2(0.25, 503, 3.0) * 0.008
+U0 = u + FLOWX                                              # warped coordinates: everything below is drawn in them
+V0 = v + FLOWY
+
+def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
+    """One aurora formation: several interconnected strands that share a strongly curving path but drift apart, cross and
+    merge along it. Each strand changes width and brightness on its own (it can fade out and re-emerge), its edges are
+    asymmetric and broken by a small local warp, and a soft volume of light surrounds the whole formation."""
+    rr = np.random.default_rng(seed)
+    # local edge warp: makes contours uneven and adds wispy extensions
+    U = U0 + noise2(0.03, seed + 900, 7.0) * min(width, 0.05) * 0.45   # vertically stretched: uneven edges and wisps, never squiggles
+    V = V0
     vm = (v0 + v1) / 2
-    xc = x0 + slope * (v - vm) + curve * np.sin(v * 5.0 + seed + 0.6 * np.sin(T + seed)) + 0.014 * n1(v * 0.8 + 0.04 * np.sin(T + seed), seed, 140)
-    xc = xc + 0.025 * np.sin(T + seed * 1.3)                                    # the whole ribbon sways slowly
-    wv = width * (0.65 + 0.7 * np.clip(0.5 + 0.35 * n1(v * 0.7, seed + 3, 160), 0, 1))          # width changes along its length
-    s = (u - xc) / wv                                                          # distance from the centre line, in widths
-    core = np.exp(-s * s)                                                      # narrow bright core
-    spread = np.exp(-np.abs(s) / (5.5 * glow)) * 0.5                          # soft light spreading around it (exponential: no halo ring)
-    # fine filaments inside the ribbon: stripes running along its length, offset per ribbon
-    fl = 0.5 + 0.5 * n1(s * 0.045 + seed * 0.37, seed + 11, 3)
-    body = (core * (1 - 0.6 * fil + 0.6 * fil * fl) + spread * (0.8 + 0.2 * fl))
-    # along the length: tapers in at the bottom, fades out at the top, with bright and quiet stretches
-    t = (v - v0) / (v1 - v0)
-    tc = np.clip(t, 0, 1)
-    env = (tc * tc * (3 - 2 * tc)) ** 1.6 * np.clip((1 - t) / 0.22, 0, 1) ** 1.4 * (t > 0) * (t < 1)   # long fade upward, soft taper at the bottom
-    env = env * np.clip(0.7 + 0.45 * n1(v * 0.9 + seed * 0.11 + 0.03 * np.cos(T + seed), seed + 5, 200), 0.3, 1.3)
+    # the formation's path: bends and changes direction as it rises (amplitude several times the old ribbons)
+    amp = 0.035 + curve * 3.0
+    path = (x0 + slope * (V - vm)
+            + amp * np.sin(V * 3.1 + seed * 1.7 + 0.5 * np.sin(T + seed))
+            + amp * 0.3 * np.sin(V * 5.3 + seed * 0.9 - 0.4 * np.cos(T + seed * 0.7))
+            + 0.03 * n1(V * 0.7 + 0.03 * np.sin(T + seed), seed, 160)
+            + 0.02 * np.sin(T + seed * 1.3))
+    tot = np.zeros((H, W), np.float32); vol = np.zeros((H, W), np.float32)
+    for k in range(strands):
+        sk = seed * 31 + k
+        ws = min(width, 0.045)                                              # wide far formations don't spread sideways
+        off = ws * (k - (strands - 1) / 2) * 1.5 + ws * 1.6 * n1(V * 0.55 + rr.random(), sk + 20, 130)   # strands drift apart and cross
+        wk = width * (0.55 + 1.2 * np.clip(0.5 + 0.45 * n1(V * 0.8 + rr.random(), sk + 40, 110), 0, 1))       # width swells and pinches
+        bk = np.clip(0.35 + 0.85 * n1(V * 1.1 + rr.random() + 0.03 * np.cos(T + sk), sk + 60, 90), 0, 1.25)   # fades out, re-emerges
+        sd = (U - path - off) / wk
+        sa = np.where(sd > 0, sd * (0.75 + 0.5 * rr.random()), sd * (1.25 - 0.5 * rr.random()))               # one edge sharper than the other
+        core = np.exp(-sa * sa)
+        # inner structure follows the strand's own curve, not a straight line
+        fl = 0.55 + 0.45 * n1(sd * 0.05 + V * 0.12 + rr.random(), sk + 80, 3)
+        # each strand ends at its own ragged height that varies across the screen: no straight horizontal edges
+        e1 = v1 + 0.07 * n1(U * 0.6 + rr.random(), sk + 120, 90) - 0.03 * k / strands
+        e0 = v0 + 0.06 * n1(U * 0.5 + rr.random(), sk + 140, 90)
+        tk = np.clip((V - e0) / np.maximum(e1 - e0, 0.05), 0, 1)
+        envk = (tk * tk * (3 - 2 * tk)) ** 1.5 * np.clip((1 - tk) / 0.35, 0, 1) ** 1.3
+        tot += core * bk * envk * (1 - 0.55 * fil + 0.55 * fil * fl)
+        vol += np.exp(-np.abs(U - path - off) / (min(wk.max(), 0.06) * 2.2 * glow)) * bk * envk   # soft volume sized in screen units
+    tot /= strands ** 0.5
+    vol /= strands
+    # soft volumetric scattering: the light seems to sit inside a glowing haze rather than on a flat background
+    body = tot + 0.5 * vol
+    env = np.clip(0.7 + 0.45 * n1(V * 0.9 + seed * 0.11 + 0.03 * np.cos(T + seed), seed + 5, 200), 0.25, 1.3)
     return body * env
 
 # depth layers, far to near. (x0, slope, top, bottom, width, curve, seed, intensity, core colour, glow colour, glow, filaments)
@@ -63,7 +96,7 @@ for layer, soft in ((FAR, 1.0), (MID, 1.0), (NEAR, 1.0)):
         r = ribbon(x0, sl, a, b, w, cv, sd, gl, fil)
         # colour: the core colour where the ribbon is intense, the glow colour in its soft spread
         k = np.clip(r * 2.5, 0, 1)[..., None]
-        img += r[..., None] * (col(gc) * (1 - k) + col(cc) * k) * inten * 2.3
+        img += r[..., None] * (col(gc) * (1 - k) + col(cc) * k) * inten * 4.1
 # fine atmospheric texture: faint streaks of light through the whole sky, very low contrast
 rs = np.random.default_rng(31).random((H // 4 + 1, W)).astype(np.float32)
 fine = nd.gaussian_filter(rs, (H * 0.02, 0.8), mode='wrap'); fine = (fine - fine.mean()) / (fine.std() + 1e-6)
