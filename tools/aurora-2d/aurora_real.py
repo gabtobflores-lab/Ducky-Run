@@ -12,9 +12,9 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.4))
+EXPO = float(os.environ.get('EXPO', 0.42))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
-RAYK = float(os.environ.get('RAYK', 0.4))      # contrast of the rays
+RAYK = float(os.environ.get('RAYK', 0.2))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0))      # soft diffuse light around each curtain
 SCAT = float(os.environ.get('SCAT', 0.15))      # light scattered into the surrounding air
 PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of a curtain get
@@ -23,15 +23,15 @@ FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's ligh
 FOCX = float(os.environ.get('FOCX', 0.3))     # where that focal area is (across the view)
 FOCW = float(os.environ.get('FOCW', 0.16))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
-BOTV = float(os.environ.get('BOTV', 0.35))      # blue-violet glow along the bottom
-TEALK = float(os.environ.get('TEALK', 1.5))    # strength of the upper-right teal curtain
+BOTV = float(os.environ.get('BOTV', 0.6))      # blue-violet glow along the bottom
+TEALK = float(os.environ.get('TEALK', 1.8))    # strength of the upper-right teal curtain
 HEMY = float(os.environ.get('HEMY', 0.7))      # height of the main curtain's lower edge
-FINE = float(os.environ.get('FINE', 0.7))      # delicate fine ray texture inside the glow
+FINE = float(os.environ.get('FINE', 0.3))      # delicate fine ray texture inside the glow
 LEFTK = float(os.environ.get('LEFTK', 0.6))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.78))      # height of the left curtain's lower edge
 MFOLD = float(os.environ.get('MFOLD', 0.016))  # how deeply the main curtain's lower edge folds
 MRISE = float(os.environ.get('MRISE', 0.2))      # how far up the main curtain's light reaches
-CLUMP = float(os.environ.get('CLUMP', 0.8))    # soft clumps of brightness inside the glow, elongated along the rays
+CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
 PHOTO = float(os.environ.get('PHOTO', 0.5))      # photographic softness of the finished image
 HAZE = float(os.environ.get('HAZE', 0.05))      # broad blue haze around the light, stronger to the left
 LOWR = float(os.environ.get('LOWR', 0.3))      # strength of the faint low-right curtain
@@ -42,6 +42,7 @@ MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretch
 SIDE = float(os.environ.get('SIDE', 0.75))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.42))    # where the main body is across the screen
 LOWG = float(os.environ.get('LOWG', 0.45))     # soft blue glow hanging below the main body
+MBLUR = float(os.environ.get('MBLUR', 16))   # softness of the main curtain
 UPC = os.environ.get('UPC', '20,240,225')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -106,7 +107,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
 CURTAINS = [
     (0.00, 0.40, LEFTY, 0.020, 0.45, 0.16, 0.04, 11, 0.30 * LEFTK, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
     (0.60, 1.00, 0.40, 0.022, 0.5, 0.10, 0.04, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
-    (0.10, 0.84, HEMY, MFOLD, 0.6, MRISE, 0.035, 22, 1.00, (60, 245, 240), tuple(int(v) for v in UPC.split(',')), 6.0),   # main curtain: one wide body
+    (0.10, 0.84, HEMY, MFOLD, 0.6, MRISE, 0.035, 22, 1.00, (60, 245, 240), tuple(int(v) for v in UPC.split(',')), MBLUR),   # main curtain: one wide body
     (0.66, 1.00, 0.88, 0.020, 0.45, 0.08, 0.04, 14, 0.30 * LOWR, (0, 170, 190),  (5, 60, 140),  8.0),   # low right, faint
     (FOCX + 0.12, FOCX + 0.2, HEMY - 0.03, 0.01, 0.5, MRISE * 1.3, 0.035, 31, 0.5 * VIOL, (120, 80, 255), (70, 50, 200), 6.0),   # violet fold edge
 ]
@@ -140,7 +141,8 @@ if SCAT > 0:   # light scattered into the air around the curtains: wide, soft, f
     img = img + nd.gaussian_filter(lightL, (W * 0.06, W * 0.06, 0)) * SCAT + nd.gaussian_filter(lightL, (W * 0.02, W * 0.02, 0)) * SCAT * 0.6
 if SIDE > 0:   # the sky falls off to darkness away from the main body
     xs = X / asp
-    img = sky + (img - sky) * (1 - SIDE * (1 - np.exp(-((xs - SIDX) / 0.38) ** 2)))[..., None]
+    ur = np.clip((xs - 0.55) / 0.3, 0, 1) * np.clip((0.55 - Y) / 0.25, 0, 1)      # leave the upper-right curtain visible
+    img = sky + (img - sky) * (1 - SIDE * (1 - np.exp(-((xs - SIDX) / 0.38) ** 2)) * (1 - 0.75 * ur))[..., None]
 # composition: dark top for the score, calmer band behind the balls
 img *= (0.35 + 0.65 * np.clip((Y - 0.04) / 0.18, 0, 1))[..., None]
 img *= (1 - 0.15 * np.exp(-((Y - 0.78) / 0.045) ** 2))[..., None]
