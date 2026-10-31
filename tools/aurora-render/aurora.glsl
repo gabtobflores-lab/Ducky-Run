@@ -34,7 +34,7 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
       float X=P.x+.16*sin(h0*.6+s+loopv(1.).x*.8)+.05*sin(h0*1.5-s*1.7+loopv(1.).y)+.16*h0;   /* a gentle twist as it rises */   /* the curtain twists and leans as it rises */
       float dz=P.z-sheetZ(X,z0,s)-X*(.9-fk*.42);                     /* curtains run away from you at different angles: ribbons that recede into the distance */
       float w=.075-.009*fk;                                                  /* half the width */                                                    /* thinner sheets: crisp light, not fog */                                                    /* near curtain softest */                                                    /* the near curtain is thick and soft, like light slightly out of focus */
-      float sheet=exp(-pow(abs(dz)/w,2.6))+.03*exp(-dz*dz/(20.*w*w));   /* a steeper edge: light drops off cleanly into dark sky */   /* the light scatters into a wide soft glow around the curtain */
+      float sheet=exp(-pow(abs(dz)/w,2.6))+.09*exp(-dz*dz/(20.*w*w));   /* a steeper edge: light drops off cleanly into dark sky */   /* the light scatters into a wide soft glow around the curtain */
       if(sheet<.002)continue;
       float h=P.y-baseY(X,y0,s);
       float prof=(smoothstep(-.6,.15,h)+.35*exp(-max(-h,0.)*1.6)*step(h,0.))*exp(-max(h,0.)/((1.7+.4*fk)*(.45+1.3*smoothstep(.25,.8,fbm(vec2(X*.32+s*2.,4.)+loopv(.35))))))*(.55+.45*smoothstep(.0,.6,h));   /* the edge fades in softly: no hard bright line */
@@ -42,12 +42,12 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
       float u=X*4.2+dz*.2;
       float comb=rayComb(u*(1.-.15*(1.-fk*.5)),h,s)*.85+rayComb(u*2.3+.5,h,s+11.)*.2*fk;   /* the near curtain is softer (slightly out of focus), the far ones crisp */      /* bold rays plus finer ones between */
       float bright=.1+.9*smoothstep(.3,.72,fbm(vec2(X*.22+s,2.)+loopv(.4)));
-      float cx=-.5+(.5*loopv(1.).x+.3*loopv(1.).y)*(1.-fk*.15)+(fk-1.5)*.32*sin(fk*1.9+.5)-.25;                                  /* all layers gather towards the centre-left */                           /* the light gathers in one area that drifts slowly */
-      float lobe=(fk<.5?2.6:1.2)*exp(-pow((X-cx-dz*.1)/(.62+fk*.3),2.))+.45*exp(-pow((X-cx-2.6+.6*loopv(1.).y)/(.8+fk*.5),2.));   /* one main luminous mass and a smaller second one */
+      float cx=-.3+(.22*loopv(1.).x+.15*loopv(1.).y)*(1.-fk*.15)+(fk-1.5)*.32*sin(fk*1.9+.5)-.25;                                  /* all layers gather towards the centre-left */                           /* the light gathers in one area that drifts slowly */
+      float lobe=(fk<.5?4.2:1.)*exp(-pow((X-cx-dz*.1)/(.62+fk*.3),2.))+.45*exp(-pow((X-cx-2.6+.6*loopv(1.).y)/(.8+fk*.5),2.));   /* one main luminous mass and a smaller second one */
       bright*=lobe;
       float rays=mix(.55,.2+.8*comb,.9*smoothstep(.1,.9,lobe));
       rays*=.9+.1*vn(vec2(u*9.+s*3.,h*.25)+loopv(.2));                /* fine streak texture, very subtle */          /* crisp rays burn inside the bright mass, soft glow at its edges */      /* some stretches glow, others fade */
-      vec3 ec=mix(emit(max(h,0.)),vec3(.1,.38,1.),fk*.13);
+      vec3 ec=mix(emit(max(h,0.)),vec3(.1,.38,1.),fk*.06);
       col+=ec*sheet*prof*rays*bright*(1./(1.+fk*.9))*dt*6.;}}
   /* night sky behind */
   float y=gl_FragCoord.y/res.y;
