@@ -25,14 +25,15 @@ def ragged(coord, seed):            # 1D noise along the curtain: each ray's low
     r = np.random.default_rng(seed).standard_normal(4096).astype(np.float32)
     r = nd.gaussian_filter1d(r, 6, mode='wrap'); r /= r.std() + 1e-6
     return np.interp((coord % 1.0) * 4095, np.arange(4096), r).astype(np.float32)
-def curtain(u0, u1, hem, hem_curve, height, soft_below, edge_soft, seed_off=0.0):
+def curtain(u0, u1, hem, hem_curve, height, soft_below, edge_soft, seed_off=0.0, taper=0.0):
     hv = hem + hem_curve * np.sin((us - u0) / max(u1 - u0, 1e-3) * np.pi) + 0.04 * ragged(us, 50 + int(seed_off * 10))   # ragged hem, each ray ends at its own height
-    span = 1 / (1 + np.exp(-(us - u0) / edge_soft)) * 1 / (1 + np.exp((us - u1) / edge_soft))
+    tp = taper * np.clip(v - 0.25, 0, None)
+    span = 1 / (1 + np.exp(-(us - u0 - tp) / edge_soft)) * 1 / (1 + np.exp((us - u1 + tp * 0.4) / edge_soft))
     d = hv - v                                                   # > 0 above the hem
     above = np.exp(-np.clip(d, 0, None) / height) * (1 / (1 + np.exp(-d / 0.03)))
     below = np.exp(-(np.clip(-d, 0, None) / soft_below) ** 2) * (d < 0)
     return span * (above + below * 0.5), d
-main, dmain = curtain(0.28, 0.76, 0.58, 0.09, 0.25, 0.05, 0.07)
+main, dmain = curtain(0.24, 0.78, 0.58, 0.09, 0.25, 0.05, 0.07, taper=0.45)
 core = np.exp(-((us - 0.56) / 0.14) ** 2) * np.exp(-np.clip(dmain, 0, None) / 0.16) * (1 / (1 + np.exp(-dmain / 0.03))) * (main > 0.01)   # brightest just above the hem
 fold = np.exp(-((us - 0.68 - 0.035 * np.sin(v * 7.0 + 0.8)) / 0.03) ** 2) * np.exp(-((v - 0.45) / 0.14) ** 2)                 # the curtain turning away: a violet edge
 teal, _ = curtain(0.72, 1.0, 0.38, 0.0, 0.22, 0.03, 0.035, 1)
@@ -51,6 +52,10 @@ def shear_img(img, k=1.0):
 st = shear_img(streaks(11, W * 0.03)) * 0.7 + shear_img(streaks(12, W * 0.008)) * 0.3   # broad soft rays, faint fine texture
 st = np.clip((st - 0.2) * 1.6, 0, 1)
 clumps = 0.95 + 0.4 * np.tanh(shear_img(smooth_noise(W * 0.05, 21, (1, 3.5))))
+back2, _ = curtain(0.30, 0.62, 0.40, -0.04, 0.28, 0.03, 0.05, 5)
+L_back2 = nd.gaussian_filter(warp(back2 * (0.3 + 0.8 * shear_img(streaks(61, W * 0.02), 0.7))), W * 0.01)
+front = np.exp(-((us - 0.30) / 0.07) ** 2) * np.exp(-((v - 0.55) / 0.3) ** 2)
+L_front = nd.gaussian_filter(front * (0.5 + 0.5 * st), W * 0.03)
 L_main = warp(main * (0.25 + 0.95 * st) * clumps)
 L_core = warp(core * (0.4 + 0.8 * st) * clumps)
 L_fold = warp(fold * (0.5 + 0.6 * st))
@@ -66,7 +71,11 @@ hk = np.clip(dmain / 0.35, 0, 1)[..., None]                               # heig
 hk = hk ** 1.6
 mcol = col((0, 215, 245)) * (1 - hk) + col((25, 95, 255)) * hk
 ulfade = 1 - 0.75 * np.clip((0.45 - u) / 0.3, 0, 1) * np.clip((0.45 - v) / 0.35, 0, 1)   # upper-left stays dark
-img += (L_main * ulfade)[..., None] * mcol * 1.25
+img += (L_back2 * ulfade)[..., None] * col((35, 80, 235)) * 0.9          # far curtain: dimmer, bluer, softer
+gaps = 1 - 0.7 * np.exp(-((us - 0.40 - 0.02 * np.sin(v * 6)) / 0.025) ** 2) * np.clip((0.66 - v) / 0.2, 0, 1) - 0.5 * np.exp(-((us - 0.30) / 0.02) ** 2)
+gaps = np.clip(nd.gaussian_filter(gaps, W * 0.006), 0, 1)
+img += (L_main * ulfade * gaps)[..., None] * mcol * 1.25
+img += L_front[..., None] * col((20, 160, 230)) * 0.35                      # near light, out of focus
 blob = np.exp(-((u - 0.64) / 0.09) ** 2) * np.exp(-((v - 0.64) / 0.045) ** 2)   # the hottest glow, just above the hem
 img += nd.gaussian_filter(L_core, W * 0.008)[..., None] * col((20, 255, 240)) * 1.6
 img += warp(blob * (0.7 + 0.4 * st))[..., None] * col((60, 255, 245)) * 0.55
