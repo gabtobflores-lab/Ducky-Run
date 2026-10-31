@@ -17,7 +17,13 @@ TEX = float(os.environ.get('TEX', 0.55))
 UNIFY = float(os.environ.get('UNIFY', 0.8))
 RAYS = float(os.environ.get('RAYS', 2.4))     # long soft rays rising from the main body
 MLEAN = float(os.environ.get('MLEAN', 0.5))
-TILT = float(os.environ.get('TILT', 0.2))     # extra lean for every formation (top-left to bottom-right)
+TILT = float(os.environ.get('TILT', 0.2))
+HAIR = float(os.environ.get('HAIR', 0.2))     # amount of fine streak texture
+LUMP = float(os.environ.get('LUMP', 0.4))     # how much strands bunch, pinch and fade (teardrops)
+BANDS = float(os.environ.get('BANDS', 5.0))   # width of the broad light bands along the lean
+SOFT = float(os.environ.get('SOFT', 0.75))
+ALIGN = float(os.environ.get('ALIGN', 0.8))   # 0..1: pulls every formation towards one shared lean (parallel curtain bands)
+BANDK = float(os.environ.get('BANDK', 0.9))  # strength of the curtain bands     # photographic softness of the finished image     # extra lean for every formation (top-left to bottom-right)
 KNEE = float(os.environ.get('KNEE', 0.0))     # highlight-only roll-off for the hottest light  # how much the main body leans   # how strongly the formations gather into one main mass
 EXPO = float(os.environ.get('EXPO', 0.68))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
 v = (np.arange(H, dtype=np.float32) / H)[:, None]            # 0 top .. 1 bottom
@@ -46,11 +52,12 @@ def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
     asymmetric and broken by a small local warp, and a soft volume of light surrounds the whole formation."""
     rr = np.random.default_rng(seed)
     # local edge warp: makes contours uneven and adds wispy extensions
-    U = U0 + noise2(0.03, seed + 900, 7.0) * min(width, 0.05) * 0.45   # vertically stretched: uneven edges and wisps, never squiggles
+    U = U0 + noise2(0.03, seed + 900, 7.0) * min(width, 0.05) * 0.45 * LUMP   # vertically stretched: uneven edges and wisps, never squiggles
     V = V0
     vm = (v0 + v1) / 2
     # the formation's path: bends and changes direction as it rises (amplitude several times the old ribbons)
-    amp = 0.035 + curve * 3.0
+    amp = (0.035 + curve * 3.0) * (1 - 0.5 * ALIGN)
+    slope = slope * (1 - ALIGN) + 0.3 * ALIGN
     path = (x0 + (slope + TILT) * (V - vm)
             + amp * np.sin(V * 3.1 + seed * 1.7 + 0.5 * np.sin(T + seed))
             + amp * 0.3 * np.sin(V * 5.3 + seed * 0.9 - 0.4 * np.cos(T + seed * 0.7))
@@ -61,8 +68,8 @@ def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
         sk = seed * 31 + k
         ws = min(width, 0.045)                                              # wide far formations don't spread sideways
         off = ws * (k - (strands - 1) / 2) * 1.5 + ws * 1.6 * n1(V * 0.55 + rr.random(), sk + 20, 130)   # strands drift apart and cross
-        wk = min(width, 0.06) * (0.55 + 1.2 * np.clip(0.5 + 0.45 * n1(V * 0.8 + rr.random(), sk + 40, 110), 0, 1))       # width swells and pinches
-        bk = np.clip(0.35 + 0.85 * n1(V * 1.1 + rr.random() + 0.03 * np.cos(T + sk), sk + 60, 90), 0, 1.25)   # fades out, re-emerges
+        wk = min(width, 0.06) * (0.55 + 1.2 * np.clip(0.5 + 0.45 * LUMP * n1(V * 0.8 + rr.random(), sk + 40, 110), 0, 1))       # width swells and pinches
+        bk = np.clip(0.6 - 0.25 * LUMP + 0.85 * LUMP * n1(V * 1.1 + rr.random() + 0.03 * np.cos(T + sk), sk + 60, 90), 0, 1.25)   # fades out, re-emerges
         sd = (U - path - off) / wk
         sa = np.where(sd > 0, sd * (0.75 + 0.5 * rr.random()), sd * (1.25 - 0.5 * rr.random()))               # one edge sharper than the other
         sa = sa / BLEND
@@ -75,7 +82,7 @@ def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
         tk = np.clip((V - e0) / np.maximum(e1 - e0, 0.05), 0, 1)
         envk = (tk * tk * (3 - 2 * tk)) ** 1.5 * np.clip((1 - tk) / 0.35, 0, 1) ** 1.3
         envF = np.maximum(envF, envk)
-        tot += core * bk * envk * (1 - 0.55 * fil + 0.55 * fil * fl)
+        tot += core * bk * envk * (1 - 0.55 * fil * HAIR + 0.55 * fil * HAIR * fl)
         vol += np.exp(-np.abs(U - path - off) / (min(wk.max(), 0.06) * 2.2 * min(glow, 1.4))) * bk * envk   # soft volume sized in screen units
     tot /= strands ** 0.5
     vol /= strands
@@ -134,6 +141,13 @@ if UNIFY > 0:
     lum = np.clip(light.mean(-1), 0, None)
     glowM = nd.gaussian_filter(light, (W * 0.03, W * 0.03, 0))      # the formations' own light, softly spread inside the mass
     img = skyimg + light * (1 - UNIFY * 0.6 + UNIFY * 0.9 * M[..., None]) + glowM * (UNIFY * 0.45 * M[..., None])
+if BANDS > 1.0 and UNIFY > 0:
+    bs = np.random.default_rng(55).standard_normal(1024).astype(np.float32)
+    bs = nd.gaussian_filter1d(bs, 4.0 * BANDS, mode='wrap'); bs = (bs - bs.mean()) / (bs.std() + 1e-6)
+    ucoord = (U0 - (MLEAN + TILT) * 0.8 * (V0 - 0.6)) % 1.0                 # position across the lean
+    band = np.interp(ucoord * 1023, np.arange(1024), bs).astype(np.float32)
+    bandmod = 1 + BANDK * np.tanh(band) * M                                   # folds of the curtain: brighter and darker bands
+    img = skyimg + (img - skyimg) * bandmod[..., None]
 # long rays: the main body's own light carried upward along the lean, fading exponentially with height (a one-sided smear,
 # computed row by row from the bottom up), broken into soft rays by a vertical streak texture
 if RAYS > 0:
@@ -146,7 +160,7 @@ if RAYS > 0:
     yy = np.arange(H, dtype=np.float32)[:, None]; xx = np.arange(W, dtype=np.float32)[None, :]
     up = nd.map_coordinates(up, [np.broadcast_to(yy, (H, W)), np.clip(xx + (yy - H * 0.65) * (MLEAN * W / H) * 0.6, 0, W - 1)], order=1)
     rs2 = np.random.default_rng(77).random((H // 8 + 1, W)).astype(np.float32)
-    rays_tex = nd.gaussian_filter(rs2, (H * 0.04 / 8, W * 0.012), mode='wrap'); rays_tex = (rays_tex - rays_tex.min()) / (rays_tex.max() - rays_tex.min())
+    rays_tex = nd.gaussian_filter(rs2, (H * 0.04 / 8, W * 0.012 * BANDS), mode='wrap'); rays_tex = (rays_tex - rays_tex.min()) / (rays_tex.max() - rays_tex.min())
     rays_tex = np.repeat(rays_tex, 8, axis=0)[:H]
     rays_l = up * (0.25 + 1.0 * rays_tex ** 1.5) * np.clip((0.75 - v) / 0.5, 0, 1)
     img += rays_l[..., None] * col((20, 150, 235)) * RAYS * 2.2
@@ -155,7 +169,7 @@ rs = np.random.default_rng(31).random((H // 4 + 1, W)).astype(np.float32)
 fine = nd.gaussian_filter(rs, (H * 0.02, 0.8), mode='wrap'); fine = (fine - fine.mean()) / (fine.std() + 1e-6)
 fine = np.repeat(fine, 4, axis=0)[:H]
 lumf = img.mean(-1, keepdims=True)
-img *= 1 + 0.06 * fine[..., None] * np.clip(lumf * 6, 0, 1)
+img *= 1 + 0.06 * HAIR * fine[..., None] * np.clip(lumf * 6, 0, 1)
 # composition: dark band at the top for the score, a calmer band behind the balls
 img *= (0.35 + 0.65 * np.clip((v - 0.04) / 0.18, 0, 1))[..., None]
 img *= (1 - 0.18 * np.exp(-((v - 0.78) / 0.045) ** 2))[..., None]
@@ -165,6 +179,8 @@ img += nd.gaussian_filter(br, (W * 0.008, W * 0.008, 0)) * 0.5
 # stars only in dark sky, soft shoulder (no clipping), fine grain
 st = (np.random.default_rng(99).random((H, W)) > 0.99985).astype(np.float32)
 img += (nd.gaussian_filter(st, 0.6) * 4 * np.clip(1 - img.mean(-1) / 0.06, 0, 1))[..., None] * 0.45
+if SOFT > 0:
+    img = img * (1 - SOFT) + nd.gaussian_filter(img, (W * 0.006, W * 0.004, 0)) * SOFT   # photographic softness
 if KNEE > 0:
     lmx = img.max(-1, keepdims=True); over = np.clip(lmx - 0.82, 0, None)
     newmx = 0.82 + over / (1 + KNEE * over * 2.5)                               # values above the knee approach a lower ceiling smoothly
