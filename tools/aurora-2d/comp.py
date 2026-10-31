@@ -32,11 +32,11 @@ def curtain(u0, u1, hem, hem_curve, height, soft_below, edge_soft, seed_off=0.0)
     above = np.exp(-np.clip(d, 0, None) / height) * (1 / (1 + np.exp(-d / 0.03)))
     below = np.exp(-(np.clip(-d, 0, None) / soft_below) ** 2) * (d < 0)
     return span * (above + below * 0.5), d
-main, dmain = curtain(0.24, 0.72, 0.62, 0.0, 0.32, 0.05, 0.06)
+main, dmain = curtain(0.22, 0.74, 0.60, 0.07, 0.34, 0.05, 0.07)
 core = np.exp(-((us - 0.50) / 0.12) ** 2) * np.exp(-np.clip(dmain, 0, None) / 0.16) * (1 / (1 + np.exp(-dmain / 0.03))) * (main > 0.01)   # brightest just above the hem
-fold = np.exp(-((us - 0.70) / 0.022) ** 2) * np.exp(-((v - 0.42) / 0.16) ** 2)                 # the curtain turning away: a violet edge
+fold = np.exp(-((us - 0.68 - 0.035 * np.sin(v * 7.0 + 0.8)) / 0.03) ** 2) * np.exp(-((v - 0.45) / 0.14) ** 2)                 # the curtain turning away: a violet edge
 teal, _ = curtain(0.64, 0.98, 0.40, 0.0, 0.30, 0.05, 0.05, 1)
-left = (np.exp(-((us - 0.12) / 0.018) ** 2) + 0.7 * np.exp(-((us - 0.19) / 0.012) ** 2)) * np.clip((0.82 - v) / 0.1, 0, 1) * np.clip(v / 0.15, 0, 1)
+left = (np.exp(-((us - 0.14) / 0.03) ** 2) + 0.5 * np.exp(-((us - 0.22) / 0.02) ** 2)) * np.clip((0.86 - v) / 0.12, 0, 1) * np.clip((v - 0.05) / 0.2, 0, 1)
 lowteal, _ = curtain(-0.05, 0.22, 0.86, 0.0, 0.10, 0.04, 0.04, 2)
 haze = np.exp(-((v - 0.95) / 0.1) ** 2) * (0.4 + 0.6 * np.exp(-((u - 0.62) / 0.35) ** 2))
 # --- streak texture along the lean ---
@@ -47,8 +47,8 @@ def streaks(seed, fine):
 shear = (LEAN * (v - 0.6)) * W
 def shear_img(img, k=1.0):
     return nd.map_coordinates(img, [y, (x - shear * k) % W], order=1, mode='wrap')
-st = shear_img(streaks(11, W * 0.006)) * 0.55 + shear_img(streaks(12, W * 0.014)) * 0.45
-st = np.clip((st - 0.25) * 1.7, 0, 1) ** 1.1
+st = shear_img(streaks(11, W * 0.03)) * 0.7 + shear_img(streaks(12, W * 0.008)) * 0.3   # broad soft rays, faint fine texture
+st = np.clip((st - 0.2) * 1.6, 0, 1)
 clumps = 0.95 + 0.4 * np.tanh(shear_img(smooth_noise(W * 0.05, 21, (1, 3.5))))
 L_main = warp(main * (0.25 + 0.95 * st) * clumps)
 L_core = warp(core * (0.4 + 0.8 * st) * clumps)
@@ -76,6 +76,7 @@ img = img * 0.4 + sm * 0.6
 img = img * 0.6 + nd.gaussian_filter(img, (W * 0.0036, W * 0.0036, 0)) * 0.4
 glow = nd.gaussian_filter(img, (W * 0.05, W * 0.05, 0))
 img = 1 - (1 - img) * (1 - glow * 0.75)
+img = img * 0.45 + nd.gaussian_filter(img, (W * 0.012, W * 0.008, 0)) * 0.55
 # vignette, deepest top-left
 d = np.sqrt(((u - 0.45) / 0.8) ** 2 + ((v - 0.58) / 0.75) ** 2)
 img *= (1 - 0.92 * np.clip(d, 0, 1) ** 2.2)[..., None]
