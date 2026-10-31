@@ -16,7 +16,9 @@ BLEND = float(os.environ.get('BLEND', 1.7))   # >1 widens strand cores so they m
 TEX = float(os.environ.get('TEX', 0.55))
 UNIFY = float(os.environ.get('UNIFY', 0.8))
 RAYS = float(os.environ.get('RAYS', 2.4))     # long soft rays rising from the main body
-MLEAN = float(os.environ.get('MLEAN', 0.5))  # how much the main body leans   # how strongly the formations gather into one main mass
+MLEAN = float(os.environ.get('MLEAN', 0.5))
+TILT = float(os.environ.get('TILT', 0.2))     # extra lean for every formation (top-left to bottom-right)
+KNEE = float(os.environ.get('KNEE', 0.0))     # highlight-only roll-off for the hottest light  # how much the main body leans   # how strongly the formations gather into one main mass
 EXPO = float(os.environ.get('EXPO', 0.68))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
 v = (np.arange(H, dtype=np.float32) / H)[:, None]            # 0 top .. 1 bottom
 u = (np.arange(W, dtype=np.float32) / W)[None, :]
@@ -49,7 +51,7 @@ def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
     vm = (v0 + v1) / 2
     # the formation's path: bends and changes direction as it rises (amplitude several times the old ribbons)
     amp = 0.035 + curve * 3.0
-    path = (x0 + slope * (V - vm)
+    path = (x0 + (slope + TILT) * (V - vm)
             + amp * np.sin(V * 3.1 + seed * 1.7 + 0.5 * np.sin(T + seed))
             + amp * 0.3 * np.sin(V * 5.3 + seed * 0.9 - 0.4 * np.cos(T + seed * 0.7))
             + 0.03 * n1(V * 0.7 + 0.03 * np.sin(T + seed), seed, 160)
@@ -163,6 +165,10 @@ img += nd.gaussian_filter(br, (W * 0.008, W * 0.008, 0)) * 0.5
 # stars only in dark sky, soft shoulder (no clipping), fine grain
 st = (np.random.default_rng(99).random((H, W)) > 0.99985).astype(np.float32)
 img += (nd.gaussian_filter(st, 0.6) * 4 * np.clip(1 - img.mean(-1) / 0.06, 0, 1))[..., None] * 0.45
+if KNEE > 0:
+    lmx = img.max(-1, keepdims=True); over = np.clip(lmx - 0.82, 0, None)
+    newmx = 0.82 + over / (1 + KNEE * over * 2.5)                               # values above the knee approach a lower ceiling smoothly
+    img = img * np.where(lmx > 0.82, newmx / np.maximum(lmx, 1e-6), 1.0)         # only light above the knee is compressed; hue kept
 img = img / (1 + 0.3 * img)
 img = np.clip(img, 0, 1) ** (1 / 1.03)
 img += np.random.default_rng(int(ph * 997) + 3).standard_normal((H, W, 1)).astype(np.float32) * 0.004
