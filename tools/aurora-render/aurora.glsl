@@ -43,9 +43,9 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
       /* rays: fine vertical structure along the curtain, slowly drifting */
       float u=X*4.2+dz*.2;
       float comb=rayComb(u*(1.-.15*(1.-fk*.5)),h,s)*.85+rayComb(u*2.3+.5,h,s+11.)*.2*fk;   /* the near curtain is softer (slightly out of focus), the far ones crisp */      /* bold rays plus finer ones between */
-      float bright=.3+.7*smoothstep(.3,.72,fbm(vec2(X*.22+s,2.)+loopv(.4)));
+      float bright=.12+.88*smoothstep(.3,.72,fbm(vec2(X*.22+s,2.)+loopv(.4)));
       float cx=-.02+(.22*loopv(1.).x+.15*loopv(1.).y)*(1.-fk*.15)+(fk-1.5)*.32*sin(fk*1.9+.5)-.25;                                  /* all layers gather towards the centre-left */                           /* the light gathers in one area that drifts slowly */
-      float lobe=(fk<.5?3.2:.9)*exp(-pow((X-cx-dz*.1)/(.62+fk*.3),2.))+.45*exp(-pow((X-cx-2.6+.6*loopv(1.).y)/(.8+fk*.5),2.));   /* one main luminous mass and a smaller second one */
+      float lobe=(fk<.5?4.:.45)*exp(-pow((X-cx-dz*.1)/(.62+fk*.3),2.))+.45*exp(-pow((X-cx-2.6+.6*loopv(1.).y)/(.8+fk*.5),2.));   /* one main luminous mass and a smaller second one */
       bright*=lobe;
       float rays=mix(.55,.2+.8*comb,.9*smoothstep(.1,.9,lobe));
       rays*=.9+.1*vn(vec2(u*9.+s*3.,h*.25)+loopv(.2));                /* fine streak texture, very subtle */          /* crisp rays burn inside the bright mass, soft glow at its edges */      /* some stretches glow, others fade */
@@ -55,7 +55,7 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
   float y=gl_FragCoord.y/res.y;
   vec3 sky=mix(vec3(.07,.05,.24),vec3(.003,.006,.02),smoothstep(0.,.7,y));   /* deep near-black overhead */   /* a faint navy glow, never pure black */                   /* violet glow low down, near-black navy overhead */
   sky+=vec3(.09,.03,.24)*exp(-pow((gl_FragCoord.x/res.x-.7)/.35,2.))*smoothstep(.45,0.,y);   /* violet glow low down */
-  col=.9*(1.-exp(-col*2.1));                                                  /* gentle curve: dim glow lifted, highlights capped softly */
+  col=.92*(1.-exp(-col*1.5));                                                  /* gentle curve: dim glow lifted, highlights capped softly */
   col=sky*(1.-col*.8)+col;                                                    /* light glows over the sky, it doesn't just sit on top */
   vec2 g=gl_FragCoord.xy/res.y*160.;float st=hs(floor(g));
   col+=vec3(.8,.85,1.)*step(.993,st)*exp(-dot(fract(g)-.5,fract(g)-.5)*40.)*.6*(1.-smoothstep(.0,.25,dot(col,vec3(.3,.5,.2))));
