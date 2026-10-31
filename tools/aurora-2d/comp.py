@@ -16,52 +16,60 @@ def warp(img):
     return nd.map_coordinates(img, [y, np.clip(x + dx, 0, W - 1)], order=1, mode='nearest')
 def lean(cx, slope):                # centre-line x (px) as a function of row: leans as it rises
     return (cx + slope * (0.62 - v)) * W
-# --- painted light shapes (intensity masks) ---
-def pillar(cx, slope, width, v0, v1, soft_top, soft_bot, curve=0.0, freq=4.0, phase=0.0, bulge=0.0, vb=0.6, sb=0.18, flare=0.0):
-    # a curtain whose centre line curves (S-shape) and whose width swells in the middle and flares at the bottom
-    c = lean(cx, slope) + curve * W * np.sin(freq * v + phase)
-    wv = width * (1 + bulge * np.exp(-((v - vb) / sb) ** 2) + flare * np.clip(v - 0.7, 0, 1) * 3)
-    across = np.exp(-((x - c) / (wv * W)) ** 2)
-    along = 1 / (1 + np.exp(-(v - v0) / soft_top)) * 1 / (1 + np.exp((v - v1) / soft_bot))
-    return across * along
-main = pillar(0.42 + 0.015 * np.sin(T), 0.11, 0.095, 0.06, 0.9, 0.1, 0.05, curve=0.045, freq=5.0, phase=0.6 + 0.3 * np.sin(T), bulge=0.9, vb=0.58, sb=0.17, flare=0.5)
-back = pillar(0.62 + 0.02 * np.cos(T), 0.12, 0.045, 0.28, 0.9, 0.08, 0.06, curve=0.025, freq=4.0, phase=2.2, bulge=0.6, vb=0.6, sb=0.15) * 0.7   # a thin violet curtain further back, right of the core   # a second, wider curtain further back
-core = pillar(0.41 + 0.015 * np.sin(T), 0.11, 0.08, 0.40, 0.72, 0.07, 0.05, curve=0.045, freq=5.0, phase=0.6 + 0.3 * np.sin(T), bulge=0.8, vb=0.6, sb=0.1)
-teal = pillar(0.73, 0.12, 0.08, 0.04, 0.42, 0.05, 0.025, curve=0.02, freq=6.0, bulge=0.3, vb=0.25, sb=0.1) * 1.3   # hangs from the top with a soft lower hem
-left = pillar(0.12, 0.12, 0.04, 0.25, 0.95, 0.08, 0.04) * 0.7
-haze = np.exp(-((v - 0.98) / 0.16) ** 2) * (0.45 + 0.4 * np.exp(-((u - 0.45) / 0.45) ** 2))
-# --- streak texture: fine vertical threads of varying brightness, slanted with the lean ---
+# --- curtains: rays hang from a bright lower edge (hem) and fade upward; all rays lean top-left -> bottom-right ---
+LEAN = 0.38                                   # how far (in screen widths) a ray drifts right per screen height downward
+def sheared(img_u):                           # horizontal position measured along the lean
+    return img_u - LEAN * (v - 0.6)
+us = sheared(u)
+def ragged(coord, seed):            # 1D noise along the curtain: each ray's lower end sits at its own height
+    r = np.random.default_rng(seed).standard_normal(4096).astype(np.float32)
+    r = nd.gaussian_filter1d(r, 6, mode='wrap'); r /= r.std() + 1e-6
+    return np.interp((coord % 1.0) * 4095, np.arange(4096), r).astype(np.float32)
+def curtain(u0, u1, hem, hem_curve, height, soft_below, edge_soft, seed_off=0.0):
+    hv = hem + hem_curve * np.sin((us - u0) / max(u1 - u0, 1e-3) * np.pi) + 0.04 * ragged(us, 50 + int(seed_off * 10))   # ragged hem, each ray ends at its own height
+    span = 1 / (1 + np.exp(-(us - u0) / edge_soft)) * 1 / (1 + np.exp((us - u1) / edge_soft))
+    d = hv - v                                                   # > 0 above the hem
+    above = np.exp(-np.clip(d, 0, None) / height) * (1 / (1 + np.exp(-d / 0.03)))
+    below = np.exp(-(np.clip(-d, 0, None) / soft_below) ** 2) * (d < 0)
+    return span * (above + below * 0.5), d
+main, dmain = curtain(0.24, 0.72, 0.62, 0.0, 0.32, 0.05, 0.06)
+core = np.exp(-((us - 0.50) / 0.12) ** 2) * np.exp(-np.clip(dmain, 0, None) / 0.16) * (1 / (1 + np.exp(-dmain / 0.03))) * (main > 0.01)   # brightest just above the hem
+fold = np.exp(-((us - 0.70) / 0.022) ** 2) * np.exp(-((v - 0.42) / 0.16) ** 2)                 # the curtain turning away: a violet edge
+teal, _ = curtain(0.64, 0.98, 0.40, 0.0, 0.30, 0.05, 0.05, 1)
+left = (np.exp(-((us - 0.12) / 0.018) ** 2) + 0.7 * np.exp(-((us - 0.19) / 0.012) ** 2)) * np.clip((0.82 - v) / 0.1, 0, 1) * np.clip(v / 0.15, 0, 1)
+lowteal, _ = curtain(-0.05, 0.22, 0.86, 0.0, 0.10, 0.04, 0.04, 2)
+haze = np.exp(-((v - 0.95) / 0.1) ** 2) * (0.4 + 0.6 * np.exp(-((u - 0.62) / 0.35) ** 2))
+# --- streak texture along the lean ---
 def streaks(seed, fine):
     n = np.random.default_rng(seed).random((H, W)).astype(np.float32)
-    n = nd.gaussian_filter(n, (H * 0.09, fine), mode='wrap')            # long along, thin across
-    n = (n - n.min()) / (n.max() - n.min())
-    return n
-shear = (0.11 * (0.62 - v)) * W
+    n = nd.gaussian_filter(n, (H * 0.09, fine), mode='wrap')
+    return (n - n.min()) / (n.max() - n.min())
+shear = (LEAN * (v - 0.6)) * W
 def shear_img(img, k=1.0):
     return nd.map_coordinates(img, [y, (x - shear * k) % W], order=1, mode='wrap')
-st = shear_img(streaks(11, W * 0.005)) * 0.55 + shear_img(streaks(12, W * 0.0116)) * 0.45
+st = shear_img(streaks(11, W * 0.006)) * 0.55 + shear_img(streaks(12, W * 0.014)) * 0.45
 st = np.clip((st - 0.25) * 1.7, 0, 1) ** 1.1
-clumps = 0.95 + 0.45 * np.tanh(smooth_noise(W * 0.045, 21, (1, 3.5)))
-# --- combine: light = shapes x streaks, then warp so it bends ---
+clumps = 0.95 + 0.4 * np.tanh(shear_img(smooth_noise(W * 0.05, 21, (1, 3.5))))
 L_main = warp(main * (0.25 + 0.95 * st) * clumps)
-L_back = warp(back * (0.35 + 0.8 * shear_img(streaks(41, W * 0.009), 1.4)))
-L_core = warp(core * (0.35 + 0.9 * st) * clumps)
-L_teal = warp(teal * (0.2 + 1.0 * shear_img(streaks(31, W * 0.0036), 0.4)))
-L_left = warp(left * (0.3 + 0.9 * st))
+L_core = warp(core * (0.4 + 0.8 * st) * clumps)
+L_fold = warp(fold * (0.5 + 0.6 * st))
+L_teal = warp(teal * (0.25 + 0.95 * shear_img(streaks(31, W * 0.008))))
+L_left = left * (0.5 + 0.6 * st)
+L_low = warp(lowteal * (0.3 + 0.9 * st))
 # --- colour ---
 def col(c): return np.array(c, np.float32).reshape(1, 1, 3) / 255
 img = np.zeros((H, W, 3), np.float32)
 sky = col((2, 4, 14)) * (1 - v[..., None]) + col((10, 8, 40)) * v[..., None]
 img += sky
-mcol = col((25, 95, 255)) * np.clip((0.5 - v) / 0.35, 0, 1)[..., None] + col((0, 200, 240)) * (1 - np.clip((0.5 - v) / 0.35, 0, 1))[..., None]   # blue high up, cyan lower
-lowk = np.clip((v - 0.74) / 0.16, 0, 1)[..., None]                      # below the core the light turns blue-violet
-mcol = mcol * (1 - lowk) + col((60, 70, 255)) * lowk
-img += L_main[..., None] * mcol * 1.25
-img += L_back[..., None] * col((95, 60, 255)) * 1.0
-img += (L_core ** 1.2)[..., None] * col((10, 235, 255)) * 1.35
-img += L_teal[..., None] * col((0, 175, 160)) * 1.1
-img += L_left[..., None] * col((50, 90, 255)) * 1.3
-img += haze[..., None] * col((75, 45, 215)) * 0.8
+hk = np.clip(dmain / 0.35, 0, 1)[..., None]                               # height above the hem: cyan near the edge, blue higher up
+mcol = col((0, 210, 245)) * (1 - hk) + col((25, 90, 255)) * hk
+img += L_main[..., None] * mcol * 1.15
+img += (L_core ** 1.1)[..., None] * col((20, 255, 240)) * 2.4
+img += L_fold[..., None] * col((110, 70, 255)) * 0.9
+img += L_teal[..., None] * col((0, 170, 160)) * 0.85
+img += L_left[..., None] * col((40, 110, 255)) * 1.0
+img += L_low[..., None] * col((0, 160, 170)) * 0.7
+img += haze[..., None] * col((70, 45, 210)) * 0.5
 # streak smear upward (long exposure) + glow
 sm = nd.uniform_filter1d(img, size=int(H * 0.03), axis=0)
 img = img * 0.4 + sm * 0.6
