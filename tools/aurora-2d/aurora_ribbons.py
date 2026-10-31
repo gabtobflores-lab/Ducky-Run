@@ -24,7 +24,10 @@ BANDS = float(os.environ.get('BANDS', 5.0))   # width of the broad light bands a
 SOFT = float(os.environ.get('SOFT', 0.35))
 ALIGN = float(os.environ.get('ALIGN', 0.8))   # 0..1: pulls every formation towards one shared lean (parallel curtain bands)
 BANDK = float(os.environ.get('BANDK', 0.9))
-HEM = float(os.environ.get('HEM', 1.0))       # 0..1: real-aurora profile - bright sharp lower edge, rays fading upward
+HEM = float(os.environ.get('HEM', 1.0))
+LOWC = float(os.environ.get('LOWC', 0.15))     # strength of the small formations below the main edge
+TEAL = float(os.environ.get('TEAL', 3.0))     # strength of the upper-right teal curtain
+CYK = float(os.environ.get('CYK', 6.0))       # how far up the rays keep their cyan core colour       # 0..1: real-aurora profile - bright sharp lower edge, rays fading upward
 HEMW = float(os.environ.get('HEMW', 0.012))   # how sharp that lower edge is (screen heights)
 RISE = float(os.environ.get('RISE', 0.55))    # how far up the light fades (fraction of the formation's height)  # strength of the curtain bands     # photographic softness of the finished image     # extra lean for every formation (top-left to bottom-right)
 KNEE = float(os.environ.get('KNEE', 0.0))     # highlight-only roll-off for the hottest light  # how much the main body leans   # how strongly the formations gather into one main mass
@@ -125,13 +128,13 @@ FAR = [
 MID = [
     (0.27, 0.38, 0.16, 0.80, 0.034, 0.018, 4, 0.34, (10, 210, 235), (0, 105, 200), 1.5, 0.4),
     (0.70, 0.20, 0.12, 0.62, 0.052, 0.022, 5, 0.6, (0, 220, 195),  (0, 120, 140),  1.5, 0.4),
-    (0.08, 0.40, 0.40, 0.95, 0.030, 0.010, 6, 0.34, (40, 140, 245), (15, 65, 180),  1.0, 0.4),
+    (0.08, 0.40, 0.40, 0.95, 0.030, 0.010, 6, 0.34 * LOWC, (40, 140, 245), (15, 65, 180),  1.0, 0.4),
     (0.76, 0.26, 0.22, 1.04, 0.045, 0.03, 18, 0.32, (0, 195, 205), (0, 95, 160),   1.6, 0.4),
 ]
 NEAR = [
     (0.55, 0.28, 0.30, 0.74, 0.016, 0.016, 7, 0.75, (70, 245, 240), (0, 160, 215),  0.9, 0.45),
-    (0.24, 0.42, 0.50, 0.90, 0.014, 0.008, 10, 0.45, (60, 210, 250), (20, 100, 220), 0.8, 0.45),
-    (0.86, 0.12, 0.20, 0.48, 0.018, 0.010, 9, 0.55, (30, 235, 210), (0, 140, 160),  0.9, 0.45),
+    (0.24, 0.42, 0.50, 0.90, 0.014, 0.008, 10, 0.45 * LOWC, (60, 210, 250), (20, 100, 220), 0.8, 0.45),
+    (0.86, 0.12, 0.20, 0.48, 0.018, 0.010, 9, 0.55 * TEAL, (30, 235, 210), (0, 140, 160),  0.9, 0.45),
 ]
 img = np.zeros((H, W, 3), np.float32)
 img += col((1, 3, 10)) * (1 - v[..., None]) + col((7, 11, 36)) * v[..., None]   # near-black top, midnight blue below
@@ -139,7 +142,7 @@ for layer, soft in ((FAR, 1.0), (MID, 1.0), (NEAR, 1.0)):
     for (x0, sl, a, b, w, cv, sd, inten, cc, gc, gl, fil) in layer:
         r = ribbon(x0, sl, a, b, w, cv, sd, gl, fil)
         # colour: the core colour where the ribbon is intense, the glow colour in its soft spread
-        k = np.clip(r * 2.5, 0, 1)[..., None]
+        k = np.clip(r * CYK, 0, 1)[..., None]
         img += r[..., None] * (col(gc) * (1 - k) + col(cc) * k) * inten * 4.1 * EXPO
 # main mass: one large curving body of light that the formations gather into. Inside it their light is lifted and joined by a
 # soft glow that follows the same curve; outside it they recede. It leans and widens towards the bottom right, reaching the
