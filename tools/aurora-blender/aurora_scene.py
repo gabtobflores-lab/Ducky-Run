@@ -61,7 +61,12 @@ def comb(x, y, z):
         if isinstance(v, (int, float)): c.inputs[i].default_value = v
         else: L.new(v, c.inputs[i])
     return c.outputs[0]
-X, Y, Z = xyz.outputs['X'], xyz.outputs['Y'], xyz.outputs['Z']
+X0, Y, Z = xyz.outputs['X'], xyz.outputs['Y'], xyz.outputs['Z']
+# smoke-like flow: the light's horizontal position is pushed around by two layers of flowing noise that change with height,
+# so streaks curl, bend and break into irregular clumps instead of running straight
+_w1 = noise(comb(m('MULTIPLY', X0, 0.12), m('MULTIPLY', Z, 0.07), 3.0 + math.sin(PH * 2 * math.pi) * 0.3), 1.0, 3, 0.5)
+_w2 = noise(comb(m('MULTIPLY', X0, 0.35), m('MULTIPLY', Z, 0.16), 7.0 + math.cos(PH * 2 * math.pi) * 0.3), 1.0, 3, 0.5)
+X = m('ADD', X0, m('ADD', m('MULTIPLY', m('SUBTRACT', _w1, 0.5), 2.6), m('MULTIPLY', m('SUBTRACT', _w2, 0.5), 0.9)))
 t = PH * 2 * math.pi
 total = None; colsum = None
 for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75), (12.0, 4.5, 5.0, 0.12, 1.1, 0.7), (8.5, -2.0, 3.0, 0.1, 1.0, 0.45)]):
