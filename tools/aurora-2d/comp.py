@@ -56,7 +56,8 @@ back2, _ = curtain(0.30, 0.62, 0.40, -0.04, 0.28, 0.03, 0.05, 5)
 L_back2 = nd.gaussian_filter(warp(back2 * (0.3 + 0.8 * shear_img(streaks(61, W * 0.02), 0.7))), W * 0.01)
 front = np.exp(-((us - 0.30) / 0.07) ** 2) * np.exp(-((v - 0.55) / 0.3) ** 2)
 L_front = nd.gaussian_filter(front * (0.5 + 0.5 * st), W * 0.03)
-L_main = warp(main * (0.25 + 0.95 * st) * clumps)
+along = 0.8 + 0.35 * np.tanh(shear_img(smooth_noise(W * 0.04, 71, (0.6, 4.0))))
+L_main = warp(main * (0.25 + 0.95 * st) * clumps * along)
 L_core = warp(core * (0.4 + 0.8 * st) * clumps)
 L_fold = warp(fold * (0.5 + 0.6 * st))
 L_teal = warp(teal * (0.25 + 0.95 * shear_img(streaks(31, W * 0.008))))
@@ -72,7 +73,7 @@ hk = hk ** 1.6
 mcol = col((0, 215, 245)) * (1 - hk) + col((25, 95, 255)) * hk
 ulfade = 1 - 0.75 * np.clip((0.45 - u) / 0.3, 0, 1) * np.clip((0.45 - v) / 0.35, 0, 1)   # upper-left stays dark
 img += (L_back2 * ulfade)[..., None] * col((35, 80, 235)) * 0.9          # far curtain: dimmer, bluer, softer
-gaps = 1 - 0.7 * np.exp(-((us - 0.40 - 0.02 * np.sin(v * 6)) / 0.025) ** 2) * np.clip((0.66 - v) / 0.2, 0, 1) - 0.5 * np.exp(-((us - 0.30) / 0.02) ** 2)
+gaps = 1 - 0.85 * np.exp(-((us - 0.40 - 0.02 * np.sin(v * 6)) / 0.025) ** 2) * np.clip((0.66 - v) / 0.2, 0, 1) - 0.7 * np.exp(-((us - 0.30) / 0.025) ** 2) - 0.45 * np.exp(-((us - 0.50) / 0.015) ** 2) * np.clip((0.6 - v) / 0.3, 0, 1)
 gaps = np.clip(nd.gaussian_filter(gaps, W * 0.006), 0, 1)
 img += (L_main * ulfade * gaps)[..., None] * mcol * 1.25
 img += L_front[..., None] * col((20, 160, 230)) * 0.35                      # near light, out of focus
@@ -97,6 +98,16 @@ glow = nd.gaussian_filter(img, (W * 0.05, W * 0.05, 0))
 img = 1 - (1 - img) * (1 - glow * 0.75)
 img = img * 0.45 + nd.gaussian_filter(img, (W * 0.012, W * 0.008, 0)) * 0.55
 img *= pocket[..., None]
+bloom1 = nd.gaussian_filter(np.clip(img - 0.35, 0, None), (W * 0.01, W * 0.01, 0))
+bloom2 = nd.gaussian_filter(np.clip(img - 0.2, 0, None), (W * 0.07, W * 0.07, 0))
+img = img + bloom1 * 0.25 + bloom2 * 0.22
+img[..., 2] = nd.shift(img[..., 2], (0, W * 0.0015), order=1, mode='nearest'); img[..., 0] = nd.shift(img[..., 0], (0, -W * 0.0015), order=1, mode='nearest')
+lum = img.mean(-1)
+sr = np.random.default_rng(99).random((H, W)); stars = (sr > 0.9993).astype(np.float32)
+stars = nd.gaussian_filter(stars, 0.7) * 6 * (sr > 0.9993).sum() ** 0
+img += (stars * np.clip(1 - lum / 0.12, 0, 1))[..., None] * 0.9
+g = img.mean(-1, keepdims=True); img = np.clip(g + (img - g) * 1.25, 0, None)   # richer colour
+img = img / (1 + img * 0.12)
 # vignette, deepest top-left
 d = np.sqrt(((u - 0.45) / 0.8) ** 2 + ((v - 0.58) / 0.75) ** 2)
 img *= (1 - 0.92 * np.clip(d, 0, 1) ** 2.2)[..., None]
