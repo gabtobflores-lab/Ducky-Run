@@ -32,11 +32,11 @@ def curtain(u0, u1, hem, hem_curve, height, soft_below, edge_soft, seed_off=0.0)
     above = np.exp(-np.clip(d, 0, None) / height) * (1 / (1 + np.exp(-d / 0.03)))
     below = np.exp(-(np.clip(-d, 0, None) / soft_below) ** 2) * (d < 0)
     return span * (above + below * 0.5), d
-main, dmain = curtain(0.22, 0.74, 0.60, 0.07, 0.25, 0.05, 0.07)
-core = np.exp(-((us - 0.56) / 0.11) ** 2) * np.exp(-np.clip(dmain, 0, None) / 0.16) * (1 / (1 + np.exp(-dmain / 0.03))) * (main > 0.01)   # brightest just above the hem
+main, dmain = curtain(0.28, 0.76, 0.58, 0.09, 0.25, 0.05, 0.07)
+core = np.exp(-((us - 0.56) / 0.14) ** 2) * np.exp(-np.clip(dmain, 0, None) / 0.16) * (1 / (1 + np.exp(-dmain / 0.03))) * (main > 0.01)   # brightest just above the hem
 fold = np.exp(-((us - 0.68 - 0.035 * np.sin(v * 7.0 + 0.8)) / 0.03) ** 2) * np.exp(-((v - 0.45) / 0.14) ** 2)                 # the curtain turning away: a violet edge
 teal, _ = curtain(0.72, 1.0, 0.38, 0.0, 0.22, 0.03, 0.035, 1)
-left = (np.exp(-((us - 0.14) / 0.03) ** 2) + 0.5 * np.exp(-((us - 0.22) / 0.02) ** 2)) * np.clip((0.86 - v) / 0.12, 0, 1) * np.clip((v - 0.05) / 0.2, 0, 1)
+left = (np.exp(-((us - 0.15) / 0.022) ** 2) + 0.25 * np.exp(-((us - 0.21) / 0.015) ** 2)) * np.clip((0.86 - v) / 0.12, 0, 1) * np.clip((v - 0.05) / 0.2, 0, 1)
 lowteal, _ = curtain(-0.05, 0.22, 0.86, 0.0, 0.10, 0.04, 0.04, 2)
 haze = np.exp(-((v - 0.95) / 0.1) ** 2) * (0.4 + 0.6 * np.exp(-((u - 0.62) / 0.35) ** 2))
 pocket = 1 - 0.55 * np.exp(-((u - 0.55) / 0.2) ** 2) * np.exp(-((v - 0.76) / 0.06) ** 2)
@@ -64,13 +64,19 @@ sky = col((2, 4, 14)) * (1 - v[..., None]) + col((10, 8, 40)) * v[..., None]
 img += sky
 hk = np.clip(dmain / 0.35, 0, 1)[..., None]                               # height above the hem: cyan near the edge, blue higher up
 mcol = col((0, 210, 245)) * (1 - hk) + col((25, 90, 255)) * hk
-img += L_main[..., None] * mcol * 1.15
-img += (L_core ** 1.1)[..., None] * col((20, 255, 240)) * 2.4
+img += L_main[..., None] * mcol * 1.35
+blob = np.exp(-((u - 0.64) / 0.09) ** 2) * np.exp(-((v - 0.64) / 0.045) ** 2)   # the hottest glow, just above the hem
+img += (L_core ** 1.1)[..., None] * col((20, 255, 240)) * 2.2
+img += warp(blob * (0.7 + 0.4 * st))[..., None] * col((60, 255, 245)) * 0.55
 img += L_fold[..., None] * col((110, 70, 255)) * 0.9
 tlobe = np.exp(-((u - 0.84) / 0.11) ** 2) * np.exp(-((v - 0.34) / 0.07) ** 2)   # a soft glowing lobe of teal, apart from the main curtain
 img += (L_teal * 0.6 + warp(tlobe * (0.6 + 0.5 * st)))[..., None] * col((0, 185, 165)) * 1.2
 img += L_left[..., None] * col((40, 110, 255)) * 1.0
 img += L_low[..., None] * col((0, 160, 170)) * 0.7
+bl = np.exp(-((u - 0.1) / 0.12) ** 2) * np.exp(-((v - 0.83) / 0.06) ** 2)
+bump = np.exp(-((u - 0.82) / 0.07) ** 2) * np.exp(-((v - 0.76) / 0.06) ** 2)
+img += warp(bl * (0.4 + 0.8 * st))[..., None] * col((0, 170, 180)) * 0.6
+img += warp(bump * (0.5 + 0.6 * st))[..., None] * col((40, 110, 255)) * 0.7
 img += haze[..., None] * col((70, 45, 210)) * 0.5
 # streak smear upward (long exposure) + glow
 sm = nd.uniform_filter1d(img, size=int(H * 0.03), axis=0)
