@@ -19,7 +19,7 @@ float rayComb(float u,float h,float seed){float r=0.,c=floor(u),f=fract(u);
   return r;}
 vec3 emit(float h){ /* colour by height above the lower edge */
   vec3 hem=vec3(.15,1.,.97),cy=vec3(.0,1.,.97),bl=vec3(.05,.35,1.),vi=vec3(.02,.3,.5);   /* cyan-white edge, electric cyan, system blue, dark teal at the top */
-  return h<.25?mix(hem,cy,h/.25):h<1.1?mix(cy,bl,.05+(h-.25)/.85*.45):mix(mix(cy,bl,.6),vi,clamp((h-1.1)/1.6,0.,1.));   /* cyan, a touch of blue, then teal-green higher up */}
+  return h<.25?mix(hem,cy,h/.25):h<1.1?mix(cy,bl,(h-.25)/.85*.35):mix(mix(cy,bl,.6),vi,clamp((h-1.1)/1.6,0.,1.));   /* cyan, a touch of blue, then teal-green higher up */}
 void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
   /* camera on the ground, looking up and ahead */
   float pitch=.66;                                                       /* looking up into the sky: rays rush together overhead */vec3 ro=vec3(0.,0.,0.);
@@ -31,7 +31,7 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
     if(P.y<0.)continue;
     if(P.y>7.5||tt>26.)break;                                                  /* above and beyond every curtain: nothing more to add */
     for(int k=0;k<5;k++){float fk=float(k),s=fk*3.7+1.;
-      float z0=2.7+fk*1.9+.5*sin(fk*2.3),y0=.8+fk*.38+.2*sin(fk*4.1+1.);   /* five curtains from near to far */                                   /* three curtains at clearly different depths */
+      float z0=(fk<2.5?3.+fk*.45:3.+fk*1.9)+.3*sin(fk*2.3),y0=.8+fk*.3+.2*sin(fk*4.1+1.);   /* three curtains bundled together into one bold form, two far behind */   /* five curtains from near to far */                                   /* three curtains at clearly different depths */
       float h0=P.y-y0;
       float X=P.x+.16*sin(h0*.6+s+loopv(1.).x*.8)+.05*sin(h0*1.5-s*1.7+loopv(1.).y)+.16*h0;   /* a gentle twist as it rises */   /* the curtain twists and leans as it rises */
       float dz=P.z-sheetZ(X,z0,s)-X*(.9-fk*.42);                     /* curtains run away from you at different angles: ribbons that recede into the distance */
@@ -44,8 +44,8 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
       float u=X*4.2+dz*.2;
       float comb=rayComb(u*(1.-.15*(1.-fk*.5)),h,s)*.85+rayComb(u*2.3+.5,h,s+11.)*.2*fk;   /* the near curtain is softer (slightly out of focus), the far ones crisp */      /* bold rays plus finer ones between */
       float bright=.12+.88*smoothstep(.3,.72,fbm(vec2(X*.22+s,2.)+loopv(.4)));
-      float cx=-.02+(.22*loopv(1.).x+.15*loopv(1.).y)*(1.-fk*.15)+(fk-1.5)*.32*sin(fk*1.9+.5)-.25;                                  /* all layers gather towards the centre-left */                           /* the light gathers in one area that drifts slowly */
-      float lobe=(fk<.5?4.:.45)*exp(-pow((X-cx-dz*.1)/(.62+fk*.3),2.))+.45*exp(-pow((X-cx-2.6+.6*loopv(1.).y)/(.8+fk*.5),2.));   /* one main luminous mass and a smaller second one */
+      float cx=-.02+(.22*loopv(1.).x+.15*loopv(1.).y)*(1.-fk*.15)+(fk<2.5?(fk-1.)*.12:(fk-1.5)*.32*sin(fk*1.9+.5))-.25;                                  /* all layers gather towards the centre-left */                           /* the light gathers in one area that drifts slowly */
+      float lobe=(fk<2.5?2.4:.4)*exp(-pow((X-cx-dz*.1)/(.62+fk*.3),2.))+.45*exp(-pow((X-cx-2.6+.6*loopv(1.).y)/(.8+fk*.5),2.));   /* one main luminous mass and a smaller second one */
       bright*=lobe;
       float rays=mix(.55,.2+.8*comb,.9*smoothstep(.1,.9,lobe));
       rays*=.9+.1*vn(vec2(u*9.+s*3.,h*.25)+loopv(.2));                /* fine streak texture, very subtle */          /* crisp rays burn inside the bright mass, soft glow at its edges */      /* some stretches glow, others fade */
@@ -53,7 +53,7 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
       col+=ec*sheet*prof*rays*bright*(1./(1.+fk*.9))*dt*6.;}}
   /* night sky behind */
   float y=gl_FragCoord.y/res.y;
-  vec3 sky=mix(vec3(.07,.05,.24),vec3(.003,.006,.02),smoothstep(0.,.7,y));   /* deep near-black overhead */   /* a faint navy glow, never pure black */                   /* violet glow low down, near-black navy overhead */
+  vec3 sky=mix(vec3(.07,.05,.24),vec3(.006,.012,.035),smoothstep(0.,.75,y));   /* deep near-black overhead */   /* a faint navy glow, never pure black */                   /* violet glow low down, near-black navy overhead */
   sky+=vec3(.09,.03,.24)*exp(-pow((gl_FragCoord.x/res.x-.7)/.35,2.))*smoothstep(.45,0.,y);   /* violet glow low down */
   col=.92*(1.-exp(-col*1.5));                                                  /* gentle curve: dim glow lifted, highlights capped softly */
   col=sky*(1.-col*.8)+col;                                                    /* light glows over the sky, it doesn't just sit on top */
