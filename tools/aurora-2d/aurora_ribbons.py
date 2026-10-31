@@ -14,7 +14,7 @@ BROAD = float(os.environ.get('BROAD', 1.0))   # strength of the broad light that
 BW = float(os.environ.get('BW', 1.6))         # its width
 BLEND = float(os.environ.get('BLEND', 1.7))   # >1 widens strand cores so they melt together
 TEX = float(os.environ.get('TEX', 0.55))
-EXPO = float(os.environ.get('EXPO', 0.6))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
+EXPO = float(os.environ.get('EXPO', 0.66))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
 v = (np.arange(H, dtype=np.float32) / H)[:, None]            # 0 top .. 1 bottom
 u = (np.arange(W, dtype=np.float32) / W)[None, :]
 asp = W / H
@@ -100,7 +100,7 @@ MID = [
     (0.27, 0.38, 0.16, 0.80, 0.034, 0.018, 4, 0.34, (10, 210, 235), (0, 105, 200), 1.5, 0.4),
     (0.70, 0.20, 0.12, 0.62, 0.052, 0.022, 5, 0.6, (0, 220, 195),  (0, 120, 140),  1.5, 0.4),
     (0.08, 0.40, 0.40, 0.95, 0.030, 0.010, 6, 0.34, (40, 140, 245), (15, 65, 180),  1.0, 0.4),
-    (0.76, 0.22, 0.28, 0.86, 0.055, 0.026, 12, 1.1, (0, 195, 205), (0, 95, 160),   1.6, 0.4),
+    (0.76, 0.26, 0.22, 1.04, 0.045, 0.03, 18, 0.32, (0, 195, 205), (0, 95, 160),   1.6, 0.4),
 ]
 NEAR = [
     (0.55, 0.28, 0.30, 0.74, 0.016, 0.016, 7, 0.75, (70, 245, 240), (0, 160, 215),  0.9, 0.45),
