@@ -18,7 +18,7 @@ float rayComb(float u,float h,float seed){float r=0.,c=floor(u),f=fract(u);
     float d=f-float(j)-off;r+=br*exp(-d*d/(wid*wid));}
   return r;}
 vec3 emit(float h){ /* colour by height above the lower edge */
-  vec3 hem=vec3(.15,1.,.97),cy=vec3(.0,1.,.97),bl=vec3(.05,.35,1.),vi=vec3(.02,.3,.5);   /* cyan-white edge, electric cyan, system blue, dark teal at the top */
+  vec3 hem=vec3(.15,1.,.97),cy=vec3(.0,1.,.97),bl=vec3(.05,.35,1.),vi=vec3(.02,.36,.42);   /* cyan-white edge, electric cyan, system blue, dark teal at the top */
   return h<.25?mix(hem,cy,h/.25):h<1.1?mix(cy,bl,(h-.25)/.85*.35):mix(mix(cy,bl,.6),vi,clamp((h-1.1)/1.6,0.,1.));   /* cyan, a touch of blue, then teal-green higher up */}
 void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
   /* camera on the ground, looking up and ahead */
@@ -36,10 +36,10 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
       float X=P.x+.16*sin(h0*.6+s+loopv(1.).x*.8)+.05*sin(h0*1.5-s*1.7+loopv(1.).y)+.16*h0;   /* a gentle twist as it rises */   /* the curtain twists and leans as it rises */
       float dz=P.z-sheetZ(X,z0,s)-X*(.9-fk*.42);                     /* curtains run away from you at different angles: ribbons that recede into the distance */
       float w=.075-.009*fk;                                                  /* half the width */                                                    /* thinner sheets: crisp light, not fog */                                                    /* near curtain softest */                                                    /* the near curtain is thick and soft, like light slightly out of focus */
-      float sheet=exp(-pow(abs(dz)/w,2.6))+.3*exp(-dz*dz/(30.*w*w));                       /* more soft scattered glow */   /* a steeper edge: light drops off cleanly into dark sky */   /* the light scatters into a wide soft glow around the curtain */
+      float sheet=exp(-pow(abs(dz)/w,2.6))+.14*exp(-dz*dz/(30.*w*w));                       /* more soft scattered glow */   /* a steeper edge: light drops off cleanly into dark sky */   /* the light scatters into a wide soft glow around the curtain */
       if(sheet<.002)continue;
       float h=P.y-baseY(X,y0,s);
-      float prof=(smoothstep(-.6,.15,h)+.35*exp(-max(-h,0.)*1.6)*step(h,0.))*exp(-max(h,0.)/((1.7+.4*fk)*(.45+1.3*smoothstep(.25,.8,fbm(vec2(X*.32+s*2.,4.)+loopv(.35))))))*(.55+.45*smoothstep(.0,.6,h));   /* the edge fades in softly: no hard bright line */
+      float prof=(smoothstep(-.6,.15,h)+.35*exp(-max(-h,0.)*1.6)*step(h,0.))*exp(-max(h,0.)/((1.15+.3*fk)*(.45+1.3*smoothstep(.25,.8,fbm(vec2(X*.32+s*2.,4.)+loopv(.35))))))*(.55+.45*smoothstep(.0,.6,h));   /* the edge fades in softly: no hard bright line */
       /* rays: fine vertical structure along the curtain, slowly drifting */
       float u=X*4.2+dz*.2;
       float comb=rayComb(u*(1.-.15*(1.-fk*.5)),h,s)*.85+rayComb(u*2.3+.5,h,s+11.)*.2*fk;   /* the near curtain is softer (slightly out of focus), the far ones crisp */      /* bold rays plus finer ones between */
@@ -53,10 +53,11 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;
       col+=ec*sheet*prof*rays*bright*(1./(1.+fk*.9))*dt*6.;}}
   /* night sky behind */
   float y=gl_FragCoord.y/res.y;
-  vec3 sky=mix(vec3(.07,.05,.24),vec3(.006,.012,.035),smoothstep(0.,.75,y));   /* deep near-black overhead */   /* a faint navy glow, never pure black */                   /* violet glow low down, near-black navy overhead */
+  vec3 sky=mix(vec3(.05,.035,.17),vec3(.0015,.003,.01),smoothstep(0.,.6,y));   /* deep black overhead */   /* deep near-black overhead */   /* a faint navy glow, never pure black */                   /* violet glow low down, near-black navy overhead */
   sky+=vec3(.09,.03,.24)*exp(-pow((gl_FragCoord.x/res.x-.7)/.35,2.))*smoothstep(.45,0.,y);   /* violet glow low down */
   col=.92*(1.-exp(-col*1.5));                                                  /* gentle curve: dim glow lifted, highlights capped softly */
-  col=sky*(1.-col*.8)+col;                                                    /* light glows over the sky, it doesn't just sit on top */
+  col=sky*(1.-col*.8)+col;
+  col=max(col-.012,0.)*1.012;                                                     /* true black where there is no light */                                                    /* light glows over the sky, it doesn't just sit on top */
   vec2 g=gl_FragCoord.xy/res.y*160.;float st=hs(floor(g));
   col+=vec3(.8,.85,1.)*step(.993,st)*exp(-dot(fract(g)-.5,fract(g)-.5)*40.)*.6*(1.-smoothstep(.0,.25,dot(col,vec3(.3,.5,.2))));
   gl_FragColor=vec4(pow(col,vec3(1./1.05)),1.);}
