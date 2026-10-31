@@ -84,7 +84,7 @@ for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75
     flare = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', noise(comb(m('MULTIPLY', X, 0.045), s + 9 + math.cos(t) * 0.2, math.sin(t) * 0.2), 1.0), 2.6), 0.95), 0.0), 1.5)
     lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, [-0.09, -0.05, -0.04][k])), [1.15 - 0.3 * math.sin(t), -1.3 + 0.2 * math.cos(t), 2.05][k])
     mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, [0.8, 0.5, 0.3][k]), 2.0), -1.0))
-    if k == 0: mass = m('MULTIPLY', mass, m('ADD', 0.45, m('MULTIPLY', 1.3, m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', m('SUBTRACT', Z, 1.8), 3.0), 2.0), -1.0)))))
+    if k == 0: mass = m('MULTIPLY', mass, m('ADD', 0.45, m('MULTIPLY', 1.8, m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', m('SUBTRACT', Z, 2.4), 2.2), 2.0), -1.0)))))
     clump = m('ADD', 0.35, m('MULTIPLY', m('POWER', noise(comb(m('MULTIPLY', X, 0.55), m('MULTIPLY', Z, 0.28), s + math.sin(t) * 0.4), 1.0, 3, 0.5), 3.2), 5.0))
     dens = m('MULTIPLY', clump, m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', sheet, edge), up), m('ADD', rays, 0.035)), m('MULTIPLY', m('ADD', m('MULTIPLY', mass, 2.2), m('MULTIPLY', flare, 0.04)), br)))
     total = dens if total is None else m('ADD', total, dens)
@@ -104,5 +104,6 @@ gl.glare_type = 'FOG_GLOW'; gl.quality = 'HIGH'; gl.size = 9; gl.mix = -0.3; gl.
 bl = ct.nodes.new('CompositorNodeBlur'); bl.filter_type = 'GAUSS'; bl.use_relative = True; bl.factor_x = 0.03; bl.factor_y = 0.022
 mx = ct.nodes.new('CompositorNodeMixRGB'); mx.inputs[0].default_value = 0.85
 ct.links.new(rl.outputs['Image'], bl.inputs['Image']); ct.links.new(rl.outputs['Image'], mx.inputs[1]); ct.links.new(bl.outputs['Image'], mx.inputs[2])
-ct.links.new(mx.outputs['Image'], gl.inputs['Image']); ct.links.new(gl.outputs['Image'], co.inputs['Image'])
+ct.links.new(mx.outputs['Image'], gl.inputs['Image']); hs = ct.nodes.new('CompositorNodeHueSat'); hs.inputs['Saturation'].default_value = 1.15
+ct.links.new(gl.outputs['Image'], hs.inputs['Image']); ct.links.new(hs.outputs['Image'], co.inputs['Image'])
 bpy.ops.render.render(write_still=True)
