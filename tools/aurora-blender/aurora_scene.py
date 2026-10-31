@@ -25,7 +25,7 @@ wn = world.node_tree.nodes; wl = world.node_tree.links; wn.clear()
 wo = wn.new('ShaderNodeOutputWorld'); bg = wn.new('ShaderNodeBackground')
 tc = wn.new('ShaderNodeTexCoord'); sep = wn.new('ShaderNodeSeparateXYZ'); ramp = wn.new('ShaderNodeValToRGB')
 wl.new(tc.outputs['Generated'], sep.inputs[0]); wl.new(sep.outputs['Z'], ramp.inputs[0])
-ramp.color_ramp.elements[0].position = 0.42; ramp.color_ramp.elements[0].color = (0.004, 0.0025, 0.016, 1)
+ramp.color_ramp.elements[0].position = 0.42; ramp.color_ramp.elements[0].color = (0.009, 0.005, 0.034, 1)
 ramp.color_ramp.elements[1].position = 0.72; ramp.color_ramp.elements[1].color = (0.0002, 0.0003, 0.001, 1)
 stars = wn.new('ShaderNodeTexVoronoi'); stars.inputs['Scale'].default_value = 900
 srmp = wn.new('ShaderNodeValToRGB'); wl.new(tc.outputs['Generated'], stars.inputs['Vector']); wl.new(stars.outputs['Distance'], srmp.inputs[0])
@@ -64,7 +64,7 @@ def comb(x, y, z):
 X, Y, Z = xyz.outputs['X'], xyz.outputs['Y'], xyz.outputs['Z']
 t = PH * 2 * math.pi
 total = None; colsum = None
-for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75), (12.0, 6.0, 5.0, 0.12, 0.55, 0.7), (8.5, -1.0, 3.0, 0.1, 0.4, 0.6)]):
+for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75), (12.0, 6.0, 5.0, 0.12, 0.55, 0.7), (8.5, -2.0, 3.0, 0.1, 0.8, 0.6)]):
     s = k * 3.7 + 1
     # the curtain hangs along a folded path: y = y0 + folds(x)
     fold1 = m('MULTIPLY', m('SINE', m('ADD', m('MULTIPLY', X, fr), s + math.sin(t) * 0.5)), amp)
@@ -78,13 +78,13 @@ for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75
     edge = m('SMOOTH_MIN', m('MAXIMUM', m('ADD', m('MULTIPLY', h, 0.18), 1.0), 0.0), 1.0, 1.2)
     up = m('EXPONENT', m('MULTIPLY', m('MAXIMUM', h, 0.0), -1.0 / ([3.0, 3.0, 2.5][k])))
     # fine vertical rays: noise stretched tall along the curtain
-    rays = noise(comb(m('MULTIPLY', m('ADD', X, m('MULTIPLY', Z, -0.05)), 2.2), m('MULTIPLY', dy, 0.5), m('MULTIPLY', Z, 0.04)), 1.0, 8, 0.6)
+    rays = noise(comb(m('MULTIPLY', m('ADD', X, m('MULTIPLY', Z, -0.12)), 2.2), m('MULTIPLY', dy, 0.5), m('MULTIPLY', Z, 0.04)), 1.0, 8, 0.6)
     rays = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', rays, 1.8), 0.48), 0.0), 1.8)
     # some stretches flare, others fade
     flare = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', noise(comb(m('MULTIPLY', X, 0.045), s + 9 + math.cos(t) * 0.2, math.sin(t) * 0.2), 1.0), 2.6), 0.95), 0.0), 1.5)
-    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, -0.05)), [1.0 - 0.3 * math.sin(t), -1.5 + 0.3 * math.cos(t), -2.1][k])
+    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, [-0.15, -0.05, -0.04][k])), [1.15 - 0.3 * math.sin(t), -1.5 + 0.3 * math.cos(t), 2.05][k])
     mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, [1.25, 1.0, 0.4][k]), 2.0), -1.0))
-    if k == 0: mass = m('MULTIPLY', mass, m('ADD', 0.4, m('MULTIPLY', 2.2, m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', m('SUBTRACT', Z, 2.0), 1.5), 2.0), -1.0)))))
+    if k == 0: mass = m('MULTIPLY', mass, m('ADD', 0.45, m('MULTIPLY', 1.5, m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', m('SUBTRACT', Z, 2.0), 1.5), 2.0), -1.0)))))
     clump = m('ADD', 0.35, m('MULTIPLY', m('POWER', noise(comb(m('MULTIPLY', X, 0.55), m('MULTIPLY', Z, 0.28), s + math.sin(t) * 0.4), 1.0, 3, 0.5), 3.2), 5.0))
     dens = m('MULTIPLY', clump, m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', sheet, edge), up), m('ADD', rays, 0.1)), m('MULTIPLY', m('ADD', m('MULTIPLY', mass, 2.2), m('MULTIPLY', flare, 0.04)), br)))
     total = dens if total is None else m('ADD', total, dens)
