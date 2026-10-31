@@ -64,7 +64,7 @@ def comb(x, y, z):
 X, Y, Z = xyz.outputs['X'], xyz.outputs['Y'], xyz.outputs['Z']
 t = PH * 2 * math.pi
 total = None; colsum = None
-for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75), (12.0, 6.0, 5.0, 0.12, 0.85, 0.7), (8.5, -2.0, 3.0, 0.1, 1.3, 0.6)]):
+for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75), (12.0, 6.0, 5.0, 0.12, 1.3, 0.7), (8.5, -2.0, 3.0, 0.1, 1.3, 0.6)]):
     s = k * 3.7 + 1
     # the curtain hangs along a folded path: y = y0 + folds(x)
     fold1 = m('MULTIPLY', m('SINE', m('ADD', m('MULTIPLY', X, fr), s + math.sin(t) * 0.5)), amp)
@@ -79,12 +79,12 @@ for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75
     up = m('EXPONENT', m('MULTIPLY', m('MAXIMUM', h, 0.0), -1.0 / ([3.0, 3.0, 2.5][k])))
     # fine vertical rays: noise stretched tall along the curtain
     rays = noise(comb(m('MULTIPLY', m('ADD', X, m('MULTIPLY', Z, -0.12)), 2.2), m('MULTIPLY', dy, 0.5), m('MULTIPLY', Z, 0.04)), 1.0, 8, 0.6)
-    rays = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', rays, 1.8), 0.48), 0.0), 1.8)
+    rays = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', rays, 2.0), 0.5), 0.0), 1.9)
     # some stretches flare, others fade
     flare = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', noise(comb(m('MULTIPLY', X, 0.045), s + 9 + math.cos(t) * 0.2, math.sin(t) * 0.2), 1.0), 2.6), 0.95), 0.0), 1.5)
-    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, [-0.15, -0.05, -0.04][k])), [1.15 - 0.3 * math.sin(t), -1.5 + 0.3 * math.cos(t), 2.05][k])
-    mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, [1.25, 1.0, 0.4][k]), 2.0), -1.0))
-    if k == 0: mass = m('MULTIPLY', mass, m('ADD', 0.45, m('MULTIPLY', 1.5, m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', m('SUBTRACT', Z, 1.5), 1.5), 2.0), -1.0)))))
+    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, [-0.15, -0.05, -0.04][k])), [1.15 - 0.3 * math.sin(t), -1.9 + 0.2 * math.cos(t), 2.05][k])
+    mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, [1.25, 0.6, 0.4][k]), 2.0), -1.0))
+    if k == 0: mass = m('MULTIPLY', mass, m('ADD', 0.5, m('MULTIPLY', 1.0, m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', m('SUBTRACT', Z, 1.5), 1.5), 2.0), -1.0)))))
     clump = m('ADD', 0.35, m('MULTIPLY', m('POWER', noise(comb(m('MULTIPLY', X, 0.55), m('MULTIPLY', Z, 0.28), s + math.sin(t) * 0.4), 1.0, 3, 0.5), 3.2), 5.0))
     dens = m('MULTIPLY', clump, m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', sheet, edge), up), m('ADD', rays, 0.1)), m('MULTIPLY', m('ADD', m('MULTIPLY', mass, 2.2), m('MULTIPLY', flare, 0.04)), br)))
     total = dens if total is None else m('ADD', total, dens)
@@ -94,7 +94,7 @@ cr = N.new('ShaderNodeValToRGB'); L.new(m('DIVIDE', m('ADD', hk, 2.5), 11.5), cr
 els = cr.color_ramp.elements; els[0].position = 0.0; els[0].color = (0.16, 0.12, 0.85, 1); els[1].position = 0.12; els[1].color = (0.04, 0.3, 1.0, 1)
 e = els.new(0.26); e.color = (0.0, 0.95, 1.0, 1); e = els.new(0.38); e.color = (0.0, 0.85, 1.0, 1)
 e = els.new(0.62); e.color = (0.02, 0.45, 1.0, 1); e = els.new(1.0); e.color = (0.0, 0.55, 0.5, 1)
-em = N.new('ShaderNodeEmission'); L.new(cr.outputs['Color'], em.inputs['Color']); L.new(m('MULTIPLY', total, 0.95), em.inputs['Strength'])
+em = N.new('ShaderNodeEmission'); L.new(cr.outputs['Color'], em.inputs['Color']); L.new(m('MULTIPLY', total, 0.72), em.inputs['Strength'])
 L.new(em.outputs[0], out.inputs['Volume'])
 
 # a soft glow around the brightest light, as a lens sees it
