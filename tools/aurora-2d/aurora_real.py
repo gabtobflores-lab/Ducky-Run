@@ -12,10 +12,13 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 1.4))
-FOLD = float(os.environ.get('FOLD', 1.5))      # strength of fold brightening
-RAYK = float(os.environ.get('RAYK', 0.8))      # contrast of the rays
-GLOW = float(os.environ.get('GLOW', 1.2))      # soft diffuse light around each curtain
+EXPO = float(os.environ.get('EXPO', 0.38))
+FOLD = float(os.environ.get('FOLD', 2.2))      # strength of fold brightening
+RAYK = float(os.environ.get('RAYK', 0.6))      # contrast of the rays
+GLOW = float(os.environ.get('GLOW', 1.6))
+SCAT = float(os.environ.get('SCAT', 0.35))      # light scattered into the surrounding air
+PMIN = float(os.environ.get('PMIN', 0.12))     # how dark the quiet stretches of a curtain get
+SPANS = float(os.environ.get('SPANS', 0.1))   # softness of a curtain's ends      # soft diffuse light around each curtain
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
     r = np.random.default_rng(seed).standard_normal(n).astype(np.float32)
@@ -46,8 +49,8 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     rays = 0.6 + 0.4 * n1(ss * 1.0 + 0.004 * np.sin(T + seed), seed + 2, 7)       # parallel rays
     rays *= 0.65 + 0.35 * n1(ss * 1.0 - 0.003 * np.cos(T + seed), seed + 3, 16)    # and broader ray groups
     rays = 1 + RAYK * (rays - 1)
-    patch = np.clip(0.3 + 0.9 * n1(ss * 1.0 + 0.01 * np.sin(T + drift), seed + 4, 140), 0.02, 1.4)   # one or two bright stretches   # bright and quiet stretches
-    span = 1 / (1 + np.exp(-(ss - s0) / 0.06)) / (1 + np.exp((ss - s1) / 0.06))
+    patch = np.clip(0.3 + 0.9 * n1(ss * 1.0 + 0.01 * np.sin(T + drift), seed + 4, 140), PMIN, 1.4)   # one or two bright stretches   # bright and quiet stretches
+    span = 1 / (1 + np.exp(-(ss - s0) / SPANS)) / (1 + np.exp((ss - s1) / SPANS))
     B1 = fold_b * rays * patch * span
     hemP = np.interp(S, ss, hem); BP = np.interp(S, ss, B1)
     d = hemP - R                                                         # > 0 above the lower edge
@@ -62,10 +65,10 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
 
 # curtains, far to near: (s0, s1, edge height, fold amp, fold freq, rise, edge softness, seed, intensity, edge colour, upper colour, blur)
 CURTAINS = [
-    (0.00, 0.40, 0.52, 0.020, 0.45, 0.10, 0.025, 11, 0.30, (30, 120, 225), (10, 35, 120), 6.0),   # far left, blue
-    (0.62, 1.00, 0.40, 0.022, 0.5, 0.09, 0.025, 12, 0.60, (0, 200, 175),  (0, 70, 110),  5.0),   # upper right, teal
-    (0.18, 0.74, 0.66, 0.045, 0.6, 0.14, 0.022, 13, 1.00, (60, 245, 240), (10, 110, 230), 3.0),  # main curtain, near
-    (0.66, 1.00, 0.88, 0.020, 0.45, 0.08, 0.025, 14, 0.30, (0, 170, 190),  (5, 60, 140),  5.0),   # low right, faint
+    (0.00, 0.45, 0.52, 0.020, 0.45, 0.12, 0.04, 11, 0.30, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
+    (0.60, 1.00, 0.40, 0.022, 0.5, 0.10, 0.04, 12, 0.60, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
+    (0.10, 0.84, 0.66, 0.045, 0.6, 0.17, 0.035, 13, 1.00, (60, 245, 240), (0, 150, 235), 6.0),   # main curtain: one wide body
+    (0.66, 1.00, 0.88, 0.020, 0.45, 0.08, 0.04, 14, 0.30, (0, 170, 190),  (5, 60, 140),  8.0),   # low right, faint
 ]
 img = np.zeros((H, W, 3), np.float32)
 sky = col((1, 3, 10)) * (1 - Y[..., None]) + col((7, 11, 36)) * Y[..., None]
@@ -76,6 +79,9 @@ for (s0, s1, hy, fa, ff, rise, th, sd, inten, ec, uc, blur) in CURTAINS:
     k = np.clip(d / rise, 0, 1)[..., None] ** 0.8                          # colour by height above the edge
     c = col(ec) * (1 - k) + col(uc) * k
     img += L[..., None] * c * inten * EXPO
+if SCAT > 0:   # light scattered into the air around the curtains: wide, soft, follows the light (not a screen-wide wash)
+    lightL = img - sky
+    img = img + nd.gaussian_filter(lightL, (W * 0.06, W * 0.06, 0)) * SCAT + nd.gaussian_filter(lightL, (W * 0.02, W * 0.02, 0)) * SCAT * 0.6
 # composition: dark top for the score, calmer band behind the balls
 img *= (0.35 + 0.65 * np.clip((Y - 0.04) / 0.18, 0, 1))[..., None]
 img *= (1 - 0.15 * np.exp(-((Y - 0.78) / 0.045) ** 2))[..., None]
