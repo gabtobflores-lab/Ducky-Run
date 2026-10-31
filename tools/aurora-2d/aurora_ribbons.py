@@ -14,7 +14,8 @@ BROAD = float(os.environ.get('BROAD', 1.0))   # strength of the broad light that
 BW = float(os.environ.get('BW', 1.6))         # its width
 BLEND = float(os.environ.get('BLEND', 1.7))   # >1 widens strand cores so they melt together
 TEX = float(os.environ.get('TEX', 0.55))
-EXPO = float(os.environ.get('EXPO', 0.66))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
+UNIFY = float(os.environ.get('UNIFY', 0.8))   # how strongly the formations gather into one main mass
+EXPO = float(os.environ.get('EXPO', 0.77))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
 v = (np.arange(H, dtype=np.float32) / H)[:, None]            # 0 top .. 1 bottom
 u = (np.arange(W, dtype=np.float32) / W)[None, :]
 asp = W / H
@@ -115,6 +116,20 @@ for layer, soft in ((FAR, 1.0), (MID, 1.0), (NEAR, 1.0)):
         # colour: the core colour where the ribbon is intense, the glow colour in its soft spread
         k = np.clip(r * 2.5, 0, 1)[..., None]
         img += r[..., None] * (col(gc) * (1 - k) + col(cc) * k) * inten * 4.1 * EXPO
+# main mass: one large curving body of light that the formations gather into. Inside it their light is lifted and joined by a
+# soft glow that follows the same curve; outside it they recede. It leans and widens towards the bottom right, reaching the
+# lower-right formation, and its outline is irregular (2D noise), so it never reads as an oval.
+skyimg = col((1, 3, 10)) * (1 - v[..., None]) + col((7, 11, 36)) * v[..., None]
+if UNIFY > 0:
+    pM = 0.44 + 0.22 * (V0 - 0.5) + 0.05 * np.sin(V0 * 3.4 + 1.2 + 0.4 * np.sin(T)) + 0.02 * np.sin(T)
+    wM = 0.17 + 0.12 * np.clip(V0 - 0.35, 0, 1)
+    M = np.exp(-(np.abs(U0 - pM) / wM) ** 1.6) * np.clip(1 + 0.35 * noise2(0.08, 801, 2.0), 0.3, 1.5)
+    M *= np.clip((V0 - 0.1) / 0.25, 0, 1) ** 1.5 * np.clip((1.02 - V0) / 0.2, 0, 1)
+    M = np.clip(M, 0, 1.2)
+    light = img - skyimg
+    lum = np.clip(light.mean(-1), 0, None)
+    glowM = nd.gaussian_filter(light, (W * 0.03, W * 0.03, 0))      # the formations' own light, softly spread inside the mass
+    img = skyimg + light * (1 - UNIFY * 0.6 + UNIFY * 0.9 * M[..., None]) + glowM * (UNIFY * 0.45 * M[..., None])
 # fine atmospheric texture: faint streaks of light through the whole sky, very low contrast
 rs = np.random.default_rng(31).random((H // 4 + 1, W)).astype(np.float32)
 fine = nd.gaussian_filter(rs, (H * 0.02, 0.8), mode='wrap'); fine = (fine - fine.mean()) / (fine.std() + 1e-6)
