@@ -9,6 +9,12 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
+import os
+BROAD = float(os.environ.get('BROAD', 1.0))   # strength of the broad light that follows each formation
+BW = float(os.environ.get('BW', 1.6))         # its width
+BLEND = float(os.environ.get('BLEND', 1.7))   # >1 widens strand cores so they melt together
+TEX = float(os.environ.get('TEX', 0.55))
+EXPO = float(os.environ.get('EXPO', 0.6))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
 v = (np.arange(H, dtype=np.float32) / H)[:, None]            # 0 top .. 1 bottom
 u = (np.arange(W, dtype=np.float32) / W)[None, :]
 asp = W / H
@@ -45,36 +51,48 @@ def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
             + amp * 0.3 * np.sin(V * 5.3 + seed * 0.9 - 0.4 * np.cos(T + seed * 0.7))
             + 0.03 * n1(V * 0.7 + 0.03 * np.sin(T + seed), seed, 160)
             + 0.02 * np.sin(T + seed * 1.3))
-    tot = np.zeros((H, W), np.float32); vol = np.zeros((H, W), np.float32)
+    tot = np.zeros((H, W), np.float32); vol = np.zeros((H, W), np.float32); envF = np.zeros((H, W), np.float32)
     for k in range(strands):
         sk = seed * 31 + k
         ws = min(width, 0.045)                                              # wide far formations don't spread sideways
         off = ws * (k - (strands - 1) / 2) * 1.5 + ws * 1.6 * n1(V * 0.55 + rr.random(), sk + 20, 130)   # strands drift apart and cross
-        wk = width * (0.55 + 1.2 * np.clip(0.5 + 0.45 * n1(V * 0.8 + rr.random(), sk + 40, 110), 0, 1))       # width swells and pinches
+        wk = min(width, 0.06) * (0.55 + 1.2 * np.clip(0.5 + 0.45 * n1(V * 0.8 + rr.random(), sk + 40, 110), 0, 1))       # width swells and pinches
         bk = np.clip(0.35 + 0.85 * n1(V * 1.1 + rr.random() + 0.03 * np.cos(T + sk), sk + 60, 90), 0, 1.25)   # fades out, re-emerges
         sd = (U - path - off) / wk
         sa = np.where(sd > 0, sd * (0.75 + 0.5 * rr.random()), sd * (1.25 - 0.5 * rr.random()))               # one edge sharper than the other
+        sa = sa / BLEND
         core = np.exp(-sa * sa)
         # inner structure follows the strand's own curve, not a straight line
-        fl = 0.55 + 0.45 * n1(sd * 0.05 + V * 0.12 + rr.random(), sk + 80, 3)
+        fl = 0.55 + 0.45 * n1((sd / BLEND) * 0.05 * TEX + V * 0.12 + rr.random(), sk + 80, 3)
         # each strand ends at its own ragged height that varies across the screen: no straight horizontal edges
         e1 = v1 + 0.07 * n1(U * 0.6 + rr.random(), sk + 120, 90) - 0.03 * k / strands
         e0 = v0 + 0.06 * n1(U * 0.5 + rr.random(), sk + 140, 90)
         tk = np.clip((V - e0) / np.maximum(e1 - e0, 0.05), 0, 1)
         envk = (tk * tk * (3 - 2 * tk)) ** 1.5 * np.clip((1 - tk) / 0.35, 0, 1) ** 1.3
+        envF = np.maximum(envF, envk)
         tot += core * bk * envk * (1 - 0.55 * fil + 0.55 * fil * fl)
-        vol += np.exp(-np.abs(U - path - off) / (min(wk.max(), 0.06) * 2.2 * glow)) * bk * envk   # soft volume sized in screen units
+        vol += np.exp(-np.abs(U - path - off) / (min(wk.max(), 0.06) * 2.2 * min(glow, 1.4))) * bk * envk   # soft volume sized in screen units
     tot /= strands ** 0.5
     vol /= strands
     # soft volumetric scattering: the light seems to sit inside a glowing haze rather than on a flat background
-    body = tot + 0.5 * vol
+    # broad illumination: a continuous field of light that follows the formation's own curving path (not a screen-wide glow),
+    # with irregular contours and internal brightness from low-frequency 2D noise; the strands become structure inside it
+    bw = min((min(width, 0.06) * 1.6 + 0.035) * BW, 0.12)                # capped: never a wide slab
+    dp = np.abs(U - path) / bw
+    mod = np.clip(0.65 + 0.45 * noise2(0.07, seed + 700, 2.5) + 0.2 * noise2(0.025, seed + 710, 4.0), 0.05, 1.4)
+    # the broad light ends irregularly: its lower and upper limits wander across the formation
+    eb1 = v1 + 0.1 * n1(U * 1.4 + seed * 0.3, seed + 730, 60); eb0 = v0 + 0.08 * n1(U * 1.1 + seed * 0.7, seed + 740, 60)
+    tb = np.clip((V - eb0) / np.maximum(eb1 - eb0, 0.05), 0, 1)
+    envB = (tb * tb * (3 - 2 * tb)) ** 1.5 * np.clip((1 - tb) / 0.4, 0, 1) ** 1.5
+    broad = np.exp(-dp ** 1.4) * mod * np.minimum(envF * 1.5, 1) * envB
+    body = tot + 0.5 * vol + BROAD * broad
     env = np.clip(0.7 + 0.45 * n1(V * 0.9 + seed * 0.11 + 0.03 * np.cos(T + seed), seed + 5, 200), 0.25, 1.3)
     return body * env
 
 # depth layers, far to near. (x0, slope, top, bottom, width, curve, seed, intensity, core colour, glow colour, glow, filaments)
 FAR = [
     (0.18, 0.30, 0.06, 0.74, 0.130, 0.020, 1, 0.42, (30, 150, 220), (10, 55, 140), 2.2, 0.3),
-    (0.74, 0.14, 0.03, 0.62, 0.140, 0.025, 2, 0.40, (10, 160, 175), (6, 60, 115),  2.2, 0.3),
+    (0.74, 0.14, 0.03, 0.60, 0.140, 0.025, 2, 0.28, (10, 160, 175), (6, 60, 115),  2.2, 0.3),
     (0.98, 0.10, 0.28, 0.92, 0.100, 0.015, 3, 0.30, (25, 110, 210), (12, 38, 115), 2.0, 0.3),
     (0.48, 0.24, 0.10, 0.68, 0.150, 0.030, 13, 0.30, (20, 130, 215), (8, 40, 125), 2.4, 0.3),
 ]
@@ -82,7 +100,7 @@ MID = [
     (0.27, 0.38, 0.16, 0.80, 0.034, 0.018, 4, 0.34, (10, 210, 235), (0, 105, 200), 1.5, 0.4),
     (0.70, 0.20, 0.12, 0.62, 0.052, 0.022, 5, 0.6, (0, 220, 195),  (0, 120, 140),  1.5, 0.4),
     (0.08, 0.40, 0.40, 0.95, 0.030, 0.010, 6, 0.34, (40, 140, 245), (15, 65, 180),  1.0, 0.4),
-    (0.80, 0.16, 0.46, 0.90, 0.040, 0.014, 12, 0.36, (0, 190, 200), (0, 90, 150),   1.5, 0.4),
+    (0.76, 0.22, 0.28, 0.86, 0.055, 0.026, 12, 1.1, (0, 195, 205), (0, 95, 160),   1.6, 0.4),
 ]
 NEAR = [
     (0.55, 0.28, 0.30, 0.74, 0.016, 0.016, 7, 0.75, (70, 245, 240), (0, 160, 215),  0.9, 0.45),
@@ -96,7 +114,7 @@ for layer, soft in ((FAR, 1.0), (MID, 1.0), (NEAR, 1.0)):
         r = ribbon(x0, sl, a, b, w, cv, sd, gl, fil)
         # colour: the core colour where the ribbon is intense, the glow colour in its soft spread
         k = np.clip(r * 2.5, 0, 1)[..., None]
-        img += r[..., None] * (col(gc) * (1 - k) + col(cc) * k) * inten * 4.1
+        img += r[..., None] * (col(gc) * (1 - k) + col(cc) * k) * inten * 4.1 * EXPO
 # fine atmospheric texture: faint streaks of light through the whole sky, very low contrast
 rs = np.random.default_rng(31).random((H // 4 + 1, W)).astype(np.float32)
 fine = nd.gaussian_filter(rs, (H * 0.02, 0.8), mode='wrap'); fine = (fine - fine.mean()) / (fine.std() + 1e-6)
