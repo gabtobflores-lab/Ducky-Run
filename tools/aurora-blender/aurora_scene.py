@@ -64,7 +64,7 @@ def comb(x, y, z):
 X, Y, Z = xyz.outputs['X'], xyz.outputs['Y'], xyz.outputs['Z']
 t = PH * 2 * math.pi
 total = None; colsum = None
-for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.9, 4.0, 0.16, 1.0, 0.55), (12.0, 6.0, 5.0, 0.12, 0.5, 0.8), (10.0, 1.5, 3.0, 0.1, 0.18, 0.6)]):
+for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.2, 4.0, 0.16, 1.0, 0.75), (12.0, 6.0, 5.0, 0.12, 0.55, 0.7), (8.5, -3.0, 3.0, 0.1, 0.3, 0.6)]):
     s = k * 3.7 + 1
     # the curtain hangs along a folded path: y = y0 + folds(x)
     fold1 = m('MULTIPLY', m('SINE', m('ADD', m('MULTIPLY', X, fr), s + math.sin(t) * 0.5)), amp)
@@ -76,14 +76,14 @@ for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.9, 4.0, 0.16, 1.0, 0.55
     # height above the lower edge: soft fade in, long fade upward
     h = m('SUBTRACT', Z, m('ADD', z0, m('MULTIPLY', m('SUBTRACT', noise(comb(m('MULTIPLY', X, 0.12), s + 5, 0), 1.0), 0.5), 3.5)))
     edge = m('SMOOTH_MIN', m('MAXIMUM', m('ADD', m('MULTIPLY', h, 0.18), 1.0), 0.0), 1.0, 1.2)
-    up = m('EXPONENT', m('MULTIPLY', m('MAXIMUM', h, 0.0), -1.0 / (3.6 + 1.2 * k)))
+    up = m('EXPONENT', m('MULTIPLY', m('MAXIMUM', h, 0.0), -1.0 / ([3.0, 3.0, 2.5][k])))
     # fine vertical rays: noise stretched tall along the curtain
-    rays = noise(comb(m('MULTIPLY', m('ADD', X, m('MULTIPLY', Z, -0.12)), 2.2), m('MULTIPLY', dy, 0.5), m('MULTIPLY', Z, 0.04)), 1.0, 8, 0.6)
-    rays = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', rays, 2.0), 0.55), 0.0), 2.0)
+    rays = noise(comb(m('MULTIPLY', m('ADD', X, m('MULTIPLY', Z, -0.05)), 2.2), m('MULTIPLY', dy, 0.5), m('MULTIPLY', Z, 0.04)), 1.0, 8, 0.6)
+    rays = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', rays, 1.8), 0.48), 0.0), 1.8)
     # some stretches flare, others fade
     flare = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', noise(comb(m('MULTIPLY', X, 0.045), s + 9 + math.cos(t) * 0.2, math.sin(t) * 0.2), 1.0), 2.6), 0.95), 0.0), 1.5)
-    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, -0.12)), [0.65 - 0.3 * math.sin(t), -2.2 + 0.3 * math.cos(t), 2.3 + 0.2 * math.sin(t)][k])
-    mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, [1.0, 1.1, 0.45][k]), 2.0), -1.0))
+    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, -0.05)), [1.0 - 0.3 * math.sin(t), -1.5 + 0.3 * math.cos(t), 2.0][k])
+    mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, [1.25, 1.0, 0.4][k]), 2.0), -1.0))
     clump = m('ADD', 0.35, m('MULTIPLY', m('POWER', noise(comb(m('MULTIPLY', X, 0.32), m('MULTIPLY', Z, 0.16), s + math.sin(t) * 0.4), 1.0, 2, 0.4), 2.4), 3.6))
     dens = m('MULTIPLY', clump, m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', sheet, edge), up), m('ADD', rays, 0.1)), m('MULTIPLY', m('ADD', m('MULTIPLY', mass, 2.2), m('MULTIPLY', flare, 0.04)), br)))
     total = dens if total is None else m('ADD', total, dens)
@@ -93,15 +93,15 @@ cr = N.new('ShaderNodeValToRGB'); L.new(m('DIVIDE', m('ADD', hk, 2.5), 11.5), cr
 els = cr.color_ramp.elements; els[0].position = 0.0; els[0].color = (0.16, 0.12, 0.85, 1); els[1].position = 0.12; els[1].color = (0.04, 0.3, 1.0, 1)
 e = els.new(0.26); e.color = (0.0, 0.95, 1.0, 1); e = els.new(0.38); e.color = (0.0, 0.85, 1.0, 1)
 e = els.new(0.55); e.color = (0.03, 0.3, 1.0, 1); e = els.new(1.0); e.color = (0.02, 0.35, 0.4, 1)
-em = N.new('ShaderNodeEmission'); L.new(cr.outputs['Color'], em.inputs['Color']); L.new(m('MULTIPLY', total, 1.4), em.inputs['Strength'])
+em = N.new('ShaderNodeEmission'); L.new(cr.outputs['Color'], em.inputs['Color']); L.new(m('MULTIPLY', total, 0.95), em.inputs['Strength'])
 L.new(em.outputs[0], out.inputs['Volume'])
 
 # a soft glow around the brightest light, as a lens sees it
 sc.use_nodes = True; ct = sc.node_tree; ct.nodes.clear()
 rl = ct.nodes.new('CompositorNodeRLayers'); gl = ct.nodes.new('CompositorNodeGlare'); co = ct.nodes.new('CompositorNodeComposite')
 gl.glare_type = 'FOG_GLOW'; gl.quality = 'HIGH'; gl.size = 9; gl.mix = -0.3; gl.threshold = 0.35
-bl = ct.nodes.new('CompositorNodeBlur'); bl.filter_type = 'GAUSS'; bl.use_relative = True; bl.factor_x = 0.02; bl.factor_y = 0.014
-mx = ct.nodes.new('CompositorNodeMixRGB'); mx.inputs[0].default_value = 0.75
+bl = ct.nodes.new('CompositorNodeBlur'); bl.filter_type = 'GAUSS'; bl.use_relative = True; bl.factor_x = 0.03; bl.factor_y = 0.022
+mx = ct.nodes.new('CompositorNodeMixRGB'); mx.inputs[0].default_value = 0.85
 ct.links.new(rl.outputs['Image'], bl.inputs['Image']); ct.links.new(rl.outputs['Image'], mx.inputs[1]); ct.links.new(bl.outputs['Image'], mx.inputs[2])
 ct.links.new(mx.outputs['Image'], gl.inputs['Image']); ct.links.new(gl.outputs['Image'], co.inputs['Image'])
 bpy.ops.render.render(write_still=True)
