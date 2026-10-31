@@ -14,8 +14,10 @@ BROAD = float(os.environ.get('BROAD', 1.0))   # strength of the broad light that
 BW = float(os.environ.get('BW', 1.6))         # its width
 BLEND = float(os.environ.get('BLEND', 1.7))   # >1 widens strand cores so they melt together
 TEX = float(os.environ.get('TEX', 0.55))
-UNIFY = float(os.environ.get('UNIFY', 0.8))   # how strongly the formations gather into one main mass
-EXPO = float(os.environ.get('EXPO', 0.77))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
+UNIFY = float(os.environ.get('UNIFY', 0.8))
+RAYS = float(os.environ.get('RAYS', 2.4))     # long soft rays rising from the main body
+MLEAN = float(os.environ.get('MLEAN', 0.5))  # how much the main body leans   # how strongly the formations gather into one main mass
+EXPO = float(os.environ.get('EXPO', 0.68))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
 v = (np.arange(H, dtype=np.float32) / H)[:, None]            # 0 top .. 1 bottom
 u = (np.arange(W, dtype=np.float32) / W)[None, :]
 asp = W / H
@@ -121,7 +123,7 @@ for layer, soft in ((FAR, 1.0), (MID, 1.0), (NEAR, 1.0)):
 # lower-right formation, and its outline is irregular (2D noise), so it never reads as an oval.
 skyimg = col((1, 3, 10)) * (1 - v[..., None]) + col((7, 11, 36)) * v[..., None]
 if UNIFY > 0:
-    pM = 0.44 + 0.22 * (V0 - 0.5) + 0.05 * np.sin(V0 * 3.4 + 1.2 + 0.4 * np.sin(T)) + 0.02 * np.sin(T)
+    pM = 0.44 + MLEAN * (V0 - 0.5) + 0.05 * np.sin(V0 * 3.4 + 1.2 + 0.4 * np.sin(T)) + 0.02 * np.sin(T)
     wM = 0.17 + 0.12 * np.clip(V0 - 0.35, 0, 1)
     M = np.exp(-(np.abs(U0 - pM) / wM) ** 1.6) * np.clip(1 + 0.35 * noise2(0.08, 801, 2.0), 0.3, 1.5)
     M *= np.clip((V0 - 0.1) / 0.25, 0, 1) ** 1.5 * np.clip((1.02 - V0) / 0.2, 0, 1)
@@ -130,6 +132,22 @@ if UNIFY > 0:
     lum = np.clip(light.mean(-1), 0, None)
     glowM = nd.gaussian_filter(light, (W * 0.03, W * 0.03, 0))      # the formations' own light, softly spread inside the mass
     img = skyimg + light * (1 - UNIFY * 0.6 + UNIFY * 0.9 * M[..., None]) + glowM * (UNIFY * 0.45 * M[..., None])
+# long rays: the main body's own light carried upward along the lean, fading exponentially with height (a one-sided smear,
+# computed row by row from the bottom up), broken into soft rays by a vertical streak texture
+if RAYS > 0:
+    from scipy.signal import lfilter
+    src = np.clip((img - skyimg).mean(-1), 0, None) * (M if UNIFY > 0 else 1)
+    shift = int(round(0.0035 * W))                                              # each row up moves a little left: rays follow the lean
+    a_dec = np.exp(-1.0 / (H * 0.12))
+    up = lfilter([1 - a_dec], [1, -a_dec], src[::-1], axis=0)[::-1]
+    # shear the smear so it leans with the main body
+    yy = np.arange(H, dtype=np.float32)[:, None]; xx = np.arange(W, dtype=np.float32)[None, :]
+    up = nd.map_coordinates(up, [np.broadcast_to(yy, (H, W)), np.clip(xx + (yy - H * 0.65) * (MLEAN * W / H) * 0.6, 0, W - 1)], order=1)
+    rs2 = np.random.default_rng(77).random((H // 8 + 1, W)).astype(np.float32)
+    rays_tex = nd.gaussian_filter(rs2, (H * 0.04 / 8, W * 0.012), mode='wrap'); rays_tex = (rays_tex - rays_tex.min()) / (rays_tex.max() - rays_tex.min())
+    rays_tex = np.repeat(rays_tex, 8, axis=0)[:H]
+    rays_l = up * (0.25 + 1.0 * rays_tex ** 1.5) * np.clip((0.75 - v) / 0.5, 0, 1)
+    img += rays_l[..., None] * col((20, 150, 235)) * RAYS * 2.2
 # fine atmospheric texture: faint streaks of light through the whole sky, very low contrast
 rs = np.random.default_rng(31).random((H // 4 + 1, W)).astype(np.float32)
 fine = nd.gaussian_filter(rs, (H * 0.02, 0.8), mode='wrap'); fine = (fine - fine.mean()) / (fine.std() + 1e-6)
