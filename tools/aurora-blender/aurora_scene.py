@@ -11,12 +11,12 @@ sc.cycles.samples = SPP; sc.cycles.use_denoising = True
 sc.cycles.volume_step_rate = 0.5; sc.cycles.volume_max_steps = 256
 sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = W, H, 100
 sc.render.image_settings.file_format = 'PNG'; sc.render.filepath = OUT
-sc.view_settings.view_transform = 'AgX'; sc.view_settings.look = 'AgX - Punchy'
+sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'
 sc.view_settings.exposure = 0.0
 
 # camera on the ground looking up and ahead
 cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); sc.collection.objects.link(cam); sc.camera = cam
-cam.location = (0, 0, 0); cam.rotation_euler = (math.radians(108), 0, 0)
+cam.location = (0, 0, 0); cam.rotation_euler = (math.radians(100), 0, 0)
 cam.data.lens = 22; cam.data.sensor_fit = 'VERTICAL'
 
 # night sky: near-black navy overhead, a little violet low down, faint stars
@@ -25,8 +25,8 @@ wn = world.node_tree.nodes; wl = world.node_tree.links; wn.clear()
 wo = wn.new('ShaderNodeOutputWorld'); bg = wn.new('ShaderNodeBackground')
 tc = wn.new('ShaderNodeTexCoord'); sep = wn.new('ShaderNodeSeparateXYZ'); ramp = wn.new('ShaderNodeValToRGB')
 wl.new(tc.outputs['Generated'], sep.inputs[0]); wl.new(sep.outputs['Z'], ramp.inputs[0])
-ramp.color_ramp.elements[0].position = 0.45; ramp.color_ramp.elements[0].color = (0.012, 0.008, 0.04, 1)
-ramp.color_ramp.elements[1].position = 0.75; ramp.color_ramp.elements[1].color = (0.001, 0.002, 0.006, 1)
+ramp.color_ramp.elements[0].position = 0.45; ramp.color_ramp.elements[0].color = (0.0015, 0.001, 0.006, 1)
+ramp.color_ramp.elements[1].position = 0.75; ramp.color_ramp.elements[1].color = (0.0002, 0.0003, 0.001, 1)
 stars = wn.new('ShaderNodeTexVoronoi'); stars.inputs['Scale'].default_value = 900
 srmp = wn.new('ShaderNodeValToRGB'); wl.new(tc.outputs['Generated'], stars.inputs['Vector']); wl.new(stars.outputs['Distance'], srmp.inputs[0])
 srmp.color_ramp.elements[0].position = 0.0; srmp.color_ramp.elements[0].color = (0.6, 0.65, 0.8, 1)
@@ -38,7 +38,7 @@ wl.new(bg.outputs[0], wo.inputs['Surface'])
 
 # the aurora: one big volume, its glow computed per point by a node network
 bpy.ops.mesh.primitive_cube_add(size=1); dom = bpy.context.active_object
-dom.scale = (60, 60, 24); dom.location = (0, 20, 10)
+dom.scale = (60, 60, 44); dom.location = (0, 20, 4)
 mat = bpy.data.materials.new('aurora'); mat.use_nodes = True; dom.data.materials.append(mat)
 N = mat.node_tree.nodes; L = mat.node_tree.links; N.clear()
 out = N.new('ShaderNodeOutputMaterial')
@@ -64,7 +64,7 @@ def comb(x, y, z):
 X, Y, Z = xyz.outputs['X'], xyz.outputs['Y'], xyz.outputs['Z']
 t = PH * 2 * math.pi
 total = None; colsum = None
-for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, 0.6, 4.0, 0.16, 1.0, 0.55), (12.0, 1.8, 5.0, 0.12, 0.45, 0.7), (18.0, 3.4, 6.0, 0.09, 0.3, 0.9)]):
+for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, -0.6, 4.0, 0.16, 1.0, 0.55), (12.0, 5.0, 5.0, 0.12, 0.38, 0.8), (18.0, 3.4, 6.0, 0.09, 0.0, 0.9)]):
     s = k * 3.7 + 1
     # the curtain hangs along a folded path: y = y0 + folds(x)
     fold1 = m('MULTIPLY', m('SINE', m('ADD', m('MULTIPLY', X, fr), s + math.sin(t) * 0.5)), amp)
@@ -75,24 +75,25 @@ for k, (y0, z0, amp, fr, br, wid) in enumerate([(8.0, 0.6, 4.0, 0.16, 1.0, 0.55)
     sheet = m('EXPONENT', m('MULTIPLY', m('POWER', m('ABSOLUTE', dy), 2.0), -1.0 / (wid * wid)))
     # height above the lower edge: soft fade in, long fade upward
     h = m('SUBTRACT', Z, m('ADD', z0, m('MULTIPLY', m('SUBTRACT', noise(comb(m('MULTIPLY', X, 0.12), s + 5, 0), 1.0), 0.5), 3.5)))
-    edge = m('SMOOTH_MIN', m('MAXIMUM', m('ADD', m('MULTIPLY', h, 0.3), 1.0), 0.0), 1.0, 0.8)
+    edge = m('SMOOTH_MIN', m('MAXIMUM', m('ADD', m('MULTIPLY', h, 0.18), 1.0), 0.0), 1.0, 1.2)
     up = m('EXPONENT', m('MULTIPLY', m('MAXIMUM', h, 0.0), -1.0 / (3.6 + 1.2 * k)))
     # fine vertical rays: noise stretched tall along the curtain
-    rays = noise(comb(m('MULTIPLY', m('ADD', X, m('MULTIPLY', Z, -0.16)), 2.2), m('MULTIPLY', dy, 0.5), m('MULTIPLY', Z, 0.04)), 1.0, 8, 0.6)
+    rays = noise(comb(m('MULTIPLY', m('ADD', X, m('MULTIPLY', Z, -0.07)), 2.2), m('MULTIPLY', dy, 0.5), m('MULTIPLY', Z, 0.04)), 1.0, 8, 0.6)
     rays = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', rays, 1.8), 0.45), 0.0), 1.8)
     # some stretches flare, others fade
     flare = m('POWER', m('MAXIMUM', m('SUBTRACT', m('MULTIPLY', noise(comb(m('MULTIPLY', X, 0.045), s + 9 + math.cos(t) * 0.2, math.sin(t) * 0.2), 1.0), 2.6), 0.95), 0.0), 1.5)
-    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, -0.16)), 2.2 - 0.8 * math.sin(t) - 6.0 * k)
-    mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, 1.15 + 1.0 * k), 2.0), -1.0))
-    dens = m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', sheet, edge), up), m('ADD', rays, 0.1)), m('MULTIPLY', m('ADD', m('MULTIPLY', mass, 2.2), m('MULTIPLY', flare, 0.04)), br))
+    lean = m('ADD', m('ADD', X, m('MULTIPLY', Z, -0.07)), [0.55 - 0.35 * math.sin(t), -2.6 + 0.3 * math.cos(t), -40][k])
+    mass = m('EXPONENT', m('MULTIPLY', m('POWER', m('DIVIDE', lean, [0.95, 1.3, 1.0][k]), 2.0), -1.0))
+    clump = m('ADD', 0.35, m('MULTIPLY', m('POWER', noise(comb(m('MULTIPLY', X, 0.5), m('MULTIPLY', Z, 0.22), s + math.sin(t) * 0.4), 1.0, 3, 0.5), 2.0), 2.6))
+    dens = m('MULTIPLY', clump, m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', m('MULTIPLY', sheet, edge), up), m('ADD', rays, 0.1)), m('MULTIPLY', m('ADD', m('MULTIPLY', mass, 2.2), m('MULTIPLY', flare, 0.04)), br)))
     total = dens if total is None else m('ADD', total, dens)
     hk = h if k == 0 else hk
 # colour by height above the main curtain's edge: cyan-white low, cyan, blue, deep teal high
 cr = N.new('ShaderNodeValToRGB'); L.new(m('DIVIDE', m('ADD', hk, 2.5), 11.5), cr.inputs[0])
-els = cr.color_ramp.elements; els[0].position = 0.0; els[0].color = (0.25, 0.12, 0.9, 1); els[1].position = 0.1; els[1].color = (0.05, 0.35, 1.0, 1)
-e = els.new(0.3); e.color = (0.2, 1.0, 0.95, 1); e = els.new(0.45); e.color = (0.0, 0.9, 1.0, 1)
-e = els.new(0.65); e.color = (0.03, 0.28, 1.0, 1); e = els.new(1.0); e.color = (0.02, 0.35, 0.4, 1)
-em = N.new('ShaderNodeEmission'); L.new(cr.outputs['Color'], em.inputs['Color']); L.new(m('MULTIPLY', total, 1.9), em.inputs['Strength'])
+els = cr.color_ramp.elements; els[0].position = 0.0; els[0].color = (0.35, 0.1, 1.0, 1); els[1].position = 0.12; els[1].color = (0.08, 0.25, 1.0, 1)
+e = els.new(0.26); e.color = (0.0, 0.95, 1.0, 1); e = els.new(0.38); e.color = (0.0, 0.85, 1.0, 1)
+e = els.new(0.55); e.color = (0.03, 0.3, 1.0, 1); e = els.new(1.0); e.color = (0.02, 0.35, 0.4, 1)
+em = N.new('ShaderNodeEmission'); L.new(cr.outputs['Color'], em.inputs['Color']); L.new(m('MULTIPLY', total, 2.0), em.inputs['Strength'])
 L.new(em.outputs[0], out.inputs['Volume'])
 
 # a soft glow around the brightest light, as a lens sees it
