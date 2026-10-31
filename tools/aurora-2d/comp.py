@@ -69,27 +69,27 @@ img = np.zeros((H, W, 3), np.float32)
 sky = col((2, 4, 14)) * (1 - v[..., None]) + col((10, 8, 40)) * v[..., None]
 img += sky
 hk = np.clip(dmain / 0.35, 0, 1)[..., None]                               # height above the hem: cyan near the edge, blue higher up
-hk = hk ** 1.6
+hk = hk ** 2.2
 mcol = col((0, 215, 245)) * (1 - hk) + col((25, 95, 255)) * hk
 ulfade = 1 - 0.75 * np.clip((0.45 - u) / 0.3, 0, 1) * np.clip((0.45 - v) / 0.35, 0, 1)   # upper-left stays dark
-img += (L_back2 * ulfade)[..., None] * col((35, 80, 235)) * 0.9          # far curtain: dimmer, bluer, softer
+img += (L_back2 * ulfade)[..., None] * col((35, 80, 235)) * 0.55          # far curtain: dimmer, bluer, softer
 gaps = 1 - 0.85 * np.exp(-((us - 0.40 - 0.02 * np.sin(v * 6)) / 0.025) ** 2) * np.clip((0.66 - v) / 0.2, 0, 1) - 0.7 * np.exp(-((us - 0.30) / 0.025) ** 2) - 0.45 * np.exp(-((us - 0.50) / 0.015) ** 2) * np.clip((0.6 - v) / 0.3, 0, 1)
 gaps = np.clip(nd.gaussian_filter(gaps, W * 0.006), 0, 1)
 img += (L_main * ulfade * gaps)[..., None] * mcol * 1.25
 img += L_front[..., None] * col((20, 160, 230)) * 0.35                      # near light, out of focus
 blob = np.exp(-((u - 0.64) / 0.09) ** 2) * np.exp(-((v - 0.64) / 0.045) ** 2)   # the hottest glow, just above the hem
-img += nd.gaussian_filter(L_core, W * 0.008)[..., None] * col((20, 255, 240)) * 1.6
+img += nd.gaussian_filter(L_core, W * 0.008)[..., None] * col((20, 255, 240)) * 1.3
 img += warp(blob * (0.7 + 0.4 * st))[..., None] * col((60, 255, 245)) * 0.55
 img += L_fold[..., None] * col((110, 70, 255)) * 0.9
 tlobe = np.exp(-((u - 0.84) / 0.11) ** 2) * np.exp(-((v - 0.34) / 0.07) ** 2)   # a soft glowing lobe of teal, apart from the main curtain
 img += (L_teal * 0.6 + warp(tlobe * (0.6 + 0.5 * st)))[..., None] * col((0, 185, 165)) * 1.2
-img += L_left[..., None] * col((40, 110, 255)) * 1.0
+img += L_left[..., None] * col((40, 110, 255)) * 0.8
 img += L_low[..., None] * col((0, 160, 170)) * 0.7
 bl = np.exp(-((u - 0.1) / 0.12) ** 2) * np.exp(-((v - 0.83) / 0.06) ** 2)
 bump = np.exp(-((u - 0.82) / 0.07) ** 2) * np.exp(-((v - 0.76) / 0.06) ** 2)
 img += warp(bl * (0.4 + 0.8 * st))[..., None] * col((0, 170, 180)) * 0.6
 img += warp(bump * (0.5 + 0.6 * st))[..., None] * col((40, 110, 255)) * 0.7
-img += haze[..., None] * col((70, 45, 210)) * 0.5
+img += haze[..., None] * col((70, 50, 200)) * 0.4
 # streak smear upward (long exposure) + glow
 sm = nd.uniform_filter1d(img, size=int(H * 0.03), axis=0)
 img = img * 0.4 + sm * 0.6
@@ -106,7 +106,7 @@ lum = img.mean(-1)
 sr = np.random.default_rng(99).random((H, W)); stars = (sr > 0.9993).astype(np.float32)
 stars = nd.gaussian_filter(stars, 0.7) * 6 * (sr > 0.9993).sum() ** 0
 img += (stars * np.clip(1 - lum / 0.12, 0, 1))[..., None] * 0.9
-g = img.mean(-1, keepdims=True); img = np.clip(g + (img - g) * 1.25, 0, None)   # richer colour
+g = img.mean(-1, keepdims=True); img = np.clip(g + (img - g) * 1.12, 0, None)   # richer colour
 img = img / (1 + img * 0.12)
 # vignette, deepest top-left
 d = np.sqrt(((u - 0.45) / 0.8) ** 2 + ((v - 0.58) / 0.75) ** 2)
