@@ -25,7 +25,10 @@ FOCW = float(os.environ.get('FOCW', 0.2))
 GRP = float(os.environ.get('GRP', 0.12))
 BOTV = float(os.environ.get('BOTV', 0.55))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.4))    # strength of the upper-right teal curtain
-HEMY = float(os.environ.get('HEMY', 0.7))     # height of the main curtain's lower edge       # contrast of the broad ray groups (columns)      # how wide it is   # softness of a curtain's ends      # soft diffuse light around each curtain
+HEMY = float(os.environ.get('HEMY', 0.7))
+FINE = float(os.environ.get('FINE', 1.0))      # delicate fine ray texture inside the glow
+LEFTK = float(os.environ.get('LEFTK', 1.8))    # strength of the left curtain
+LEFTY = float(os.environ.get('LEFTY', 0.78))   # height of its lower edge     # height of the main curtain's lower edge       # contrast of the broad ray groups (columns)      # how wide it is   # softness of a curtain's ends      # soft diffuse light around each curtain
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
     r = np.random.default_rng(seed).standard_normal(n).astype(np.float32)
@@ -55,6 +58,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     fold_b = 1 + FOLD * 1.4 * np.clip(dh, 0, 2.5) ** 1.3
     rays = 0.6 + 0.4 * n1(ss * 1.0 + 0.004 * np.sin(T + seed), seed + 2, 7)       # parallel rays
     rays *= (1 - GRP) + GRP * n1(ss * 1.0 - 0.003 * np.cos(T + seed), seed + 3, 16)    # and broader ray groups
+    rays *= 1 + FINE * 0.25 * n1(ss * 1.0 + 0.002 * np.sin(T + seed), seed + 6, 1.2)   # delicate fine rays
     rays = 1 + RAYK * (rays - 1)
     patch = np.clip(0.3 + 0.9 * n1(ss * 1.0 + 0.01 * np.sin(T + drift), seed + 4, 140), PMIN, 1.4)   # one or two bright stretches   # bright and quiet stretches
     span = 1 / (1 + np.exp(-(ss - s0) / SPANS)) / (1 + np.exp((ss - s1) / SPANS))
@@ -74,7 +78,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
 
 # curtains, far to near: (s0, s1, edge height, fold amp, fold freq, rise, edge softness, seed, intensity, edge colour, upper colour, blur)
 CURTAINS = [
-    (0.00, 0.45, 0.52, 0.020, 0.45, 0.12, 0.04, 11, 0.30, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
+    (0.00, 0.40, LEFTY, 0.020, 0.45, 0.16, 0.04, 11, 0.30 * LEFTK, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
     (0.60, 1.00, 0.40, 0.022, 0.5, 0.10, 0.04, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
     (0.10, 0.84, HEMY, 0.045, 0.6, 0.17, 0.035, 22, 1.00, (60, 245, 240), (0, 185, 240), 6.0),   # main curtain: one wide body
     (0.66, 1.00, 0.88, 0.020, 0.45, 0.08, 0.04, 14, 0.30, (0, 170, 190),  (5, 60, 140),  8.0),   # low right, faint
