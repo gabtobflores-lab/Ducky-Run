@@ -12,11 +12,11 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.4))
+EXPO = float(os.environ.get('EXPO', 0.37))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.6))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 1.6))
-SCAT = float(os.environ.get('SCAT', 0.5))      # light scattered into the surrounding air
+SCAT = float(os.environ.get('SCAT', 0.6))      # light scattered into the surrounding air
 PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of a curtain get
 SPANS = float(os.environ.get('SPANS', 0.1))
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
@@ -30,7 +30,9 @@ FINE = float(os.environ.get('FINE', 1.0))      # delicate fine ray texture insid
 LEFTK = float(os.environ.get('LEFTK', 1.8))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.78))
 MFOLD = float(os.environ.get('MFOLD', 0.016))  # how deeply the main curtain's lower edge folds
-MRISE = float(os.environ.get('MRISE', 0.11))   # how far up the main curtain's light reaches   # height of its lower edge     # height of the main curtain's lower edge       # contrast of the broad ray groups (columns)      # how wide it is   # softness of a curtain's ends      # soft diffuse light around each curtain
+MRISE = float(os.environ.get('MRISE', 0.11))
+CLUMP = float(os.environ.get('CLUMP', 0.8))    # soft clumps of brightness inside the glow, elongated along the rays
+PHOTO = float(os.environ.get('PHOTO', 0.5))    # photographic softness of the finished image   # how far up the main curtain's light reaches   # height of its lower edge     # height of the main curtain's lower edge       # contrast of the broad ray groups (columns)      # how wide it is   # softness of a curtain's ends      # soft diffuse light around each curtain
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
     r = np.random.default_rng(seed).standard_normal(n).astype(np.float32)
@@ -76,6 +78,13 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     flick = 0.82 + 0.18 * np.interp(np.mod(S * 1.0 + R * 0.35, 1.0) * 4095, np.arange(4096), n1(np.linspace(0, 1, 4096), seed + 5, 3))
     diffuse = np.exp(-np.clip(d, 0, None) / (rise * 1.6)) * (1 / (1 + np.exp(-d / (thick * 2.0))))
     soft = nd.gaussian_filter(np.interp(S, ss, patch * span), 1)       # broad soft light along the curtain
+    if CLUMP > 0:   # soft clumps: a smooth field in ray coordinates, stretched along the rays, drifting slowly
+        rng2 = np.random.default_rng(seed + 77)
+        fld = nd.gaussian_filter(rng2.standard_normal((256, 256)).astype(np.float32), (14, 5), mode='wrap')
+        fld = (fld - fld.mean()) / (fld.std() + 1e-6)
+        rr = (R - R.min()) / (R.max() - R.min())
+        cl = nd.map_coordinates(fld, [np.mod(rr * 255 * 1.4 + 6 * np.sin(T + seed), 256), np.mod(S * 255 * 2.2 + 4 * np.cos(T + seed), 256)], order=1, mode='wrap')
+        core = core * np.clip(1 + CLUMP * 0.45 * np.tanh(cl), 0.15, 1.8)
     return core * BP * flick + GLOW * 0.35 * diffuse * soft, d
 
 # curtains, far to near: (s0, s1, edge height, fold amp, fold freq, rise, edge softness, seed, intensity, edge colour, upper colour, blur)
@@ -108,7 +117,7 @@ img *= (1 - 0.15 * np.exp(-((Y - 0.78) / 0.045) ** 2))[..., None]
 # light scattering: small and only on the brightest light
 br = np.clip(img - 0.35, 0, None)
 img += nd.gaussian_filter(br, (W * 0.01, W * 0.01, 0)) * 0.45
-img = img * 0.7 + nd.gaussian_filter(img, (W * 0.003, W * 0.003, 0)) * 0.3        # the softness of a photograph
+img = img * (1 - PHOTO) + nd.gaussian_filter(img, (W * 0.004, W * 0.004, 0)) * PHOTO        # the softness of a photograph
 st = (np.random.default_rng(99).random((H, W)) > 0.99985).astype(np.float32)
 img += (nd.gaussian_filter(st, 0.6) * 4 * np.clip(1 - img.mean(-1) / 0.06, 0, 1))[..., None] * 0.45
 img = img / (1 + 0.3 * img)
