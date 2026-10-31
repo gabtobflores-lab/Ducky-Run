@@ -65,13 +65,11 @@ for pdir in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/De
 done
 echo "App: $BUNDLE · team $TEAM · version 1.0 ($BUILD)"
 
-# the newest game into the project before building: the aurora is drawn by the game itself, so the old video file goes
+# the newest game into the project before building, with our own pre-rendered aurora video (replaces any older aurora.mp4)
 curl -fsSL "$BASE/app-update/index.html" -o "$W/index.html" && [ "$(wc -c < "$W/index.html")" -gt 100000 ] && cp "$W/index.html" "$APPDIR/index.html" || { echo "✗ Couldn't download the game. Check your internet and try again."; exit 1; }
 curl -fsSL "$BASE/app-update/MirrorDropApp.swift" -o "$W/MirrorDropApp.swift" && [ -s "$W/MirrorDropApp.swift" ] && cp "$W/MirrorDropApp.swift" "$APPDIR/MirrorDropApp.swift"
-if [ -f "$APPDIR/aurora.mp4" ]; then
-  if grep -q "aurora.mp4" "$PROJ/project.pbxproj"; then : > "$APPDIR/aurora.mp4"; else rm -f "$APPDIR/aurora.mp4"; fi
-fi
-echo "✓ newest game copied into the project (original aurora, no video)"
+curl -fsSL "$BASE/app-update/aurora.mp4" -o "$W/aurora.mp4" && [ "$(wc -c < "$W/aurora.mp4")" -gt 100000 ] && cp "$W/aurora.mp4" "$APPDIR/aurora.mp4" || { echo "✗ Couldn't download the aurora video. Check your internet and try again."; exit 1; }
+echo "✓ newest game and our own aurora video copied into the project"
 
 # xcodebuild needs the full Xcode app; if Terminal points at the Command Line Tools, use the Xcode app directly (no settings changed)
 if ! xcodebuild -version >/dev/null 2>&1; then

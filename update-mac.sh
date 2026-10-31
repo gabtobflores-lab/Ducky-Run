@@ -24,8 +24,8 @@ update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swi
   local bk="$1/../Mirror Drop backup $STAMP"
   mkdir -p "$bk"; cp "$1/MirrorDropApp.swift" "$1/index.html" "$bk/" 2>/dev/null
   get app-update/MirrorDropApp.swift "$1/MirrorDropApp.swift"
-  get app-update/index.html "$1/index.html"   # the aurora is drawn by the game itself now: no video file any more
-  if [ -f "$1/aurora.mp4" ]; then if grep -q "aurora.mp4" "$1"/../*.xcodeproj/project.pbxproj 2>/dev/null; then : > "$1/aurora.mp4"; else rm -f "$1/aurora.mp4"; fi; fi
+  get app-update/index.html "$1/index.html"
+  get app-update/aurora.mp4 "$1/aurora.mp4"   # our own pre-rendered aurora loop
   echo "  game installed"
   # iOS's launch screen looks exactly like the game's loading screen, so opening the app flows straight into it
   local plist="$1/../Info.plist"

@@ -12,5 +12,5 @@ const bf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bf);gl.bufferData(gl.AR
 gl.uniform2f(gl.getUniformLocation(pr,'res'),W,H);window.draw=(ph)=>{gl.uniform1f(gl.getUniformLocation(pr,'ph'),ph);gl.drawArrays(gl.TRIANGLES,0,3);gl.finish();};}catch(e){return String(e)}return null},{F,W,H});
 if(err){console.log(err);process.exit(1);}
 const N=Math.round(fps*loop);
-for(let i=from;i<Math.min(to,N);i++){await p.evaluate(ph=>draw(ph),i/N);const d=await p.evaluate(()=>document.getElementById('c').toDataURL('image/png'));fs.writeFileSync(`${out}/f${String(i).padStart(4,'0')}.png`,Buffer.from(d.split(',')[1],'base64'));}
+const step=+(process.argv[9]||1);for(let i=from;i<Math.min(to,N);i+=step){if(fs.existsSync(`${out}/f${String(i).padStart(4,'0')}.png`))continue;await p.evaluate(ph=>draw(ph),i/N);const d=await p.evaluate(()=>document.getElementById('c').toDataURL('image/png'));fs.writeFileSync(`${out}/f${String(i).padStart(4,'0')}.png`,Buffer.from(d.split(',')[1],'base64'));}
 await b.close();})();
