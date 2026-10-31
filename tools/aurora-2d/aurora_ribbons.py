@@ -18,14 +18,17 @@ UNIFY = float(os.environ.get('UNIFY', 0.8))
 RAYS = float(os.environ.get('RAYS', 2.4))     # long soft rays rising from the main body
 MLEAN = float(os.environ.get('MLEAN', 0.5))
 TILT = float(os.environ.get('TILT', 0.2))
-HAIR = float(os.environ.get('HAIR', 0.2))     # amount of fine streak texture
+HAIR = float(os.environ.get('HAIR', 0.9))     # amount of fine streak texture
 LUMP = float(os.environ.get('LUMP', 0.4))     # how much strands bunch, pinch and fade (teardrops)
 BANDS = float(os.environ.get('BANDS', 5.0))   # width of the broad light bands along the lean
-SOFT = float(os.environ.get('SOFT', 0.75))
+SOFT = float(os.environ.get('SOFT', 0.35))
 ALIGN = float(os.environ.get('ALIGN', 0.8))   # 0..1: pulls every formation towards one shared lean (parallel curtain bands)
-BANDK = float(os.environ.get('BANDK', 0.9))  # strength of the curtain bands     # photographic softness of the finished image     # extra lean for every formation (top-left to bottom-right)
+BANDK = float(os.environ.get('BANDK', 0.9))
+HEM = float(os.environ.get('HEM', 1.0))       # 0..1: real-aurora profile - bright sharp lower edge, rays fading upward
+HEMW = float(os.environ.get('HEMW', 0.012))   # how sharp that lower edge is (screen heights)
+RISE = float(os.environ.get('RISE', 0.55))    # how far up the light fades (fraction of the formation's height)  # strength of the curtain bands     # photographic softness of the finished image     # extra lean for every formation (top-left to bottom-right)
 KNEE = float(os.environ.get('KNEE', 0.0))     # highlight-only roll-off for the hottest light  # how much the main body leans   # how strongly the formations gather into one main mass
-EXPO = float(os.environ.get('EXPO', 0.68))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
+EXPO = float(os.environ.get('EXPO', 0.38))     # exposure compensation, keeps overall brightness unchanged       # internal texture scale (smaller = larger structures)
 v = (np.arange(H, dtype=np.float32) / H)[:, None]            # 0 top .. 1 bottom
 u = (np.arange(W, dtype=np.float32) / W)[None, :]
 asp = W / H
@@ -77,10 +80,17 @@ def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
         # inner structure follows the strand's own curve, not a straight line
         fl = 0.55 + 0.45 * n1((sd / BLEND) * 0.05 * TEX + V * 0.12 + rr.random(), sk + 80, 3)
         # each strand ends at its own ragged height that varies across the screen: no straight horizontal edges
-        e1 = v1 + 0.07 * n1(U * 0.6 + rr.random(), sk + 120, 90) - 0.03 * k / strands
+        e1 = v1 + 0.07 * n1(U * 0.6 + rr.random(), sk + 120, 90) - 0.03 * k / strands + 0.018 * HEM * n1(U * 2.5 + rr.random() + 0.02 * np.sin(T + sk), sk + 160, 20)   # the lower edge ripples
         e0 = v0 + 0.06 * n1(U * 0.5 + rr.random(), sk + 140, 90)
         tk = np.clip((V - e0) / np.maximum(e1 - e0, 0.05), 0, 1)
         envk = (tk * tk * (3 - 2 * tk)) ** 1.5 * np.clip((1 - tk) / 0.35, 0, 1) ** 1.3
+        if HEM > 0:   # a real aurora curtain: brightest at its rippling lower edge, rays fading up into the sky, little light below
+            hgt = np.maximum(e1 - e0, 0.05)
+            dh = e1 - V                                                        # distance above the lower edge
+            above = np.exp(-np.clip(dh, 0, None) / (hgt * RISE)) * (dh > -1)
+            edge = 1 / (1 + np.exp(-dh / HEMW))                                # the edge itself: sharp but not a hard line
+            hem = above * edge * np.clip((V - e0) / (hgt * 0.25), 0, 1)
+            envk = envk * (1 - HEM) + hem * HEM
         envF = np.maximum(envF, envk)
         tot += core * bk * envk * (1 - 0.55 * fil * HAIR + 0.55 * fil * HAIR * fl)
         vol += np.exp(-np.abs(U - path - off) / (min(wk.max(), 0.06) * 2.2 * min(glow, 1.4))) * bk * envk   # soft volume sized in screen units
@@ -96,6 +106,10 @@ def ribbon(x0, slope, v0, v1, width, curve, seed, glow=1.0, fil=0.5, strands=4):
     eb1 = v1 + 0.1 * n1(U * 1.4 + seed * 0.3, seed + 730, 60); eb0 = v0 + 0.08 * n1(U * 1.1 + seed * 0.7, seed + 740, 60)
     tb = np.clip((V - eb0) / np.maximum(eb1 - eb0, 0.05), 0, 1)
     envB = (tb * tb * (3 - 2 * tb)) ** 1.5 * np.clip((1 - tb) / 0.4, 0, 1) ** 1.5
+    if HEM > 0:
+        hgtb = np.maximum(eb1 - eb0, 0.05); dhb = eb1 - V
+        hb = np.exp(-np.clip(dhb, 0, None) / (hgtb * RISE * 1.2)) / (1 + np.exp(-dhb / (HEMW * 2))) * np.clip((V - eb0) / (hgtb * 0.25), 0, 1)
+        envB = envB * (1 - HEM) + hb * HEM
     broad = np.exp(-dp ** 1.4) * mod * np.minimum(envF * 1.5, 1) * envB
     body = tot + 0.5 * vol + BROAD * broad
     env = np.clip(0.7 + 0.45 * n1(V * 0.9 + seed * 0.11 + 0.03 * np.cos(T + seed), seed + 5, 200), 0.25, 1.3)
