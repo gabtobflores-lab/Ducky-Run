@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="9e8c5ee">
+<meta name="build" content="1a5f820">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1872,12 +1872,12 @@ vec3 studio(vec3 r){vec3 c=vec3(.025,.022,.05)+vec3(.05,.04,.1)*smoothstep(-.3,.
   c+=iri(az/6.2832+t*.03)*exp(-pow((az-1.)/.6,2.))*smoothstep(.3,-.2,r.y)*.35; /* a coloured back light */
   c+=vec3(.2,.26,.42)*smoothstep(-.05,-.85,r.y); /* light bouncing up from the beam and the ground below */
   return c;}
-void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(sc.x*asp,sc.y);float RX=asp*.29;
-  vec3 c=mix(vec3(.04,.05,.14),vec3(.16,.13,.34),smoothstep(0.,.75,uv.y));c=mix(c,vec3(.34,.24,.46),smoothstep(.7,1.05,uv.y)); /* the game's night: deep indigo to violet, warming at the horizon */
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(sc.x*asp,sc.y);float RX=asp*.16;
+  vec3 c=mix(vec3(.047,.039,.149),vec3(.243,.165,.44),smoothstep(0.,.62,uv.y));c=mix(c,vec3(.6,.38,.6),smoothstep(.55,1.05,uv.y)); /* the meteor shower's night: deep blue-violet to rose at the horizon */ /* the game's night: deep indigo to violet, warming at the horizon */
   c+=starfield(P,.5)*smoothstep(.55,.15,uv.y);
-  float sl=exp(-length((P-C)/vec2(asp*.7,.3))); /* the ship's light on the clouds */
+  float sl=exp(-length((P-C)/vec2(asp*.4,.16))); /* the ship's light on the clouds round it, as the moon lights its clouds */
   for(int k=0;k<3;k++){float fk=float(k);vec2 cp=vec2(P.x*(1.2+fk*.4)+t*(.012+fk*.006)+fk*3.,P.y*(3.+fk)-fk);float cl=smoothstep(.36,.9,fbm(cp));cl=cl*cl*(3.-2.*cl)*smoothstep(.02+fk*.1,.45+fk*.2,uv.y)*(1.-.55*exp(-pow((uv.y-.78)/.12,2.))); /* wide, soft fades: no edges, and thinner around the balls */
-    vec3 cc=mix(vec3(.12,.11,.26),vec3(.5,.42,.7),.35+.35*fk/2.)+vec3(.55,.95,.9)*sl*(.9-fk*.25);c=mix(c,cc,cl*(.45-fk*.1)*sk);} /* soft cloud banks, lit mint from within */
+    vec3 cc=mix(vec3(.2,.14,.38),vec3(.85,.62,.88),.3+.3*fk/2.)+vec3(.55,1.,.9)*sl*(1.1-fk*.25);c=mix(c,cc,cl*(.45-fk*.1)*sk);} /* soft cloud banks, lit mint from within */
   /* the camera: a little below the ship, looking up at it */
   vec3 ro=vec3(0.,-.62,-4.4),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
   vec2 q=(P-C)/RX/S;vec3 rd=normalize(fw+rt*q.x+up*(-q.y));
@@ -1890,10 +1890,10 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   c+=bcol*cone*mist*.3*sk;c+=vec3(.85,1.,.96)*smoothstep(wdt*.35,0.,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*2.4)*.3*sk;
   float pool=exp(-pow((P.x-Ce.x-sn*.95)/(asp*.42),2.)-pow((uv.y-1.03)/.1,2.));c+=vec3(.7,.75,1.)*pool*.18*sk;
   /* the soft iridescent glow it casts */
-  float gl=length((P-C)/vec2(RX*1.05,RX*.32));c+=iri(atan(P.y-C.y,P.x-C.x)/6.2832+t*.06)*exp(-max(gl-1.,0.)*3.)*smoothstep(.55,1.,gl)*.16*sk;
+  float gl=length((P-C)/vec2(RX*1.1,RX*.55));c+=vec3(.75,.7,1.)*exp(-gl*gl*.45)*.22*sk+vec3(.55,1.,.9)*exp(-gl*gl*1.6)*.18*sk; /* its own soft halo, like the moon's */
   /* the ship */
   float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1;
-  if(false&&h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
+  if(h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
     for(int i=0;i<56;i++){p=ro+rd*tt;float dd=map(p);if(dd<.0008){hit=1.;break;}tt+=dd;if(tt>7.)break;}
     if(hit>0.){vec3 n=nrm(p),v=-rd,r=reflect(rd,n);float ndv=clamp(dot(n,v),0.,1.);
       float ao=clamp(1.-3.*(.06-map(p+n*.06)),0.,1.)*clamp(1.-2.*(.15-map(p+n*.15)),0.,1.); /* soft occlusion in the creases */
@@ -1904,34 +1904,17 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
         col+=vec3(.45,1.,.85)*exp(-length(p-vec3(0.,.1,0.))*3.2)*.55; /* a soft mint light inside */
         vec3 L=normalize(vec3(-.45,.85,-.35));col+=vec3(1.)*pow(max(dot(r,L),0.),60.)*1.2;gcol=col;} /* the key light's crisp highlight */
       { /* titanium */
-        float ang=atan(p.z,p.x)+t*.12;
-        float fc=.04+.96*pow(1.-ndv,4.);
-        col=c*1.25+vec3(.16,.17,.28)+vec3(.35,.9,.8)*exp(-rxz*2.6)*.35; /* frosted liquid glass, like the game's own buttons: it lifts the sky behind it, a mint light glowing inside */
-        col+=studio(r)*fc*.75; /* the glass catches the light at its edges */
-        col+=vec3(1.)*smoothstep(.06,0.,abs(rxz-.97))*step(0.,p.y)*.55; /* the bright hairline rim along the top, as on the game's glass */
-        if(p.y<-.02){col*=.9; /* the underside, in its own shade */
+        float ang=atan(p.z,p.x)+t*.12;vec3 L=normalize(vec3(-.5,.8,-.35));float wrap=clamp((dot(n,L)+.4)/1.4,0.,1.);
+        col=vec3(.95,.93,1.)*(vec3(.3,.25,.45)+vec3(1.,.97,1.)*wrap*1.15)+vec3(.45,.9,.85)*clamp(-n.y,0.,1.)*.3; /* soft pearl, lit like the moon: a gentle terminator, violet in the shade, mint from the beam */
+        col+=studio(r)*(.04+.96*pow(1.-ndv,5.))*.35; /* a faint sheen */
+        if(p.y<-.02){col*=.75; /* the underside, in its own shade */
           float lr=smoothstep(.02,0.,abs(rxz-.46))*pow(max(0.,sin(ang*14.)),10.);col+=vec3(.85,.92,1.)*lr*1.4; /* a ring of lights turning */
           col+=vec3(.95,.98,1.)*smoothstep(.15,.1,rxz)*(.9+.1*sin(t*2.))*1.4;} /* the aperture */
-        float edge=smoothstep(.05,0.,abs(rxz-.985))*smoothstep(.06,0.,abs(p.y));col+=iri(atan(p.z,p.x)/6.2832+t*.06)*edge*1.6;} /* the iridescent rim */
+        float edge=smoothstep(.05,0.,abs(rxz-.985))*smoothstep(.06,0.,abs(p.y));col+=vec3(.6,1.,.9)*edge*.35;} /* a faint mint rim */
       col=mix(col,gcol,gk); /* glass and metal meet softly */
       col*=.35+.65*ao;
-      col=mix(col,vec3(.17,.15,.34)+vec3(.25,.45,.42)*.25,.15); /* distance haze: it sits in the same air as the clouds */
+      col=mix(col,vec3(.3,.24,.46),.1); /* distance haze, the same violet as the night: it sits in the same air as the clouds */
       c=mix(c,col,sk);}}
-  { /* the saucer, drawn flat in the game's own 2D style: the blocks' slate navy in simple soft gradients, a glossy glass dome like the balls, a row of warm lights like each block's gold bar */
-    float aa=1.5/res.y; vec2 d=P-C; float hw=RX*.95, hh=RX*.17;
-    float glo=exp(-dot(d/vec2(hw*1.25,hh*2.6),d/vec2(hw*1.25,hh*2.6)));c+=vec3(.45,1.,.88)*glo*.18*sk; /* a soft glow around it */
-    vec2 dm=(d+vec2(0.,hh*.55))/vec2(hw*.36,hh*1.7);float dome=(1.-smoothstep(1.-aa/(hh*1.7),1.,length(dm)))*step(dm.y,.25);
-    vec3 dc=mix(vec3(.62,.95,.98),vec3(.16,.55,.66),smoothstep(-1.,.2,dm.y));dc+=vec3(1.)*exp(-pow((dm.x+.38)/.16,2.)-pow((dm.y+.55)/.14,2.))*.8; /* glossy, with the balls' white highlight */
-    c=mix(c,dc,dome*sk);
-    vec2 db=d/vec2(hw,hh);float body=1.-smoothstep(1.-aa/hh,1.,length(db));
-    vec3 bc=mix(vec3(.31,.33,.47),vec3(.15,.16,.24),smoothstep(-1.,1.,db.y)); /* the blocks' slate navy, lighter on top */
-    bc+=vec3(1.)*.1*smoothstep(.12,0.,abs(db.y+.45))*(1.-abs(db.x)); /* the soft sheen line every block has */
-    for(int i=0;i<9;i++){float u=(float(i)+.5)/9.*2.-1.;vec2 lp=vec2(u*hw*.78,hh*.32*(1.-u*u*.35));float on=.45+.55*max(0.,sin(t*2.2-float(i)*.8));
-      bc+=vec3(1.,.78,.42)*on*exp(-dot(d-lp,d-lp)/(hh*hh*.035))*1.2;} /* a row of warm lights, chasing slowly */
-    c=mix(c,bc,body*sk);
-    float rim=smoothstep(.06,0.,abs(length(db)-.97))*step(db.y,.1);c+=vec3(.5,1.,.9)*rim*.35*sk; /* a thin mint rim underneath */
-    float bot=exp(-dot((d-vec2(0.,hh*.95))/vec2(hw*.16,hh*.32),(d-vec2(0.,hh*.95))/vec2(hw*.16,hh*.32)));c+=vec3(.75,1.,.95)*bot*.9*sk; /* the opening the beam comes from */
-  }
   { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
     c=mix(c,vec3(.26,.24,.44)+vec3(.4,.8,.75)*.15,veil*.55*sk); }
   c=1.-exp(-c*1.35);gl_FragColor=vec4(c+dith(),1.);}`,
@@ -2070,7 +2053,7 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U;
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .05, H * (.2 - .34 * (1 - ea))); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .14 }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .3 + Math.sin(t * .05) * W * .03, H * (.23 - .34 * (1 - ea))); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .14 }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
   if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' ? k : 'clouds', U))) return false;
