@@ -90,7 +90,7 @@ BLURK = float(os.environ.get('BLURK', 3.2))   # softness multiplier for every cu
 FOLDK = float(os.environ.get('FOLDK', 0.3))   # depth of the folds along the side curtains' lower edges (saw-teeth when high)
 STK = float(os.environ.get('STK', 7.5))       # main body built from individual soft vertical streaks
 STN = int(float(os.environ.get('STN', 26)))   # how many streaks
-STWD = float(os.environ.get('STWD', 2.0))     # streak width multiplier
+STWD = float(os.environ.get('STWD', 2.6))     # streak width multiplier
 MAINK = float(os.environ.get('MAINK', 0.25))   # strength of the old smooth main curtain
 STFI = float(os.environ.get('STFI', 0.09))    # how gradually each streak fades in above its bottom end
 STFAN = float(os.environ.get('STFAN', 0.8))   # streaks spread apart as they rise (column widens upward)
@@ -238,7 +238,7 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
     acc = np.zeros((H, W), np.float32); dacc = np.zeros((H, W), np.float32)
     clusters = [(FOCX, rb0, FOCW, STN, 1.0, STTALL)] if STPATH <= 0 else []
     if STPATH > 0:   # the ribbon: a smooth S-shaped path on screen; each streak hangs from a point on it
-        cpts = np.array([tuple(map(float, q.split(','))) for q in os.environ.get('CPATH', '0.1,.6;.25,.68;.36,.68;.42,.6;.47,.5;.52,.4;.57,.3;.66,.23;.86,.19;1.1,.16').split(';')])
+        cpts = np.array([tuple(map(float, q.split(','))) for q in os.environ.get('CPATH', '-.15,.56;.05,.6;.25,.65;.42,.68;.58,.65;.7,.56;.76,.43;.76,.3;.7,.17;.62,.03').split(';')])
         cpts = cpts + np.array([[.03 * np.sin(T + k * 1.3), .02 * np.cos(T + k * 1.9)] for k in range(len(cpts))])
         Pp = np.vstack([cpts[0] * 2 - cpts[1], cpts, cpts[-1] * 2 - cpts[-2]]); path = []
         for k in range(1, len(Pp) - 2):
@@ -255,8 +255,8 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
         farp = np.clip((py_ + .05) / .7, .3, 1); endp = np.clip(uu / .07, 0, 1) * np.clip((1 - uu) / .12, 0, 1)
         for i in range(STPN):
             if endp[i] < .02: continue
-            wd = rngS.uniform(0.005, 0.016) * STWD; amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2) * (1 + float(os.environ.get('FOLDP', 0.8)) * foldp[i]) * bund[i]
-            ln = rngS.uniform(.08, .16) * float(os.environ.get('STPL', 2.4)) * lnv[i] * (.55 + .45 * farp[i]) * (1 + .5 * foldp[i]); drift = .004 * np.sin(T + i * 1.7)
+            wd = rngS.uniform(0.005, 0.016) * STWD * (1 + float(os.environ.get('PLUME', 5)) * np.clip((.5 - py_[i]) / .5, 0, 1) ** 1.3); amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2) * (1 + float(os.environ.get('FOLDP', 0.8)) * foldp[i]) * bund[i]
+            ln = rngS.uniform(.08, .16) * float(os.environ.get('STPL', 1.8)) * lnv[i] * (.55 + .45 * farp[i]) * (1 + .5 * foldp[i]); drift = .004 * np.sin(T + i * 1.7)
             d = pr_[i] - R; across = np.exp(-((S - ps_[i] - drift) / wd) ** 2)
             along = np.clip(d / STFI, 0, 1) ** 1.5 * np.exp(-np.clip(d, 0, None) / (ln * 0.55)) * (d < ln * 1.8)
             acc += amp * across * along; dacc += amp * across * along * np.clip(d / ln, 0, 1)
