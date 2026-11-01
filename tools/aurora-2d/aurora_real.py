@@ -32,7 +32,7 @@ LEFTY = float(os.environ.get('LEFTY', 0.82))      # height of the left curtain's
 MFOLD = float(os.environ.get('MFOLD', 0.05))  # how deeply the main curtain's lower edge folds
 MRISE = float(os.environ.get('MRISE', 0.26))      # how far up the main curtain's light reaches
 CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
-PHOTO = float(os.environ.get('PHOTO', 0.3))      # photographic softness of the finished image
+PHOTO = float(os.environ.get('PHOTO', 0.15))      # photographic softness of the finished image
 HAZE = float(os.environ.get('HAZE', 0.3))      # broad blue haze around the light, stronger to the left
 LOWR = float(os.environ.get('LOWR', 2.0))      # strength of the faint low-right curtain
 VIOL = float(os.environ.get('VIOL', 1.2))      # violet fold edge along the right side of the main glow
@@ -61,6 +61,7 @@ LOWY = float(os.environ.get('LOWY', 0.8))    # height of the low-right curtain's
 ECOL = os.environ.get('ECOL', '30,240,255')   # colour at the main curtain's bright lower part
 TWA = float(os.environ.get('TWA', 0.045))       # how far a curtain sways sideways along its height (twists and turns)
 TWF = float(os.environ.get('TWF', 1.0))       # how many bends along its height
+DET = float(os.environ.get('DET', 0.5))       # fine ray detail kept on top of the soft glow (image quality)
 UPC = os.environ.get('UPC', '30,222,236')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -116,7 +117,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     edge = 1 / (1 + np.exp(-d / thick))
     core = above * edge
     # rays flicker gently along their length
-    flick = 0.82 + 0.18 * np.interp(np.mod(S * 1.0 + R * 0.35, 1.0) * 4095, np.arange(4096), n1(np.linspace(0, 1, 4096), seed + 5, 3))
+    flick = 0.82 + 0.18 * np.interp(np.mod(Sx * 1.0 + R * 0.35, 1.0) * 4095, np.arange(4096), n1(np.linspace(0, 1, 4096), seed + 5, 3))
     diffuse = np.exp(-np.clip(d, 0, None) / (rise * 1.6)) * (1 / (1 + np.exp(-d / (thick * 2.0))))
     soft = nd.gaussian_filter(np.interp(Sx, ss, patch * span), 1)       # broad soft light along the curtain
     if CLUMP > 0:   # soft clumps: a smooth field in ray coordinates, stretched along the rays, drifting slowly
@@ -124,7 +125,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
         fld = nd.gaussian_filter(rng2.standard_normal((256, 256)).astype(np.float32), (14, 5), mode='wrap')
         fld = (fld - fld.mean()) / (fld.std() + 1e-6)
         rr = (R - R.min()) / (R.max() - R.min())
-        cl = nd.map_coordinates(fld, [np.mod(rr * 255 * 1.4 + 6 * np.sin(T + seed), 256), np.mod(S * 255 * 2.2 + 4 * np.cos(T + seed), 256)], order=1, mode='wrap')
+        cl = nd.map_coordinates(fld, [np.mod(rr * 255 * 1.4 + 6 * np.sin(T + seed), 256), np.mod(Sx * 255 * 2.2 + 4 * np.cos(T + seed), 256)], order=1, mode='wrap')
         core = core * np.clip(1 + CLUMP * 0.45 * np.tanh(cl), 0.15, 1.8)
     return core * BP * flick + GLOW * 0.35 * diffuse * soft, d
 
@@ -142,7 +143,12 @@ sky = col((1, 3, 10)) * (1 - Y[..., None]) + col((7, 11, 36)) * Y[..., None]
 img += sky
 for (s0, s1, hy, fa, ff, rise, th, sd, inten, ec, uc, blur) in CURTAINS:
     L, d = curtain(s0, s1, hy, fa, ff, rise, th, sd, sd * 1.3)
-    if blur > 0: L = nd.gaussian_filter(L, blur * W / 1206)
+    if blur > 0:
+        Lb = nd.gaussian_filter(L, blur * W / 1206)
+        if DET > 0 and sd in (22, 41):   # keep the fine ray structure: the glow stays soft, the striations along the rays stay crisp
+            Lf = nd.gaussian_filter(L, 1.3 * W / 1206)
+            Lb = Lb + DET * (Lf - Lb) * np.clip(Lb / (Lb.max() * 0.25 + 1e-6), 0, 1)
+        L = np.clip(Lb, 0, None)
     k = np.clip(d / rise, 0, 1)[..., None] ** float(os.environ.get('KEXP', 4.0))                          # colour by height above the edge
     c = col(ec) * (1 - k) + col(uc) * k
     img += L[..., None] * c * inten * EXPO
