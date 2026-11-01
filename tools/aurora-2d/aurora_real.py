@@ -44,6 +44,11 @@ SIDX = float(os.environ.get('SIDX', 0.42))    # where the main body is across th
 LOWG = float(os.environ.get('LOWG', 0.45))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '20,125,235')   # colour of the glow below the body
+CURL = float(os.environ.get('CURL', 0.0))     # a short low fold of light curling under the lower left of the main body
+CURX = float(os.environ.get('CURX', -0.09))   # its position relative to the focal area
+CURY = float(os.environ.get('CURY', 0.07))    # how far below the main edge the curl hangs
+KNOT = float(os.environ.get('KNOT', 1.6))     # a soft bright knot of light at the lower left of the main body
+KNY = float(os.environ.get('KNY', -0.03))       # its height relative to the main edge (screen heights, + = lower)
 UPC = os.environ.get('UPC', '50,250,210')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -110,6 +115,7 @@ CURTAINS = [
     (0.60, 1.00, 0.40, 0.022, 0.5, 0.10, 0.04, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
     (0.10, 0.84, HEMY, MFOLD, 0.6, MRISE, 0.035, 22, 1.00, (60, 245, 240), tuple(int(v) for v in UPC.split(',')), MBLUR),   # main curtain: one wide body
     (0.66, 1.00, 0.88, 0.020, 0.45, 0.08, 0.04, 14, 0.30 * LOWR, (0, 170, 190),  (5, 60, 140),  8.0),   # low right, faint
+    (FOCX + CURX - 0.05, FOCX + CURX + 0.05, HEMY + CURY, 0.03, 0.9, 0.07, 0.03, 41, 0.9 * CURL, (60, 245, 240), (20, 170, 240), 5.0),   # low curl
     (FOCX + 0.12, FOCX + 0.2, HEMY - 0.03, 0.01, 0.5, MRISE * 1.3, 0.035, 31, 0.5 * VIOL, (120, 80, 255), (70, 50, 200), 6.0),   # violet fold edge
 ]
 img = np.zeros((H, W, 3), np.float32)
@@ -121,6 +127,11 @@ for (s0, s1, hy, fa, ff, rise, th, sd, inten, ec, uc, blur) in CURTAINS:
     k = np.clip(d / rise, 0, 1)[..., None] ** float(os.environ.get('KEXP', 4.0))                          # colour by height above the edge
     c = col(ec) * (1 - k) + col(uc) * k
     img += L[..., None] * c * inten * EXPO
+if KNOT > 0:   # bright knot where the curtain's lower edge folds towards the viewer: compact, stretched a little along the rays
+    s_k = FOCX + CURX; r_k = r_at(HEMY + KNY)
+    g = np.exp(-((S - s_k) / 0.035) ** 2 - ((R - r_k) / 0.045) ** 2)
+    g = g + 0.5 * np.exp(-((S - s_k - 0.03) / 0.02) ** 2 - ((R - r_k + 0.05) / 0.06) ** 2)   # a fainter tail curling up and right
+    img = img + nd.gaussian_filter(g, 4 * W / 1206)[..., None] * col((70, 250, 245)) * KNOT * EXPO
 if LOWG > 0:   # light from the body lights the air beneath it: a broad blue glow, below the body, fading downward
     litL = nd.gaussian_filter(np.clip((img - sky).mean(-1), 0, None), W * 0.07)
     litL = np.roll(litL, int(0.09 * H), axis=0); litL[:int(0.09 * H)] = 0
