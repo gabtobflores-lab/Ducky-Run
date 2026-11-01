@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.32))
+EXPO = float(os.environ.get('EXPO', 0.3))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.55))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
@@ -21,7 +21,7 @@ PMIN = float(os.environ.get('PMIN', 0.9))     # how dark the quiet stretches of 
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
 FOCX = float(os.environ.get('FOCX', 0.3971))     # where that focal area is (across the view)
-FOCW = float(os.environ.get('FOCW', 0.3))      # how wide that focal area is
+FOCW = float(os.environ.get('FOCW', 0.36))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.35))      # contrast of the broad ray groups (columns)
 BOTV = float(os.environ.get('BOTV', 0.6))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.0))    # strength of the upper-right teal curtain
@@ -39,7 +39,7 @@ VIOL = float(os.environ.get('VIOL', 0.0))      # violet fold edge along the righ
 MPK = float(os.environ.get('MPK', 0.08))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 0.9))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 1.1))     # darkens the sky away from the main body
+SIDE = float(os.environ.get('SIDE', 0.9))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.5981))    # where the main body is across the screen
 LOWG = float(os.environ.get('LOWG', 0.3))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
@@ -93,6 +93,8 @@ STN = int(float(os.environ.get('STN', 26)))   # how many streaks
 STWD = float(os.environ.get('STWD', 1.5))     # streak width multiplier
 MAINK = float(os.environ.get('MAINK', 0.25))   # strength of the old smooth main curtain
 STFI = float(os.environ.get('STFI', 0.14))    # how gradually each streak fades in above its bottom end
+STFAN = float(os.environ.get('STFAN', 0.8))   # streaks spread apart as they rise (column widens upward)
+STTOP = os.environ.get('STTOP', '20,155,238')  # colour of the streaks' upper parts
 UPC = os.environ.get('UPC', '25,200,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -233,13 +235,14 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
         bot = rb0 + rngS.normal(0, 0.035) + 0.04 * abs(off) / FOCW   # bottom end (larger r = lower)
         ln = rngS.uniform(0.22, 0.5) * (0.6 + 0.4 * amp)            # length up the ray
         drift = 0.008 * np.sin(T + i * 1.9)
-        across = np.exp(-((S - sc - off - drift) / wd) ** 2)
+        up_ = np.clip(bot - R, 0, None)
+        across = np.exp(-((S - sc - off * (1 + STFAN * up_) - drift) / (wd * (1 + 0.6 * STFAN * up_))) ** 2)
         d = bot - R                                               # >0 above the bottom end
         along = np.clip(d / STFI, 0, 1) ** 1.5 * np.exp(-np.clip(d, 0, None) / (ln * 0.55)) * (d < ln * 1.6)
         acc += amp * across * along; dacc += amp * across * along * np.clip(d / ln, 0, 1)
     acc = nd.gaussian_filter(acc, 3 * W / 1206); kk = nd.gaussian_filter(dacc, 3 * W / 1206) / (acc + 1e-6)
     kk = np.clip(kk, 0, 1)[..., None] ** 0.8
-    cS = col(tuple(int(v) for v in ECOL.split(','))) * (1 - kk) + col((20, 120, 235)) * kk
+    cS = col(tuple(int(v) for v in ECOL.split(','))) * (1 - kk) + col(tuple(int(v) for v in STTOP.split(','))) * kk
     glowS = nd.gaussian_filter(acc, W * 0.03)
     img = img + (acc[..., None] * cS + glowS[..., None] * col((20, 150, 235)) * 0.6) * STK * EXPO
 if LOWG > 0:   # light from the body lights the air beneath it: a broad blue glow, below the body, fading downward
