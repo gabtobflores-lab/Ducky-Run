@@ -7,6 +7,7 @@ import SwiftUI
 import WebKit
 import GameKit
 import StoreKit
+import AVFoundation
 
 @main
 struct MirrorDropApp: App {
@@ -32,6 +33,9 @@ struct GameView: UIViewRepresentable {
     func makeCoordinator() -> NativeBridge { NativeBridge() }
 
     func makeUIView(context: Context) -> WKWebView {
+        // Ambient audio: the Ring/Silent switch and the volume buttons silence the game, and it mixes with the player's own music
+        try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true                // the aurora video plays inside the game
         config.mediaTypesRequiringUserActionForPlayback = []
