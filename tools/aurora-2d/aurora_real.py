@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.34))
+EXPO = float(os.environ.get('EXPO', 0.37))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.3))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
@@ -21,7 +21,7 @@ PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
 FOCX = float(os.environ.get('FOCX', 0.3971))     # where that focal area is (across the view)
-FOCW = float(os.environ.get('FOCW', 0.25))      # how wide that focal area is
+FOCW = float(os.environ.get('FOCW', 0.2))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
 BOTV = float(os.environ.get('BOTV', 0.7))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.4752))    # strength of the upper-right teal curtain
@@ -30,16 +30,16 @@ FINE = float(os.environ.get('FINE', 0.5))      # delicate fine ray texture insid
 LEFTK = float(os.environ.get('LEFTK', 0.9))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.86))      # height of the left curtain's lower edge
 MFOLD = float(os.environ.get('MFOLD', 0.03))  # how deeply the main curtain's lower edge folds
-MRISE = float(os.environ.get('MRISE', 0.3048))      # how far up the main curtain's light reaches
+MRISE = float(os.environ.get('MRISE', 0.2))      # how far up the main curtain's light reaches
 CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
 PHOTO = float(os.environ.get('PHOTO', 0.4))      # photographic softness of the finished image
 HAZE = float(os.environ.get('HAZE', 0.0))      # broad blue haze around the light, stronger to the left
-LOWR = float(os.environ.get('LOWR', 21.7367))      # strength of the faint low-right curtain
+LOWR = float(os.environ.get('LOWR', 16))      # strength of the faint low-right curtain
 VIOL = float(os.environ.get('VIOL', 1.1506))      # violet fold edge along the right side of the main glow
-MPK = float(os.environ.get('MPK', 0.12))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
+MPK = float(os.environ.get('MPK', 0.08))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 0.9))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 1.7))     # darkens the sky away from the main body
+SIDE = float(os.environ.get('SIDE', 2.0))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.5981))    # where the main body is across the screen
 LOWG = float(os.environ.get('LOWG', 0.2204))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
