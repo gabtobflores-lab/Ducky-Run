@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.26))
+EXPO = float(os.environ.get('EXPO', 0.25))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.55))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
@@ -21,11 +21,11 @@ PMIN = float(os.environ.get('PMIN', 0.9))     # how dark the quiet stretches of 
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
 FOCX = float(os.environ.get('FOCX', 0.3971))     # where that focal area is (across the view)
-FOCW = float(os.environ.get('FOCW', 0.36))      # how wide that focal area is
+FOCW = float(os.environ.get('FOCW', 0.3))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.35))      # contrast of the broad ray groups (columns)
-BOTV = float(os.environ.get('BOTV', 0.6))      # blue-violet glow along the bottom
+BOTV = float(os.environ.get('BOTV', 0.4))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.0))    # strength of the upper-right teal curtain
-HEMY = float(os.environ.get('HEMY', 0.71))      # height of the main curtain's lower edge
+HEMY = float(os.environ.get('HEMY', 0.73))      # height of the main curtain's lower edge
 FINE = float(os.environ.get('FINE', 0.0))      # delicate fine ray texture inside the glow
 LEFTK = float(os.environ.get('LEFTK', 0.9))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.86))      # height of the left curtain's lower edge
@@ -39,9 +39,9 @@ VIOL = float(os.environ.get('VIOL', 0.0))      # violet fold edge along the righ
 MPK = float(os.environ.get('MPK', 0.08))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 0.9))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 0.9))     # darkens the sky away from the main body
+SIDE = float(os.environ.get('SIDE', 0.5))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.5981))    # where the main body is across the screen
-LOWG = float(os.environ.get('LOWG', 0.3))     # soft blue glow hanging below the main body
+LOWG = float(os.environ.get('LOWG', 0.4))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '10,165,230')   # colour of the glow below the body
 CURL = float(os.environ.get('CURL', 0.0))     # a short low fold of light curling under the lower left of the main body
@@ -76,10 +76,10 @@ PLF = float(os.environ.get('PLF', 9))      # how many pleats across the view
 RIB = float(os.environ.get('RIB', 1.0))       # build the main body from overlapping ribbons (sheets) with brighter edges, instead of one mass
 RIBE = float(os.environ.get('RIBE', 0.015))   # softness of the ribbons' edges
 RIM = float(os.environ.get('RIM', 0.0))       # extra brightness where a ribbon is seen edge-on
-LCK = float(os.environ.get('LCK', 0.2))       # a blue curtain inside the left of the view, beside the main column
+LCK = float(os.environ.get('LCK', 0.6))       # a blue curtain inside the left of the view, beside the main column
 LCX = float(os.environ.get('LCX', 0.3109))      # its centre (view units)
 LCY = float(os.environ.get('LCY', 0.5))      # height of its lower edge
-STW = float(os.environ.get('STW', 2.0))       # width of the light column below the body
+STW = float(os.environ.get('STW', 1.5))       # width of the light column below the body
 GAP2 = float(os.environ.get('GAP2', 0.0))     # dark pocket between the lower-left lobe and the core
 GPX = float(os.environ.get('GPX', 0.0))       # its offset across from the lobe
 GPY = float(os.environ.get('GPY', 0.06))      # how far above the lobe it sits
@@ -95,6 +95,9 @@ MAINK = float(os.environ.get('MAINK', 0.25))   # strength of the old smooth main
 STFI = float(os.environ.get('STFI', 0.14))    # how gradually each streak fades in above its bottom end
 STFAN = float(os.environ.get('STFAN', 0.8))   # streaks spread apart as they rise (column widens upward)
 STTOP = os.environ.get('STTOP', '25,175,238')  # colour of the streaks' upper parts
+STTALL = float(os.environ.get('STTALL', 0.6))  # centre streaks taller, outer ones shorter (tower shape)
+STLOW = float(os.environ.get('STLOW', 0.12))  # outer streaks start lower
+STCL = float(os.environ.get('STCL', 0.45))    # how tightly the streaks cluster round the core
 UPC = os.environ.get('UPC', '25,200,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -229,11 +232,12 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
     sc = FOCX; rb0 = r_at(HEMY)
     acc = np.zeros((H, W), np.float32); dacc = np.zeros((H, W), np.float32)
     for i in range(STN):
-        off = rngS.normal(0, FOCW * 0.55)                         # position across, clustered round the core
+        off = rngS.normal(0, FOCW * STCL)                         # position across, clustered round the core
         wd = rngS.uniform(0.006, 0.022) * STWD                    # width
         amp = np.exp(-(off / (FOCW * 0.7)) ** 2) * rngS.uniform(0.45, 1.0)
-        bot = rb0 + rngS.normal(0, 0.035) + 0.04 * abs(off) / FOCW   # bottom end (larger r = lower)
-        ln = rngS.uniform(0.22, 0.5) * (0.6 + 0.4 * amp)            # length up the ray
+        bot = rb0 + rngS.normal(0, 0.035 * (1 - 0.6 * min(STTALL, 1))) + STLOW * abs(off) / FOCW   # bottom end (larger r = lower)
+        ln = rngS.uniform(0.22, 0.5) * (0.6 + 0.4 * amp)
+        if STTALL > 0: ln = (rngS.uniform(0.85, 1.0) * 0.55 * np.exp(-(off / (FOCW * 0.45)) ** 2) + 0.12) * STTALL            # length up the ray
         drift = 0.008 * np.sin(T + i * 1.9)
         up_ = np.clip(bot - R, 0, None)
         across = np.exp(-((S - sc - off * (1 + STFAN * up_) - drift) / (wd * (1 + 0.6 * STFAN * up_))) ** 2)
