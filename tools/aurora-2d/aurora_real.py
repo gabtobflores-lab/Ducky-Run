@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.37))
+EXPO = float(os.environ.get('EXPO', 0.35))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.3))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
@@ -23,7 +23,7 @@ FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's ligh
 FOCX = float(os.environ.get('FOCX', 0.3971))     # where that focal area is (across the view)
 FOCW = float(os.environ.get('FOCW', 0.2))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
-BOTV = float(os.environ.get('BOTV', 0.7))      # blue-violet glow along the bottom
+BOTV = float(os.environ.get('BOTV', 0.45))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.4752))    # strength of the upper-right teal curtain
 HEMY = float(os.environ.get('HEMY', 0.6173))      # height of the main curtain's lower edge
 FINE = float(os.environ.get('FINE', 0.5))      # delicate fine ray texture inside the glow
@@ -41,11 +41,11 @@ MFB = float(os.environ.get('MFB', 0.9))       # fold brightening on the main cur
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
 SIDE = float(os.environ.get('SIDE', 2.0))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.5981))    # where the main body is across the screen
-LOWG = float(os.environ.get('LOWG', 0.2204))     # soft blue glow hanging below the main body
+LOWG = float(os.environ.get('LOWG', 0.5))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '10,150,232')   # colour of the glow below the body
 CURL = float(os.environ.get('CURL', 4))     # a short low fold of light curling under the lower left of the main body
-CURX = float(os.environ.get('CURX', -0.1))   # its position relative to the focal area
+CURX = float(os.environ.get('CURX', -0.04))   # its position relative to the focal area
 CURY = float(os.environ.get('CURY', 0.1))    # how far below the main edge the curl hangs
 KNOT = float(os.environ.get('KNOT', 0.0))     # a soft bright knot of light at the lower left of the main body
 KNY = float(os.environ.get('KNY', -0.03))       # its height relative to the main edge (screen heights, + = lower)
@@ -63,7 +63,7 @@ TWA = float(os.environ.get('TWA', 0.01))       # how far a curtain sways sideway
 TWF = float(os.environ.get('TWF', 1.0))       # how many bends along its height
 DET = float(os.environ.get('DET', 0.25))       # fine ray detail kept on top of the soft glow (image quality)
 LGR = float(os.environ.get('LGR', 0.17))      # how far below the body its glow hangs (screen heights)
-STEM = float(os.environ.get('STEM', 0.4))     # broad column of light from under the body down to the bottom, widening as it goes
+STEM = float(os.environ.get('STEM', 0.25))     # broad column of light from under the body down to the bottom, widening as it goes
 STX = float(os.environ.get('STX', 0.47))       # its centre across the screen
 KNS = float(os.environ.get('KNS', 1.0))       # size of the knot / lower lobe
 FPOW = float(os.environ.get('FPOW', 2))     # shape of the main body across: 2 = rounded peak, higher = broad with straight sides
@@ -79,7 +79,7 @@ RIM = float(os.environ.get('RIM', 0.3))       # extra brightness where a ribbon 
 LCK = float(os.environ.get('LCK', 1.4047))       # a blue curtain inside the left of the view, beside the main column
 LCX = float(os.environ.get('LCX', 0.3109))      # its centre (view units)
 LCY = float(os.environ.get('LCY', 0.5))      # height of its lower edge
-STW = float(os.environ.get('STW', 1.5))       # width of the light column below the body
+STW = float(os.environ.get('STW', 2.0))       # width of the light column below the body
 GAP2 = float(os.environ.get('GAP2', 0.6))     # dark pocket between the lower-left lobe and the core
 GPX = float(os.environ.get('GPX', 0.0))       # its offset across from the lobe
 GPY = float(os.environ.get('GPY', 0.06))      # how far above the lobe it sits
