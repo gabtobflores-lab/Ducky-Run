@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.3))
+EXPO = float(os.environ.get('EXPO', 0.26))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.55))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
@@ -43,7 +43,7 @@ SIDE = float(os.environ.get('SIDE', 0.9))     # darkens the sky away from the ma
 SIDX = float(os.environ.get('SIDX', 0.5981))    # where the main body is across the screen
 LOWG = float(os.environ.get('LOWG', 0.3))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
-LOWC = os.environ.get('LOWC', '15,125,235')   # colour of the glow below the body
+LOWC = os.environ.get('LOWC', '10,165,230')   # colour of the glow below the body
 CURL = float(os.environ.get('CURL', 0.0))     # a short low fold of light curling under the lower left of the main body
 CURX = float(os.environ.get('CURX', -0.04))   # its position relative to the focal area
 CURY = float(os.environ.get('CURY', 0.1))    # how far below the main edge the curl hangs
@@ -63,7 +63,7 @@ TWA = float(os.environ.get('TWA', 0.01))       # how far a curtain sways sideway
 TWF = float(os.environ.get('TWF', 1.0))       # how many bends along its height
 DET = float(os.environ.get('DET', 0.0))       # fine ray detail kept on top of the soft glow (image quality)
 LGR = float(os.environ.get('LGR', 0.17))      # how far below the body its glow hangs (screen heights)
-STEM = float(os.environ.get('STEM', 0.35))     # broad column of light from under the body down to the bottom, widening as it goes
+STEM = float(os.environ.get('STEM', 0.5))     # broad column of light from under the body down to the bottom, widening as it goes
 STX = float(os.environ.get('STX', 0.47))       # its centre across the screen
 KNS = float(os.environ.get('KNS', 1.0))       # size of the knot / lower lobe
 FPOW = float(os.environ.get('FPOW', 2))     # shape of the main body across: 2 = rounded peak, higher = broad with straight sides
@@ -94,7 +94,7 @@ STWD = float(os.environ.get('STWD', 1.5))     # streak width multiplier
 MAINK = float(os.environ.get('MAINK', 0.25))   # strength of the old smooth main curtain
 STFI = float(os.environ.get('STFI', 0.14))    # how gradually each streak fades in above its bottom end
 STFAN = float(os.environ.get('STFAN', 0.8))   # streaks spread apart as they rise (column widens upward)
-STTOP = os.environ.get('STTOP', '20,155,238')  # colour of the streaks' upper parts
+STTOP = os.environ.get('STTOP', '25,175,238')  # colour of the streaks' upper parts
 UPC = os.environ.get('UPC', '25,200,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
