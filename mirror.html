@@ -194,6 +194,12 @@
   .gi{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 3px 8px rgba(43,45,66,.12)}
   .gi svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .g0{background:linear-gradient(160deg,#5b5f7e,#2b2d42)}
+  .e-sky{background:linear-gradient(160deg,#7fb0ef,#3d78d6)} .e-grey{background:linear-gradient(160deg,#a8b1c2,#6c778c)} .e-storm{background:linear-gradient(160deg,#6f7c96,#3c465c)}
+  .e-warm{background:linear-gradient(160deg,#ffc36b,#f08a3c)} .e-night{background:linear-gradient(160deg,#6d63c9,#2f2a73)} .e-aur{background:linear-gradient(160deg,#4fd8d6,#2a6fd0)}
+  .e-snow{background:linear-gradient(160deg,#b8cff0,#7c9cd6)} .e-hole{background:linear-gradient(160deg,#4a3f2a,#120f0a)} .e-alien{background:linear-gradient(160deg,#9b8cff,#3fc9b0)}
+  .etag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;vertical-align:1px}
+  .etag.v{background:rgba(43,45,66,.07);color:var(--ink-3)} .etag.p{background:rgba(232,67,95,.12);color:#c8304c}
+  .gintro{padding:10px 14px 2px;font-size:13px;font-weight:500;line-height:1.4;color:var(--ink-2);opacity:0;transition:opacity .3s var(--ease)} .guide.open .gintro{opacity:1}
   .g1{background:linear-gradient(160deg,#5fd6e3,#1aa9bc)} .g2{background:linear-gradient(160deg,#ff8fa1,#e8435f)}
   .g3{background:linear-gradient(160deg,#9ec5ff,#4a7dff)} .g4{background:linear-gradient(160deg,#c4b5ff,#7b5cf0)}
   .g5{background:linear-gradient(160deg,#7fd8ff,#3a8dff)} .g6{background:linear-gradient(160deg,#c8d3e0,#7f8fa6)}
@@ -2782,7 +2788,7 @@ let last = performance.now();
 syncDiffUI(); show('#menu', true);
 // profile + leaderboard sheet
 const pfp = $('#pfp'), pSheet = $('#sheet'), srows = $('#srows'), stabs = $('#stabs');
-let sTab = 'p', editName = false, editPic = false, lbSect = null, nameErr = '', nameDraft = '', guideOpen = false;
+let sTab = 'p', editName = false, editPic = false, lbSect = null, nameErr = '', nameDraft = '', guideOpen = false, evOpen = false;
 // How to Play: one quiet row in the profile that opens into a short, illustrated guide to every control
 const GUIDE = [
   ['g1', '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.5M12 18v2.5M3.5 12H6M18 12h2.5"/>', 'Tap', 'Each tap moves both balls one step, mirrored. At the edge, they turn around.'],
@@ -2797,6 +2803,24 @@ function guideHTML() {
   const items = GUIDE.concat(ent >= 4 ? [['g8', '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>', 'Golden Run', 'Pass your best and the balls turn to liquid gold.']] : []);
   return `<div class="sgrp guide${guideOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="guide" aria-expanded="${guideOpen}"><span class="gi g0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><path d="M12 16.6v.1"/></svg></span><b>How to Play</b><span class="gchev" aria-hidden="true">›</span></button>`
     + `<div class="gbody"><div>${items.map(([c, d, t, x]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${d}</svg></span><span class="gtx"><b>${t}</b><small>${x}</small></span></div>`).join('')}</div></div></div></div>`; }
+const EVINFO = [ // the events, from the most common to the rarest; p = changes how the game plays
+  ['fog', 'e-grey', 'Fog', 'Mist rolls in and the blocks are harder to see.', 0],
+  ['wind', 'e-sky', 'Wind', 'A gust pushes both balls a little to one side.', 1],
+  ['rain', 'e-storm', 'Rain', 'Either the blocks speed up slightly, or more blocks come at you.', 1],
+  ['hail', 'e-storm', 'Hail', 'A short, heavy shower of ice.', 0],
+  ['storm', 'e-storm', 'Storm', 'Lightning can charge a block and slide it to the other side.', 1],
+  ['snow', 'e-snow', 'Snow', 'The cold slows the blocks down.', 1],
+  ['heat', 'e-warm', 'Heat wave', 'The air shimmers in the heat.', 0],
+  ['sun', 'e-warm', 'Sun flash', 'A brief burst of glare.', 0],
+  ['meteor', 'e-night', 'Meteor shower', 'Shooting stars cross a clear night sky.', 0],
+  ['aurora', 'e-aur', 'Aurora', 'The northern lights fill the sky.', 0],
+  ['bhole', 'e-hole', 'Black hole', 'Very rare. Gravity bends the starlight around it.', 0],
+  ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side.', 1],
+];
+function eventsHTML() {
+  return `<div class="sgrp guide${evOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="events" aria-expanded="${evOpen}"><span class="gi e-aur"><svg viewBox="0 0 24 24">${WXICON.aurora}</svg></span><b>Events</b><span class="gchev" aria-hidden="true">›</span></button>`
+    + `<div class="gbody"><div><div class="gintro">There are ${EVINFO.length} events in Mirror Drop. They arrive at random during a run, with a note just before they start. Some only change the sky; others change how the game plays.</div>`
+    + EVINFO.map(([k, c, n, x, p]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${WXICON[k]}</svg></span><span class="gtx"><b>${n}<span class="etag ${p ? 'p' : 'v'}">${p ? 'AFFECTS PLAY' : 'VISUAL'}</span></b><small>${x}</small></span></div>`).join('') + `</div></div></div></div>`; }
 const BAD = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'cock', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'fag', 'retard', 'rape', 'nazi', 'hitler', 'porn', 'penis', 'vagina', 'boob', 'jizz', 'wank', 'twat', 'kike', 'spic', 'chink', 'dildo', 'anus', 'tits', 'piss', 'damn', 'hell'];
 function nameProblem(n) { // nicknames stay friendly: letters, numbers and a few marks, nothing rude even when spelled with numbers
   if (n.length < 2) return 'At least 2 characters.';
@@ -2831,6 +2855,7 @@ function renderSheet() {
     const sc = bestNow();
     h += `<div class="pstats"><div><b>${sc || '–'}</b><small>Best · ${NAMES[bucket()]}</small></div><div><b>${prof.runs}</b><small>Runs</small></div><div><b>${prof.combo > 1 ? '×' + prof.combo : '–'}</b><small>Best combo</small></div></div>`;
     h += guideHTML();
+    h += eventsHTML();
     { const ss = (k, b, sm) => `<label class="sopt"><span class="tx"><b>${b}</b><small>${sm}</small></span><span class="sw g"><input type="checkbox" data-snd="${k}"${prof.snd[k] ? ' checked' : ''}><span></span></span></label>`;
       h += `<div class="sgrp"><h3>SOUND</h3><div class="slist">${ss('fx', 'Sound effects', 'Game sounds and calm weather ambience.')}${ss('music', 'Music', 'Quiet music in the menu.')}</div></div>`; }
     if (ent < 4) h += `<button class="row unl" data-act="unlock"><span class="av">✦</span><span class="nm">${ent ? 'Your pack: ' + TIER_NAMES[ent] : 'Unlock more of Mirror Drop'}<small>${ent ? 'Upgrade any time, you only pay the difference' : 'Plus · Pro · Max · Supporter'}</small></span><span class="chev">›</span></button>`;
@@ -2927,6 +2952,7 @@ async function shareScore(run) { const best = bestNow(), sc = run || best; if (!
 srows.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, i = +b.dataset.i;
   if (a === 'guide') { guideOpen = !guideOpen; b.closest('.guide').classList.toggle('open', guideOpen); b.setAttribute('aria-expanded', guideOpen); haptic('selection'); }
+  if (a === 'events') { evOpen = !evOpen; b.closest('.guide').classList.toggle('open', evOpen); b.setAttribute('aria-expanded', evOpen); haptic('selection'); }
   else if (a === 'pic') { editPic = !editPic; renderSheet(); }
   else if (a === 'name') { editName = true; nameErr = ''; renderSheet(); }
   else if (a === 'save') commitName();
