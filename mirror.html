@@ -1914,7 +1914,10 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
         float edge=smoothstep(.05,0.,abs(rxz-.985))*smoothstep(.06,0.,abs(p.y));col+=iri(atan(p.z,p.x)/6.2832+t*.06)*edge*1.6;} /* the iridescent rim */
       col=mix(col,gcol,gk); /* glass and metal meet softly */
       col*=.35+.65*ao;
+      col=mix(col,vec3(.17,.15,.34)+vec3(.25,.45,.42)*.25,.28); /* distance haze: it sits in the same air as the clouds */
       c=mix(c,col,sk);}}
+  { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
+    c=mix(c,vec3(.26,.24,.44)+vec3(.4,.8,.75)*.15,veil*.55*sk); }
   c=1.-exp(-c*1.35);gl_FragColor=vec4(c+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
