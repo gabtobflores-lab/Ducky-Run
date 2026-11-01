@@ -44,9 +44,9 @@ SIDX = float(os.environ.get('SIDX', 0.5981))    # where the main body is across 
 LOWG = float(os.environ.get('LOWG', 0.2204))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '10,150,232')   # colour of the glow below the body
-CURL = float(os.environ.get('CURL', 2.8))     # a short low fold of light curling under the lower left of the main body
-CURX = float(os.environ.get('CURX', -0.09))   # its position relative to the focal area
-CURY = float(os.environ.get('CURY', 0.11))    # how far below the main edge the curl hangs
+CURL = float(os.environ.get('CURL', 4))     # a short low fold of light curling under the lower left of the main body
+CURX = float(os.environ.get('CURX', -0.1))   # its position relative to the focal area
+CURY = float(os.environ.get('CURY', 0.1))    # how far below the main edge the curl hangs
 KNOT = float(os.environ.get('KNOT', 0.0))     # a soft bright knot of light at the lower left of the main body
 KNY = float(os.environ.get('KNY', -0.03))       # its height relative to the main edge (screen heights, + = lower)
 FOCWL = float(os.environ.get('FOCWL', 0.0))   # width of the focal area on its left side (0 = same as right): smaller gives a clear left edge
@@ -63,8 +63,8 @@ TWA = float(os.environ.get('TWA', 0.01))       # how far a curtain sways sideway
 TWF = float(os.environ.get('TWF', 1.0))       # how many bends along its height
 DET = float(os.environ.get('DET', 0.25))       # fine ray detail kept on top of the soft glow (image quality)
 LGR = float(os.environ.get('LGR', 0.17))      # how far below the body its glow hangs (screen heights)
-STEM = float(os.environ.get('STEM', 0.1674))     # broad column of light from under the body down to the bottom, widening as it goes
-STX = float(os.environ.get('STX', 0.53))       # its centre across the screen
+STEM = float(os.environ.get('STEM', 0.4))     # broad column of light from under the body down to the bottom, widening as it goes
+STX = float(os.environ.get('STX', 0.47))       # its centre across the screen
 KNS = float(os.environ.get('KNS', 1.0))       # size of the knot / lower lobe
 FPOW = float(os.environ.get('FPOW', 2))     # shape of the main body across: 2 = rounded peak, higher = broad with straight sides
 TOPY = float(os.environ.get('TOPY', 0.0))     # screen height where the main body's top fades out evenly (0 = off): a broad top, not a flame tip
@@ -79,6 +79,7 @@ RIM = float(os.environ.get('RIM', 0.3))       # extra brightness where a ribbon 
 LCK = float(os.environ.get('LCK', 1.4047))       # a blue curtain inside the left of the view, beside the main column
 LCX = float(os.environ.get('LCX', 0.3109))      # its centre (view units)
 LCY = float(os.environ.get('LCY', 0.5))      # height of its lower edge
+STW = float(os.environ.get('STW', 1.5))       # width of the light column below the body
 UPC = os.environ.get('UPC', '25,205,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -206,7 +207,7 @@ if LOWG > 0:   # light from the body lights the air beneath it: a broad blue glo
     img = img + (litL * wv)[..., None] * col(tuple(int(v) for v in LOWC.split(','))) * LOWG
 if STEM > 0:   # the light continues down below the body to the bottom of the screen, widening as it goes
     xs_ = X / asp
-    ww = 0.24 + 0.3 * np.clip((Y - 0.55) / 0.45, 0, 1)                     # wider lower down
+    ww = (0.24 + 0.3 * np.clip((Y - 0.55) / 0.45, 0, 1)) * STW              # wider lower down
     col_ = np.exp(-np.abs((xs_ - STX) / ww) ** 3) * np.clip((Y - 0.5) / 0.2, 0, 1)   # flat-topped: a broad even band of light
     col_ = nd.gaussian_filter(col_ * (0.85 + 0.15 * np.sin(xs_ * 40 + 3 * np.sin(T))), W * 0.01)   # faint vertical banding
     img = img + col_[..., None] * (col((15, 150, 235)) * 0.7 + col((40, 210, 240)) * 0.3) * STEM
