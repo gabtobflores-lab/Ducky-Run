@@ -14,7 +14,7 @@ W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.arg
 T = ph * 2 * np.pi
 EXPO = float(os.environ.get('EXPO', 0.235))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
-RAYK = float(os.environ.get('RAYK', 0.3))      # contrast of the rays
+RAYK = float(os.environ.get('RAYK', 0.45))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 3.0))      # soft diffuse light around each curtain
 SCAT = float(os.environ.get('SCAT', 0.15))      # light scattered into the surrounding air
 PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of a curtain get
@@ -26,23 +26,23 @@ GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups
 BOTV = float(os.environ.get('BOTV', 0.9))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.2))    # strength of the upper-right teal curtain
 HEMY = float(os.environ.get('HEMY', 0.7))      # height of the main curtain's lower edge
-FINE = float(os.environ.get('FINE', 0.8))      # delicate fine ray texture inside the glow
+FINE = float(os.environ.get('FINE', 0.9))      # delicate fine ray texture inside the glow
 LEFTK = float(os.environ.get('LEFTK', 1.3))    # strength of the left curtain
-LEFTY = float(os.environ.get('LEFTY', 0.78))      # height of the left curtain's lower edge
+LEFTY = float(os.environ.get('LEFTY', 0.82))      # height of the left curtain's lower edge
 MFOLD = float(os.environ.get('MFOLD', 0.025))  # how deeply the main curtain's lower edge folds
 MRISE = float(os.environ.get('MRISE', 0.26))      # how far up the main curtain's light reaches
 CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
-PHOTO = float(os.environ.get('PHOTO', 0.5))      # photographic softness of the finished image
+PHOTO = float(os.environ.get('PHOTO', 0.3))      # photographic softness of the finished image
 HAZE = float(os.environ.get('HAZE', 0.3))      # broad blue haze around the light, stronger to the left
-LOWR = float(os.environ.get('LOWR', 0.3))      # strength of the faint low-right curtain
+LOWR = float(os.environ.get('LOWR', 1.4))      # strength of the faint low-right curtain
 VIOL = float(os.environ.get('VIOL', 1.2))      # violet fold edge along the right side of the main glow
 MPK = float(os.environ.get('MPK', 0.14))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 0.8))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 1.05))     # darkens the sky away from the main body
+SIDE = float(os.environ.get('SIDE', 1.25))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.42))    # where the main body is across the screen
 LOWG = float(os.environ.get('LOWG', 0.45))     # soft blue glow hanging below the main body
-MBLUR = float(os.environ.get('MBLUR', 12))   # softness of the main curtain
+MBLUR = float(os.environ.get('MBLUR', 9))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '20,125,235')   # colour of the glow below the body
 CURL = float(os.environ.get('CURL', 0.0))     # a short low fold of light curling under the lower left of the main body
 CURX = float(os.environ.get('CURX', -0.09))   # its position relative to the focal area
@@ -65,7 +65,7 @@ def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, un
 
 asp = W / H
 Y, X = np.mgrid[0:H, 0:W].astype(np.float32); X = X / H; Y = Y / H     # screen in units of its height
-XV, YV = float(os.environ.get('XV', -0.15)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
+XV, YV = float(os.environ.get('XV', -0.6)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
 A = np.arctan2(X - XV, Y - YV)                                         # which ray a pixel is on
 R = np.hypot(X - XV, Y - YV)                                           # how far along that ray (larger = lower on screen)
 a0, a1 = A.min(), A.max()
