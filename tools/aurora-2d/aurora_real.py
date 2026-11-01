@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.195))
+EXPO = float(os.environ.get('EXPO', 0.27))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.45))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 3.6))      # soft diffuse light around each curtain
@@ -21,10 +21,10 @@ PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
 FOCX = float(os.environ.get('FOCX', 0.32))     # where that focal area is (across the view)
-FOCW = float(os.environ.get('FOCW', 0.18))      # how wide that focal area is
+FOCW = float(os.environ.get('FOCW', 0.22))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
 BOTV = float(os.environ.get('BOTV', 0.9))      # blue-violet glow along the bottom
-TEALK = float(os.environ.get('TEALK', 2.2))    # strength of the upper-right teal curtain
+TEALK = float(os.environ.get('TEALK', 1.4))    # strength of the upper-right teal curtain
 HEMY = float(os.environ.get('HEMY', 0.7))      # height of the main curtain's lower edge
 FINE = float(os.environ.get('FINE', 0.9))      # delicate fine ray texture inside the glow
 LEFTK = float(os.environ.get('LEFTK', 1.3))    # strength of the left curtain
@@ -39,7 +39,7 @@ VIOL = float(os.environ.get('VIOL', 1.2))      # violet fold edge along the righ
 MPK = float(os.environ.get('MPK', 0.14))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 1.1))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 1.5))     # darkens the sky away from the main body
+SIDE = float(os.environ.get('SIDE', 1.0))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.42))    # where the main body is across the screen
 LOWG = float(os.environ.get('LOWG', 0.45))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 9))   # softness of the main curtain
@@ -72,9 +72,12 @@ def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, un
 asp = W / H
 Y, X = np.mgrid[0:H, 0:W].astype(np.float32); X = X / H; Y = Y / H     # screen in units of its height
 XV, YV = float(os.environ.get('XV', -0.6)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
-A = np.arctan2(X - XV, Y - YV)                                         # which ray a pixel is on
-R = np.hypot(X - XV, Y - YV)                                           # how far along that ray (larger = lower on screen)
-a0, a1 = A.min(), A.max()
+ZOOM = float(os.environ.get('ZOOM', 1.5))     # >1 pulls the camera back: the whole aurora is seen smaller, farther away, in a wider sky
+ZCY = float(os.environ.get('ZCY', 0.45))      # the screen height the zoom is centred on
+A0 = np.arctan2(X - XV, Y - YV); a0, a1 = A0.min(), A0.max(); del A0    # the ray-angle range of the unzoomed view
+Xw = asp * 0.47 + (X - asp * 0.47) * ZOOM; Yw = ZCY + (Y - ZCY) * ZOOM   # world position seen at each pixel
+A = np.arctan2(Xw - XV, Yw - YV)                                       # which ray a pixel is on
+R = np.hypot(Xw - XV, Yw - YV)                                         # how far along that ray (larger = lower on screen)
 S = (A - a0) / (a1 - a0)                                               # 0 at the left edge of the view, 1 at the right
 def r_at(y):                                                           # r of a screen height y, at mid-screen
     return float(np.hypot(asp * 0.5 - XV, y - YV))
@@ -132,7 +135,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
 # curtains, far to near: (s0, s1, edge height, fold amp, fold freq, rise, edge softness, seed, intensity, edge colour, upper colour, blur)
 CURTAINS = [
     (0.00, 0.40, LEFTY, 0.020, 0.45, 0.16, 0.04, 11, 0.30 * LEFTK, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
-    (0.60, 1.00, 0.40, 0.022, 0.5, TRISE, 0.04, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
+    (0.60, 1.00, 0.40, 0.05, 0.7, TRISE, 0.09, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
     (0.10, 0.84, HEMY, MFOLD, 0.6, MRISE, 0.035, 22, 1.00, tuple(int(v) for v in ECOL.split(',')), tuple(int(v) for v in UPC.split(',')), MBLUR),   # main curtain: one wide body
     (0.66, 1.00, LOWY, 0.020, 0.45, 0.08, 0.04, 14, 0.30 * LOWR, (0, 170, 190),  (5, 60, 140),  8.0),   # low right, faint
     (FOCX + CURX - 0.05, FOCX + CURX + 0.05, HEMY + CURY, 0.03, 0.9, 0.07, 0.03, 41, 0.9 * CURL, (60, 245, 240), (20, 170, 240), 5.0),   # low curl
@@ -144,7 +147,7 @@ img += sky
 for (s0, s1, hy, fa, ff, rise, th, sd, inten, ec, uc, blur) in CURTAINS:
     L, d = curtain(s0, s1, hy, fa, ff, rise, th, sd, sd * 1.3)
     if blur > 0:
-        Lb = nd.gaussian_filter(L, blur * W / 1206)
+        Lb = nd.gaussian_filter(L, blur * W / 1206 / ZOOM)
         if DET > 0 and sd in (22, 41):   # keep the fine ray structure: the glow stays soft, the striations along the rays stay crisp
             Lf = nd.gaussian_filter(L, 1.3 * W / 1206)
             Lb = Lb + DET * (Lf - Lb) * np.clip(Lb / (Lb.max() * 0.25 + 1e-6), 0, 1)
@@ -156,10 +159,10 @@ if KNOT > 0:   # bright knot where the curtain's lower edge folds towards the vi
     s_k = FOCX + CURX; r_k = r_at(HEMY + KNY)
     g = np.exp(-((S - s_k) / 0.035) ** 2 - ((R - r_k) / 0.045) ** 2)
     g = g + 0.5 * np.exp(-((S - s_k - 0.03) / 0.02) ** 2 - ((R - r_k + 0.05) / 0.06) ** 2)   # a fainter tail curling up and right
-    img = img + nd.gaussian_filter(g, 4 * W / 1206)[..., None] * col((70, 250, 245)) * KNOT * EXPO
+    img = img + nd.gaussian_filter(g, 4 * W / 1206 / ZOOM)[..., None] * col((70, 250, 245)) * KNOT * EXPO
     if GAP > 0:   # a pocket of darker sky between the knot and the body: the sheet folds away there
         gp = np.exp(-((S - s_k - 0.035) / 0.03) ** 2 - ((R - r_k + 0.065) / 0.03) ** 2)
-        img = sky + (img - sky) * (1 - GAP * nd.gaussian_filter(gp, 6 * W / 1206))[..., None]
+        img = sky + (img - sky) * (1 - GAP * nd.gaussian_filter(gp, 6 * W / 1206 / ZOOM))[..., None]
 if LOWG > 0:   # light from the body lights the air beneath it: a broad blue glow, below the body, fading downward
     litL = nd.gaussian_filter(np.clip((img - sky).mean(-1), 0, None), W * 0.07)
     litL = np.roll(litL, int(0.09 * H), axis=0); litL[:int(0.09 * H)] = 0
