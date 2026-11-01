@@ -1788,8 +1788,18 @@ function drawWindRibbons() { // drawn after the air warp so the ribbons stay per
       const pts = []; for (let x = x0; x <= x1 + 6; x += 6) pts.push([x, flow(x)]);
       const stroke = (lw, rgb, al, off) => { const g = ctx.createLinearGradient(tx, 0, hx, 0); g.addColorStop(0, `rgba(${rgb},0)`); g.addColorStop(.55, `rgba(${rgb},${al * .6})`); g.addColorStop(.88, `rgba(${rgb},${al})`); g.addColorStop(1, `rgba(${rgb},0)`);
         ctx.strokeStyle = g; ctx.lineWidth = lw; ctx.beginPath(); pts.forEach(([x, y], n) => { const yy = y + off(x); if (!n) ctx.moveTo(x, yy); else { const [px, py] = pts[n - 1], m = (px + x) / 2; ctx.quadraticCurveTo(px, py + off(px), m, (py + off(px) + yy) / 2); } }); ctx.stroke(); };
-      stroke(26 + sd.k * 10, '255,255,255', .09 * a, () => 0); // a soft, wide body of moving air that blends into the sky
-      stroke(7, '150,168,200', .1 * a, () => 3); // the faintest cool shade beneath, for depth on a bright sky
+      const body = (hw0, rgb, al, dy) => { // a body of moving air as real tapered geometry: it swells from a fine tail to its widest just behind the gust front, then rounds off
+        const n = pts.length; if (n < 3) return; const up = [], dn = [];
+        for (let i = 0; i < n; i++) { const [x, y] = pts[i], u = (windDir > 0 ? (x - tx) : (tx - x)) / Math.max(1, len), pr = Math.sin(Math.PI * Math.min(1, Math.max(0, u)) ** .7) ** 1.15; // widest near the front
+          const [x2, y2] = pts[Math.min(n - 1, i + 1)], [x1, y1] = pts[Math.max(0, i - 1)], tl = Math.hypot(x2 - x1, y2 - y1) || 1, nx = -(y2 - y1) / tl, ny = (x2 - x1) / tl, hw = hw0 * pr * (1 + .18 * Math.sin(x * .013 - t * .9 * windDir + k));
+          up.push([x + nx * hw, y + dy + ny * hw]); dn.push([x - nx * hw, y + dy - ny * hw]); }
+        const g = ctx.createLinearGradient(tx, 0, hx, 0); g.addColorStop(0, `rgba(${rgb},0)`); g.addColorStop(.5, `rgba(${rgb},${al * .7})`); g.addColorStop(.85, `rgba(${rgb},${al})`); g.addColorStop(1, `rgba(${rgb},${al * .6})`);
+        ctx.fillStyle = g; ctx.beginPath(); up.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); for (let i = n - 1; i >= 0; i--) ctx.lineTo(dn[i][0], dn[i][1]); ctx.closePath(); ctx.fill();
+        return up; };
+      body(7, '150,168,200', .1 * a, 3); // the faintest cool shade beneath, for depth on a bright sky
+      const top = body(13 + sd.k * 5, '255,255,255', .1 * a, 0); // a soft, wide body of moving air that blends into the sky
+      if (top) { const g = ctx.createLinearGradient(tx, 0, hx, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.7, `rgba(255,255,255,${.22 * a})`); g.addColorStop(1, 'rgba(255,255,255,0)'); // its upper edge catches the light
+        ctx.strokeStyle = g; ctx.lineWidth = 1.2; ctx.beginPath(); top.forEach(([x, y], i) => i ? ctx.lineTo(x, y + 1.5) : ctx.moveTo(x, y + 1.5)); ctx.stroke(); }
       for (let j = 0; j < 3; j++) stroke(.8 + (j === 1) * .9 + sd.k * .5, '255,255,255', (j === 1 ? .85 : .5) * a, x => (j - 1) * (4 + 3.5 * Math.sin(x * .011 - t * .7 * windDir + j * 2.1 + k))); // fine strands that drift apart and weave back together
     }
     ctx.fillStyle = `rgba(160,145,120,${.4 * a})`;
