@@ -26,6 +26,7 @@ update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swi
   get app-update/MirrorDropApp.swift "$1/MirrorDropApp.swift"
   get app-update/index.html "$1/index.html"
   get app-update/aurora.mp4 "$1/aurora.mp4"   # our own pre-rendered aurora loop
+  get app-update/blackhole.mp4 "$1/blackhole.mp4"   # our ray-traced black hole loop
   echo "  game installed"
   # iOS's launch screen looks exactly like the game's loading screen, so opening the app flows straight into it
   local plist="$1/../Info.plist"

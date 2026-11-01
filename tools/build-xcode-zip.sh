@@ -11,6 +11,6 @@ cp swift-app/MirrorDropApp.swift "$tmp/Mirror Drop/MirrorDrop/MirrorDropApp.swif
 bash tools/build-app-update.sh >/dev/null
 # the small, fast-opening game file plus the aurora video beside it (the project picks up every file in its MirrorDrop folder)
 cp app-update/index.html "$tmp/Mirror Drop/MirrorDrop/index.html"
-if [ -f app-update/aurora.mp4 ]; then cp app-update/aurora.mp4 "$tmp/Mirror Drop/MirrorDrop/aurora.mp4"; fi
+for v in aurora blackhole; do if [ -f app-update/$v.mp4 ]; then cp app-update/$v.mp4 "$tmp/Mirror Drop/MirrorDrop/$v.mp4"; fi; done
 rm -f "$out"; (cd "$tmp" && zip -qr -X - "Mirror Drop") > "$out"
 echo "Built $out ($(du -h "$out" | cut -f1))"

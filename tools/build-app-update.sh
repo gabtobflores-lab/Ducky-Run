@@ -26,6 +26,11 @@ import shutil
 if os.path.exists('tools/aurora-render/aurora.mp4'):
     shutil.copy('tools/aurora-render/aurora.mp4', out + '/aurora.mp4')
     s, n = re.subn(r"(const AURVID = \{ type: '[^']*', )src: '', data: ''", r"\1src: 'aurora.mp4', data: ''", s); assert n == 1, 'AURVID'
+elif os.path.exists(out + '/aurora.mp4'): os.remove(out + '/aurora.mp4')
+# and the ray-traced black hole (tools/blackhole/blackhole.mp4)
+if os.path.exists('tools/blackhole/blackhole.mp4'):
+    shutil.copy('tools/blackhole/blackhole.mp4', out + '/blackhole.mp4')
+    s, n = re.subn(r"(const BHVID = \{ type: '[^']*', )src: '', data: ''", r"\1src: 'blackhole.mp4', data: ''", s); assert n == 1, 'BHVID'
 open(out + '/index.html', 'w').write(s)
 PY
 (cd native/MirrorDrop && ls *.swift) > app-update/native-files.txt

@@ -31,7 +31,7 @@ jobs:
       - name: Assemble the project
         run: |
           mkdir -p build && cp -R xcode build/proj
-          cp app-update/MirrorDropApp.swift app-update/index.html build/proj/MirrorDrop/; if [ -f app-update/aurora.mp4 ]; then cp app-update/aurora.mp4 build/proj/MirrorDrop/; fi
+          cp app-update/MirrorDropApp.swift app-update/index.html build/proj/MirrorDrop/; for v in aurora blackhole; do if [ -f app-update/$v.mp4 ]; then cp app-update/$v.mp4 build/proj/MirrorDrop/; fi; done
           cp -R app-update/LaunchBalls.imageset build/proj/MirrorDrop/Assets.xcassets/
           [ -d app-update/AppIcon-Gold.appiconset ] && cp -R app-update/AppIcon-Gold.appiconset build/proj/MirrorDrop/Assets.xcassets/
           cd build/proj && xcodebuild -list -project MirrorDrop.xcodeproj

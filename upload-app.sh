@@ -68,8 +68,12 @@ echo "App: $BUNDLE · team $TEAM · version 1.0 ($BUILD)"
 # the newest game into the project before building, with our own pre-rendered aurora video (replaces any older aurora.mp4)
 curl -fsSL "$BASE/app-update/index.html" -o "$W/index.html" && [ "$(wc -c < "$W/index.html")" -gt 100000 ] && cp "$W/index.html" "$APPDIR/index.html" || { echo "✗ Couldn't download the game. Check your internet and try again."; exit 1; }
 curl -fsSL "$BASE/app-update/MirrorDropApp.swift" -o "$W/MirrorDropApp.swift" && [ -s "$W/MirrorDropApp.swift" ] && cp "$W/MirrorDropApp.swift" "$APPDIR/MirrorDropApp.swift"
-curl -fsSL "$BASE/app-update/aurora.mp4" -o "$W/aurora.mp4" && [ "$(wc -c < "$W/aurora.mp4")" -gt 100000 ] && cp "$W/aurora.mp4" "$APPDIR/aurora.mp4" || { echo "✗ Couldn't download the aurora video. Check your internet and try again."; exit 1; }
-echo "✓ newest game and our own aurora video copied into the project"
+# our own pre-rendered videos, when they exist; otherwise any older copy is removed and the game draws that event live
+for vid in aurora blackhole; do
+  if curl -fsSL "$BASE/app-update/$vid.mp4" -o "$W/$vid.mp4" 2>/dev/null && [ "$(wc -c < "$W/$vid.mp4")" -gt 100000 ]; then cp "$W/$vid.mp4" "$APPDIR/$vid.mp4"; echo "✓ our own $vid video copied into the project"
+  else rm -f "$APPDIR/$vid.mp4"; echo "· no $vid video yet: the game draws it live"; fi
+done
+echo "✓ newest game copied into the project"
 
 # xcodebuild needs the full Xcode app; if Terminal points at the Command Line Tools, use the Xcode app directly (no settings changed)
 if ! xcodebuild -version >/dev/null 2>&1; then
