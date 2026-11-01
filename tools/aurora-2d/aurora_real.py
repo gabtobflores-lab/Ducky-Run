@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.235))
+EXPO = float(os.environ.get('EXPO', 0.22))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.45))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 3.0))      # soft diffuse light around each curtain
@@ -34,7 +34,7 @@ MRISE = float(os.environ.get('MRISE', 0.26))      # how far up the main curtain'
 CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
 PHOTO = float(os.environ.get('PHOTO', 0.3))      # photographic softness of the finished image
 HAZE = float(os.environ.get('HAZE', 0.3))      # broad blue haze around the light, stronger to the left
-LOWR = float(os.environ.get('LOWR', 1.4))      # strength of the faint low-right curtain
+LOWR = float(os.environ.get('LOWR', 2.0))      # strength of the faint low-right curtain
 VIOL = float(os.environ.get('VIOL', 1.2))      # violet fold edge along the right side of the main glow
 MPK = float(os.environ.get('MPK', 0.14))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 0.8))       # fold brightening on the main curtain
@@ -56,6 +56,9 @@ BOTU = float(os.environ.get('BOTU', 0.9))    # how evenly the bottom glow spread
 TRISE = float(os.environ.get('TRISE', 0.18))  # how far up the upper-right curtain's light reaches
 BOTC = os.environ.get('BOTC', '45,80,230')   # colour of the glow along the bottom
 SIDEL = float(os.environ.get('SIDEL', 0.7))   # how much the left curtains are spared from the side darkening
+SIDEB = float(os.environ.get('SIDEB', 0.6))   # how much the lower sides are spared from the side darkening
+LOWY = float(os.environ.get('LOWY', 0.8))    # height of the low-right curtain's lower edge
+ECOL = os.environ.get('ECOL', '30,240,255')   # colour at the main curtain's bright lower part
 UPC = os.environ.get('UPC', '30,222,236')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -121,8 +124,8 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
 CURTAINS = [
     (0.00, 0.40, LEFTY, 0.020, 0.45, 0.16, 0.04, 11, 0.30 * LEFTK, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
     (0.60, 1.00, 0.40, 0.022, 0.5, TRISE, 0.04, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
-    (0.10, 0.84, HEMY, MFOLD, 0.6, MRISE, 0.035, 22, 1.00, (60, 245, 240), tuple(int(v) for v in UPC.split(',')), MBLUR),   # main curtain: one wide body
-    (0.66, 1.00, 0.88, 0.020, 0.45, 0.08, 0.04, 14, 0.30 * LOWR, (0, 170, 190),  (5, 60, 140),  8.0),   # low right, faint
+    (0.10, 0.84, HEMY, MFOLD, 0.6, MRISE, 0.035, 22, 1.00, tuple(int(v) for v in ECOL.split(',')), tuple(int(v) for v in UPC.split(',')), MBLUR),   # main curtain: one wide body
+    (0.66, 1.00, LOWY, 0.020, 0.45, 0.08, 0.04, 14, 0.30 * LOWR, (0, 170, 190),  (5, 60, 140),  8.0),   # low right, faint
     (FOCX + CURX - 0.05, FOCX + CURX + 0.05, HEMY + CURY, 0.03, 0.9, 0.07, 0.03, 41, 0.9 * CURL, (60, 245, 240), (20, 170, 240), 5.0),   # low curl
     (FOCX + 0.12, FOCX + 0.2, HEMY - 0.03, 0.01, 0.5, MRISE * 1.3, 0.035, 31, 0.5 * VIOL, (120, 80, 255), (70, 50, 200), 6.0),   # violet fold edge
 ]
@@ -165,7 +168,7 @@ if SCAT > 0:   # light scattered into the air around the curtains: wide, soft, f
 if SIDE > 0:   # the sky falls off to darkness away from the main body
     xs = X / asp
     ur = np.clip((xs - 0.55) / 0.3, 0, 1) * np.clip((0.55 - Y) / 0.25, 0, 1)      # leave the upper-right curtain visible
-    img = sky + (img - sky) * (1 - SIDE * (1 - np.exp(-((xs - SIDX) / 0.38) ** 2)) * (1 - 0.75 * ur) * (1 - SIDEL * np.clip((0.32 - xs) / 0.22, 0, 1) * np.clip((Y - 0.12) / 0.15, 0, 1) * np.clip((0.8 - Y) / 0.15, 0, 1)))[..., None]
+    img = sky + (img - sky) * (1 - SIDE * (1 - np.exp(-((xs - SIDX) / 0.38) ** 2)) * (1 - 0.75 * ur) * (1 - SIDEB * np.clip((Y - 0.55) / 0.15, 0, 1) * np.clip(np.abs(xs - SIDX) / 0.3, 0, 1)) * (1 - SIDEL * np.clip((0.32 - xs) / 0.22, 0, 1) * np.clip((Y - 0.12) / 0.15, 0, 1) * np.clip((0.8 - Y) / 0.15, 0, 1)))[..., None]
 # composition: dark top for the score, calmer band behind the balls
 img *= (0.35 + 0.65 * np.clip((Y - 0.04) / 0.18, 0, 1))[..., None]
 img *= (1 - 0.15 * np.exp(-((Y - 0.78) / 0.045) ** 2))[..., None]
