@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="1b3c24d">
+<meta name="build" content="2b4ace8">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1904,16 +1904,18 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
         col+=vec3(.45,1.,.85)*exp(-length(p-vec3(0.,.1,0.))*3.2)*.55; /* a soft mint light inside */
         vec3 L=normalize(vec3(-.45,.85,-.35));col+=vec3(1.)*pow(max(dot(r,L),0.),60.)*1.2;gcol=col;} /* the key light's crisp highlight */
       { /* titanium */
-        float ang=atan(p.z,p.x)+t*.12;vec3 L=normalize(vec3(-.45,.85,-.35));float wrap=clamp((dot(n,L)+.35)/1.35,0.,1.);
-        vec3 alb=vec3(.93,.92,.95);col=alb*(vec3(.16,.15,.24)+vec3(1.,.98,.96)*wrap*.85+vec3(.35,.7,.66)*clamp(-n.y,0.,1.)*.35); /* pearl ceramic: soft wrapped light, a mint bounce from the beam below */
-        float fc=.04+.96*pow(1.-ndv,5.);col+=studio(r)*fc*.9+vec3(1.)*pow(max(dot(r,L),0.),80.)*.8; /* a clear lacquer reflecting the studio */
-        if(p.y<-.02){col*=.62; /* the underside, in its own shade */
+        float ang=atan(p.z,p.x)+t*.12;
+        float fc=.04+.96*pow(1.-ndv,4.);
+        col=c*1.25+vec3(.16,.17,.28)+vec3(.35,.9,.8)*exp(-rxz*2.6)*.35; /* frosted liquid glass, like the game's own buttons: it lifts the sky behind it, a mint light glowing inside */
+        col+=studio(r)*fc*.75; /* the glass catches the light at its edges */
+        col+=vec3(1.)*smoothstep(.06,0.,abs(rxz-.97))*step(0.,p.y)*.55; /* the bright hairline rim along the top, as on the game's glass */
+        if(p.y<-.02){col*=.9; /* the underside, in its own shade */
           float lr=smoothstep(.02,0.,abs(rxz-.46))*pow(max(0.,sin(ang*14.)),10.);col+=vec3(.85,.92,1.)*lr*1.4; /* a ring of lights turning */
           col+=vec3(.95,.98,1.)*smoothstep(.15,.1,rxz)*(.9+.1*sin(t*2.))*1.4;} /* the aperture */
         float edge=smoothstep(.05,0.,abs(rxz-.985))*smoothstep(.06,0.,abs(p.y));col+=iri(atan(p.z,p.x)/6.2832+t*.06)*edge*1.6;} /* the iridescent rim */
       col=mix(col,gcol,gk); /* glass and metal meet softly */
       col*=.35+.65*ao;
-      col=mix(col,vec3(.17,.15,.34)+vec3(.25,.45,.42)*.25,.28); /* distance haze: it sits in the same air as the clouds */
+      col=mix(col,vec3(.17,.15,.34)+vec3(.25,.45,.42)*.25,.15); /* distance haze: it sits in the same air as the clouds */
       c=mix(c,col,sk);}}
   { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
     c=mix(c,vec3(.26,.24,.44)+vec3(.4,.8,.75)*.15,veil*.55*sk); }
