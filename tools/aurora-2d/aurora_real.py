@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.22))
+EXPO = float(os.environ.get('EXPO', 0.195))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.45))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 3.0))      # soft diffuse light around each curtain
@@ -29,7 +29,7 @@ HEMY = float(os.environ.get('HEMY', 0.7))      # height of the main curtain's lo
 FINE = float(os.environ.get('FINE', 0.9))      # delicate fine ray texture inside the glow
 LEFTK = float(os.environ.get('LEFTK', 1.3))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.82))      # height of the left curtain's lower edge
-MFOLD = float(os.environ.get('MFOLD', 0.025))  # how deeply the main curtain's lower edge folds
+MFOLD = float(os.environ.get('MFOLD', 0.05))  # how deeply the main curtain's lower edge folds
 MRISE = float(os.environ.get('MRISE', 0.26))      # how far up the main curtain's light reaches
 CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
 PHOTO = float(os.environ.get('PHOTO', 0.3))      # photographic softness of the finished image
@@ -37,9 +37,9 @@ HAZE = float(os.environ.get('HAZE', 0.3))      # broad blue haze around the ligh
 LOWR = float(os.environ.get('LOWR', 2.0))      # strength of the faint low-right curtain
 VIOL = float(os.environ.get('VIOL', 1.2))      # violet fold edge along the right side of the main glow
 MPK = float(os.environ.get('MPK', 0.14))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
-MFB = float(os.environ.get('MFB', 0.8))       # fold brightening on the main curtain
+MFB = float(os.environ.get('MFB', 1.1))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 1.25))     # darkens the sky away from the main body
+SIDE = float(os.environ.get('SIDE', 1.35))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.42))    # where the main body is across the screen
 LOWG = float(os.environ.get('LOWG', 0.45))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 9))   # softness of the main curtain
@@ -59,6 +59,8 @@ SIDEL = float(os.environ.get('SIDEL', 0.7))   # how much the left curtains are s
 SIDEB = float(os.environ.get('SIDEB', 0.6))   # how much the lower sides are spared from the side darkening
 LOWY = float(os.environ.get('LOWY', 0.8))    # height of the low-right curtain's lower edge
 ECOL = os.environ.get('ECOL', '30,240,255')   # colour at the main curtain's bright lower part
+TWA = float(os.environ.get('TWA', 0.045))       # how far a curtain sways sideways along its height (twists and turns)
+TWF = float(os.environ.get('TWF', 1.0))       # how many bends along its height
 UPC = os.environ.get('UPC', '30,222,236')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -100,7 +102,13 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     if seed == 22 and FOCUS > 0:
         wf = np.where(ss < FOCX, FOCWL if FOCWL > 0 else FOCW, FOCW)
         B1 = B1 * ((1 - FOCUS) + FOCUS * 1.6 * np.exp(-np.abs((ss - FOCX) / wf) ** (2.6 if FOCWL > 0 else 2)))
-    hemP = np.interp(S, ss, hem); BP = np.interp(S, ss, B1)
+    Sx = S
+    if TWA > 0:   # the sheet bends: its rays curve and sway sideways with height, differently for each curtain
+        rr0 = (R - R.min()) / (R.max() - R.min())
+        tw = (np.sin(2 * np.pi * (rr0 * TWF + 0.13 * seed) + 0.6 * np.sin(T + seed))
+              + 0.5 * np.sin(2 * np.pi * (rr0 * TWF * 2.3 + 0.37 * seed) - 0.4 * np.cos(T + 0.5 * seed)))
+        Sx = S + TWA * tw * (1.3 - rr0)   # sways more higher up, where the rays fan out
+    hemP = np.interp(Sx, ss, hem); BP = np.interp(Sx, ss, B1)
     d = hemP - R                                                         # > 0 above the lower edge
     above = np.exp(-np.clip(d, 0, None) / rise)
     if seed == 22 and MPK > 0:   # brightest part of the body sits above the edge; light below it fades softly towards the edge
@@ -110,7 +118,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     # rays flicker gently along their length
     flick = 0.82 + 0.18 * np.interp(np.mod(S * 1.0 + R * 0.35, 1.0) * 4095, np.arange(4096), n1(np.linspace(0, 1, 4096), seed + 5, 3))
     diffuse = np.exp(-np.clip(d, 0, None) / (rise * 1.6)) * (1 / (1 + np.exp(-d / (thick * 2.0))))
-    soft = nd.gaussian_filter(np.interp(S, ss, patch * span), 1)       # broad soft light along the curtain
+    soft = nd.gaussian_filter(np.interp(Sx, ss, patch * span), 1)       # broad soft light along the curtain
     if CLUMP > 0:   # soft clumps: a smooth field in ray coordinates, stretched along the rays, drifting slowly
         rng2 = np.random.default_rng(seed + 77)
         fld = nd.gaussian_filter(rng2.standard_normal((256, 256)).astype(np.float32), (14, 5), mode='wrap')
