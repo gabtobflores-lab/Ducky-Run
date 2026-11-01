@@ -69,6 +69,8 @@ KNS = float(os.environ.get('KNS', 1.0))       # size of the knot / lower lobe
 FPOW = float(os.environ.get('FPOW', 4))     # shape of the main body across: 2 = rounded peak, higher = broad with straight sides
 TOPY = float(os.environ.get('TOPY', 0.15))     # screen height where the main body's top fades out evenly (0 = off): a broad top, not a flame tip
 TOPS = float(os.environ.get('TOPS', 0.22))    # how softly
+BOTK = float(os.environ.get('BOTK', 1.1))     # a low row of curtains whose rays rise from near the bottom of the screen
+BOTY = float(os.environ.get('BOTY', 1.12))    # world height of their lower edge
 UPC = os.environ.get('UPC', '30,222,236')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -144,6 +146,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
 
 # curtains, far to near: (s0, s1, edge height, fold amp, fold freq, rise, edge softness, seed, intensity, edge colour, upper colour, blur)
 CURTAINS = [
+    (-0.3, 1.3, BOTY, 0.05, 0.8, 0.2, 0.05, 51, 0.5 * BOTK, (35, 160, 240), (45, 70, 210), 8.0),   # low curtains rising from the bottom, across the view
     (0.00, 0.40, LEFTY, 0.020, 0.45, 0.16, 0.04, 11, 0.30 * LEFTK, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
     (0.60, 1.00, 0.40, 0.05, 0.7, TRISE, 0.09, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
     (0.10, 0.84, HEMY, MFOLD, 0.6, MRISE, 0.035, 22, 1.00, tuple(int(v) for v in ECOL.split(',')), tuple(int(v) for v in UPC.split(',')), MBLUR),   # main curtain: one wide body
