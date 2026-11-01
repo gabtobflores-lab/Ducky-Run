@@ -80,6 +80,11 @@ LCK = float(os.environ.get('LCK', 1.4047))       # a blue curtain inside the lef
 LCX = float(os.environ.get('LCX', 0.3109))      # its centre (view units)
 LCY = float(os.environ.get('LCY', 0.5))      # height of its lower edge
 STW = float(os.environ.get('STW', 1.5))       # width of the light column below the body
+GAP2 = float(os.environ.get('GAP2', 0.6))     # dark pocket between the lower-left lobe and the core
+GPX = float(os.environ.get('GPX', 0.0))       # its offset across from the lobe
+GPY = float(os.environ.get('GPY', 0.06))      # how far above the lobe it sits
+TPK = float(os.environ.get('TPK', 0.0))       # two peaks at the top of the main body
+TPY = float(os.environ.get('TPY', 0.3))       # screen height of the dip between the peaks
 UPC = os.environ.get('UPC', '25,205,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -199,6 +204,15 @@ if KNOT > 0:   # bright knot where the curtain's lower edge folds towards the vi
     if GAP > 0:   # a pocket of darker sky between the knot and the body: the sheet folds away there
         gp = np.exp(-((S - s_k - 0.035) / 0.03) ** 2 - ((R - r_k + 0.065) / 0.03) ** 2)
         img = sky + (img - sky) * (1 - GAP * nd.gaussian_filter(gp, 6 * W / 1206 / ZOOM))[..., None]
+if GAP2 > 0:   # a pocket of darker sky separating the lower-left lobe from the core
+    s_g = FOCX + CURX + GPX; r_g = r_at(HEMY + CURY - GPY)
+    gp = np.exp(-((S - s_g) / 0.045) ** 2 - ((R - r_g) / 0.035) ** 2)
+    img = sky + (img - sky) * (1 - GAP2 * nd.gaussian_filter(gp, 8 * W / 1206))[..., None]
+if TPK > 0:   # the body's top splits into two peaks: darken the dip between them and above the shoulders
+    s1, s2 = FOCX - 0.06, FOCX + 0.06
+    ytop = TPY - 0.12 * (np.exp(-((S - s1) / 0.035) ** 2) + np.exp(-((S - s2) / 0.035) ** 2))
+    fade = np.clip((Y - ytop) / 0.1, 0, 1) ** 1.2
+    img = sky + (img - sky) * (1 - TPK * (1 - fade))[..., None]
 if LOWG > 0:   # light from the body lights the air beneath it: a broad blue glow, below the body, fading downward
     litL = nd.gaussian_filter(np.clip((img - sky).mean(-1), 0, None), W * 0.07)
     litL = np.roll(litL, int(LGR * H), axis=0); litL[:int(LGR * H)] = 0
