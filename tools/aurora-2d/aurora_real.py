@@ -12,36 +12,36 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.4))
+EXPO = float(os.environ.get('EXPO', 0.295))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.8))      # contrast of the rays
-GLOW = float(os.environ.get('GLOW', 1.6))      # soft diffuse light around each curtain
+GLOW = float(os.environ.get('GLOW', 2.56))      # soft diffuse light around each curtain
 SCAT = float(os.environ.get('SCAT', 0.08))      # light scattered into the surrounding air
 PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of a curtain get
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
-FOCX = float(os.environ.get('FOCX', 0.42))     # where that focal area is (across the view)
-FOCW = float(os.environ.get('FOCW', 0.32))      # how wide that focal area is
+FOCX = float(os.environ.get('FOCX', 0.4128))     # where that focal area is (across the view)
+FOCW = float(os.environ.get('FOCW', 0.3853))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
-BOTV = float(os.environ.get('BOTV', 0.45))      # blue-violet glow along the bottom
-TEALK = float(os.environ.get('TEALK', 2.6))    # strength of the upper-right teal curtain
-HEMY = float(os.environ.get('HEMY', 0.62))      # height of the main curtain's lower edge
+BOTV = float(os.environ.get('BOTV', 0.6446))      # blue-violet glow along the bottom
+TEALK = float(os.environ.get('TEALK', 3.142))    # strength of the upper-right teal curtain
+HEMY = float(os.environ.get('HEMY', 0.5938))      # height of the main curtain's lower edge
 FINE = float(os.environ.get('FINE', 1.0))      # delicate fine ray texture inside the glow
 LEFTK = float(os.environ.get('LEFTK', 0.9))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.86))      # height of the left curtain's lower edge
 MFOLD = float(os.environ.get('MFOLD', 0.03))  # how deeply the main curtain's lower edge folds
-MRISE = float(os.environ.get('MRISE', 0.28))      # how far up the main curtain's light reaches
+MRISE = float(os.environ.get('MRISE', 0.2412))      # how far up the main curtain's light reaches
 CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
 PHOTO = float(os.environ.get('PHOTO', 0.15))      # photographic softness of the finished image
 HAZE = float(os.environ.get('HAZE', 0.0))      # broad blue haze around the light, stronger to the left
-LOWR = float(os.environ.get('LOWR', 8))      # strength of the faint low-right curtain
-VIOL = float(os.environ.get('VIOL', 2.0))      # violet fold edge along the right side of the main glow
+LOWR = float(os.environ.get('LOWR', 25.0))      # strength of the faint low-right curtain
+VIOL = float(os.environ.get('VIOL', 2.6416))      # violet fold edge along the right side of the main glow
 MPK = float(os.environ.get('MPK', 0.12))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 0.9))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 0.3))     # darkens the sky away from the main body
-SIDX = float(os.environ.get('SIDX', 0.52))    # where the main body is across the screen
-LOWG = float(os.environ.get('LOWG', 0.35))     # soft blue glow hanging below the main body
+SIDE = float(os.environ.get('SIDE', 1.4266))     # darkens the sky away from the main body
+SIDX = float(os.environ.get('SIDX', 0.575))    # where the main body is across the screen
+LOWG = float(os.environ.get('LOWG', 0.4728))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 6))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '5,185,222')   # colour of the glow below the body
 CURL = float(os.environ.get('CURL', 2.8))     # a short low fold of light curling under the lower left of the main body
@@ -57,28 +57,28 @@ TRISE = float(os.environ.get('TRISE', 0.18))  # how far up the upper-right curta
 BOTC = os.environ.get('BOTC', '45,80,230')   # colour of the glow along the bottom
 SIDEL = float(os.environ.get('SIDEL', 0.7))   # how much the left curtains are spared from the side darkening
 SIDEB = float(os.environ.get('SIDEB', 0.8))   # how much the lower sides are spared from the side darkening
-LOWY = float(os.environ.get('LOWY', 0.75))    # height of the low-right curtain's lower edge
+LOWY = float(os.environ.get('LOWY', 0.6755))    # height of the low-right curtain's lower edge
 ECOL = os.environ.get('ECOL', '30,240,255')   # colour at the main curtain's bright lower part
 TWA = float(os.environ.get('TWA', 0.01))       # how far a curtain sways sideways along its height (twists and turns)
 TWF = float(os.environ.get('TWF', 1.0))       # how many bends along its height
 DET = float(os.environ.get('DET', 0.6))       # fine ray detail kept on top of the soft glow (image quality)
 LGR = float(os.environ.get('LGR', 0.17))      # how far below the body its glow hangs (screen heights)
-STEM = float(os.environ.get('STEM', 0.25))     # broad column of light from under the body down to the bottom, widening as it goes
+STEM = float(os.environ.get('STEM', 0.1219))     # broad column of light from under the body down to the bottom, widening as it goes
 STX = float(os.environ.get('STX', 0.53))       # its centre across the screen
 KNS = float(os.environ.get('KNS', 1.0))       # size of the knot / lower lobe
 FPOW = float(os.environ.get('FPOW', 2))     # shape of the main body across: 2 = rounded peak, higher = broad with straight sides
-TOPY = float(os.environ.get('TOPY', 0.15))     # screen height where the main body's top fades out evenly (0 = off): a broad top, not a flame tip
+TOPY = float(os.environ.get('TOPY', 0.0))     # screen height where the main body's top fades out evenly (0 = off): a broad top, not a flame tip
 TOPS = float(os.environ.get('TOPS', 0.22))    # how softly
-BOTK = float(os.environ.get('BOTK', 0.3))     # a low row of curtains whose rays rise from near the bottom of the screen
+BOTK = float(os.environ.get('BOTK', 0.4563))     # a low row of curtains whose rays rise from near the bottom of the screen
 BOTY = float(os.environ.get('BOTY', 1.12))    # world height of their lower edge
 PLT = float(os.environ.get('PLT', 0.0))       # strength of the long vertical pleats in the main curtain (bright and darker bands)
 PLF = float(os.environ.get('PLF', 9))      # how many pleats across the view
 RIB = float(os.environ.get('RIB', 0.85))       # build the main body from overlapping ribbons (sheets) with brighter edges, instead of one mass
 RIBE = float(os.environ.get('RIBE', 0.005))   # softness of the ribbons' edges
 RIM = float(os.environ.get('RIM', 0.6))       # extra brightness where a ribbon is seen edge-on
-LCK = float(os.environ.get('LCK', 1.5))       # a blue curtain inside the left of the view, beside the main column
-LCX = float(os.environ.get('LCX', 0.22))      # its centre (view units)
-LCY = float(os.environ.get('LCY', 0.7))      # height of its lower edge
+LCK = float(os.environ.get('LCK', 1.1746))       # a blue curtain inside the left of the view, beside the main column
+LCX = float(os.environ.get('LCX', 0.2867))      # its centre (view units)
+LCY = float(os.environ.get('LCY', 0.5267))      # height of its lower edge
 UPC = os.environ.get('UPC', '60,245,218')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -88,9 +88,9 @@ def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, un
 
 asp = W / H
 Y, X = np.mgrid[0:H, 0:W].astype(np.float32); X = X / H; Y = Y / H     # screen in units of its height
-XV, YV = float(os.environ.get('XV', -0.12)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
-ZOOM = float(os.environ.get('ZOOM', 1.5))     # >1 pulls the camera back: the whole aurora is seen smaller, farther away, in a wider sky
-ZCY = float(os.environ.get('ZCY', 0.58))      # the screen height the zoom is centred on
+XV, YV = float(os.environ.get('XV', -0.2979)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
+ZOOM = float(os.environ.get('ZOOM', 1.2135))     # >1 pulls the camera back: the whole aurora is seen smaller, farther away, in a wider sky
+ZCY = float(os.environ.get('ZCY', 0.4995))      # the screen height the zoom is centred on
 A0 = np.arctan2(X - XV, Y - YV); a0, a1 = A0.min(), A0.max(); del A0    # the ray-angle range of the unzoomed view
 Xw = asp * 0.47 + (X - asp * 0.47) * ZOOM; Yw = ZCY + (Y - ZCY) * ZOOM   # world position seen at each pixel
 A = np.arctan2(Xw - XV, Yw - YV)                                       # which ray a pixel is on
