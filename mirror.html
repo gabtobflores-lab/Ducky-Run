@@ -1918,14 +1918,21 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       col*=.35+.65*ao;
       col=mix(col,vec3(.17,.15,.34)+vec3(.25,.45,.42)*.25,.15); /* distance haze: it sits in the same air as the clouds */
       c=mix(c,col,sk);}}
-  { /* the ship itself stays hidden above the clouds, the way a storm's lightning is only seen glowing through them */
-    vec2 e=(P-C)/vec2(RX*1.15,RX*.24);float er=length(e);
-    c+=vec3(.45,1.,.88)*exp(-er*er*1.6)*.35*sk+vec3(.6,.5,1.)*exp(-er*er*.5)*.12*sk; /* its vast glow behind the cloud */
-    float ang=atan(e.y,e.x),ringd=abs(er-.8);
-    for(int i=0;i<18;i++){float a=float(i)/18.*6.2832+t*.18;vec2 lp=C+vec2(cos(a)*RX*1.15*.8,sin(a)*RX*.24*.8);float front=step(0.,sin(a)); /* a ring of lights slowly circling */
-      float pul=.55+.45*sin(t*1.7-float(i)*.9);c+=vec3(.75,1.,.95)*exp(-dot(P-lp,P-lp)/(RX*RX*.0009))*pul*(.35+.65*front)*.9*sk+vec3(.5,1.,.9)*exp(-dot(P-lp,P-lp)/(RX*RX*.012))*pul*.1*sk;}
-    float deck=smoothstep(.38,.75,fbm(vec2(P.x*1.5+t*.015,P.y*4.2-t*.01)))*exp(-pow((P.y-C.y)/(RX*.42),2.)); /* the cloud deck it hides in, lit from within */
-    c=mix(c,vec3(.2,.18,.38)+vec3(.45,.95,.85)*exp(-er*er*.9)*.45,deck*.85*sk); }
+  { /* the saucer, drawn flat in the game's own 2D style: the blocks' slate navy in simple soft gradients, a glossy glass dome like the balls, a row of warm lights like each block's gold bar */
+    float aa=1.5/res.y; vec2 d=P-C; float hw=RX*.95, hh=RX*.17;
+    float glo=exp(-dot(d/vec2(hw*1.25,hh*2.6),d/vec2(hw*1.25,hh*2.6)));c+=vec3(.45,1.,.88)*glo*.18*sk; /* a soft glow around it */
+    vec2 dm=(d+vec2(0.,hh*.55))/vec2(hw*.36,hh*1.7);float dome=(1.-smoothstep(1.-aa/(hh*1.7),1.,length(dm)))*step(dm.y,.25);
+    vec3 dc=mix(vec3(.62,.95,.98),vec3(.16,.55,.66),smoothstep(-1.,.2,dm.y));dc+=vec3(1.)*exp(-pow((dm.x+.38)/.16,2.)-pow((dm.y+.55)/.14,2.))*.8; /* glossy, with the balls' white highlight */
+    c=mix(c,dc,dome*sk);
+    vec2 db=d/vec2(hw,hh);float body=1.-smoothstep(1.-aa/hh,1.,length(db));
+    vec3 bc=mix(vec3(.31,.33,.47),vec3(.15,.16,.24),smoothstep(-1.,1.,db.y)); /* the blocks' slate navy, lighter on top */
+    bc+=vec3(1.)*.1*smoothstep(.12,0.,abs(db.y+.45))*(1.-abs(db.x)); /* the soft sheen line every block has */
+    for(int i=0;i<9;i++){float u=(float(i)+.5)/9.*2.-1.;vec2 lp=vec2(u*hw*.78,hh*.32*(1.-u*u*.35));float on=.45+.55*max(0.,sin(t*2.2-float(i)*.8));
+      bc+=vec3(1.,.78,.42)*on*exp(-dot(d-lp,d-lp)/(hh*hh*.035))*1.2;} /* a row of warm lights, chasing slowly */
+    c=mix(c,bc,body*sk);
+    float rim=smoothstep(.06,0.,abs(length(db)-.97))*step(db.y,.1);c+=vec3(.5,1.,.9)*rim*.35*sk; /* a thin mint rim underneath */
+    float bot=exp(-dot((d-vec2(0.,hh*.95))/vec2(hw*.16,hh*.32),(d-vec2(0.,hh*.95))/vec2(hw*.16,hh*.32)));c+=vec3(.75,1.,.95)*bot*.9*sk; /* the opening the beam comes from */
+  }
   { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
     c=mix(c,vec3(.26,.24,.44)+vec3(.4,.8,.75)*.15,veil*.55*sk); }
   c=1.-exp(-c*1.35);gl_FragColor=vec4(c+dith(),1.);}`,
