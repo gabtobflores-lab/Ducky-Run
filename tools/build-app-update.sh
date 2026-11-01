@@ -31,6 +31,7 @@ elif os.path.exists(out + '/aurora.mp4'): os.remove(out + '/aurora.mp4')
 if os.path.exists('tools/blackhole/blackhole.mp4'):
     shutil.copy('tools/blackhole/blackhole.mp4', out + '/blackhole.mp4')
     s, n = re.subn(r"(const BHVID = \{ type: '[^']*', )src: '', data: ''", r"\1src: 'blackhole.mp4', data: ''", s); assert n == 1, 'BHVID'
+elif os.path.exists(out + '/blackhole.mp4'): os.remove(out + '/blackhole.mp4')
 open(out + '/index.html', 'w').write(s)
 PY
 (cd native/MirrorDrop && ls *.swift) > app-update/native-files.txt

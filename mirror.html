@@ -865,7 +865,16 @@ function sndTick(dt) {
 }
 // lobby music: an endless, quiet generative piece. Slow pad chords (Dmaj9, Bm11, Gmaj9, Asus) with soft bell notes from the D major pentatonic drifting over them
 const MUSP = [[146.83, 220, 277.18, 329.63, 369.99], [123.47, 185, 220, 293.66, 329.63], [98, 146.83, 185, 220, 246.94], [110, 164.81, 220, 246.94, 293.66]], MUSN = [587.33, 659.26, 739.99, 880, 987.77, 1174.66];
-const MUS = { next: 0, ch: 0, note: 0, idx: 2, on: false };
+const MUS = { next: 0, ch: 0, note: 0, idx: 2, on: false, ph: 0, motif: null, rep: 0 };
+function piano(f, vol, at) { // a soft felt piano: a warm fundamental, a gentle second partial that fades first, a muted attack, a long natural decay
+  if (!sndOn('music')) return;
+  try { const A = AB, t0 = ac.currentTime + at, out = ac.createGain(), lp = filt('lowpass', Math.min(4200, f * 5), .4), s = ac.createGain(), dur = 3.6 + 220 / f;
+    out.gain.setValueAtTime(0, t0); out.gain.linearRampToValueAtTime(vol, t0 + .012); out.gain.exponentialRampToValueAtTime(vol * .35, t0 + .5); out.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    [[1, 'sine', 1, 0], [2, 'sine', .28, 1.1], [3, 'triangle', .07, .5], [1, 'triangle', .18, 0]].forEach(([m, ty, a, dk]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = ty; o.frequency.value = f * m; o.detune.value = m === 1 && ty === 'triangle' ? 3 : 0;
+      g.gain.setValueAtTime(a, t0); if (dk) g.gain.exponentialRampToValueAtTime(.0001, t0 + dk + .3); o.connect(g); g.connect(lp); o.start(t0); o.stop(t0 + dur + .05); });
+    lp.connect(out); out.connect(A.mus); s.gain.value = .55; out.connect(s); s.connect(A.rev); } catch (e) {} }
+// melodies written as phrases over the four chords: a motif is stated, answered with a small variation, then the music rests and breathes
+const MOTIFS = [[[0, 0], [2, .9], [4, 1.8], [3, 3.2]], [[4, 0], [3, .8], [2, 1.6], [0, 3]], [[2, 0], [4, .7], [5, 1.4], [4, 2.4], [2, 3.6]], [[5, 0], [4, 1.1], [2, 2.2]], [[0, 0], [4, 1.2], [3, 2.], [2, 2.8], [1, 4.]]];
 function musChord(fr, t0, len) { const A = AB, lp = filt('lowpass', 950, .3), g = ac.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(1, t0 + 3.2); g.gain.setValueAtTime(1, t0 + len); g.gain.linearRampToValueAtTime(0, t0 + len + 4.2);
   lp.frequency.setValueAtTime(700, t0); lp.frequency.linearRampToValueAtTime(1150, t0 + len * .6); lp.frequency.linearRampToValueAtTime(800, t0 + len + 4); // each chord opens and closes slowly, like breathing
   fr.forEach((f, i) => { [['sine', 0, .022], ['triangle', 6, .009]].forEach(([ty, dc, v]) => { const o = ac.createOscillator(), og = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = dc * (i % 2 ? 1 : -1); og.gain.value = v / (1 + i * .15); o.connect(og); og.connect(lp); o.start(t0); o.stop(t0 + len + 4.4); }); });
@@ -877,8 +886,12 @@ function musTick() {
   if (!want) { if (MUS.on && AB.mus.gain.value < .01) MUS.on = false; if (!MUS.on) return; } // fades out, then stops scheduling
   if (!MUS.on && want) { MUS.on = true; MUS.next = now + .1; MUS.note = now + 2.5; }
   while (MUS.next < now + .5) { musChord(MUSP[MUS.ch], MUS.next, 9); MUS.next += 9; MUS.ch = (MUS.ch + 1) % MUSP.length; }
-  while (MUS.note < now + .5) { if (Math.random() < .72) { MUS.idx = Math.max(0, Math.min(MUSN.length - 1, MUS.idx + [-2, -1, -1, 1, 1, 2][Math.random() * 6 | 0])); bell(MUSN[MUS.idx], .016, 3.4, 'mus', .7, MUS.note - now);
-      if (Math.random() < .25) bell(MUSN[Math.max(0, MUS.idx - 2)], .01, 3, 'mus', .7, MUS.note - now + .45); } MUS.note += 1.6 + Math.random() * 1.8; }
+  while (MUS.note < now + .5) { // one phrase at a time: the motif, then its answer (shifted, last note changed), then a rest
+    if (!MUS.motif || MUS.rep >= 2) { MUS.motif = MOTIFS[Math.random() * MOTIFS.length | 0]; MUS.rep = 0; MUS.sh = Math.random() < .5 ? 0 : 1; }
+    const sh = MUS.rep ? MUS.sh : 0, tempo = 1.05;
+    MUS.motif.forEach(([d, at], i) => { let k = Math.max(0, Math.min(MUSN.length - 1, d + sh + (MUS.rep && i === MUS.motif.length - 1 ? -1 : 0))); piano(MUSN[k], .03, MUS.note - now + at * tempo);
+      if (i === 0) piano(MUSN[k] / 2, .016, MUS.note - now + at * tempo + .02); }); // a soft low octave under the first note
+    MUS.note += (MUS.motif[MUS.motif.length - 1][1] * tempo) + (MUS.rep ? 5 + Math.random() * 4 : 2.2); MUS.rep++; }
 }
 // the invasion's own music: an original piece in E Lydian, the mode of wonder. A soft pulsing arpeggio over a wide pad, and a theremin-like voice gliding between notes
 const ALM = { on: false, next: 0, step: 0, bar: 0, g: null, thr: null };
