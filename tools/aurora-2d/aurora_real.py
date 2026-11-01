@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.26))
+EXPO = float(os.environ.get('EXPO', 0.27))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.3))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 3.0))      # soft diffuse light around each curtain
@@ -20,7 +20,7 @@ SCAT = float(os.environ.get('SCAT', 0.15))      # light scattered into the surro
 PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of a curtain get
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
-FOCX = float(os.environ.get('FOCX', 0.3))     # where that focal area is (across the view)
+FOCX = float(os.environ.get('FOCX', 0.32))     # where that focal area is (across the view)
 FOCW = float(os.environ.get('FOCW', 0.2))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
 BOTV = float(os.environ.get('BOTV', 0.6))      # blue-violet glow along the bottom
@@ -49,7 +49,9 @@ CURX = float(os.environ.get('CURX', -0.09))   # its position relative to the foc
 CURY = float(os.environ.get('CURY', 0.07))    # how far below the main edge the curl hangs
 KNOT = float(os.environ.get('KNOT', 1.6))     # a soft bright knot of light at the lower left of the main body
 KNY = float(os.environ.get('KNY', -0.03))       # its height relative to the main edge (screen heights, + = lower)
-UPC = os.environ.get('UPC', '50,250,210')        # the main curtain's upper colour
+FOCWL = float(os.environ.get('FOCWL', 0.13))   # width of the focal area on its left side (0 = same as right): smaller gives a clear left edge
+GAP = float(os.environ.get('GAP', 0.6))       # dark gap between the knot and the body above it
+UPC = os.environ.get('UPC', '35,230,232')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
     r = np.random.default_rng(seed).standard_normal(n).astype(np.float32)
@@ -88,7 +90,8 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     span = 1 / (1 + np.exp(-(ss - s0) / SPANS)) / (1 + np.exp((ss - s1) / SPANS))
     B1 = fold_b * rays * patch * span
     if seed == 22 and FOCUS > 0:
-        B1 = B1 * ((1 - FOCUS) + FOCUS * 1.6 * np.exp(-((ss - FOCX) / FOCW) ** 2))
+        wf = np.where(ss < FOCX, FOCWL if FOCWL > 0 else FOCW, FOCW)
+        B1 = B1 * ((1 - FOCUS) + FOCUS * 1.6 * np.exp(-np.abs((ss - FOCX) / wf) ** (2.6 if FOCWL > 0 else 2)))
     hemP = np.interp(S, ss, hem); BP = np.interp(S, ss, B1)
     d = hemP - R                                                         # > 0 above the lower edge
     above = np.exp(-np.clip(d, 0, None) / rise)
@@ -132,6 +135,9 @@ if KNOT > 0:   # bright knot where the curtain's lower edge folds towards the vi
     g = np.exp(-((S - s_k) / 0.035) ** 2 - ((R - r_k) / 0.045) ** 2)
     g = g + 0.5 * np.exp(-((S - s_k - 0.03) / 0.02) ** 2 - ((R - r_k + 0.05) / 0.06) ** 2)   # a fainter tail curling up and right
     img = img + nd.gaussian_filter(g, 4 * W / 1206)[..., None] * col((70, 250, 245)) * KNOT * EXPO
+    if GAP > 0:   # a pocket of darker sky between the knot and the body: the sheet folds away there
+        gp = np.exp(-((S - s_k - 0.035) / 0.03) ** 2 - ((R - r_k + 0.065) / 0.03) ** 2)
+        img = sky + (img - sky) * (1 - GAP * nd.gaussian_filter(gp, 6 * W / 1206))[..., None]
 if LOWG > 0:   # light from the body lights the air beneath it: a broad blue glow, below the body, fading downward
     litL = nd.gaussian_filter(np.clip((img - sky).mean(-1), 0, None), W * 0.07)
     litL = np.roll(litL, int(0.09 * H), axis=0); litL[:int(0.09 * H)] = 0
