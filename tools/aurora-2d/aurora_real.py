@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.22))
+EXPO = float(os.environ.get('EXPO', 0.17))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.55))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
@@ -102,7 +102,7 @@ ST2K = float(os.environ.get('ST2K', 0.0))     # second, smaller streak cluster a
 ST2X = float(os.environ.get('ST2X', -0.22))   # its offset across from the core
 ST2Y = float(os.environ.get('ST2Y', 0.14))    # how much lower its bottom sits
 STPATH = float(os.environ.get('STPATH', 1.0))  # streaks hang from a swirling ribbon path (like real northern lights) instead of one cluster
-STPN = int(float(os.environ.get('STPN', 150)))   # how many streaks along the path
+STPN = int(float(os.environ.get('STPN', 200)))   # how many streaks along the path
 UPC = os.environ.get('UPC', '25,200,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -248,11 +248,14 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
         uu = (np.arange(STPN) + .5) / STPN; px_ = np.interp(uu, seg, path[:, 0]) * asp; py_ = np.interp(uu, seg, path[:, 1])
         xw_ = asp * 0.47 + (px_ - asp * 0.47) * ZOOM; yw_ = ZCY + (py_ - ZCY) * ZOOM
         ps_ = (np.arctan2(xw_ - XV, yw_ - YV) - a0) / (a1 - a0); pr_ = np.hypot(xw_ - XV, yw_ - YV)
+        tgx = np.gradient(px_); tgy = np.gradient(py_); tl = np.hypot(tgx, tgy) + 1e-9
+        foldp = np.clip(1 - np.abs(tgx / tl) / .55, 0, 1) ** 1.5   # 1 where the ribbon runs up/down the sky (seen edge-on): rays stack into a bright fold
+        lnv = np.interp((uu * 7 + ph * 7) % 7, np.arange(8), np.r_[np.random.default_rng(91).uniform(.5, 1.6, 7), 0][[0,1,2,3,4,5,6,0]]) # ray length varies along the ribbon, short stretches and soaring ones
         farp = np.clip((py_ + .05) / .7, .3, 1); endp = np.clip(uu / .07, 0, 1) * np.clip((1 - uu) / .12, 0, 1)
         for i in range(STPN):
             if endp[i] < .02: continue
-            wd = rngS.uniform(0.005, 0.016) * STWD; amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2)
-            ln = rngS.uniform(.08, .16) * float(os.environ.get('STPL', 1.8)) * (.55 + .45 * farp[i]); drift = .004 * np.sin(T + i * 1.7)
+            wd = rngS.uniform(0.005, 0.016) * STWD; amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2) * (1 + float(os.environ.get('FOLDP', 2.0)) * foldp[i])
+            ln = rngS.uniform(.08, .16) * float(os.environ.get('STPL', 1.8)) * lnv[i] * (.55 + .45 * farp[i]) * (1 + .5 * foldp[i]); drift = .004 * np.sin(T + i * 1.7)
             d = pr_[i] - R; across = np.exp(-((S - ps_[i] - drift) / wd) ** 2)
             along = np.clip(d / STFI, 0, 1) ** 1.5 * np.exp(-np.clip(d, 0, None) / (ln * 0.55)) * (d < ln * 1.8)
             acc += amp * across * along; dacc += amp * across * along * np.clip(d / ln, 0, 1)
