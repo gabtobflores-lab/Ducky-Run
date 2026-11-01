@@ -251,10 +251,11 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
         tgx = np.gradient(px_); tgy = np.gradient(py_); tl = np.hypot(tgx, tgy) + 1e-9
         foldp = np.clip(1 - np.abs(tgx / tl) / .55, 0, 1) ** 1.5   # 1 where the ribbon runs up/down the sky (seen edge-on): rays stack into a bright fold
         lnv = np.interp((uu * 7 + ph * 7) % 7, np.arange(8), np.r_[np.random.default_rng(91).uniform(.5, 1.6, 7), 0][[0,1,2,3,4,5,6,0]]) # ray length varies along the ribbon, short stretches and soaring ones
+        _bn = np.random.default_rng(57).random(16); bund = np.interp((uu * 16 + ph * 2) % 16, np.arange(17), np.r_[_bn, _bn[0]]); bund = (float(os.environ.get('BMIN', .3)) + (1 - float(os.environ.get('BMIN', .3))) * np.clip((bund - .25) / .55, 0, 1) ** 1.3) * 1.25  # bundles of rays with darker gaps between them
         farp = np.clip((py_ + .05) / .7, .3, 1); endp = np.clip(uu / .07, 0, 1) * np.clip((1 - uu) / .12, 0, 1)
         for i in range(STPN):
             if endp[i] < .02: continue
-            wd = rngS.uniform(0.005, 0.016) * STWD; amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2) * (1 + float(os.environ.get('FOLDP', 2.0)) * foldp[i])
+            wd = rngS.uniform(0.005, 0.016) * STWD; amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2) * (1 + float(os.environ.get('FOLDP', 2.0)) * foldp[i]) * bund[i]
             ln = rngS.uniform(.08, .16) * float(os.environ.get('STPL', 1.8)) * lnv[i] * (.55 + .45 * farp[i]) * (1 + .5 * foldp[i]); drift = .004 * np.sin(T + i * 1.7)
             d = pr_[i] - R; across = np.exp(-((S - ps_[i] - drift) / wd) ** 2)
             along = np.clip(d / STFI, 0, 1) ** 1.5 * np.exp(-np.clip(d, 0, None) / (ln * 0.55)) * (d < ln * 1.8)
