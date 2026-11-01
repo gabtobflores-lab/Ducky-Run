@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.25))
+EXPO = float(os.environ.get('EXPO', 0.24))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.55))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
@@ -45,8 +45,8 @@ LOWG = float(os.environ.get('LOWG', 0.4))     # soft blue glow hanging below the
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '10,165,230')   # colour of the glow below the body
 CURL = float(os.environ.get('CURL', 0.0))     # a short low fold of light curling under the lower left of the main body
-CURX = float(os.environ.get('CURX', -0.04))   # its position relative to the focal area
-CURY = float(os.environ.get('CURY', 0.1))    # how far below the main edge the curl hangs
+CURX = float(os.environ.get('CURX', -0.14))   # its position relative to the focal area
+CURY = float(os.environ.get('CURY', 0.05))    # how far below the main edge the curl hangs
 KNOT = float(os.environ.get('KNOT', 0.0))     # a soft bright knot of light at the lower left of the main body
 KNY = float(os.environ.get('KNY', -0.03))       # its height relative to the main edge (screen heights, + = lower)
 FOCWL = float(os.environ.get('FOCWL', 0.0))   # width of the focal area on its left side (0 = same as right): smaller gives a clear left edge
@@ -80,9 +80,9 @@ LCK = float(os.environ.get('LCK', 0.6))       # a blue curtain inside the left o
 LCX = float(os.environ.get('LCX', 0.3109))      # its centre (view units)
 LCY = float(os.environ.get('LCY', 0.5))      # height of its lower edge
 STW = float(os.environ.get('STW', 1.5))       # width of the light column below the body
-GAP2 = float(os.environ.get('GAP2', 0.0))     # dark pocket between the lower-left lobe and the core
+GAP2 = float(os.environ.get('GAP2', 0.7))     # dark pocket between the lower-left lobe and the core
 GPX = float(os.environ.get('GPX', 0.0))       # its offset across from the lobe
-GPY = float(os.environ.get('GPY', 0.06))      # how far above the lobe it sits
+GPY = float(os.environ.get('GPY', 0.0))      # how far above the lobe it sits
 TPK = float(os.environ.get('TPK', 0.0))       # two peaks at the top of the main body
 TPY = float(os.environ.get('TPY', 0.3))       # screen height of the dip between the peaks
 FLK = float(os.environ.get('FLK', 0.0))      # flicker along the rays (thin lines)
@@ -98,6 +98,9 @@ STTOP = os.environ.get('STTOP', '25,175,238')  # colour of the streaks' upper pa
 STTALL = float(os.environ.get('STTALL', 0.6))  # centre streaks taller, outer ones shorter (tower shape)
 STLOW = float(os.environ.get('STLOW', 0.12))  # outer streaks start lower
 STCL = float(os.environ.get('STCL', 0.45))    # how tightly the streaks cluster round the core
+ST2K = float(os.environ.get('ST2K', 1.4))     # second, smaller streak cluster at the lower left of the core
+ST2X = float(os.environ.get('ST2X', -0.22))   # its offset across from the core
+ST2Y = float(os.environ.get('ST2Y', 0.14))    # how much lower its bottom sits
 UPC = os.environ.get('UPC', '25,200,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -229,21 +232,24 @@ if TPK > 0:   # the body's top splits into two peaks: darken the dip between the
     img = sky + (img - sky) * (1 - TPK * (1 - fade))[..., None]
 if STK > 0:   # the main body as a column of individual soft streaks along the rays
     rngS = np.random.default_rng(404)
-    sc = FOCX; rb0 = r_at(HEMY)
+    rb0 = r_at(HEMY)
     acc = np.zeros((H, W), np.float32); dacc = np.zeros((H, W), np.float32)
-    for i in range(STN):
-        off = rngS.normal(0, FOCW * STCL)                         # position across, clustered round the core
-        wd = rngS.uniform(0.006, 0.022) * STWD                    # width
-        amp = np.exp(-(off / (FOCW * 0.7)) ** 2) * rngS.uniform(0.45, 1.0)
-        bot = rb0 + rngS.normal(0, 0.035 * (1 - 0.6 * min(STTALL, 1))) + STLOW * abs(off) / FOCW   # bottom end (larger r = lower)
-        ln = rngS.uniform(0.22, 0.5) * (0.6 + 0.4 * amp)
-        if STTALL > 0: ln = (rngS.uniform(0.85, 1.0) * 0.55 * np.exp(-(off / (FOCW * 0.45)) ** 2) + 0.12) * STTALL            # length up the ray
-        drift = 0.008 * np.sin(T + i * 1.9)
-        up_ = np.clip(bot - R, 0, None)
-        across = np.exp(-((S - sc - off * (1 + STFAN * up_) - drift) / (wd * (1 + 0.6 * STFAN * up_))) ** 2)
-        d = bot - R                                               # >0 above the bottom end
-        along = np.clip(d / STFI, 0, 1) ** 1.5 * np.exp(-np.clip(d, 0, None) / (ln * 0.55)) * (d < ln * 1.6)
-        acc += amp * across * along; dacc += amp * across * along * np.clip(d / ln, 0, 1)
+    clusters = [(FOCX, rb0, FOCW, STN, 1.0, STTALL)]
+    if ST2K > 0: clusters.append((FOCX + ST2X, r_at(HEMY + ST2Y), FOCW * 0.45, max(6, STN // 3), ST2K, STTALL * 0.45))
+    for (sc, rb0, FW, NN, KK, TT) in clusters:
+      for i in range(NN):
+          off = rngS.normal(0, FW * STCL)                           # position across, clustered round the core
+          wd = rngS.uniform(0.006, 0.022) * STWD                    # width
+          amp = np.exp(-(off / (FW * 0.7)) ** 2) * rngS.uniform(0.45, 1.0)
+          bot = rb0 + rngS.normal(0, 0.035 * (1 - 0.6 * min(TT, 1))) + STLOW * abs(off) / FW   # bottom end (larger r = lower)
+          ln = rngS.uniform(0.22, 0.5) * (0.6 + 0.4 * amp)
+          if TT > 0: ln = (rngS.uniform(0.85, 1.0) * 0.55 * np.exp(-(off / (FW * 0.45)) ** 2) + 0.12) * TT            # length up the ray
+          drift = 0.008 * np.sin(T + i * 1.9)
+          up_ = np.clip(bot - R, 0, None)
+          across = np.exp(-((S - sc - off * (1 + STFAN * up_) - drift) / (wd * (1 + 0.6 * STFAN * up_))) ** 2)
+          d = bot - R                                               # >0 above the bottom end
+          along = np.clip(d / STFI, 0, 1) ** 1.5 * np.exp(-np.clip(d, 0, None) / (ln * 0.55)) * (d < ln * 1.6)
+          acc += KK * amp * across * along; dacc += KK * amp * across * along * np.clip(d / ln, 0, 1)
     acc = nd.gaussian_filter(acc, 3 * W / 1206); kk = nd.gaussian_filter(dacc, 3 * W / 1206) / (acc + 1e-6)
     kk = np.clip(kk, 0, 1)[..., None] ** 0.8
     cS = col(tuple(int(v) for v in ECOL.split(','))) * (1 - kk) + col(tuple(int(v) for v in STTOP.split(','))) * kk
