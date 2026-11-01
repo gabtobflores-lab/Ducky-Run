@@ -1895,7 +1895,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   float gl=length((P-C)/vec2(RX*1.05,RX*.32));c+=iri(atan(P.y-C.y,P.x-C.x)/6.2832+t*.06)*exp(-max(gl-1.,0.)*3.)*smoothstep(.55,1.,gl)*.16*sk;
   /* the ship */
   float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1;
-  if(h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
+  if(false&&h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
     for(int i=0;i<56;i++){p=ro+rd*tt;float dd=map(p);if(dd<.0008){hit=1.;break;}tt+=dd;if(tt>7.)break;}
     if(hit>0.){vec3 n=nrm(p),v=-rd,r=reflect(rd,n);float ndv=clamp(dot(n,v),0.,1.);
       float ao=clamp(1.-3.*(.06-map(p+n*.06)),0.,1.)*clamp(1.-2.*(.15-map(p+n*.15)),0.,1.); /* soft occlusion in the creases */
@@ -1919,6 +1919,14 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       col*=.35+.65*ao;
       col=mix(col,vec3(.17,.15,.34)+vec3(.25,.45,.42)*.25,.15); /* distance haze: it sits in the same air as the clouds */
       c=mix(c,col,sk);}}
+  { /* the ship itself stays hidden above the clouds, the way a storm's lightning is only seen glowing through them */
+    vec2 e=(P-C)/vec2(RX*1.15,RX*.24);float er=length(e);
+    c+=vec3(.45,1.,.88)*exp(-er*er*1.6)*.35*sk+vec3(.6,.5,1.)*exp(-er*er*.5)*.12*sk; /* its vast glow behind the cloud */
+    float ang=atan(e.y,e.x),ringd=abs(er-.8);
+    for(int i=0;i<18;i++){float a=float(i)/18.*6.2832+t*.18;vec2 lp=C+vec2(cos(a)*RX*1.15*.8,sin(a)*RX*.24*.8);float front=step(0.,sin(a)); /* a ring of lights slowly circling */
+      float pul=.55+.45*sin(t*1.7-float(i)*.9);c+=vec3(.75,1.,.95)*exp(-dot(P-lp,P-lp)/(RX*RX*.0009))*pul*(.35+.65*front)*.9*sk+vec3(.5,1.,.9)*exp(-dot(P-lp,P-lp)/(RX*RX*.012))*pul*.1*sk;}
+    float deck=smoothstep(.38,.75,fbm(vec2(P.x*1.5+t*.015,P.y*4.2-t*.01)))*exp(-pow((P.y-C.y)/(RX*.42),2.)); /* the cloud deck it hides in, lit from within */
+    c=mix(c,vec3(.2,.18,.38)+vec3(.45,.95,.85)*exp(-er*er*.9)*.45,deck*.85*sk); }
   { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
     c=mix(c,vec3(.26,.24,.44)+vec3(.4,.8,.75)*.15,veil*.55*sk); }
   c=1.-exp(-c*1.35);gl_FragColor=vec4(c+dith(),1.);}`,
