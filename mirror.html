@@ -748,6 +748,7 @@ document.querySelectorAll('.drange').forEach(r => {
 });
 addEventListener('pointerup', () => document.querySelectorAll('.drange.drag').forEach(r => r.classList.remove('drag')));
 document.querySelectorAll('.drange').forEach(r => r.addEventListener('input', () => {
+  { const s0 = section(); sliderV = +r.value; if (section() !== s0) { beep(620 + section() * 90, .06, 'sine', .03); haptic('selection'); } } diff = SECT_DIFF[section()]; // a tick each time the slider crosses into a new difficulty
   sliderV = +r.value; diff = SECT_DIFF[section()]; saveKey('mirrorSlider', sliderV); syncDiffUI();
 }));
 
@@ -979,7 +980,7 @@ function endDaily() { if (!beforeDaily) return; ({ sliderV, mode } = beforeDaily
 let freePause = false;
 function pauseGame(away) {
   if (state !== 'play' || resumeT > 0) return;
-  freePause = !!away;
+  freePause = !!away; if (!away) beep(520, .22, 'sine', .04, -180); // a soft falling tone
   wxHide(); state = 'paused'; $('#pfog').textContent = away ? 'Paused while you were away. No fog this time.' : fog ? `Fog level ${fog}. Resuming brings thicker fog for 5 seconds.` : 'Careful: resuming brings in fog for 5 seconds.'; show('#pause', true);
 }
 function resumeGame() {
@@ -1180,7 +1181,7 @@ function update(dt) {
         }
       }
     }
-    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; combo = 1; }
+    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; if (combo > 2) beep(440, .3, 'sine', .028, -120); combo = 1; } // a gentle falling note when a combo is lost
   }
   things = things.filter(o => o.y < H + 80 && !(o.got && o.k === 'g'));
   if (mode === 'normal' && !gate && score >= GOAL) { gate = { y: Math.min(nextY + 40, -80), t: 0 }; banner = 'FINAL STRETCH'; fxA = 1; beep(520, .5, 'sine', .06, 260); haptic('medium'); } // no new rows: the finish line comes down behind the last one
@@ -1344,7 +1345,8 @@ function updateWeather(dt) {
   // electrified blocks: two readable side switches (to the mirror column and back), finished long before they reach the balls
   for (const o of things) if (o.elec) {
     o.et += dt; const A = LX[o.l0], B = LX[N - 1 - o.l0], sm = q => q * q * (3 - 2 * q), te = o.et * (o.ts || 1), sw = o.sw === undefined ? 2 : o.sw;
-    const p1 = sw ? sm(clamp01((te - .45) / .38)) : 0, p2 = sw > 1 ? sm(clamp01((te - 1.15) / .38)) : 0; // never mid-slide when it reaches the balls
+    const p1 = sw ? sm(clamp01((te - .45) / .38)) : 0, p2 = sw > 1 ? sm(clamp01((te - 1.15) / .38)) : 0;
+    if (state === 'play') { if (sw && !o.s1 && te >= .45) { o.s1 = 1; hush(2400, 3, .3, .02, 900, 0, .2); } if (sw > 1 && !o.s2 && te >= 1.15) { o.s2 = 1; hush(2400, 3, .3, .02, 900, 0, .2); } } // a crackling zip as the charge throws it across // never mid-slide when it reaches the balls
     o.ex = A + (B - A) * (p1 - p2); o.l = Math.abs(o.ex - A) <= Math.abs(o.ex - B) ? o.l0 : N - 1 - o.l0;
   }
 }
@@ -1384,7 +1386,7 @@ function skyField(alpha, paint) {
   if (!skyC || skyC.width !== fw || skyC.height !== fh) { skyC = document.createElement('canvas'); skyC.width = fw; skyC.height = fh; skyX = skyC.getContext('2d'); }
   skyX.setTransform(1, 0, 0, 1, 0, 0); skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = 1; skyX.clearRect(0, 0, fw, fh); skyX.setTransform(1 / 8, 0, 0, 1 / 8, 0, 0);
   paint(skyX); if (LIGHTS[wx.kind]) LIGHTS[wx.kind](skyX);
-  const vk = { bhole: .55, alien: .6, storm: .55, rain: .42, snow: .3, hail: .4, aurora: .6, meteor: .65 }[wx.kind]; if (vk) { skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = vk; skyX.drawImage(vignette(), 0, 0, W, H); skyX.globalAlpha = 1; } // the sky falls off into shadow at the edges, like a lens
+  const vk = { bhole: .35, alien: .6, storm: .55, rain: .42, snow: .3, hail: .4, aurora: .6, meteor: .65 }[wx.kind]; if (vk) { skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = vk; skyX.drawImage(vignette(), 0, 0, W, H); skyX.globalAlpha = 1; } // the sky falls off into shadow at the edges, like a lens
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'medium'; ctx.globalAlpha = alpha; ctx.drawImage(skyC, 0, 0, fw * 8, fh * 8); ctx.globalAlpha = 1; // one smooth upscale straight to the screen
 }
 function light(g, x, y, r, stops, op = 'source-over') { // an off-centre radial light, the way scattered light really pools in a sky
@@ -1402,7 +1404,7 @@ function glow(g, rgb, x, y, rx, ry, al) { const b = softBlob(rgb); g.globalAlpha
 // each event's sky: an Apple-Weather-style colour field with slow luminous masses moving inside it
 const SKY = {
   storm: g => { skyGrad(g, [[0, '60,72,94'], [.4, '80,94,116'], [.8, '98,112,134'], [1, '110,124,144']]); /* Apple's rain: slate blue-grey */ for (let k = 0; k < 5; k++) { const sd = SEEDS[k]; glow(g, '30,36,52', ((sd.x * W * 1.6 + t * 9 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .16, .7); } glow(g, '170,185,210', W * .5, H * .95, W * .9, H * .25, .35); },
-  bhole: g => { skyGrad(g, [[0, '12,10,38'], [.6, '40,28,84'], [1, '122,72,140']]); glow(g, '250,170,190', W * .5, H * .3, W * .55, W * .16, .4); glow(g, '6,4,14', W * .5, H * .3, W * .12, W * .12, 1); },
+  bhole: g => { skyGrad(g, [[0, '4,4,8'], [1, '8,7,12']]); glow(g, '255,200,140', W * .5, H * .3, W * 1.1, W * .1, .5); glow(g, '255,214,160', W * .8, H * .2, W * .32, W * .3, .45); glow(g, '0,0,0', W * .8, H * .2, W * .17, W * .17, 1); },
   alien: g => { skyGrad(g, [[0, '4,10,16'], [.5, '8,30,34'], [1, '20,62,56']]); glow(g, '90,255,200', W * .5, H * .16, W * .6, H * .14, .25); },
   rain: g => { skyGrad(g, [[0, '74,86,108'], [.45, '96,108,130'], [1, '120,132,152']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k]; glow(g, '44,52,68', ((sd.x * W * 1.6 + t * 8 * sd.k) % (W * 1.6)) - W * .3, H * (.05 + sd.y * .25), W * .5, H * .15, .55); } },
   snow: g => { skyGrad(g, [[0, '124,138,166'], [.45, '152,166,190'], [1, '186,196,214']]); for (let k = 0; k < 4; k++) { const sd = SEEDS[k + 13]; glow(g, k % 2 ? '108,122,150' : '228,234,246', ((sd.x * W * 1.6 + t * 4 * sd.k) % (W * 1.6)) - W * .3, H * (.06 + sd.y * .3), W * .5, H * .16, .5); } glow(g, '236,240,250', W * .5, H * 1.02, W * 1.2, H * .22, .45); },
@@ -1816,28 +1818,34 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
   sky=mix(sky,far.rgb,far.a*.72*cloudA);sky=mix(sky,near.rgb,near.a*cloudA);
   if(rain>0.)sky+=vec3(.82,.88,.98)*(rainL(uv,asp,70.,9.,1.)*.15+rainL(uv,asp,125.,6.5,2.)*.09)*rain*(1.+bolt.z*.8); /* the distant rain curtain */
   gl_FragColor=vec4(sky+dith(),1.);}`,
-    bhole: `/* a black hole in the game's own night: the violet-to-rose sky of the meteor shower, soft nebula light, and the hole itself drawn softly, like everything else in Mirror Drop.
-   Light bends round it (stars swirl into arcs near the edge); a soft, glowing disk of peach and rose light, brighter on the side turning towards us; a gentle halo where the far side is lifted into view */
+    bhole: `/* a Gargantua-like black hole near the corner: the shadow, a thin photon ring, a nearly edge-on disk of white-gold light crossing the whole sky in front of it,
+   and the far side of the disk lifted by gravity into a great glowing arc over the top and a thinner one beneath. Stars behind are bent round the hole */
 uniform vec2 bc;uniform float br,bk;
 vec2 rot(vec2 v,float a){float c=cos(a),s=sin(a);return vec2(c*v.x-s*v.y,s*v.x+c*v.y);}
-vec3 night(vec2 q,float y){vec3 c=mix(vec3(.047,.039,.149),vec3(.16,.11,.33),smoothstep(0.,.62,y));c=mix(c,vec3(.48,.28,.55),smoothstep(.55,1.05,y));
-  float n=fbm3(q*1.6+vec2(t*.006,0.)),n2=fbm3(q*3.4+5.);c+=vec3(.22,.12,.34)*smoothstep(.42,.9,n)*.5+vec3(.32,.16,.3)*smoothstep(.55,.95,n2)*.28;return c+starfield(q,.9);}
-void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(bc.x*asp,bc.y);float R=br*(.3+.7*smoothstep(0.,1.,bk));
+vec3 space(vec2 q){vec3 c=vec3(.006,.006,.012)+vec3(.02,.016,.03)*fbm3(q*1.4);return c+starfield(q,1.);}
+vec3 hot(float k){return mix(vec3(1.,.97,.9),vec3(1.,.66,.32),smoothstep(0.,1.,k));} /* white-gold at the inner edge, amber outward */
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(bc.x*asp,bc.y);float R=br*(.35+.65*smoothstep(0.,1.,bk));
   vec2 d=P-C;float r=length(d);vec2 dir=d/max(r,1e-4);
-  float def=R*R*1.5/max(r,R*.6);vec2 q=C+rot(dir,.35*R/max(r,R))*(r-def);
-  vec3 c=night(q,uv.y+(q.y-P.y)*.4);
-  c*=mix(.03,1.,smoothstep(R*.88,R*1.12,r)); /* the shadow, with a soft edge */
-  vec2 dd=rot(d,-.1);vec2 e=vec2(dd.x,dd.y/.26);float rr=length(e),Rin=R*1.35,Rout=R*3.4;
-  float om=t*.35*pow(Rin/max(rr,Rin*.5),1.5);vec2 er=rot(e,om);float tx=.7+.45*fbm3(er/R*1.1);
-  float prof=smoothstep(Rin*.85,Rin*1.25,rr)*(1.-smoothstep(Rout*.45,Rout,rr))*pow(Rin/max(rr,1e-4),1.3);
-  float beam=1.+.55*(-e.x/max(rr,1e-4));vec3 lit=mix(vec3(1.,.9,.82),vec3(.98,.58,.66),smoothstep(Rin,Rout*.8,rr));lit=mix(lit,vec3(.62,.46,.95),smoothstep(Rout*.55,Rout,rr)); /* warm white, then rose, fading to violet */
-  vec3 disk=lit*prof*tx*beam*.95;
-  if(dd.y<0.)c+=disk*smoothstep(R*.95,R*1.15,r);
-  float halo=exp(-pow((r-R*1.32)/(R*.22),2.))*(.45+.55*max(-dir.y,0.)+.2*max(dir.y,0.));c+=vec3(1.,.78,.78)*halo*(1.+.4*(-dir.x))*.42;
-  c+=vec3(1.,.9,.86)*exp(-pow((r-R*1.06)/(R*.07),2.))*.55; /* a soft ring of bent light */
-  if(dd.y>=0.)c+=disk;
-  c+=vec3(.9,.55,.75)*.16*exp(-r/(R*3.))*bk; /* the whole thing glows softly into the sky */
-  c=1.-exp(-c*1.45);gl_FragColor=vec4(c+dith(),1.);}`,
+  float def=R*R*1.6/max(r,R*.6);vec2 q=C+rot(dir,.25*R/max(r,R))*(r-def);
+  vec3 c=space(q)*smoothstep(R*.985,R*1.015,r);
+  vec2 dd=rot(d,-.2);float u=-dd.y/max(r,1e-4);
+  float Rin=R*1.25,Rout=R*7.5;
+  /* the disk itself, nearly edge-on: a thin flared band; fine concentric rings turning slowly */
+  float th=.07+.03*smoothstep(Rin,Rout,abs(dd.x));vec2 e=vec2(dd.x,dd.y/th);float rr=length(e);
+  float ring=.62+.5*fbm3(vec2(rr/R*7.,t*.05))*(.7+.3*fbm3(vec2(rr/R*2.,dd.x/R*.6+t*.12)));
+  float prof=smoothstep(Rin*.96,Rin*1.12,rr)*pow(Rin/max(rr,1e-4),1.5)*(1.-smoothstep(Rout*.45,Rout,rr));
+  float band=1.;
+  vec3 disk=hot(smoothstep(Rin,Rout*.55,abs(dd.x)))*prof*ring*band*1.9*(1.+.18*(-dd.x/(abs(dd.x)+R*2.)))*(dd.y>0.?(.55+1.2*exp(-dd.y/(R*.12))):1.);
+  /* the far side of the disk, bent into an arc over the top and a thinner arc below */
+  float hp=smoothstep(R*1.02,R*1.1,r);float ringT=.65+.45*fbm3(vec2(r/R*9.,t*.04));
+  float up=hp*exp(-max(r-R*1.1,0.)/(R*.55))*smoothstep(-.25,.5,u);
+  float dn=hp*exp(-max(r-R*1.07,0.)/(R*.17))*smoothstep(-.25,.55,-u);
+  vec3 halo=hot(smoothstep(R*1.1,R*2.2,r))*(up*1.9+dn*1.3)*ringT;
+  c+=halo*smoothstep(R*.99,R*1.03,r);
+  c+=vec3(1.,.95,.86)*exp(-pow((r-R*1.02)/(R*.012),2.))*.9; /* the photon ring */
+  if(dd.y<0.)c+=disk*smoothstep(R*.99,R*1.03,r);else c+=disk; /* behind the shadow above the midline, in front of it below */
+  c+=vec3(1.,.72,.42)*(.16*exp(-abs(dd.y)/(R*.45))*exp(-abs(dd.x)/(R*6.))+.12*exp(-max(r-R,0.)/(R*.8)))*bk*smoothstep(R*.98,R*1.08,r); /* the soft glow of all that light, never inside the shadow */
+  c=1.-exp(-c*1.6);gl_FragColor=vec4(c+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;
@@ -1970,7 +1978,7 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U;
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'bhole') { const [cx, cy] = toUV(W * .5, H * .3); U = { bc: [cx, cy], br: W * .12 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
   if (!(k === 'aurora' ? SKYGL.aurora() : SKYGL.draw(k === 'fog' || k === 'bhole' ? k : 'clouds', U))) return false;
@@ -2013,13 +2021,6 @@ function drawBackWeather() { // events that live behind the blocks and balls
       for (let i = 0; i < 9; i++) { const u = (i + .5) / 9, lx = mx + (u * 2 - 1) * W * .38, ly = my + H * .045 + Math.sin(u * Math.PI) * H * .012, on = .25 + .75 * Math.max(0, Math.sin(t * 1.6 - i * .8)); ctx.globalAlpha = on * .7 * a; ctx.drawImage(softBlob('190,255,232'), lx - 16, ly - 10, 32, 20); }
       ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; });
   }
-  if (wx.kind === 'bhole') lowres(() => [[.56, .3, -3, 2, .55, 62], [.76, .34, 4, 2.4, .8, 63]].forEach(([y, h, sp, sc, al, sd], i) => drawSheet(cloudTex('mcn' + (i + 1), '52,34,96', '236,186,236', { seed: sd, cover: .54, base: .8, top: .12, alpha: .92, squash: 1.5, sharp: 3, shadow: .7, p: 3 }), H * y + nz(t * .05, i + 5) * 10, H * h, sp, al * a, sc))); // the meteor night's soft violet clouds drift below, lit rose by the glow
-  if (wx.kind === 'bhole') { // dust spiralling in: each mote circles faster as it nears, then vanishes behind the edge of the shadow
-    const cx = W * .5, cy = H * .3, Rh = W * .12 * (.25 + .75 * a * a * (3 - 2 * a)); ctx.save(); ctx.globalCompositeOperation = 'screen';
-    for (let i = 0; i < 46; i++) { const h1 = hash(i * 1.7), h2 = hash(i * 3.3 + 1), life = (t * (.05 + .05 * h1) + h2) % 1, rr = Rh * (1.6 + 2.6 * (1 - life) ** 1.3), an = h2 * 40 + t * .5 * Math.pow(Rh * 1.5 / rr, 1.5) + life * 6;
-      const ex = Math.cos(an) * rr, ey = Math.sin(an) * rr * .2, c0 = Math.cos(.12), s0 = Math.sin(.12), px = cx + ex * c0 - ey * s0, py = cy + ex * s0 + ey * c0; if (ey < 0 && Math.hypot(px - cx, py - cy) < Rh * 1.05) continue;
-      const sz = 2 + 3 * h1; ctx.globalAlpha = a * (.2 + .35 * h1) * Math.min(1, life * 6) * (1 - life * .3) * (1 + .8 * Math.max(0, -Math.cos(an))); ctx.drawImage(softBlob(h1 > .5 ? '255,200,210' : '255,232,220'), px - sz, py - sz, sz * 2, sz * 2); }
-    ctx.restore(); ctx.globalAlpha = 1; }
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
   if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
     ctx.globalAlpha = (.18 + .3 * (1 - z)) * a; ctx.drawImage(softBlob('240,246,255'), x - r, y - r, r * 2, r * 2); } ctx.globalAlpha = 1; }); // layers of out-of-focus ice drifting in the air
@@ -2028,7 +2029,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
       const sway = nz(t * .8, d.x * 40) * 14, x = ((d.x * (W + 40) + t * 40 * d.s) % (W + 40)) - 20 + sway, y = ((d.y * (H + 60) + t * 600 * d.s) % (H + 60)) - 30;
       ctx.globalAlpha = .4 * a; ctx.drawImage(hailWake(), x - d.r * .9, y - d.r * 12, d.r * 1.8, d.r * 12.5); /* a soft wake through the air */ ctx.globalAlpha = .8 * a; ctx.drawImage(ICE(), x - d.r * 1.3, y - d.r * 1.4, d.r * 2.6, d.r * 2.85); ctx.globalAlpha = 1; // slightly stretched along the fall
       if (y > BY + 55 && y < BY + 70 && Math.random() < .3 && hailHits.length < 16) hailHits.push({ x, y, t: 0, s: .6 + Math.random() * .8, vx: (Math.random() - .5) * 60, r: d.r });
-      if (hailHits.length < 16 && Math.random() < .35) for (const o of things) if (o.k === 'b' && Math.abs(x - bxOf(o)) < bw() / 2 - 4 && y > o.y - 30 && y < o.y - 18) { hailHits.push({ x, y: o.y - 22, t: 0, s: .5 + Math.random() * .6, vx: (Math.random() - .5) * 90, r: d.r * .8 }); break; } // stones bounce off the blocks
+      if (hailHits.length < 16 && Math.random() < .35) for (const o of things) if (o.k === 'b' && Math.abs(x - bxOf(o)) < bw() / 2 - 4 && y > o.y - 30 && y < o.y - 18) { if (Math.random() < .5) bell(3600 + Math.random() * 1800, .006, .08, 'fx', .1); hailHits.push({ x, y: o.y - 22, t: 0, s: .5 + Math.random() * .6, vx: (Math.random() - .5) * 90, r: d.r * .8 }); break; } // stones bounce off the blocks
     }
     for (const h of hailHits) { const k = h.t / .4; if (k < .25) { ctx.globalAlpha = (1 - k / .25) * a; ctx.drawImage(softBlob('255,255,255'), h.x - 7, h.y - 4, 14, 8); ctx.globalAlpha = 1; } /* crisp contact flash */ ctx.fillStyle = `rgba(255,255,255,${(1 - k) * .8 * a})`; ctx.beginPath(); ctx.arc(h.x + (h.vx || 0) * h.t, h.y - Math.sin(k * Math.PI) * 14 * (h.s || 1), (h.r || 1.5) * .8, 0, 7); ctx.fill(); ctx.strokeStyle = `rgba(200,225,245,${(1 - k) * .55 * a})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(h.x, h.y, (3 + k * 10) * (h.s || 1), (1 + k * 3) * (h.s || 1), 0, 0, 7); ctx.stroke(); }
   }
@@ -2871,7 +2872,7 @@ function sheetDrag(root, panel, handles, close) {
     panel.style.transition = ''; panel.style.transform = ''; if (bd) { bd.style.transition = ''; bd.style.opacity = ''; }
     if (shut) { haptic('selection'); close(); } };
   addEventListener('pointerup', end); addEventListener('pointercancel', end); }
-function closeSheet() { if (!pSheet.classList.contains('on')) return; if (editName) { const inp = $('#nmi'); if (inp && nameProblem(inp.value.trim())) { editName = false; nameErr = ''; } else commitName(); } pSheet.classList.remove('open'); pSheet.setAttribute('aria-hidden', 'true'); setTimeout(() => { if (!pSheet.classList.contains('open')) pSheet.classList.remove('on'); }, 380); }
+function closeSheet() { if (!pSheet.classList.contains('on')) return; if (editName) { const inp = $('#nmi'); if (inp && nameProblem(inp.value.trim())) { editName = false; nameErr = ''; } else commitName(); } pSheet.classList.remove('open'); pSheet.setAttribute('aria-hidden', 'true'); beep(680, .07, 'sine', .03, -160); setTimeout(() => { if (!pSheet.classList.contains('open')) pSheet.classList.remove('on'); }, 380); }
 pfp.addEventListener('click', () => openSheet('p')); $('#mbest').addEventListener('click', () => openSheet('l'));
 $('#sdone').addEventListener('click', closeSheet); pSheet.querySelector('.bd').addEventListener('click', closeSheet);
 addEventListener('online', flushGc);
