@@ -1848,46 +1848,63 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   if(dd.y<0.)c+=disk*smoothstep(R*.99,R*1.02,r);else c+=disk;
   c+=vec3(1.,.7,.4)*(.18*exp(-abs(dd.y)/(R*.5))*exp(-abs(dd.x)/(R*6.))+.14*exp(-max(r-R,0.)/(R*.9)))*bk*smoothstep(R*.98,R*1.06,r); /* bloom */
   c=1.-exp(-c*1.55);c=pow(c,vec3(.95));gl_FragColor=vec4(c+dith(),1.);}`,
-    alien: `/* the invasion, drawn like a product render: a sleek titanium disc seen in three-quarter view with a glass dome, soft studio light and a slow highlight;
-   a thin iridescent glow flows round its rim (violet, pink, amber, blue); a glowing aperture underneath, and the beam visibly pouring from it, widening to the ground */
+    alien: `/* the invasion, rendered like an Apple product shot: the ship is a real 3D shape (ray-marched distance fields), lit by a studio: a large softbox overhead,
+   a strip light at the side and a coloured back light. Titanium reflects the studio with Fresnel, the glass dome mirrors it, soft occlusion in the creases;
+   a thin iridescent rim light, a ring of lights turning underneath, and the beam pouring from the lit aperture */
 uniform vec2 sc;uniform float sk,ba;
-float E(vec2 d,vec2 r){return length(d/r);}
 vec3 iri(float a){a=fract(a);vec3 c1=vec3(.62,.42,1.),c2=vec3(1.,.45,.72),c3=vec3(1.,.68,.38),c4=vec3(.38,.62,1.);
   return a<.25?mix(c1,c2,a*4.):a<.5?mix(c2,c3,(a-.25)*4.):a<.75?mix(c3,c4,(a-.5)*4.):mix(c4,c1,(a-.75)*4.);}
-void main(){vec2 uv=UV();float asp=res.x/res.y,px=1.5/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(sc.x*asp,sc.y);
+float sdE(vec3 p,vec3 r){float k0=length(p/r),k1=length(p/(r*r));return k0*(k0-1.)/k1;}
+float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
+float map(vec3 p){float hull=sdE(p,vec3(1.,.16,1.));float dome=length(p-vec3(0.,.1,0.))-.36;float belly=sdE(p-vec3(0.,-.07,0.),vec3(.6,.15,.6));
+  return smin(smin(hull,dome,.08),belly,.06);}
+vec3 nrm(vec3 p){vec2 e=vec2(.0015,-.0015);return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));}
+vec3 studio(vec3 r){vec3 c=vec3(.025,.022,.05)+vec3(.05,.04,.1)*smoothstep(-.3,.6,r.y); /* the dark studio, a little night violet */
+  c+=vec3(.22,.22,.28)*smoothstep(-.4,.9,r.y); /* a soft fill sweeping up the studio */
+  c+=vec3(1.)*smoothstep(.3,.75,r.y)*1.05; /* the large softbox overhead */
+  c+=vec3(.55,.58,.7)*exp(-pow((r.y+.05)/.12,2.))*.5; /* a horizon line of light, for the gradient highlight along the rim */
+  float az=atan(r.z,r.x);c+=vec3(.9,.93,1.)*exp(-pow((az+2.2)/.28,2.))*smoothstep(-.15,.35,r.y)*smoothstep(.75,.3,r.y)*.7; /* a tall strip light at the side */
+  c+=iri(az/6.2832+t*.03)*exp(-pow((az-1.)/.6,2.))*smoothstep(.3,-.2,r.y)*.35; /* a coloured back light */
+  c+=vec3(.2,.26,.42)*smoothstep(-.05,-.85,r.y); /* light bouncing up from the beam and the ground below */
+  return c;}
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(sc.x*asp,sc.y);float RX=asp*.4;
   vec3 c=mix(vec3(.03,.025,.08),vec3(.07,.06,.16),smoothstep(0.,1.,uv.y));c+=starfield(P,.55);
-  float RX=asp*.4,RY=RX*.2;vec2 d=P-C;
-  float hz=smoothstep(.5,.85,fbm3(vec2(P.x*1.4+t*.015,P.y*4.)))*smoothstep(.1,.45,uv.y);c+=vec3(.25,.22,.5)*hz*.14*sk; /* haze */
-  /* the beam, pouring from the aperture */
-  vec2 Ce=C+vec2(0.,RY*1.25);vec2 bq=P-Ce;float cs=cos(ba),sn=sin(ba);bq=vec2(cs*bq.x-sn*bq.y,sn*bq.x+cs*bq.y);
-  float w0=RX*.17,wdt=w0+max(bq.y,0.)*.36;float cone=smoothstep(wdt,wdt*.25,abs(bq.x))*smoothstep(-.005,.02,bq.y)*exp(-max(bq.y,0.)*.9);
+  float hz=smoothstep(.5,.85,fbm3(vec2(P.x*1.4+t*.015,P.y*4.)))*smoothstep(.1,.45,uv.y);c+=vec3(.25,.22,.5)*hz*.14*sk;
+  /* the camera: a little below the ship, looking up at it */
+  vec3 ro=vec3(0.,-.62,-4.4),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
+  vec2 q=(P-C)/RX/S;vec3 rd=normalize(fw+rt*q.x+up*(-q.y));
+  /* where the aperture appears on screen, so the beam starts exactly there */
+  vec3 ap=vec3(0.,-.22,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(aq.x,-aq.y)*RX*S;
+  vec2 bq=P-Ce;float cs=cos(ba),sn=sin(ba);bq=vec2(cs*bq.x-sn*bq.y,sn*bq.x+cs*bq.y);
+  float w0=RX*.13,wdt=w0+max(bq.y,0.)*.36;float cone=smoothstep(wdt,wdt*.25,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*.9);
   float mist=.6+.55*fbm3(vec2(bq.x*6.,bq.y*2.6+t*.3))+.2*fbm3(vec2(bq.x*15.,bq.y*6.+t*.55));
-  vec3 bc=mix(vec3(.85,.95,1.),iri(bq.x/wdt*.25+.15+t*.05),.35*smoothstep(.2,1.,abs(bq.x)/wdt));
-  c+=bc*cone*mist*.36*sk;c+=vec3(1.)*smoothstep(wdt*.35,0.,abs(bq.x))*smoothstep(-.005,.02,bq.y)*exp(-max(bq.y,0.)*2.4)*.28*sk;
+  vec3 bcol=mix(vec3(.85,.95,1.),iri(bq.x/wdt*.25+.15+t*.05),.35*smoothstep(.2,1.,abs(bq.x)/wdt));
+  c+=bcol*cone*mist*.36*sk;c+=vec3(1.)*smoothstep(wdt*.35,0.,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*2.4)*.3*sk;
   float pool=exp(-pow((P.x-Ce.x-sn*.95)/(asp*.42),2.)-pow((uv.y-1.03)/.1,2.));c+=vec3(.7,.75,1.)*pool*.18*sk;
-  /* the soft iridescent glow the ship casts round itself */
-  float er=E(d,vec2(RX,RY));float ang=atan(d.y/RY,d.x/RX)/6.2832+t*.06;
-  c+=iri(ang)*exp(-max(er-1.,0.)*3.5)*.22*sk*smoothstep(.6,1.,er);
-  /* the body, layered back to front: the glass dome, the bulging underside, then the titanium rim over both */
-  float aa=px*2.5;
-  vec2 dq=(d+vec2(0.,RY*.25))/vec2(RX*.3,RY*2.);float ed=length(dq);float dome=(1.-smoothstep(1.-aa/(RY*2.),1.,ed))*step(dq.y,.2);
-  if(dome>0.){vec3 gl=mix(vec3(.24,.24,.4),vec3(.05,.05,.12),smoothstep(-1.,.1,dq.y));
-    gl+=vec3(1.)*exp(-pow((dq.x+.38)/.16,2.)-pow((dq.y+.6)/.13,2.))*.7; /* a crisp window reflection on the glass */
-    gl+=vec3(.75,.8,1.)*smoothstep(.75,1.,ed)*.18; /* fresnel: brighter towards the edge */
-    gl+=iri(dq.x*.3+t*.05)*exp(-pow((dq.y-.05)/.15,2.))*.3;
-    c=mix(c,gl,dome*sk);}
-  vec2 bd2=(d-vec2(0.,RY*.4))/vec2(RX*.8,RY*1.15);float eb=length(bd2);float bot=(1.-smoothstep(1.-aa/RY,1.,eb))*step(0.,bd2.y+.2);
-  if(bot>0.){vec3 u=mix(vec3(.2,.2,.27),vec3(.06,.06,.09),smoothstep(-.2,1.,bd2.y));u*=.8+.2*smoothstep(1.,.4,eb);
-    float ap=length((d-vec2(0.,RY*1.15))/vec2(RX*.15,RY*.3));u+=vec3(.92,.97,1.)*(1.-smoothstep(.7,1.,ap))*(.88+.12*sin(t*2.))+vec3(.6,.75,1.)*exp(-ap*1.5)*.35; /* the aperture */
-    float lr=smoothstep(.05,0.,abs(eb-.7))*pow(max(0.,sin(atan(bd2.y,bd2.x)*14.-t*1.8)),8.);u+=vec3(.85,.9,1.)*lr*.7; /* a ring of small lights turning */
-    c=mix(c,u,bot*sk);}
-  float rim=1.-smoothstep(1.-aa/RY,1.,er);
-  if(rim>0.){float y=d.y/RY;vec3 ti=mix(vec3(.7,.71,.78),vec3(.16,.16,.22),smoothstep(-.9,.9,y)); /* titanium, lit from above */
-    ti+=vec3(.95,.97,1.)*exp(-pow((d.x/RX-sin(t*.25)*.6)/.16,2.))*smoothstep(.9,-.5,y)*.5; /* a slow highlight sliding across */
-    ti+=vec3(1.)*smoothstep(.1,0.,abs(y+.25))*.12; /* the fine bevel line */
-    ti*=1.-.25*smoothstep(.85,1.,er)*smoothstep(-.2,1.,y); /* softly shadowed on the underside of the lip */
-    ti+=iri(ang)*smoothstep(.07,0.,abs(er-1.))*step(-.3,y)*1.3; /* the glowing edge */
-    c=mix(c,ti,rim*sk);}
+  /* the soft iridescent glow it casts */
+  float gl=length((P-C)/vec2(RX*1.05,RX*.32));c+=iri(atan(P.y-C.y,P.x-C.x)/6.2832+t*.06)*exp(-max(gl-1.,0.)*3.)*smoothstep(.55,1.,gl)*.16*sk;
+  /* the ship */
+  float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1;
+  if(h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
+    for(int i=0;i<56;i++){p=ro+rd*tt;float dd=map(p);if(dd<.0008){hit=1.;break;}tt+=dd;if(tt>7.)break;}
+    if(hit>0.){vec3 n=nrm(p),v=-rd,r=reflect(rd,n);float ndv=clamp(dot(n,v),0.,1.);
+      float ao=clamp(1.-3.*(.06-map(p+n*.06)),0.,1.)*clamp(1.-2.*(.15-map(p+n*.15)),0.,1.); /* soft occlusion in the creases */
+      float rxz=length(p.xz);vec3 col;
+      vec3 gcol=vec3(0.);float gk=smoothstep(.05,.11,p.y)*smoothstep(.44,.38,rxz);
+      { /* the glass dome */
+        float fr=.04+.96*pow(1.-ndv,5.);col=studio(r)*fr*1.3+vec3(.05,.05,.12)*(1.-fr)+iri(p.x*.6+t*.05)*pow(1.-ndv,2.)*.25;
+        col+=vec3(.6,.85,1.)*exp(-length(p-vec3(0.,.1,0.))*4.)*.35; /* a soft light inside */
+        vec3 L=normalize(vec3(-.45,.85,-.35));col+=vec3(1.)*pow(max(dot(r,L),0.),60.)*1.2;gcol=col;} /* the key light's crisp highlight */
+      { /* titanium */
+        vec3 F0=vec3(.6,.61,.66);vec3 fr=F0+(1.-F0)*pow(1.-ndv,5.);float ang=atan(p.z,p.x)+t*.12;
+        col=studio(r)*fr;
+        if(p.y<-.02){col*=.8; /* the underside, in its own shade */
+          float lr=smoothstep(.02,0.,abs(rxz-.46))*pow(max(0.,sin(ang*14.)),10.);col+=vec3(.85,.92,1.)*lr*1.4; /* a ring of lights turning */
+          col+=vec3(.95,.98,1.)*smoothstep(.15,.1,rxz)*(.9+.1*sin(t*2.))*1.4;} /* the aperture */
+        float edge=smoothstep(.05,0.,abs(rxz-.985))*smoothstep(.06,0.,abs(p.y));col+=iri(atan(p.z,p.x)/6.2832+t*.06)*edge*1.6;} /* the iridescent rim */
+      col=mix(col,gcol,gk); /* glass and metal meet softly */
+      col*=.35+.65*ao;
+      c=mix(c,col,sk);}}
   c=1.-exp(-c*1.35);gl_FragColor=vec4(c+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}

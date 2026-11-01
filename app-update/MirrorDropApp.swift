@@ -125,7 +125,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
     // MARK: start-up check
     // If the game hasn't shown its menu 6 seconds after launch, a small panel says what happened, so a stuck start can be fixed.
 
-    static let appBuild = "2faf172"   // replaced with the release's version by tools/build-app-update.sh
+    static let appBuild = "02b50d8"   // replaced with the release's version by tools/build-app-update.sh
     private var ready = false
     private var events: [String] = []
     private var panel: UIView?
@@ -233,14 +233,15 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
             let ins = w?.safeAreaInsets ?? webView?.safeAreaInsets ?? .zero
             return (["top": Double(ins.top), "bottom": Double(ins.bottom)], nil)
 
-        // The aurora video, handed to the game after launch so the game file itself stays small and opens fast
-        case ("App", "aurora"):
+        // The aurora and black hole videos, handed to the game after launch so the game file itself stays small and opens fast
+        case ("App", "aurora"), ("App", "blackhole"):
+            let name = method
             let data = await Task.detached(priority: .utility) { () -> String? in
-                guard let url = Bundle.main.url(forResource: "aurora", withExtension: "mp4"),
+                guard let url = Bundle.main.url(forResource: name, withExtension: "mp4"),
                       let bytes = try? Data(contentsOf: url) else { return nil }
                 return bytes.base64EncodedString()
             }.value
-            guard let data else { return (nil, "aurora.mp4 is not in the app") }
+            guard let data else { return (nil, "\(name).mp4 is not in the app") }
             return (["data": data], nil)
 
         // Sharing: the iPhone's own share sheet with the score picture and a line of text
