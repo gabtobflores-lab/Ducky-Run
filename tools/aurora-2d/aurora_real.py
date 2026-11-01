@@ -12,10 +12,10 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.17))
+EXPO = float(os.environ.get('EXPO', 0.09))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.55))      # contrast of the rays
-GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
+GLOW = float(os.environ.get('GLOW', 3.0))      # soft diffuse light around each curtain
 SCAT = float(os.environ.get('SCAT', 0.08))      # light scattered into the surrounding air
 PMIN = float(os.environ.get('PMIN', 0.9))     # how dark the quiet stretches of a curtain get
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
@@ -23,25 +23,25 @@ FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's ligh
 FOCX = float(os.environ.get('FOCX', 0.3971))     # where that focal area is (across the view)
 FOCW = float(os.environ.get('FOCW', 0.3))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.35))      # contrast of the broad ray groups (columns)
-BOTV = float(os.environ.get('BOTV', 0.4))      # blue-violet glow along the bottom
+BOTV = float(os.environ.get('BOTV', 0.7))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 0.8))    # strength of the upper-right teal curtain
 HEMY = float(os.environ.get('HEMY', 0.73))      # height of the main curtain's lower edge
 FINE = float(os.environ.get('FINE', 0.0))      # delicate fine ray texture inside the glow
-LEFTK = float(os.environ.get('LEFTK', 0.9))    # strength of the left curtain
+LEFTK = float(os.environ.get('LEFTK', 1.2))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.86))      # height of the left curtain's lower edge
 MFOLD = float(os.environ.get('MFOLD', 0.02))  # how deeply the main curtain's lower edge folds
 MRISE = float(os.environ.get('MRISE', 0.2))      # how far up the main curtain's light reaches
 CLUMP = float(os.environ.get('CLUMP', 0.0))    # soft clumps of brightness inside the glow, elongated along the rays
 PHOTO = float(os.environ.get('PHOTO', 0.4))      # photographic softness of the finished image
-HAZE = float(os.environ.get('HAZE', 0.3))      # broad blue haze around the light, stronger to the left
+HAZE = float(os.environ.get('HAZE', 0.4))      # broad blue haze around the light, stronger to the left
 LOWR = float(os.environ.get('LOWR', 0.0))      # strength of the faint low-right curtain
 VIOL = float(os.environ.get('VIOL', 0.0))      # violet fold edge along the right side of the main glow
 MPK = float(os.environ.get('MPK', 0.08))       # how far above its lower edge the main curtain is brightest (0 = at the edge)
 MFB = float(os.environ.get('MFB', 0.9))       # fold brightening on the main curtain
 MPAT = float(os.environ.get('MPAT', 0.4))     # contrast of bright/quiet stretches on the main curtain
-SIDE = float(os.environ.get('SIDE', 0.5))     # darkens the sky away from the main body
+SIDE = float(os.environ.get('SIDE', 1.0))     # darkens the sky away from the main body
 SIDX = float(os.environ.get('SIDX', 0.5981))    # where the main body is across the screen
-LOWG = float(os.environ.get('LOWG', 0.15))     # soft blue glow hanging below the main body
+LOWG = float(os.environ.get('LOWG', 0.5))     # soft blue glow hanging below the main body
 MBLUR = float(os.environ.get('MBLUR', 14))   # softness of the main curtain
 LOWC = os.environ.get('LOWC', '10,165,230')   # colour of the glow below the body
 CURL = float(os.environ.get('CURL', 0.0))     # a short low fold of light curling under the lower left of the main body
@@ -76,7 +76,7 @@ PLF = float(os.environ.get('PLF', 9))      # how many pleats across the view
 RIB = float(os.environ.get('RIB', 1.0))       # build the main body from overlapping ribbons (sheets) with brighter edges, instead of one mass
 RIBE = float(os.environ.get('RIBE', 0.015))   # softness of the ribbons' edges
 RIM = float(os.environ.get('RIM', 0.0))       # extra brightness where a ribbon is seen edge-on
-LCK = float(os.environ.get('LCK', 0.0))       # a blue curtain inside the left of the view, beside the main column
+LCK = float(os.environ.get('LCK', 1.6))       # a blue curtain inside the left of the view, beside the main column
 LCX = float(os.environ.get('LCX', 0.3109))      # its centre (view units)
 LCY = float(os.environ.get('LCY', 0.5))      # height of its lower edge
 STW = float(os.environ.get('STW', 1.5))       # width of the light column below the body
@@ -86,13 +86,13 @@ GPY = float(os.environ.get('GPY', 0.0))      # how far above the lobe it sits
 TPK = float(os.environ.get('TPK', 0.0))       # two peaks at the top of the main body
 TPY = float(os.environ.get('TPY', 0.3))       # screen height of the dip between the peaks
 FLK = float(os.environ.get('FLK', 0.0))      # flicker along the rays (thin lines)
-BLURK = float(os.environ.get('BLURK', 1.8))   # softness multiplier for every curtain
+BLURK = float(os.environ.get('BLURK', 3.2))   # softness multiplier for every curtain
 FOLDK = float(os.environ.get('FOLDK', 0.3))   # depth of the folds along the side curtains' lower edges (saw-teeth when high)
 STK = float(os.environ.get('STK', 7.5))       # main body built from individual soft vertical streaks
 STN = int(float(os.environ.get('STN', 26)))   # how many streaks
-STWD = float(os.environ.get('STWD', 1.5))     # streak width multiplier
+STWD = float(os.environ.get('STWD', 2.0))     # streak width multiplier
 MAINK = float(os.environ.get('MAINK', 0.25))   # strength of the old smooth main curtain
-STFI = float(os.environ.get('STFI', 0.03))    # how gradually each streak fades in above its bottom end
+STFI = float(os.environ.get('STFI', 0.09))    # how gradually each streak fades in above its bottom end
 STFAN = float(os.environ.get('STFAN', 0.8))   # streaks spread apart as they rise (column widens upward)
 STTOP = os.environ.get('STTOP', '40,150,236')  # colour of the streaks' upper parts
 STTALL = float(os.environ.get('STTALL', 0.6))  # centre streaks taller, outer ones shorter (tower shape)
@@ -102,7 +102,7 @@ ST2K = float(os.environ.get('ST2K', 0.0))     # second, smaller streak cluster a
 ST2X = float(os.environ.get('ST2X', -0.22))   # its offset across from the core
 ST2Y = float(os.environ.get('ST2Y', 0.14))    # how much lower its bottom sits
 STPATH = float(os.environ.get('STPATH', 1.0))  # streaks hang from a swirling ribbon path (like real northern lights) instead of one cluster
-STPN = int(float(os.environ.get('STPN', 200)))   # how many streaks along the path
+STPN = int(float(os.environ.get('STPN', 260)))   # how many streaks along the path
 UPC = os.environ.get('UPC', '25,200,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -238,7 +238,7 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
     acc = np.zeros((H, W), np.float32); dacc = np.zeros((H, W), np.float32)
     clusters = [(FOCX, rb0, FOCW, STN, 1.0, STTALL)] if STPATH <= 0 else []
     if STPATH > 0:   # the ribbon: a smooth S-shaped path on screen; each streak hangs from a point on it
-        cpts = np.array([(-.12, .62), (.12, .68), (.4, .66), (.66, .58), (.82, .44), (.72, .31), (.5, .27), (.33, .2), (.38, .08), (.55, .0)])
+        cpts = np.array([tuple(map(float, q.split(','))) for q in os.environ.get('CPATH', '0.1,.6;.25,.68;.36,.68;.42,.6;.47,.5;.52,.4;.57,.3;.66,.23;.86,.19;1.1,.16').split(';')])
         cpts = cpts + np.array([[.03 * np.sin(T + k * 1.3), .02 * np.cos(T + k * 1.9)] for k in range(len(cpts))])
         Pp = np.vstack([cpts[0] * 2 - cpts[1], cpts, cpts[-1] * 2 - cpts[-2]]); path = []
         for k in range(1, len(Pp) - 2):
@@ -255,8 +255,8 @@ if STK > 0:   # the main body as a column of individual soft streaks along the r
         farp = np.clip((py_ + .05) / .7, .3, 1); endp = np.clip(uu / .07, 0, 1) * np.clip((1 - uu) / .12, 0, 1)
         for i in range(STPN):
             if endp[i] < .02: continue
-            wd = rngS.uniform(0.005, 0.016) * STWD; amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2) * (1 + float(os.environ.get('FOLDP', 2.0)) * foldp[i]) * bund[i]
-            ln = rngS.uniform(.08, .16) * float(os.environ.get('STPL', 1.8)) * lnv[i] * (.55 + .45 * farp[i]) * (1 + .5 * foldp[i]); drift = .004 * np.sin(T + i * 1.7)
+            wd = rngS.uniform(0.005, 0.016) * STWD; amp = STPATH * endp[i] * (.35 + .65 * farp[i]) * rngS.uniform(.5, 1.0) * (.6 + .4 * np.sin(uu[i] * 23 + T) ** 2) * (1 + float(os.environ.get('FOLDP', 0.8)) * foldp[i]) * bund[i]
+            ln = rngS.uniform(.08, .16) * float(os.environ.get('STPL', 2.4)) * lnv[i] * (.55 + .45 * farp[i]) * (1 + .5 * foldp[i]); drift = .004 * np.sin(T + i * 1.7)
             d = pr_[i] - R; across = np.exp(-((S - ps_[i] - drift) / wd) ** 2)
             along = np.clip(d / STFI, 0, 1) ** 1.5 * np.exp(-np.clip(d, 0, None) / (ln * 0.55)) * (d < ln * 1.8)
             acc += amp * across * along; dacc += amp * across * along * np.clip(d / ln, 0, 1)
