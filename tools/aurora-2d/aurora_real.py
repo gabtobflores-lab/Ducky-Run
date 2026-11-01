@@ -12,9 +12,9 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.35))
+EXPO = float(os.environ.get('EXPO', 0.29))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
-RAYK = float(os.environ.get('RAYK', 0.3))      # contrast of the rays
+RAYK = float(os.environ.get('RAYK', 0.25))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0068))      # soft diffuse light around each curtain
 SCAT = float(os.environ.get('SCAT', 0.08))      # light scattered into the surrounding air
 PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of a curtain get
@@ -26,12 +26,12 @@ GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups
 BOTV = float(os.environ.get('BOTV', 0.45))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.4752))    # strength of the upper-right teal curtain
 HEMY = float(os.environ.get('HEMY', 0.6173))      # height of the main curtain's lower edge
-FINE = float(os.environ.get('FINE', 0.5))      # delicate fine ray texture inside the glow
+FINE = float(os.environ.get('FINE', 0.0))      # delicate fine ray texture inside the glow
 LEFTK = float(os.environ.get('LEFTK', 0.9))    # strength of the left curtain
 LEFTY = float(os.environ.get('LEFTY', 0.86))      # height of the left curtain's lower edge
 MFOLD = float(os.environ.get('MFOLD', 0.03))  # how deeply the main curtain's lower edge folds
 MRISE = float(os.environ.get('MRISE', 0.2))      # how far up the main curtain's light reaches
-CLUMP = float(os.environ.get('CLUMP', 0.5))    # soft clumps of brightness inside the glow, elongated along the rays
+CLUMP = float(os.environ.get('CLUMP', 0.0))    # soft clumps of brightness inside the glow, elongated along the rays
 PHOTO = float(os.environ.get('PHOTO', 0.4))      # photographic softness of the finished image
 HAZE = float(os.environ.get('HAZE', 0.0))      # broad blue haze around the light, stronger to the left
 LOWR = float(os.environ.get('LOWR', 16))      # strength of the faint low-right curtain
@@ -61,7 +61,7 @@ LOWY = float(os.environ.get('LOWY', 0.648))    # height of the low-right curtain
 ECOL = os.environ.get('ECOL', '15,230,255')   # colour at the main curtain's bright lower part
 TWA = float(os.environ.get('TWA', 0.01))       # how far a curtain sways sideways along its height (twists and turns)
 TWF = float(os.environ.get('TWF', 1.0))       # how many bends along its height
-DET = float(os.environ.get('DET', 0.25))       # fine ray detail kept on top of the soft glow (image quality)
+DET = float(os.environ.get('DET', 0.0))       # fine ray detail kept on top of the soft glow (image quality)
 LGR = float(os.environ.get('LGR', 0.17))      # how far below the body its glow hangs (screen heights)
 STEM = float(os.environ.get('STEM', 0.25))     # broad column of light from under the body down to the bottom, widening as it goes
 STX = float(os.environ.get('STX', 0.47))       # its centre across the screen
@@ -69,13 +69,13 @@ KNS = float(os.environ.get('KNS', 1.0))       # size of the knot / lower lobe
 FPOW = float(os.environ.get('FPOW', 2))     # shape of the main body across: 2 = rounded peak, higher = broad with straight sides
 TOPY = float(os.environ.get('TOPY', 0.0))     # screen height where the main body's top fades out evenly (0 = off): a broad top, not a flame tip
 TOPS = float(os.environ.get('TOPS', 0.22))    # how softly
-BOTK = float(os.environ.get('BOTK', 0.4331))     # a low row of curtains whose rays rise from near the bottom of the screen
+BOTK = float(os.environ.get('BOTK', 0.2))     # a low row of curtains whose rays rise from near the bottom of the screen
 BOTY = float(os.environ.get('BOTY', 1.12))    # world height of their lower edge
 PLT = float(os.environ.get('PLT', 0.0))       # strength of the long vertical pleats in the main curtain (bright and darker bands)
 PLF = float(os.environ.get('PLF', 9))      # how many pleats across the view
-RIB = float(os.environ.get('RIB', 0.85))       # build the main body from overlapping ribbons (sheets) with brighter edges, instead of one mass
-RIBE = float(os.environ.get('RIBE', 0.005))   # softness of the ribbons' edges
-RIM = float(os.environ.get('RIM', 0.3))       # extra brightness where a ribbon is seen edge-on
+RIB = float(os.environ.get('RIB', 1.0))       # build the main body from overlapping ribbons (sheets) with brighter edges, instead of one mass
+RIBE = float(os.environ.get('RIBE', 0.015))   # softness of the ribbons' edges
+RIM = float(os.environ.get('RIM', 0.0))       # extra brightness where a ribbon is seen edge-on
 LCK = float(os.environ.get('LCK', 1.4047))       # a blue curtain inside the left of the view, beside the main column
 LCX = float(os.environ.get('LCX', 0.3109))      # its centre (view units)
 LCY = float(os.environ.get('LCY', 0.5))      # height of its lower edge
@@ -85,6 +85,8 @@ GPX = float(os.environ.get('GPX', 0.0))       # its offset across from the lobe
 GPY = float(os.environ.get('GPY', 0.06))      # how far above the lobe it sits
 TPK = float(os.environ.get('TPK', 0.0))       # two peaks at the top of the main body
 TPY = float(os.environ.get('TPY', 0.3))       # screen height of the dip between the peaks
+FLK = float(os.environ.get('FLK', 0.0))      # flicker along the rays (thin lines)
+BLURK = float(os.environ.get('BLURK', 2.2))   # softness multiplier for every curtain
 UPC = os.environ.get('UPC', '25,205,240')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -156,7 +158,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
     edge = 1 / (1 + np.exp(-d / thick))
     core = above * edge
     # rays flicker gently along their length
-    flick = 0.82 + 0.18 * np.interp(np.mod(Sx * 1.0 + R * 0.35, 1.0) * 4095, np.arange(4096), n1(np.linspace(0, 1, 4096), seed + 5, 3))
+    flick = (1 - FLK) + FLK * np.interp(np.mod(Sx * 1.0 + R * 0.35, 1.0) * 4095, np.arange(4096), n1(np.linspace(0, 1, 4096), seed + 5, 3))
     diffuse = np.exp(-np.clip(d, 0, None) / (rise * 1.6)) * (1 / (1 + np.exp(-d / (thick * 2.0))))
     soft = nd.gaussian_filter(np.interp(Sx, ss, patch * span), 1)       # broad soft light along the curtain
     if CLUMP > 0:   # soft clumps: a smooth field in ray coordinates, stretched along the rays, drifting slowly
@@ -188,7 +190,7 @@ img += sky
 for (s0, s1, hy, fa, ff, rise, th, sd, inten, ec, uc, blur) in CURTAINS:
     L, d = curtain(s0, s1, hy, fa, ff, rise, th, sd, sd * 1.3)
     if blur > 0:
-        Lb = nd.gaussian_filter(L, blur * W / 1206 / ZOOM)
+        Lb = nd.gaussian_filter(L, blur * BLURK * W / 1206 / ZOOM)
         if DET > 0 and sd in (22, 41):   # keep the fine ray structure: the glow stays soft, the striations along the rays stay crisp
             Lf = nd.gaussian_filter(L, 1.3 * W / 1206)
             Lb = Lb + DET * (Lf - Lb) * np.clip(Lb / (Lb.max() * 0.25 + 1e-6), 0, 1)
@@ -223,7 +225,7 @@ if STEM > 0:   # the light continues down below the body to the bottom of the sc
     xs_ = X / asp
     ww = (0.24 + 0.3 * np.clip((Y - 0.55) / 0.45, 0, 1)) * STW              # wider lower down
     col_ = np.exp(-np.abs((xs_ - STX) / ww) ** 3) * np.clip((Y - 0.5) / 0.2, 0, 1)   # flat-topped: a broad even band of light
-    col_ = nd.gaussian_filter(col_ * (0.85 + 0.15 * np.sin(xs_ * 40 + 3 * np.sin(T))), W * 0.01)   # faint vertical banding
+    col_ = nd.gaussian_filter(col_ * (0.8 + 0.2 * np.sin(xs_ * 11 + 2 * np.sin(T))), W * 0.01)   # faint vertical banding
     img = img + col_[..., None] * (col((15, 150, 235)) * 0.7 + col((40, 210, 240)) * 0.3) * STEM
 if BOTV > 0:   # a broad, soft blue-violet glow along the bottom, strongest under the light, fading upward
     under = nd.gaussian_filter(np.clip((img - sky).mean(-1), 0, None), W * 0.12)
