@@ -1844,6 +1844,36 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   if(dd.y<0.)c+=disk*smoothstep(R*.99,R*1.02,r);else c+=disk;
   c+=vec3(1.,.7,.4)*(.18*exp(-abs(dd.y)/(R*.5))*exp(-abs(dd.x)/(R*6.))+.14*exp(-max(r-R,0.)/(R*.9)))*bk*smoothstep(R*.98,R*1.06,r); /* bloom */
   c=1.-exp(-c*1.55);c=pow(c,vec3(.95));gl_FragColor=vec4(c+dith(),1.);}`,
+    alien: `/* the invasion: a colossal ship seen from below, filling the top of the sky. Its underside is dark metal in concentric panels and radial seams, with a slow wave of lights round
+   the outer ring, a fine inner ring, and a glowing core; a hazy beam falls from the core with mist rising through it; the night around it glows violet and mint in the haze */
+uniform vec2 sc;uniform float sk,ba;
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y);vec2 C=vec2(sc.x*asp,sc.y);
+  vec3 c=mix(vec3(.02,.02,.06),vec3(.06,.05,.14),smoothstep(0.,1.,uv.y));c+=starfield(P,.5)*smoothstep(.25,.6,uv.y);
+  float rx=asp*.78,ry=.19;vec2 d=(P-C)/vec2(rx,ry);float rr=length(d),th=atan(d.y,d.x);
+  float glo=exp(-length((P-C-vec2(0.,.05))/vec2(rx*1.3,.32)));c+=vec3(.25,.2,.55)*glo*.5*sk; /* the ship lights the haze around it */
+  /* the beam: a widening cone from the core, mist drifting up through it */
+  vec2 bd=P-C-vec2(0.,ry*.15);float ang=ba;vec2 bq=vec2(bd.x*cos(ang)-bd.y*sin(ang),bd.x*sin(ang)+bd.y*cos(ang));
+  float wdt=.05+bq.y*.42;float cone=smoothstep(wdt,wdt*.35,abs(bq.x))*step(0.,bq.y)*exp(-bq.y*1.1);
+  float mist=.55+.6*fbm3(vec2(bq.x*7.,bq.y*3.+t*.35))+.25*fbm3(vec2(bq.x*16.,bq.y*7.+t*.6));
+  float haze=smoothstep(.45,.85,fbm3(vec2(P.x*1.6+t*.02,P.y*5.)))*smoothstep(.15,.5,uv.y)*smoothstep(1.,.6,uv.y);c+=vec3(.3,.28,.6)*haze*.12*sk+vec3(.4,1.,.85)*haze*cone*.25*sk; /* thin haze drifting through the light */
+  float pool=exp(-pow((P.x-C.x-sin(ang)*.9)/(asp*.42),2.)-pow((uv.y-1.02)/.1,2.));c+=vec3(.35,.9,.78)*pool*.22*sk; /* where the beam reaches the ground */
+  c+=vec3(.42,1.,.86)*cone*mist*.32*sk;c+=vec3(.6,1.,.92)*smoothstep(wdt*.3,0.,abs(bq.x))*step(0.,bq.y)*exp(-bq.y*2.2)*.25*sk; /* its bright heart */
+  if(rr<1.){ /* the hull */
+    float k=rr;vec3 m=mix(vec3(.2,.2,.28),vec3(.06,.06,.1),smoothstep(0.,1.,k));m*=.86+.28*fbm3(vec2(th*5.,k*10.))*(.8+.2*fbm3(vec2(th*30.,k*40.)));
+    float band=smoothstep(.3,.36,k)*smoothstep(.62,.56,k);m*=1.-.35*band; /* a recessed middle band */
+    m+=vec3(.35,.34,.5)*(smoothstep(.02,0.,abs(k-.36))+smoothstep(.02,0.,abs(k-.62)))*(.4+.6*max(0.,-d.y)); /* raised edges catching the light */
+    float seams=smoothstep(.012,.0,abs(fract(th/6.2832*24.)-.5)-.488)*step(.62,k)*step(k,.95);m*=1.-.12*seams;
+    m+=vec3(.35,.8,.7)*exp(-k*4.5)*.35; /* the core lights the underside around it */
+    m*=.75+.25*smoothstep(1.,.7,k); /* shadowed towards the rim */
+    m+=vec3(.5,.45,.75)*pow(max(0.,-d.y),3.)*.08*(1.-k); /* a faint sheen */
+    float wave=pow(max(0.,sin(th*1.-t*1.4)),6.);float lt=smoothstep(.022,.0,abs(k-.84))*(.25+.75*pow(.5+.5*sin(th*44.),18.))*(.35+.65*wave);
+    float lt2=smoothstep(.015,.0,abs(k-.46))*pow(.5+.5*sin(th*30.+t*.8),24.)*.8;
+    float core=smoothstep(.2,.0,k)*(.75+.25*sin(t*2.));
+    m+=vec3(.6,1.,.9)*lt*1.3+vec3(.75,.65,1.)*lt2+vec3(.65,1.,.92)*core*1.4;
+    float edge=smoothstep(.985,.94,rr)*smoothstep(.86,.97,rr)*(.5+.5*max(0.,-d.y));m+=vec3(.55,.5,.85)*edge*.35; /* rim light */
+    c=mix(c,m,smoothstep(1.,.985,rr)*sk);}
+  c+=vec3(.45,1.,.88)*exp(-rr*rr*8.)*.12*sk; /* the core's bloom */
+  c=1.-exp(-c*1.3);gl_FragColor=vec4(c+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;
@@ -1950,7 +1980,7 @@ void main(){vec2 p=UV();float asp=res.x/res.y;float x=p.x*asp-(p.y-.5)*.07,y=p.y
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); VA.get(); },
     aurora, bhole, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' ? (qLevel ? .7 : 1) : qLevel ? .45 : .6), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? (qLevel ? .7 : 1) : qLevel ? .45 : .6), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
@@ -1979,10 +2009,10 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U;
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .06, H * .015); U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .14 }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
-  if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' ? k : 'clouds', U))) return false;
+  if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' ? k : 'clouds', U))) return false;
   const a = wx.a; skyE = a * a * (3 - 2 * a); return true; }
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
@@ -2014,7 +2044,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   });
   if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
-  if (wx.kind === 'alien') drawMother(a);
+  if (wx.kind === 'alien' && !G) drawMother(a); // the hand-drawn ship only when the GPU sky is unavailable
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
   if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
     ctx.globalAlpha = (.18 + .3 * (1 - z)) * a; ctx.drawImage(softBlob('240,246,255'), x - r, y - r, r * 2, r * 2); } ctx.globalAlpha = 1; }); // layers of out-of-focus ice drifting in the air
