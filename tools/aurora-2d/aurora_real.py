@@ -12,16 +12,16 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.28))
+EXPO = float(os.environ.get('EXPO', 0.35))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.4))      # contrast of the rays
-GLOW = float(os.environ.get('GLOW', 2.0))      # soft diffuse light around each curtain
-SCAT = float(os.environ.get('SCAT', 0.15))      # light scattered into the surrounding air
+GLOW = float(os.environ.get('GLOW', 1.0))      # soft diffuse light around each curtain
+SCAT = float(os.environ.get('SCAT', 0.08))      # light scattered into the surrounding air
 PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of a curtain get
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
 FOCX = float(os.environ.get('FOCX', 0.42))     # where that focal area is (across the view)
-FOCW = float(os.environ.get('FOCW', 0.26))      # how wide that focal area is
+FOCW = float(os.environ.get('FOCW', 0.3))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
 BOTV = float(os.environ.get('BOTV', 0.6))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.0))    # strength of the upper-right teal curtain
@@ -71,6 +71,8 @@ TOPY = float(os.environ.get('TOPY', 0.15))     # screen height where the main bo
 TOPS = float(os.environ.get('TOPS', 0.22))    # how softly
 BOTK = float(os.environ.get('BOTK', 0.5))     # a low row of curtains whose rays rise from near the bottom of the screen
 BOTY = float(os.environ.get('BOTY', 1.12))    # world height of their lower edge
+PLT = float(os.environ.get('PLT', 0.9))       # strength of the long vertical pleats in the main curtain (bright and darker bands)
+PLF = float(os.environ.get('PLF', 9))      # how many pleats across the view
 UPC = os.environ.get('UPC', '30,222,236')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -80,7 +82,7 @@ def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, un
 
 asp = W / H
 Y, X = np.mgrid[0:H, 0:W].astype(np.float32); X = X / H; Y = Y / H     # screen in units of its height
-XV, YV = float(os.environ.get('XV', -0.3)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
+XV, YV = float(os.environ.get('XV', -0.12)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
 ZOOM = float(os.environ.get('ZOOM', 1.5))     # >1 pulls the camera back: the whole aurora is seen smaller, farther away, in a wider sky
 ZCY = float(os.environ.get('ZCY', 0.58))      # the screen height the zoom is centred on
 A0 = np.arctan2(X - XV, Y - YV); a0, a1 = A0.min(), A0.max(); del A0    # the ray-angle range of the unzoomed view
@@ -112,6 +114,11 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
         patch = patch.mean() + (patch - patch.mean()) * MPAT
     span = 1 / (1 + np.exp(-(ss - s0) / SPANS)) / (1 + np.exp((ss - s1) / SPANS))
     B1 = fold_b * rays * patch * span
+    if seed == 22 and PLT > 0:   # pleats: the sheet hangs in long folds, seen as parallel bright and darker bands
+        dp = 0.02 * np.sin(T)
+        pl = (0.5 * np.sin(2 * np.pi * (ss * PLF + 0.13 + dp)) + 0.3 * np.sin(2 * np.pi * (ss * PLF * 1.73 + 0.6 - dp))
+              + 0.2 * np.sin(2 * np.pi * (ss * PLF * 2.9 + 0.2 + 1.5 * dp)))
+        B1 = B1 * np.clip(1 + PLT * pl, 0.12, 2.2)
     if seed == 22 and FOCUS > 0:
         wf = np.where(ss < FOCX, FOCWL if FOCWL > 0 else FOCW, FOCW)
         B1 = B1 * ((1 - FOCUS) + FOCUS * 1.6 * np.exp(-np.abs((ss - FOCX) / wf) ** FPOW))
