@@ -1818,34 +1818,31 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3
   sky=mix(sky,far.rgb,far.a*.72*cloudA);sky=mix(sky,near.rgb,near.a*cloudA);
   if(rain>0.)sky+=vec3(.82,.88,.98)*(rainL(uv,asp,70.,9.,1.)*.15+rainL(uv,asp,125.,6.5,2.)*.09)*rain*(1.+bolt.z*.8); /* the distant rain curtain */
   gl_FragColor=vec4(sky+dith(),1.);}`,
-    bhole: `/* a Gargantua-like black hole near the corner: the shadow, a thin photon ring, a nearly edge-on disk of white-gold light crossing the whole sky in front of it,
-   and the far side of the disk lifted by gravity into a great glowing arc over the top and a thinner one beneath. Stars behind are bent round the hole */
+    bhole: `/* a Gargantua-like black hole near the corner, drawn sharp and luminous: deep space with a soft warm glow, the shadow and its thin photon ring,
+   a nearly edge-on disk of white-gold light crossing the sky with silky concentric rings, and the far side of the disk lifted by gravity into a great arc over the top and a thinner one beneath */
 uniform vec2 bc;uniform float br,bk;
 vec2 rot(vec2 v,float a){float c=cos(a),s=sin(a);return vec2(c*v.x-s*v.y,s*v.x+c*v.y);}
-vec3 space(vec2 q){vec3 c=vec3(.006,.006,.012)+vec3(.02,.016,.03)*fbm3(q*1.4);return c+starfield(q,1.);}
-vec3 hot(float k){return mix(vec3(1.,.97,.9),vec3(1.,.66,.32),smoothstep(0.,1.,k));} /* white-gold at the inner edge, amber outward */
+float stars(vec2 q){vec2 g=q*90.;vec2 id=floor(g);float h=hs(id);float s=0.;if(h>.975){vec2 f=fract(g)-.5-vec2(hs(id+3.)-.5,hs(id+5.)-.5)*.6;s=exp(-dot(f,f)*90.)*(h-.975)/.025;}
+  g=q*200.;id=floor(g);h=hs(id+9.);if(h>.97){vec2 f=fract(g)-.5;s+=exp(-dot(f,f)*120.)*.35;}return s;}
+vec3 space(vec2 q,vec2 uv){vec3 c=mix(vec3(.02,.02,.05),vec3(.035,.028,.06),uv.y);float n=fbm3(q*1.2+vec2(t*.003,0.));c+=vec3(.06,.04,.1)*smoothstep(.4,.85,n);return c+vec3(.95,.93,1.)*stars(q)*.9;}
+vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.74,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
+float silk(float x){return .82+.07*sin(x*13.)+.04*sin(x*37.+1.3)+.14*(vn(vec2(x*5.,1.))-.5);} /* smooth, fine rings rather than noise */
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(bc.x*asp,bc.y);float R=br*(.35+.65*smoothstep(0.,1.,bk));
   vec2 d=P-C;float r=length(d);vec2 dir=d/max(r,1e-4);
   float def=R*R*1.6/max(r,R*.6);vec2 q=C+rot(dir,.25*R/max(r,R))*(r-def);
-  vec3 c=space(q)*smoothstep(R*.985,R*1.015,r);
-  vec2 dd=rot(d,-.2);float u=-dd.y/max(r,1e-4);
-  float Rin=R*1.25,Rout=R*7.5;
-  /* the disk itself, nearly edge-on: a thin flared band; fine concentric rings turning slowly */
+  vec3 c=space(q,uv)*smoothstep(R*.99,R*1.01,r);
+  vec2 dd=rot(d,-.2);float u=-dd.y/max(r,1e-4);float Rin=R*1.25,Rout=R*7.5;
   float th=.07+.03*smoothstep(Rin,Rout,abs(dd.x));vec2 e=vec2(dd.x,dd.y/th);float rr=length(e);
-  float ring=.62+.5*fbm3(vec2(rr/R*7.,t*.05))*(.7+.3*fbm3(vec2(rr/R*2.,dd.x/R*.6+t*.12)));
-  float prof=smoothstep(Rin*.96,Rin*1.12,rr)*pow(Rin/max(rr,1e-4),1.5)*(1.-smoothstep(Rout*.45,Rout,rr));
-  float band=1.;
-  vec3 disk=hot(smoothstep(Rin,Rout*.55,abs(dd.x)))*prof*ring*band*1.9*(1.+.18*(-dd.x/(abs(dd.x)+R*2.)))*(dd.y>0.?(.55+1.2*exp(-dd.y/(R*.12))):1.);
-  /* the far side of the disk, bent into an arc over the top and a thinner arc below */
-  float hp=smoothstep(R*1.02,R*1.1,r);float ringT=.65+.45*fbm3(vec2(r/R*9.,t*.04));
-  float up=hp*exp(-max(r-R*1.1,0.)/(R*.55))*smoothstep(-.25,.5,u);
-  float dn=hp*exp(-max(r-R*1.07,0.)/(R*.17))*smoothstep(-.25,.55,-u);
-  vec3 halo=hot(smoothstep(R*1.1,R*2.2,r))*(up*1.9+dn*1.3)*ringT;
-  c+=halo*smoothstep(R*.99,R*1.03,r);
-  c+=vec3(1.,.95,.86)*exp(-pow((r-R*1.02)/(R*.012),2.))*.9; /* the photon ring */
-  if(dd.y<0.)c+=disk*smoothstep(R*.99,R*1.03,r);else c+=disk; /* behind the shadow above the midline, in front of it below */
-  c+=vec3(1.,.72,.42)*(.16*exp(-abs(dd.y)/(R*.45))*exp(-abs(dd.x)/(R*6.))+.12*exp(-max(r-R,0.)/(R*.8)))*bk*smoothstep(R*.98,R*1.08,r); /* the soft glow of all that light, never inside the shadow */
-  c=1.-exp(-c*1.6);gl_FragColor=vec4(c+dith(),1.);}`,
+  float spin=t*.08;float ring=silk(rr/R*.35+spin*.02)*(.85+.15*sin(atan(e.y,e.x)*3.+t*.6+rr/R*2.));
+  float prof=smoothstep(Rin*.97,Rin*1.1,rr)*pow(Rin/max(rr,1e-4),1.5)*(1.-smoothstep(Rout*.45,Rout,rr));
+  vec3 disk=hot(smoothstep(Rin,Rout*.55,rr))*prof*ring*1.9*(1.+.18*(-dd.x/(abs(dd.x)+R*2.)))*(dd.y>0.?(.55+1.2*exp(-dd.y/(R*.12))):1.);
+  float hp=smoothstep(R*1.015,R*1.08,r);float ringT=silk(r/R*.9);
+  float up=hp*exp(-max(r-R*1.08,0.)/(R*.55))*smoothstep(-.25,.5,u),dn=hp*exp(-max(r-R*1.06,0.)/(R*.17))*smoothstep(-.25,.55,-u);
+  vec3 halo=hot(smoothstep(R*1.08,R*2.3,r))*(up*1.9+dn*1.3)*ringT;
+  c+=halo;c+=vec3(1.,.96,.9)*exp(-pow((r-R*1.015)/(R*.008),2.))*1.1;
+  if(dd.y<0.)c+=disk*smoothstep(R*.99,R*1.02,r);else c+=disk;
+  c+=vec3(1.,.7,.4)*(.18*exp(-abs(dd.y)/(R*.5))*exp(-abs(dd.x)/(R*6.))+.14*exp(-max(r-R,0.)/(R*.9)))*bk*smoothstep(R*.98,R*1.06,r); /* bloom */
+  c=1.-exp(-c*1.55);c=pow(c,vec3(.95));gl_FragColor=vec4(c+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;
@@ -1949,7 +1946,7 @@ void main(){vec2 p=UV();float asp=res.x/res.y;float x=p.x*asp-(p.y-.5)*.07,y=p.y
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); vidEl(); },
     aurora, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (qLevel ? .45 : .6), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' ? (qLevel ? .7 : 1) : qLevel ? .45 : .6), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
@@ -2043,6 +2040,11 @@ function drawSnow(a, near) { // snowfall in depth: far flakes small, sharp and s
       r = near ? 7 + z * 9 : .9 + z * 3.2, al = near ? .16 + .1 * (1 - z) : .45 + .5 * z;
     ctx.globalAlpha = al * a; if (!near && r < 2.2) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .7, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
   ctx.globalAlpha = 1; }
+function holeBlock(x, y, w, h, k) { // light from the disk falls on the side of each block that faces the black hole, warmer and stronger the closer it is
+  const hx = W * .72, hy = H * .24, dx = hx - x, dy = hy - y, dist = Math.hypot(dx, dy), f = k * Math.min(1, (W * .9) / (dist + W * .2)) ** 1.6; if (f < .02) return;
+  const ux = dx / dist, uy = dy / dist, x0 = x - w / 2, y0 = y - h / 2, g = ctx.createLinearGradient(x + ux * w * .5, y + uy * h * .5, x - ux * w * .1, y - uy * h * .1);
+  g.addColorStop(0, `rgba(255,214,160,${.42 * f})`); g.addColorStop(1, 'rgba(255,214,160,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.clip(); ctx.strokeStyle = `rgba(255,232,196,${.75 * f})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x0 + ux * 2.5, y0 + uy * 2.5, w, h, 12); ctx.stroke(); ctx.restore(); } // a bright rim along the lit edge
 function snowBlock(o, x, y, w, h, k) { // snow settling on a block while it falls through the cold: a soft white cap that builds up, and a cool frosted tint
   o.sn = Math.min(1, (o.sn || 0) + snowD * .45 * k); const c = o.sn * k; if (c < .02) return;
   const x0 = x - w / 2, y0 = y - h / 2, r = 12;
@@ -2533,7 +2535,7 @@ function draw() {
       ctx.save(); ctx.translate(x + Math.sin(k * 75) * 3.2 * dmp, o.y - 3 * sq); ctx.scale(1 + .07 * sq, 1 - .13 * sq);
       if (o.al) drawAlien(o, 0, 0, bw(), 44); else drawBlock(0, 0, bw(), 44, 0, o.elec); ctx.restore();
     } else { { const bk = wx.kind === 'storm' ? boltK() : 0; if (bk > .08 && wx.bolt) { const sx2 = Math.sign(x - wx.bolt.pts[0][0]) || 1; ctx.fillStyle = `rgba(10,14,28,${.4 * bk})`; ctx.beginPath(); ctx.roundRect(x - bw() / 2 + sx2 * 14 * bk, o.y - 22 + 16 * bk, bw(), 44, 12); ctx.fill(); } } // lightning casts a shadow
-      if (o.al) { drawAlien(o, x, o.y, bw(), 44); continue; } drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec); if (wetA > .02) wetBlock(o, x, o.y, bw(), 44, wetA); if (snowA > .02 || o.sn) snowBlock(o, x, o.y, bw(), 44, snowA); }
+      if (o.al) { drawAlien(o, x, o.y, bw(), 44); continue; } drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec); if (wetA > .02) wetBlock(o, x, o.y, bw(), 44, wetA); if (snowA > .02 || o.sn) snowBlock(o, x, o.y, bw(), 44, snowA); if (wx.kind === 'bhole' && wx.a > .02) holeBlock(x, o.y, bw(), 44, wx.a); }
   }
   drawHaze();
 
