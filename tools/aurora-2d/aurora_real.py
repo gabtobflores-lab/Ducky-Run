@@ -21,7 +21,7 @@ PMIN = float(os.environ.get('PMIN', 0.45))     # how dark the quiet stretches of
 SPANS = float(os.environ.get('SPANS', 0.1))      # softness of a curtain's ends
 FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's light around one focal area
 FOCX = float(os.environ.get('FOCX', 0.32))     # where that focal area is (across the view)
-FOCW = float(os.environ.get('FOCW', 0.2))      # how wide that focal area is
+FOCW = float(os.environ.get('FOCW', 0.22))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
 BOTV = float(os.environ.get('BOTV', 0.9))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.2))    # strength of the upper-right teal curtain
@@ -52,8 +52,9 @@ KNY = float(os.environ.get('KNY', -0.03))       # its height relative to the mai
 FOCWL = float(os.environ.get('FOCWL', 0.13))   # width of the focal area on its left side (0 = same as right): smaller gives a clear left edge
 GAP = float(os.environ.get('GAP', 0.6))       # dark gap between the knot and the body above it
 TONE = float(os.environ.get('TONE', 0.4))     # highlight compression (higher = softer brightest light)
-BOTU = float(os.environ.get('BOTU', 0.7))    # how evenly the bottom glow spreads across the width
+BOTU = float(os.environ.get('BOTU', 0.9))    # how evenly the bottom glow spreads across the width
 TRISE = float(os.environ.get('TRISE', 0.18))  # how far up the upper-right curtain's light reaches
+BOTC = os.environ.get('BOTC', '45,80,230')   # colour of the glow along the bottom
 UPC = os.environ.get('UPC', '35,230,232')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -63,7 +64,7 @@ def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, un
 
 asp = W / H
 Y, X = np.mgrid[0:H, 0:W].astype(np.float32); X = X / H; Y = Y / H     # screen in units of its height
-XV, YV = float(os.environ.get('XV', -0.15)), -1.25                                                   # where the rays converge: high above, a little left
+XV, YV = float(os.environ.get('XV', -0.15)), float(os.environ.get('YV', -2.6))                                                   # where the rays converge: high above, a little left
 A = np.arctan2(X - XV, Y - YV)                                         # which ray a pixel is on
 R = np.hypot(X - XV, Y - YV)                                           # how far along that ray (larger = lower on screen)
 a0, a1 = A.min(), A.max()
@@ -151,7 +152,7 @@ if BOTV > 0:   # a broad, soft blue-violet glow along the bottom, strongest unde
     under = nd.gaussian_filter(np.clip((img - sky).mean(-1), 0, None), W * 0.12)
     under = under / (under.max() + 1e-6)
     bot = np.clip((Y - 0.72) / 0.28, 0, 1) ** 1.3 * (BOTU + (1 - BOTU) * under)
-    img = img + bot[..., None] * (col((95, 50, 215)) * 0.8 + col((40, 80, 230)) * 0.2) * BOTV
+    img = img + bot[..., None] * (col(tuple(int(v) for v in BOTC.split(','))) * 0.8 + col((40, 80, 230)) * 0.2) * BOTV
 if HAZE > 0:   # a broad blue haze: the lit air around the aurora, leaning towards the left side
     lightH = np.clip((img - sky).mean(-1), 0, None)
     hz = nd.gaussian_filter(lightH, W * 0.14); hz = hz / (hz.max() + 1e-6)
