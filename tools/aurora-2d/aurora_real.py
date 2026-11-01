@@ -12,7 +12,7 @@ from scipy import ndimage as nd
 from PIL import Image
 W, H = int(sys.argv[1]), int(sys.argv[2]); out = sys.argv[3]; ph = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
 T = ph * 2 * np.pi
-EXPO = float(os.environ.get('EXPO', 0.3))
+EXPO = float(os.environ.get('EXPO', 0.28))
 FOLD = float(os.environ.get('FOLD', 0.9))      # strength of fold brightening
 RAYK = float(os.environ.get('RAYK', 0.4))      # contrast of the rays
 GLOW = float(os.environ.get('GLOW', 2.0))      # soft diffuse light around each curtain
@@ -23,7 +23,7 @@ FOCUS = float(os.environ.get('FOCUS', 1.0))    # gathers the main curtain's ligh
 FOCX = float(os.environ.get('FOCX', 0.42))     # where that focal area is (across the view)
 FOCW = float(os.environ.get('FOCW', 0.26))      # how wide that focal area is
 GRP = float(os.environ.get('GRP', 0.12))      # contrast of the broad ray groups (columns)
-BOTV = float(os.environ.get('BOTV', 0.9))      # blue-violet glow along the bottom
+BOTV = float(os.environ.get('BOTV', 0.6))      # blue-violet glow along the bottom
 TEALK = float(os.environ.get('TEALK', 2.0))    # strength of the upper-right teal curtain
 HEMY = float(os.environ.get('HEMY', 0.62))      # height of the main curtain's lower edge
 FINE = float(os.environ.get('FINE', 0.9))      # delicate fine ray texture inside the glow
@@ -69,7 +69,7 @@ KNS = float(os.environ.get('KNS', 1.0))       # size of the knot / lower lobe
 FPOW = float(os.environ.get('FPOW', 4))     # shape of the main body across: 2 = rounded peak, higher = broad with straight sides
 TOPY = float(os.environ.get('TOPY', 0.15))     # screen height where the main body's top fades out evenly (0 = off): a broad top, not a flame tip
 TOPS = float(os.environ.get('TOPS', 0.22))    # how softly
-BOTK = float(os.environ.get('BOTK', 1.1))     # a low row of curtains whose rays rise from near the bottom of the screen
+BOTK = float(os.environ.get('BOTK', 0.5))     # a low row of curtains whose rays rise from near the bottom of the screen
 BOTY = float(os.environ.get('BOTY', 1.12))    # world height of their lower edge
 UPC = os.environ.get('UPC', '30,222,236')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
