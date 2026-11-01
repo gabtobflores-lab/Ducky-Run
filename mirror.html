@@ -40,6 +40,10 @@
   .screen.on{display:flex;animation:in .42s var(--ios) both}
   .screen.out{display:flex;animation:out .2s cubic-bezier(.4,0,1,1) both;pointer-events:none}
   #pause,#over{background:rgba(246,241,234,.80);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+  /* over an event sky the same veil is real frosted glass: the scene behind keeps its own colours, softly blurred, instead of turning milky cream */
+  body.evsky #pause,body.evsky #over{background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%)}
+  body.evsky.night #pause #pfog,body.evsky.night #over .hint{color:rgba(235,235,245,.75)}
+  #pglass{position:fixed;left:0;top:0;width:100%;height:0;pointer-events:none;display:none;-webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);background:rgba(255,255,255,.12)}
   @keyframes in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
   @keyframes out{from{opacity:1}to{opacity:0;transform:scale(.985)}}
 
@@ -502,6 +506,7 @@ bootLog('game script started (build ' + (document.querySelector('meta[name=build
 addEventListener('error', e => { bootLog('error: ' + (e.message || 'unknown') + (e.lineno ? ' (line ' + e.lineno + ')' : '')); }); addEventListener('unhandledrejection', e => bootLog('promise error: ' + ((e.reason && e.reason.message) || e.reason)));
 addEventListener('error', e => { const b = document.getElementById('boot'); if (!b || b.dataset.err) return; b.dataset.err = 1; const d = document.createElement('div'); d.style.cssText = 'position:absolute;left:24px;right:24px;bottom:64px;font:13px/1.4 -apple-system,system-ui;color:#8a8d9a;text-align:center'; d.textContent = 'Something went wrong while loading: ' + (e.message || 'unknown error') + (e.lineno ? ' (line ' + e.lineno + ')' : ''); b.appendChild(d); });</script>
 <canvas id="sky" aria-hidden="true" style="visibility:hidden"></canvas>
+<div id="pglass" aria-hidden="true"></div>
 <canvas id="c"></canvas>
 
 <div class="screen" id="menu">
@@ -2037,6 +2042,14 @@ void main(){vec2 p=UV();float asp=res.x/res.y;float x=p.x*asp-(p.y-.5)*.07,y=p.y
       gl.drawArrays(gl.TRIANGLES, 0, 3); return true; }
   };
 })();
+const pgEl = document.getElementById('pglass'); let pgOn = false;
+function pGlass(on, fy, fade) { // the frosted layer follows the sheet: down to its lip, then fading out over the soft falloff
+  if (!on) { if (pgOn) { pgEl.style.display = 'none'; pgOn = false; } return; }
+  const k = innerHeight / cv.height, y1 = (offY + fy * scale) * k, y2 = (offY + (fy + fade) * scale) * k, op = (resumeT > 0 || state === 'paused') ? 1 : clamp01(fogT / .8);
+  pgEl.style.height = y2 + 'px'; const m = `linear-gradient(#000 0,#000 ${(y1 / y2 * 100).toFixed(1)}%,transparent 100%)`; pgEl.style.webkitMaskImage = m; pgEl.style.maskImage = m; pgEl.style.opacity = op;
+  if (!pgOn) { pgEl.style.display = 'block'; pgOn = true; } }
+document.body.classList.toggle('evsky', false);
+setInterval(() => document.body.classList.toggle('evsky', !!(wx.kind && wx.a > .3)), 200); // the pause veil switches to frosted glass over event skies
 const toUV = (x, y) => [(offX + x * scale) / cv.width, (offY + y * scale) / cv.height]; // game coordinates to screen fractions, for the sky shaders
 const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, cloud shadow and light, and where the clouds gather
   storm: () => ({ cTop: '44,52,70', cMid: '64,76,96', cBot: '88,100,120', cd: '28,33,46', cl: '146,156,174', cov: [.08, 1.02, 1.15, .16], scl: 1.8, drift: [.05, 0], cloudA: 1, rain: 1 }),
@@ -2700,10 +2713,14 @@ function draw() {
     const edge = x => fy + Math.sin((Math.abs(x - W / 2) / W) * 9 - t * 1.1) * 7 + Math.sin(t * .7) * 3;
     const sheet = () => { ctx.beginPath(); ctx.moveTo(-20, -20); ctx.lineTo(W + 20, -20); for (let x = W + 20; x >= -20; x -= 10) ctx.lineTo(x, edge(x)); ctx.closePath(); };
     // soft falloff below the lip so blocks emerge gradually
-    const fg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); fg.addColorStop(0, 'rgba(248,245,241,.92)'); fg.addColorStop(1, 'rgba(248,245,241,0)');
+    const gls = skyE > .02 ? skyE : 0; pGlass(gls > .02, fy, fade); // over an event's GPU sky: real frosted glass behind, so the sky keeps its colours
+    if (gls > .02) { ctx.save(); ctx.globalCompositeOperation = 'destination-out'; // the fog hides what is behind it: blocks under the sheet are cleared, and fade back in under its soft lip
+      const eg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); eg.addColorStop(0, `rgba(0,0,0,${gls})`); eg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = eg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
+      ctx.fillStyle = `rgba(0,0,0,${gls})`; sheet(); ctx.fill(); ctx.restore(); } // over an event: real frosted glass behind, so the sky keeps its colours
+    const fg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); fg.addColorStop(0, `rgba(248,245,241,${.92 * (1 - .8 * gls)})`); fg.addColorStop(1, 'rgba(248,245,241,0)');
     ctx.fillStyle = fg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
     // frosted body: fully opaque so nothing behind it can be read
-    const body = ctx.createLinearGradient(0, 0, 0, fy); body.addColorStop(0, '#fbf9f6'); body.addColorStop(1, '#f3efea');
+    const body = ctx.createLinearGradient(0, 0, 0, fy); body.addColorStop(0, `rgba(251,249,246,${1 - .84 * gls})`); body.addColorStop(1, `rgba(243,239,234,${1 - .84 * gls})`);
     ctx.fillStyle = body; sheet(); ctx.fill();
     ctx.save(); sheet(); ctx.clip();
     [[0, '255,107,129'], [1, '46,196,214']].forEach(([sd, c]) => { // mirrored tint pools
@@ -2727,6 +2744,7 @@ function draw() {
     ctx.strokeStyle = lg; ctx.lineWidth = 2; lip(); ctx.stroke();
     ctx.restore();
   }
+  else pGlass(false);
   if (state === 'play' && resumeT > 0) { // clean ring countdown
     const cy = H * .42, frac = resumeT - Math.floor(resumeT), pop = 1 + .22 * Math.max(0, frac - .7) / .3;
     ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(W / 2, cy, 62, 0, 7); ctx.fill();
