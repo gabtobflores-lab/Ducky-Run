@@ -76,6 +76,9 @@ PLF = float(os.environ.get('PLF', 9))      # how many pleats across the view
 RIB = float(os.environ.get('RIB', 0.85))       # build the main body from overlapping ribbons (sheets) with brighter edges, instead of one mass
 RIBE = float(os.environ.get('RIBE', 0.005))   # softness of the ribbons' edges
 RIM = float(os.environ.get('RIM', 0.6))       # extra brightness where a ribbon is seen edge-on
+LCK = float(os.environ.get('LCK', 1.5))       # a blue curtain inside the left of the view, beside the main column
+LCX = float(os.environ.get('LCX', 0.22))      # its centre (view units)
+LCY = float(os.environ.get('LCY', 0.7))      # height of its lower edge
 UPC = os.environ.get('UPC', '60,245,218')        # the main curtain's upper colour
 def col(c): return np.array(c, np.float32) / 255
 def n1(t, seed, smooth=8, n=4096):                         # smooth 1D noise, unit variance, wraps on [0,1)
@@ -164,6 +167,7 @@ def curtain(s0, s1, hem_y, fold_amp, fold_freq, rise, thick, seed, drift):
 
 # curtains, far to near: (s0, s1, edge height, fold amp, fold freq, rise, edge softness, seed, intensity, edge colour, upper colour, blur)
 CURTAINS = [
+    (LCX - 0.08, LCX + 0.08, LCY, 0.03, 0.7, 0.3, 0.05, 61, 0.6 * LCK, (15, 205, 232), (20, 120, 220), 9.0),   # left curtain inside the view
     (-0.3, 1.3, BOTY, 0.05, 0.8, 0.2, 0.05, 51, 0.5 * BOTK, (35, 160, 240), (45, 70, 210), 8.0),   # low curtains rising from the bottom, across the view
     (0.00, 0.40, LEFTY, 0.020, 0.45, 0.16, 0.04, 11, 0.30 * LEFTK, (30, 130, 230), (12, 45, 140), 9.0),   # far left, blue
     (0.60, 1.00, 0.40, 0.05, 0.7, TRISE, 0.09, 12, 0.60 * TEALK, (0, 205, 185),  (0, 90, 130),  8.0),    # upper right, teal
