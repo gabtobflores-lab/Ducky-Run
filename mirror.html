@@ -2294,10 +2294,12 @@ function drawSnow(a, near) { // snowfall in depth: far flakes small, sharp and s
   for (const f of SNOW) { if (near ? f.z < .82 : f.z >= .82) continue; const dn = clamp01((a * 1.2 - (f.x * 7.31 + f.y * 3.17) % 1) / .2); if (dn <= 0) continue; // the first few flakes, then the fall thickens
     const z = f.z, sp = (18 + 62 * z) * f.s, y = ((f.y * (H + 80) + t * sp) % (H + 80)) - 40,
       x = ((f.x * (W + 60) + t * (4 + 8 * z) + Math.sin(t * f.f + f.ph) * f.w * (.5 + z)) % (W + 60) + W + 60) % (W + 60) - 30,
-      r = near ? 7 + z * 9 : .9 + z * 3.2, al = near ? .16 + .1 * (1 - z) : .45 + .5 * z;
+      r = near ? 7 + z * 9 : 1.25 + z * 3.8, al = near ? .16 + .1 * (1 - z) : .6 + .4 * z;
     if (!near && z > .35 && state === 'play' && parts.length < 140) for (const o of things) { if (o.k !== 'b' || o.al) continue; const top = o.y - 22, bx0 = bxOf(o); if (Math.abs(x - bx0) < bw() / 2 - 3 && y > top - 2 && y < top + 2.5) { if (Math.random() < .5) parts.push({ x, y: top, vx: (Math.random() - .5) * 26, vy: -14 - Math.random() * 18, g: 60, life: .45, max: .45, r: .8 + z * 1.1, col: 'rgba(255,255,255,.9)' }); break; } } // a flake landing on a block lifts a tiny puff of powder
-    ctx.globalAlpha = al * (.4 + .6 * a) * dn; if (!near && r < 2.2) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .7, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
+    ctx.globalAlpha = al * (.4 + .6 * a) * dn; if (!near) { ctx.globalAlpha *= .55; ctx.drawImage(flakeShade(), x - r * 2.2, y - r * 2.2 + .6, r * 4.4, r * 4.4); ctx.globalAlpha = al * (.4 + .6 * a) * dn; } // a faint cool shadow round each flake, so white flakes read against the pale sky
+    if (!near && r < 2.4) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .75, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
   ctx.globalAlpha = 1; }
+const flakeShade = () => sprite('flkS', 32, 32, g => { const r = g.createRadialGradient(16, 16, 3, 16, 16, 16); r.addColorStop(0, 'rgba(70,90,130,.55)'); r.addColorStop(.5, 'rgba(70,90,130,.18)'); r.addColorStop(1, 'rgba(70,90,130,0)'); g.fillStyle = r; g.fillRect(0, 0, 32, 32); });
 const INF = Array.from({ length: 46 }, (_, i) => ({ ph: Math.random(), r0: .9 + Math.random() * 1.6, a0: Math.random() * 6.283, s: .5 + Math.random() * .8, z: Math.random() }));
 function drawInfall(a) { // specks of glowing gas falling into the black hole: each circles in the plane of the disk, tightening and speeding up as it nears, warming from amber to white, then is gone
   const hx = W * .76, hy = H * .325, R = W * .37; ctx.save(); ctx.globalCompositeOperation = 'screen';
@@ -2389,6 +2391,9 @@ function snowBlock(o, x, y, w, h, k) { // snow settling on a block while it fall
   ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x0 + 3, y0 + th * .6); // the cap drapes slightly over the corners and is gently uneven along its top
   for (let i = 0; i <= 10; i++) { const u = i / 10, xx = x0 + 3 + (w - 6) * u, bump = Math.sin(u * 9.4 + (o.row || 0)) * .35 + Math.sin(u * 3.1 + (o.l || 0)) * .45; ctx.lineTo(xx, y0 - th * (Math.sin(u * Math.PI) ** .35) * (1 + .18 * bump)); }
   ctx.lineTo(x0 + w - 3, y0 + th * .6); ctx.quadraticCurveTo(x0 + w / 2, y0 + th * 1.2, x0 + 3, y0 + th * .6); ctx.fill();
+  ctx.save(); ctx.strokeStyle = `rgba(140,162,200,${.42 * c})`; ctx.lineWidth = .9; ctx.beginPath(); // a fine cool contour along the top of the cap, so it reads crisply against a pale sky
+  for (let i = 0; i <= 10; i++) { const u = i / 10, xx = x0 + 3 + (w - 6) * u, bump = Math.sin(u * 9.4 + (o.row || 0)) * .35 + Math.sin(u * 3.1 + (o.l || 0)) * .45, yy = y0 - th * (Math.sin(u * Math.PI) ** .35) * (1 + .18 * bump) - .4; i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); ctx.restore();
+  if (c > .35) { const q = clamp01((c - .35) / .65); ctx.fillStyle = `rgba(250,252,255,${.92 * q})`; for (const [cx, sd] of [[x0 + 4, -1], [x0 + w - 4, 1]]) { ctx.beginPath(); ctx.ellipse(cx - sd * 1.5, y0 + th * .45 + .8 * q, 5 * q + 1, 1.4 + 1.2 * q, sd * .35, 0, 7); ctx.fill(); } } // as it builds, the snow rounds over the corners and droops a little
   const sh = ctx.createLinearGradient(0, y0 + th * .7, 0, y0 + th * 2.4); sh.addColorStop(0, `rgba(24,30,56,${.22 * c})`); sh.addColorStop(1, 'rgba(24,30,56,0)'); // the snow casts a soft shadow on the block face just below it
   ctx.fillStyle = sh; ctx.beginPath(); ctx.roundRect(x0 + 4, y0 + th * .7, w - 8, th * 1.7, 3); ctx.fill();
   const cs = ctx.createLinearGradient(0, y0 - th, 0, y0 + th); cs.addColorStop(0, 'rgba(190,212,245,0)'); cs.addColorStop(1, `rgba(190,212,245,${.35 * c})`); // its underside is cool and shaded, the top catches the light
