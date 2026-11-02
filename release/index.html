@@ -968,21 +968,21 @@ const crash = { ball: [null, null], shards: [], waves: [], tmpl: null, hole: -1 
 // weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
 // per-second chances once the cooldown has passed; warn = seconds of notice before it starts (longer for events that affect play)
 const WX = {
-  fog: { dur: 14, p: 1 / 55, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 18, p: 1 / 140, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
-  hail: { dur: 12, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 5.5, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
-  heat: { dur: 12, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.8, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
-  aurora: { dur: 17, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] },
-  meteor: { dur: 16, p: 1 / 150, warn: 1.2, note: ['Meteor shower', 'Look up'] },
-  rain: { dur: 16, p: 1 / 120, warn: 2.2, note: ['Rain incoming', 'Wet lanes ahead'] }, // a gentler storm: soft glows in the cloud, no strikes and no thunder; each shower either brings more blocks or a slight speed-up
-  snow: { dur: 16, p: 1 / 150, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
-  bhole: { dur: 20, p: 1 / 1700, warn: 1.6, note: ['Black hole', 'Gravity bends the starlight'] }, // very rare and purely to look at
-  alien: { dur: 18, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
+  fog: { dur: 18, p: 1 / 55, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 22, p: 1 / 140, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
+  hail: { dur: 14, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 7, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
+  heat: { dur: 16, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.8, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
+  aurora: { dur: 26, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] },
+  meteor: { dur: 22, p: 1 / 150, warn: 1.2, note: ['Meteor shower', 'Look up'] },
+  rain: { dur: 20, p: 1 / 120, warn: 2.2, note: ['Rain incoming', 'Wet lanes ahead'] }, // a gentler storm: soft glows in the cloud, no strikes and no thunder; each shower either brings more blocks or a slight speed-up
+  snow: { dur: 22, p: 1 / 150, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
+  bhole: { dur: 28, p: 1 / 1700, warn: 1.6, note: ['Black hole', 'Gravity bends the starlight'] }, // very rare and purely to look at
+  alien: { dur: 22, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
 };
 const CHIPS = []; let chipT = 0;
 const HAIL = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1.8 + Math.random() * Math.random() * 3.6, s: .75 + Math.random() * .6 })), hailHits = [];
 const wx = { kind: '', phase: '', t: 0, p: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 };
 const RAIN = Array.from({ length: 90 }, () => { const z = .25 + .75 * Math.random() ** 1.3; return { x: Math.random(), y: Math.random(), z, l: 16 + z * 64 + Math.random() * 26, s: .55 + z * .9 + Math.random() * .15, v: Math.random() }; }).sort((p, q) => p.z - q.z);
-const SNOW = Array.from({ length: 150 }, () => { const z = Math.random() ** 1.6; return { x: Math.random(), y: Math.random(), z, ph: Math.random() * 7, f: .35 + Math.random() * .5, w: 10 + Math.random() * 22, s: .8 + Math.random() * .4 }; }).sort((p, q) => p.z - q.z); let snowT = 0, snowD = 0; // flakes at depth z: 0 far (tiny, sharp, slow) .. 1 near (large, soft, faster)
+const SNOW = Array.from({ length: 260 }, () => { const z = Math.random() ** 1.6; return { x: Math.random(), y: Math.random(), z, ph: Math.random() * 7, f: .35 + Math.random() * .5, w: 10 + Math.random() * 22, s: .8 + Math.random() * .4 }; }).sort((p, q) => p.z - q.z); let snowT = 0, snowD = 0; // flakes at depth z: 0 far (tiny, sharp, slow) .. 1 near (large, soft, faster)
 const windHead = []; let windT = 0;
 let windDir = 1, rimA = 0, sunX = -999, tapT = -9, bhPar = 0;
 const ELEC = { base: '#7cc4ff', hi: '#ffffff', lo: '#3b82f6', deep: '#1f56c9', core: '238,248,255', rgb: '124,196,255' };
@@ -1726,7 +1726,7 @@ function nightSky(a, starA) { // stars with a slow twinkle on top of the cached 
   ctx.globalAlpha = 1;
 }
 const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? wx.a : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'rain' ? wx.a * .7 : wx.kind === 'snow' ? wx.a * .35 : wx.kind === 'fog' ? wx.a * .15 : 0; // the pale fog keeps dark text
-const uiNight = () => smooth((nightK() - .3) / .3); // 0 = the Wind (day) style, 1 = the Aurora (night) style
+const uiNight = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? smooth((wx.a - .33) / .06) : smooth((nightK() - .3) / .3); /* a night event dims the room quickly, so the ink flips in one short step just as the twilight passes mid-tone, never sitting grey on grey */ // 0 = the Wind (day) style, 1 = the Aurora (night) style
 const hudInk = al => { const k = uiNight(); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .5})`; };
 const SPR = {};
 const vignette = () => sprite('vig', 256, 512, (g, w, h) => { const r = g.createRadialGradient(w / 2, h * .45, h * .22, w / 2, h * .5, h * .72); r.addColorStop(0, 'rgba(4,6,18,0)'); r.addColorStop(1, 'rgba(4,6,18,.75)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
@@ -2386,8 +2386,8 @@ function holeBlock(x, y, w, h, k) { // light from the disk falls on the side of 
   g.addColorStop(0, `rgba(255,214,160,${.42 * f})`); g.addColorStop(1, 'rgba(255,214,160,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.fill();
   ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.clip(); ctx.strokeStyle = `rgba(255,232,196,${.75 * f})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x0 + ux * 2.5, y0 + uy * 2.5, w, h, 12); ctx.stroke(); ctx.restore(); } // a bright rim along the lit edge
 function snowBlock(o, x, y, w, h, k) { // snow settling on a block while it falls through the cold: a soft white cap that builds up, and a cool frosted tint
-  const ramp = wx.kind !== 'snow' ? 1 : wx.phase === 'on' ? .25 + .75 * clamp01(wx.t / 7) : wx.phase === 'out' ? 1 : 0; // the snow only starts settling once it is falling, and settles faster the longer it has snowed
-  if (y > -10) o.sn = Math.min(1, (o.sn || 0) + (snowD || 0) * .32 * k * ramp); const c = (o.sn || 0) * k; if (!(c >= .02)) return; // and only while the block is out in it, on screen
+  const ramp = wx.kind !== 'snow' ? 1 : wx.phase === 'on' ? .55 + .45 * clamp01(wx.t / 5) : wx.phase === 'out' ? 1 : 0; // the snow only starts settling once it is falling, and settles faster the longer it has snowed
+  if (y > -10) o.sn = Math.min(1, (o.sn || 0) + (snowD || 0) * 1.05 * k * ramp); const c = (o.sn || 0) * k; if (!(c >= .02)) return; // and only while the block is out in it, on screen
   const x0 = x - w / 2, y0 = y - h / 2, r = 12;
   ctx.fillStyle = `rgba(206,226,255,${.16 * c})`; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, r); ctx.fill(); // frost
   ctx.strokeStyle = `rgba(236,246,255,${.45 * c})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.roundRect(x0 + .6, y0 + .6, w - 1.2, h - 1.2, r); ctx.stroke();
@@ -2860,13 +2860,13 @@ function draw() {
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   const playing = state !== 'menu';
   if (bgA > .004) { ctx.globalAlpha = bgA * (1 - dimK); drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
-  ctx.globalAlpha = 1 - skyE * .85; drawDivider(Math.max(pulse * .5, fxA, state === "menu" ? 0 : 0)); ctx.globalAlpha = 1; /* the divider melts into an event sky */
+  ctx.globalAlpha = (1 - skyE * (NT ? 1 : .85)) * Math.max(0, 1 - dimK * 2.4); drawDivider(Math.max(pulse * .5, fxA, state === "menu" ? 0 : 0)); ctx.globalAlpha = 1; /* the divider melts into an event sky */
   if (!playing) { ctx.restore(); return; } // the home screen shows only the calm backdrop; the balls live in its preview
 
   // column guides
   const off = (t * speed * .5) % 64;
-  ctx.fillStyle = 'rgba(43,45,66,.045)';
-  LX.forEach(x => { for (let y = -64 + off; y < H; y += 64) { ctx.beginPath(); ctx.roundRect(x - 1.5, y, 3, 22, 1.5); ctx.fill(); } });
+  ctx.fillStyle = `rgba(43,45,66,${.045 * (1 - skyE) * (1 - dimK)})`; /* the guides melt into an event sky with the divider */
+  if (skyE < .98 && dimK < .98) LX.forEach(x => { for (let y = -64 + off; y < H; y += 64) { ctx.beginPath(); ctx.roundRect(x - 1.5, y, 3, 22, 1.5); ctx.fill(); } });
 
   drawBackWeather();
   drawRain();
