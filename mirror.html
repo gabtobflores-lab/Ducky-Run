@@ -977,7 +977,7 @@ const wx = { kind: '', phase: '', t: 0, p: 0, cool: 14, roll: 0, a: 0, flash: 0,
 const RAIN = Array.from({ length: 90 }, () => { const z = .25 + .75 * Math.random() ** 1.3; return { x: Math.random(), y: Math.random(), z, l: 16 + z * 64 + Math.random() * 26, s: .55 + z * .9 + Math.random() * .15, v: Math.random() }; }).sort((p, q) => p.z - q.z);
 const SNOW = Array.from({ length: 150 }, () => { const z = Math.random() ** 1.6; return { x: Math.random(), y: Math.random(), z, ph: Math.random() * 7, f: .35 + Math.random() * .5, w: 10 + Math.random() * 22, s: .8 + Math.random() * .4 }; }).sort((p, q) => p.z - q.z); let snowT = 0, snowD = 0; // flakes at depth z: 0 far (tiny, sharp, slow) .. 1 near (large, soft, faster)
 const windHead = []; let windT = 0;
-let windDir = 1, rimA = 0, sunX = -999;
+let windDir = 1, rimA = 0, sunX = -999, tapT = -9, bhPar = 0;
 const ELEC = { base: '#7cc4ff', hi: '#ffffff', lo: '#3b82f6', deep: '#1f56c9', core: '238,248,255', rgb: '124,196,255' };
 const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks slide, so collisions use where they are drawn
 function reset() {
@@ -1077,7 +1077,7 @@ $('#play').onclick = () => { if (!fresh()) startGame(); }; $('#retry').onclick =
 
 let flashA = 0, flashLane = 0;
 function setPos(np, lane) {
-  if (state !== 'play' || resumeT > 0) return;
+  if (state !== 'play' || resumeT > 0) return; tapT = t; // the black hole answers each tap with a faint ripple
   np = Math.max(0, Math.min(per - 1, np)); flashA = 1; flashLane = lane === undefined ? np : lane;
   if (np === pos) { beep(300, .04, 'triangle', .03); haptic('rigid'); }
   else {
@@ -2054,17 +2054,23 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   c*=.82;c=1.-exp(-c*1.5);gl_FragColor=vec4(c+dith(),1.);}`, /* the whole event sits a little darker */
     bholemap: `/* the black hole, rendered live from its traced light paths: each pixel knows where its light crossed the disk (first crossing in front,
    second the far side bent over and under the hole); the disk turns faster near the hole, its silky rings drift, the side turning towards us is brighter */
-uniform sampler2D mA,mB;uniform vec2 va; /* va: the maps' aspect, and how far the event has arrived */
+uniform sampler2D mA,mB;uniform vec2 va,vb; /* va: the maps' aspect, and how far the event has arrived; vb: the balls' sideways position (parallax) and seconds since the last tap */
 vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.72,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
-vec3 disk(vec4 m,float far){if(m.a<.75)return vec3(0.);float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
-  float om=t*.55*pow(3./r,1.5);float pr=ph-om;                                              /* Keplerian: inner rings turn faster */
+vec3 disk(vec4 m,float far){float wm=smoothstep(.45,.95,m.a);if(wm<=0.)return vec3(0.); /* a soft edge where the light paths stop hitting the disk: no speckled, jagged rim */float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
+  float om=t*.9*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
   float s=fbm3(vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.))*.9+.1*sin(r*9.+3.*sin(r*1.7)); /* silky structure, smooth all the way round */
+  float fil=fbm3(vec2(cos(pr)*3.2,sin(pr)*3.2)+vec2(r*5.5,0.));s+=.55*(smoothstep(.45,.85,fil)-.3);   /* fine filaments of gas, sheared into streaks by the turning */
+  float hs1=pow(max(0.,cos(pr*2.+r*.9)),18.)*exp(-pow((r-3.6)/.7,2.))*.9;s+=hs1;                    /* a couple of hot clumps orbiting close in */
   float T=pow(r/2.6,-.75)*pow(max(1.-sqrt(2.4/r),0.),.25);float I=pow(T,2.6)*(.75+.55*s);
   I*=smoothstep(2.6,3.1,r)*pow(clamp((10.-r)/4.,0.,1.),1.5)*(1.+.28*sin(ph));                 /* soft inner and outer edges; the approaching side brighter */
-  return hot(clamp((r-2.6)/3.4,0.,1.))*I*(far>.5?1.15:1.);}
+  return hot(clamp((r-2.6)/3.4,0.,1.))*I*(far>.5?1.15:1.)*wm;}
 void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)*sa/va.x;else q.y=.5+(p.y-.5)*va.x/sa;
-  vec4 A=texture2D(mA,q),B=texture2D(mB,q);
-  vec3 c=vec3(.004,.004,.008)+starfield(vec2(p.x*sa,p.y),.35)*step(A.a,.25)*step(B.a,.25);
+  q.x-=vb.x*.012;q+=vec2(sin(t*.21),cos(t*.17))*.0025;                                         /* depth: the hole sits far behind the play, shifting a little against the balls, and drifts very slightly */
+  { vec2 d=(p-vec2(.8,.31))*vec2(sa,1.);float L=length(d),R=vb.y*.5,w=exp(-pow((L-R)/.03,2.))*exp(-vb.y*1.4); q+=d/max(L,.001)*w*.007; } /* each tap sends a faint ripple out through the light round the hole */
+  vec4 A=texture2D(mA,q),B=texture2D(mB,q);float sm=(1.-smoothstep(.15,.6,A.a))*(1.-smoothstep(.15,.6,B.a));
+  { vec2 tx=vec2(1./360.,1./780.);float aA=0.,aB=0.;for(int i=0;i<4;i++){vec2 o=vec2(i==0?1.:i==1?-1.:0.,i==2?1.:i==3?-1.:0.)*tx;aA+=texture2D(mA,q+o).a;aB+=texture2D(mB,q+o).a;}
+    A.a=min(A.a,(A.a+aA)/5.);B.a=min(B.a,(B.a+aB)/5.);B.a*=smoothstep(.55,.85,(B.a+aB)/5.); } /* a hit counts fully only where its neighbours agree: the thin ring stays clean, without stray specks */
+  vec3 c=vec3(.004,.004,.008)+starfield(vec2(p.x*sa+t*.004-vb.x*.006,p.y),.35)*sm; /* the stars drift slowly, and less than the hole does: they are further still */
   vec3 dB=disk(B,1.),dA=disk(A,0.);
   c=c*(1.-clamp(length(dB)*1.6,0.,.97))+dB;c=c*(1.-clamp(length(dA)*1.6,0.,.97))+dA;   /* far side first, then the near crossing in front */
   vec3 gl=vec3(0.);for(int k=0;k<12;k++){float a=float(k)*2.39996,rr=.012+.05*fract(float(k)*.618);vec2 o=vec2(cos(a),sin(a))*rr*vec2(1.,sa/va.x); /* soft bloom: light spilling round the bright disk, as through a lens */
@@ -2180,7 +2186,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 p
     const vt = VA.tex(); if (vt && VA.aspect()) return pass('auroravid', [['vid', vt, 0]], null, w, h, { va: [VA.aspect(), 0] }); /* the pre-rendered loop */
     return pass('aurora', [], null, w, h, {}); };
   const bhole = () => { if (!ok()) return false; const T2 = bhTex(); if (T2) { const sc = Math.min(devicePixelRatio || 1, 2), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc)); if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
-      if (!prog('bholemap')) return false; const ok2 = pass('bholemap', [['mA', T2[0], 0], ['mB', T2[1], 1]], null, w, h, { va: [BHMAP[0].naturalWidth / BHMAP[0].naturalHeight, wx.a] }); return ok2; }
+      if (!prog('bholemap')) return false; const ok2 = pass('bholemap', [['mA', T2[0], 0], ['mB', T2[1], 1]], null, w, h, { va: [BHMAP[0].naturalWidth / BHMAP[0].naturalHeight, wx.a], vb: [(bhPar += ((bx ? (bx[0] - W * .25) / (W * .25) : 0) - bhPar) * .06), Math.min(9, t - tapT)] }); return ok2; }
     const vt = VB.tex(); if (!vt || !VB.aspect()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 ? 2 : 3), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
     if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } if (!prog('auroravid')) return false; return pass('auroravid', [['vid', vt, 0]], null, w, h, { va: [VB.aspect(), 0] }); }; // the ray-traced loop, when it is available // one pass, straight to the screen, drawn entirely by the GPU: light enough for full resolution on every iPhone
   const rgb = c => c.split(',').map(v => v / 255);
