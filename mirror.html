@@ -1933,6 +1933,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
    a low cap ringed with amber light, tiers stepping down underneath with a ring of amber lights and a glowing aperture that pours a beam of light down.
    The metal reflects the dark sky and the amber glow beneath it; the clouds round it are lit amber from below. Its lights breathe slowly, and now and then surge */
 uniform vec2 sc;uniform float sk,ba,pk;
+#define FOGK .9
 float sdE(vec3 p,vec3 r){float k0=length(p/r),k1=length(p/(r*r));return k0*(k0-1.)/k1;}
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
 float map(vec3 p){float disc=sdE(p,vec3(1.,.075,1.)),cap=sdE(p-vec3(0.,.06,0.),vec3(.3,.15,.3));
@@ -1983,6 +1984,11 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       col+=E*br;col+=vec3(1.,.55,.2)*smoothstep(-.02,-.2,n.y)*.08*br;                             /* the underside catches its own light */
       c=mix(c,col,sk);hitG=1.;}}
   { vec2 cw=(P-C-vec2(0.,-RX*.13))/vec2(RX*.38,RX*.09);c+=vec3(1.,.52,.18)*exp(-dot(cw,cw))*.7*br*sk*(1.-hitG*.85); } /* the cap's amber ring, hidden above the disc, its light rising over the rim */
+  /* fog banks drifting round the ship, thick enough to swallow parts of it; its lights glow through, the fog lit amber from inside */
+  { float FK=FOGK;vec2 fq=vec2(P.x*1.6-t*.025,(P.y-C.y)*4.5);vec2 fw2=vec2(fbm3(fq*.8+t*.03),fbm3(fq*.8-t*.02+7.));float fo=smoothstep(.42,.66,fbm(fq*1.3+fw2*1.6));
+    float band=exp(-pow((P.y-C.y-RX*.04)/(RX*.5),2.))*exp(-pow((P.x-C.x)/(RX*2.2),2.));
+    vec2 fd=(P-C)/vec2(RX*.9,RX*.35);float inner=exp(-dot(fd,fd));
+    c=mix(c,vec3(.2,.19,.21)+vec3(1.,.5,.2)*inner*.7*br,fo*band*FK*sk); }
   /* thin cloud drifting in front of it, lit from below */
   float wisp=smoothstep(.5,.85,fbm(vec2(P.x*2.2-t*.03,P.y*6.+1.3)))*exp(-pow((P.y-C.y-RX*.04)/(RX*.2),2.))*exp(-pow((P.x-C.x)/(RX*1.5),2.));
   c=mix(c,vec3(.12,.1,.1)+vec3(1.,.55,.22)*.12*br,wisp*.55*sk);
