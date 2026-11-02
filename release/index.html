@@ -2048,6 +2048,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       col+=vec3(.45,.5,.65)*pow(1.-ndv,3.)*.2;                                                  /* cold light along its edges */
       col+=E*br;col+=vec3(1.,.55,.2)*smoothstep(-.02,-.2,n.y)*.03*br;                             /* the underside catches its own light */
       c=mix(c,col,sk*cov);hitG=cov;}}
+  { vec2 bw=(P-Ce)/vec2(RX*.32,RX*.1);c+=vec3(1.,.62,.28)*exp(-dot(bw,bw))*.22*br*sk; } /* a soft bloom where the beam leaves the ship */
   { vec2 cw=(P-C-vec2(0.,-RX*.13))/vec2(RX*.38,RX*.09);c+=vec3(1.,.52,.18)*exp(-dot(cw,cw))*.7*br*sk*(1.-hitG*.85); } /* the cap's amber ring, hidden above the disc, its light rising over the rim */
   /* fog banks drifting round the ship, thick enough to swallow parts of it; its lights glow through, the fog lit amber from inside */
   { float FK=FOGK;vec2 fq=vec2(P.x*1.6-t*.045,(P.y-C.y)*4.5);vec2 fw2=vec2(fbm3(fq*.8+t*.05),fbm3(fq*.8-t*.035+7.)); /* the fog banks roll past at a visible pace */float fo=smoothstep(.36,.64,fbm(fq*1.3+fw2*1.6));
@@ -2071,14 +2072,14 @@ vec3 lsky(vec2 P,vec2 C,float RE){vec2 d=P-C;float r2=max(dot(d,d),1e-5);vec2 b=
   return c;} /* va: the maps' aspect, and how far the event has arrived; vb: the balls' sideways position (parallax) and seconds since the last tap */
 vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.72,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
 vec3 disk(vec4 m,float far){float wm=smoothstep(.45,.95,m.a);if(wm<=0.)return vec3(0.); /* a soft edge where the light paths stop hitting the disk: no speckled, jagged rim */float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
-  float om=t*2.6*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
+  float om=t*3.*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
   vec2 pc=vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.);vec2 wq=vec2(fbm3(pc*1.3+vec2(t*.24,0.)),fbm3(pc*1.3+vec2(4.,-t*.2)));  /* the gas churns as it orbits: its pattern is warped by a slowly changing flow, so it never looks like a turning picture */
   float s=fbm3(pc+wq*2.)*1.45-.2+.1*sin(r*9.+3.*sin(r*1.7));
   float silk=fbm3(vec2(r*7.5+cos(pr)*.55,sin(pr)*.55+r*.4));s+=.3*(silk-.5);
   float clump=fbm3(vec2(cos(pr),sin(pr))*2.6+vec2(r*1.9,r*.7));s+=.75*(smoothstep(.35,.8,clump)-.35);   /* clouds of brighter and darker gas around the ring, carried round by the turning and sheared into arcs: the motion you see at a glance */                       /* fine concentric silk, as in the film: each ring carries its own pattern round at its own speed */
   s+=.22*pow(max(0.,cos(pr+r*.6)),6.)*exp(-pow((r-3.8)/1.1,2.));                                     /* one soft brighter swell riding the inner disk */
   float T=pow(r/2.6,-.75)*pow(max(1.-sqrt(2.4/r),0.),.25);float I=pow(T,2.6)*(.75+.55*s);
-  I*=smoothstep(2.6,3.1,r)*pow(clamp((10.-r)/4.,0.,1.),1.5)*(1.+.28*sin(ph));                 /* soft inner and outer edges; the approaching side brighter */
+  I*=smoothstep(2.6,3.1,r)*pow(clamp((10.-r)/4.,0.,1.),1.5)*(1.+.28*sin(ph))*(1.+.5*pow(max(0.,cos(pr*1.-1.3)),10.)*exp(-pow((r-3.3)/.8,2.))*(.65+.35*sin(t*.45)));  /* soft edges; the approaching side brighter; a hot flare of gas orbiting close in */
   return hot(clamp((r-2.6)/3.4,0.,1.))*I*(far>.5?1.15:1.)*wm;}
 void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)*sa/va.x;else q.y=.5+(p.y-.5)*va.x/sa;
   q+=vec2(sin(t*.21),cos(t*.17))*.0015;                                         /* depth: the hole sits far behind the play, shifting a little against the balls, and drifts very slightly */
@@ -2116,7 +2117,7 @@ mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,s,-s,c);}
 float tri(float x){return clamp(abs(fract(x)-.5),.01,.49);}
 vec2 tri2(vec2 p){return vec2(tri(p.x)+tri(p.y),tri(p.y+tri(p.x)));}
 float tnoise(vec2 p){float z=1.8,z2=2.5,rz=0.;p*=rot(p.x*.06);vec2 bp=p;
-  for(int i=0;i<5;i++){vec2 dg=tri2(bp*1.85)*.75;dg*=rot(t*.11);   /* the curtains ripple and refold a little faster: lively, never hurried */p-=dg/z2;bp*=1.3;z2*=.45;z*=.42;p*=1.21+(rz-1.)*.02;rz+=tri(p.x+tri(p.y))*z;p*=-mat2(.95534,.29552,-.29552,.95534);}
+  for(int i=0;i<5;i++){vec2 dg=tri2(bp*1.85)*.75;dg*=rot(t*.15);   /* the curtains ripple and refold a little faster: lively, never hurried */p-=dg/z2;bp*=1.3;z2*=.45;z*=.42;p*=1.21+(rz-1.)*.02;rz+=tri(p.x+tri(p.y))*z;p*=-mat2(.95534,.29552,-.29552,.95534);}
   return clamp(1./pow(rz*29.,1.64),0.,.68);} /* a touch more contrast: crisper rays inside the curtains */
 vec3 pal(float i){vec3 a=vec3(.2,1.,.6),b=vec3(.2,.75,1.),c=vec3(.35,.4,1.),d=vec3(.7,.35,1.);i=clamp(i*1.3,0.,1.);return i<.33?mix(a,b,i*3.):i<.66?mix(b,c,(i-.33)*3.):mix(c,d,(i-.66)*3.);} /* green at the hem, cyan, blue, violet higher up */
 vec3 sheetsA(vec2 q,float hd,float sd){vec3 ro=vec3(sd*1.7,0.,-6.7),rd=normalize(vec3(q*vec2(1.1,.5),1.3));rd.yz*=rot(.16);rd.xz*=rot(hd); /* looking up into the sky */
@@ -2128,7 +2129,7 @@ vec3 sheetsA(vec2 q,float hd,float sd){vec3 ro=vec3(sd*1.7,0.,-6.7),rd=normalize
   return acc;}
 vec3 sheetsA2(vec2 q,float hd,float sd){return sheetsA(q,hd,sd);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.y)-.42);
-  vec3 acc=sheetsA(q,.18+.07*sin(t*.045)+.02*sin(t*.13),0.)+sheetsA(q+vec2(.25,.36),1.45+.05*sin(t*.035),3.)*.7*smoothstep(.38,.62,uv.y); /* the main curtains above, and a second display further off filling the lower sky */
+  vec3 acc=sheetsA(q+vec2(.04*sin(t*.11),0.),.18+.1*sin(t*.06)+.03*sin(t*.17),0.)+sheetsA(q+vec2(.25,.36),1.45+.05*sin(t*.035),3.)*.7*smoothstep(.38,.62,uv.y); /* the main curtains above, and a second display further off filling the lower sky */
   vec3 sky=mix(vec3(.004,.008,.03),vec3(.02,.03,.09),smoothstep(0.,1.,1.-uv.y));sky+=vec3(.05,.03,.14)*smoothstep(.55,1.,uv.y)*.6;
   float L=dot(acc,vec3(.33));acc*=smoothstep(.018,.075,L)*.8+.2; /* a few pure dark gaps open between the curtains */
   vec3 col=sky*(.75+.25*smoothstep(.01,.08,L))+acc*acc*7.5+acc*.75+pow(acc,vec3(3.))*18.; /* the brightest folds get a defined, almost white core; the glow round them is kept */
@@ -2850,14 +2851,13 @@ function draw() {
   { const n = state !== 'menu' && uiNight() > .5; if (n !== nightOn) { nightOn = n; document.body.classList.toggle('night', n); themeMeta && themeMeta.setAttribute('content', n ? '#0b1020' : '#f6f1ea'); } } // glass and Safari's bars tint to the sky
   ctx = mainCtx;
   const skyOn = drawSky();
-  ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? (skyE > .995 ? 0 : 1) : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
+  ctx.setTransform(1, 0, 0, 1, 0, 0); const NT = { aurora: [[150, 162, 222], [8, 14, 38]], bhole: [[196, 150, 118], [5, 5, 9]], alien: [[158, 128, 108], [12, 12, 18]], meteor: [[196, 168, 222], [24, 20, 60]] }[wx.kind], night = NT && NT[1], dimK = night && skyOn ? smooth(clamp01(skyE / .55)) : 0, bgA = skyOn ? (night ? 1 - smooth(clamp01((skyE - .35) / .65)) : 1 - skyE) : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height);
+  if (bgA > .004) { ctx.globalAlpha = bgA; if (dimK > 0) { const tone = k => { k = clamp01(k); const [a, b] = k < .5 ? [[246, 241, 234], NT[0]] : [NT[0], NT[1]], q = smooth(k < .5 ? k * 2 : (k - .5) * 2); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * q)).join(',')})`; };
+    const g = ctx.createLinearGradient(0, 0, 0, cv.height); g.addColorStop(0, tone(dimK * 1.25)); g.addColorStop(1, tone(dimK * .85)); ctx.fillStyle = g; } else ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } // twilight: the room passes through the event's own dusk colour, darkest at the top, then its sky emerges // a night event first dims the room to its own dark tone, then its sky emerges through it: never a milky grey mix ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
   const sk = RM ? 0 : shake; ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * sk * scale, offY + (Math.random() - .5) * sk * scale);
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   const playing = state !== 'menu';
-  if (bgA > .004) { ctx.globalAlpha = bgA; drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
-  if (skyOn && bgA > .004 && skyE > .002) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'destination-out'; // the event sky is revealed like dusk falling: it sweeps down from the top behind a soft edge, never a milky half-transparent wash
-    const Hc = cv.height, f = (skyE * 1.5 - .25) * Hc, band = Hc * .28, g = ctx.createLinearGradient(0, f - band, 0, f + band * .35); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(.55, 'rgba(0,0,0,.75)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, Math.min(Hc, f + band * .35 + 2)); ctx.restore(); }
+  if (bgA > .004) { ctx.globalAlpha = bgA * (1 - dimK); drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
   ctx.globalAlpha = 1 - skyE * .85; drawDivider(Math.max(pulse * .5, fxA, state === "menu" ? 0 : 0)); ctx.globalAlpha = 1; /* the divider melts into an event sky */
   if (!playing) { ctx.restore(); return; } // the home screen shows only the calm backdrop; the balls live in its preview
 
