@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="7544584">
+<meta name="build" content="e146a16">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -57,7 +57,8 @@
   .label{font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--ink-2)}
 
   /* cards */
-  .card{width:min(330px,86vw);background:var(--card);border:1px solid rgba(255,255,255,.85);border-radius:var(--r-card);box-shadow:var(--sh-card)}
+  .card{width:min(330px,86vw);background:var(--card);border:1px solid rgba(255,255,255,.85);border-radius:var(--r-card);box-shadow:var(--sh-card);position:relative}
+  .card::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.45));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)} /* Liquid Glass edge */
   .diff{display:flex;flex-direction:column;gap:6px;padding:13px 16px 11px}
   .dl{display:flex;justify-content:space-between;align-items:baseline}
   .dname,#pername{font-size:17px;font-weight:800;letter-spacing:.02em}
@@ -1749,6 +1750,8 @@ const ICE = () => sprite('ice3', 64, 64, (g) => { // a hailstone in layers: clea
   rg = g.createRadialGradient(c - 4, c - 4, 0, c, c, R * .75); rg.addColorStop(0, 'rgba(248,252,255,.95)'); rg.addColorStop(1, 'rgba(230,242,252,.2)'); g.fillStyle = rg; g.beginPath(); g.arc(c, c, R * .75, 0, 7); g.fill(); // cloudy body
   rg = g.createRadialGradient(c + 4, c + 9, 0, c + 4, c + 9, R * .4); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(1, 'rgba(210,240,255,0)'); g.fillStyle = rg; g.beginPath(); g.arc(c + 4, c + 9, R * .4, 0, 7); g.fill(); // caustic core
   g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.5; g.beginPath(); g.arc(c, c, R - 1.5, 3.6, 5.2); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.ellipse(c - 10, c - 12, 5.5, 3.5, -.6, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(225,240,255,.45)'; g.lineWidth = 1.1; g.beginPath(); g.arc(c, c, R - 1.2, .35, 1.25); g.stroke(); // Liquid Glass: the light returns faintly along the opposite edge
+  g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(150,195,255,.1)'; g.fillRect(0, 0, 64, 64); // a faint cool tint, like tinted glass
 });
 const hailWake = () => sprite('hwake', 16, 96, (g, w, h) => { const lg = g.createLinearGradient(0, 0, 0, h); lg.addColorStop(0, 'rgba(230,240,252,0)'); lg.addColorStop(1, 'rgba(240,248,255,.9)'); g.fillStyle = lg; g.beginPath(); g.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, 7); g.fill(); });
 const hailTrail = () => sprite('htrail', 4, 64, (g, w, h) => { const lg = g.createLinearGradient(0, 0, 0, h); lg.addColorStop(0, 'rgba(235,244,252,0)'); lg.addColorStop(1, 'rgba(235,244,252,1)'); g.fillStyle = lg; g.fillRect(0, 0, w, h); });
@@ -1955,22 +1958,22 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
    a low cap ringed with amber light, tiers stepping down underneath with a ring of amber lights and a glowing aperture that pours a beam of light down.
    The metal reflects the dark sky and the amber glow beneath it; the clouds round it are lit amber from below. Its lights breathe slowly, and now and then surge */
 uniform vec2 sc;uniform float sk,ba,pk;
-#define FOGK .9
+#define FOGK 1.
 float sdE(vec3 p,vec3 r){float k0=length(p/r),k1=length(p/(r*r));return k0*(k0-1.)/k1;}
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
 float map(vec3 p){float disc=sdE(p,vec3(1.,.075,1.)),cap=sdE(p-vec3(0.,.06,0.),vec3(.3,.15,.3));
   float t1=sdE(p-vec3(0.,-.055,0.),vec3(.7,.075,.7)),t2=sdE(p-vec3(0.,-.1,0.),vec3(.42,.06,.42)),t3=sdE(p-vec3(0.,-.14,0.),vec3(.2,.045,.2));
   return min(min(smin(disc,cap,.02),smin(t1,t2,.015)),min(t3,disc));}
 vec3 nrm(vec3 p){vec2 e=vec2(.001,-.001);return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));}
-vec3 env(vec3 r){vec3 c=vec3(.03,.034,.045)+vec3(.12,.13,.16)*smoothstep(-.1,.8,r.y);        /* the overcast sky above */
+vec3 env(vec3 r){vec3 c=vec3(.018,.02,.028)+vec3(.07,.075,.095)*smoothstep(-.1,.8,r.y);        /* the overcast sky above */
   c+=vec3(.55,.28,.1)*smoothstep(.05,-.7,r.y)*.38;                                                 /* the amber glow below, from its own beam on the clouds */
   c+=vec3(.16,.13,.12)*exp(-pow(r.y/.12,2.));                                                     /* a dim horizon */
-  c+=vec3(.6,.65,.78)*pow(max(dot(r,normalize(vec3(.6,.55,-.4))),0.),10.)*1.1;                     /* a cold moon somewhere behind the clouds */
+  c+=vec3(.6,.65,.78)*pow(max(dot(r,normalize(vec3(.6,.55,-.4))),0.),12.)*.7;                     /* a cold moon somewhere behind the clouds */
   return c;}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(sc.x*asp,sc.y);float RX=asp*.33;
   float br=.72+.28*sin(t*1.25),surge=smoothstep(.93,1.,sin(t*.37)*.5+.5);br+=surge*.6;            /* its lights breathe; now and then they surge */
   /* a heavy, slowly churning overcast night, lit amber from beneath where the ship is */
-  vec3 c=mix(vec3(.015,.02,.035),vec3(.035,.035,.05),smoothstep(.0,1.,uv.y));
+  vec3 c=mix(vec3(.01,.013,.024),vec3(.03,.03,.042),smoothstep(.0,1.,uv.y));
   vec2 sd2=(P-C)/vec2(asp*.42,.16);float sl=exp(-dot(sd2,sd2));
   for(int k=0;k<3;k++){float fk=float(k);vec2 cp=vec2(P.x*(1.4+fk*.5)+t*(.01+fk*.005)+fk*3.,P.y*(2.6+fk*.8)-fk+t*.006);vec2 wq=vec2(fbm3(cp*.7+t*.02),fbm3(cp*.7-t*.015+4.));
     float cl=smoothstep(.3,.85,fbm(cp+wq*1.2));float under=smoothstep(.45,.7,fbm(cp+wq*1.2+vec2(0.,.12)));        /* the cloud and how much of it faces down */
@@ -2002,19 +2005,19 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       float sa=(fract(ang/6.2832*15.+.5)-.5)*6.2832/15.*rxz;float la=length(vec2(sa,rxz-.6));E+=(vec3(1.,.85,.6)*smoothstep(.028,.008,la)*4.+vec3(1.,.5,.15)*smoothstep(.07,.0,la)*1.6)*step(p.y,-.04); /* a ring of round amber lights round the tiers */   /* a ring of amber lights round the tiers */
       float sb=(fract(ang/6.2832*7.+.62)-.5)*6.2832/7.*rxz;float lb=length(vec2(sb,rxz-.86));E+=(vec3(1.,.82,.55)*smoothstep(.025,.006,lb)*3.5+vec3(1.,.45,.12)*smoothstep(.06,0.,lb)*1.2)*step(p.y,-.01); /* a few lights under the rim */
       E+=mix(AM,vec3(1.,.93,.8),smoothstep(.17,.04,rxz))*smoothstep(.19,.14,rxz)*step(p.y,-.17)*4.;          /* the aperture */
-      col+=vec3(.45,.5,.65)*pow(1.-ndv,3.)*.35;                                                  /* cold light along its edges */
+      col+=vec3(.45,.5,.65)*pow(1.-ndv,3.)*.2;                                                  /* cold light along its edges */
       col+=E*br;col+=vec3(1.,.55,.2)*smoothstep(-.02,-.2,n.y)*.08*br;                             /* the underside catches its own light */
       c=mix(c,col,sk);hitG=1.;}}
   { vec2 cw=(P-C-vec2(0.,-RX*.13))/vec2(RX*.38,RX*.09);c+=vec3(1.,.52,.18)*exp(-dot(cw,cw))*.7*br*sk*(1.-hitG*.85); } /* the cap's amber ring, hidden above the disc, its light rising over the rim */
   /* fog banks drifting round the ship, thick enough to swallow parts of it; its lights glow through, the fog lit amber from inside */
-  { float FK=FOGK;vec2 fq=vec2(P.x*1.6-t*.025,(P.y-C.y)*4.5);vec2 fw2=vec2(fbm3(fq*.8+t*.03),fbm3(fq*.8-t*.02+7.));float fo=smoothstep(.42,.66,fbm(fq*1.3+fw2*1.6));
-    float band=exp(-pow((P.y-C.y-RX*.04)/(RX*.5),2.))*exp(-pow((P.x-C.x)/(RX*2.2),2.));
+  { float FK=FOGK;vec2 fq=vec2(P.x*1.6-t*.025,(P.y-C.y)*4.5);vec2 fw2=vec2(fbm3(fq*.8+t*.03),fbm3(fq*.8-t*.02+7.));float fo=smoothstep(.36,.64,fbm(fq*1.3+fw2*1.6));
+    float band=exp(-pow((P.y-C.y-RX*.02)/(RX*.62),2.))*exp(-pow((P.x-C.x)/(RX*2.6),2.));
     vec2 fd=(P-C)/vec2(RX*.9,RX*.35);float inner=exp(-dot(fd,fd));
-    c=mix(c,vec3(.2,.19,.21)+vec3(1.,.5,.2)*inner*.7*br,fo*band*FK*sk); }
+    c=mix(c,vec3(.11,.105,.12)+vec3(1.,.5,.2)*inner*.45*br,fo*band*FK*sk); }
   /* thin cloud drifting in front of it, lit from below */
   float wisp=smoothstep(.5,.85,fbm(vec2(P.x*2.2-t*.03,P.y*6.+1.3)))*exp(-pow((P.y-C.y-RX*.04)/(RX*.2),2.))*exp(-pow((P.x-C.x)/(RX*1.5),2.));
   c=mix(c,vec3(.12,.1,.1)+vec3(1.,.55,.22)*.12*br,wisp*.55*sk);
-  c*=1.-.35*smoothstep(.45,1.1,length((uv-vec2(.5,.45))*vec2(1.,.8)));                              /* a heavy vignette */
+  c*=1.-.45*smoothstep(.4,1.05,length((uv-vec2(.5,.45))*vec2(1.,.8)));                              /* a heavy vignette */
   c=1.-exp(-c*1.5);gl_FragColor=vec4(c+dith(),1.);}`,
     bholemap: `/* the black hole, rendered live from its traced light paths: each pixel knows where its light crossed the disk (first crossing in front,
    second the far side bent over and under the hole); the disk turns faster near the hole, its silky rings drift, the side turning towards us is brighter */
@@ -2707,6 +2710,8 @@ function drawAlien(o, x, y, w, h) { // an alien ship in the shape of a block: ir
   ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.beginPath(); ctx.roundRect(x0 + 6, y0 + 3, w - 12, 3, 2); ctx.fill(); ctx.restore(); // the top sheen every block has
   const rg = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); rg.addColorStop(0, 'rgba(210,190,255,.9)'); rg.addColorStop(.5, 'rgba(190,245,255,.95)'); rg.addColorStop(1, 'rgba(200,255,230,.9)');
   ctx.strokeStyle = rg; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x0 + .75, y0 + .75, w - 1.5, h - 1.5, r); ctx.stroke();
+  { const lg = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); lg.addColorStop(0, 'rgba(255,255,255,.85)'); lg.addColorStop(.3, 'rgba(255,255,255,0)'); lg.addColorStop(.72, 'rgba(255,255,255,0)'); lg.addColorStop(1, 'rgba(255,255,255,.4)');
+    ctx.strokeStyle = lg; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(x0 + 1.5, y0 + 1.5, w - 3, h - 3, r - 1); ctx.stroke(); } // Liquid Glass: the edge catches the light at the top left and returns it faintly at the bottom right
   ctx.save(); ctx.shadowColor = 'rgba(190,240,255,.9)'; ctx.shadowBlur = 10; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(x - w * .29, y - 3.5, w * .58, 7, 3.5); ctx.fill(); ctx.restore(); // the bar, glowing white where every block carries gold
   if (o.warped && wf < 1) { ctx.strokeStyle = `rgba(210,250,255,${1 - wf})`; ctx.lineWidth = 2; const gr = wf * 16; ctx.beginPath(); ctx.roundRect(x0 - gr, y0 - gr, w + gr * 2, h + gr * 2, r + gr); ctx.stroke(); }
 }
