@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="65da5eb">
+<meta name="build" content="0188767">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -990,11 +990,11 @@ const WX = {
   meteor: { dur: 22, p: 1 / 150, warn: 1.2, note: ['Meteor shower', 'Look up'] },
   rain: { dur: 20, p: 1 / 120, warn: 2.2, note: ['Rain incoming', 'Wet lanes ahead'] }, // a gentler storm: soft glows in the cloud, no strikes and no thunder; each shower either brings more blocks or a slight speed-up
   snow: { dur: 22, p: 1 / 150, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
-  eclipse: { dur: 38, p: 1 / 900, warn: 1.6, note: ['Solar eclipse', 'The moon is crossing the sun'] }, // rare and purely to look at: the day darkens to a ring of fire
-  halo: { dur: 20, p: 1 / 260, warn: 1.2, note: ['Ice halo', 'Diamond dust in the air'] }, // a frozen, crystal-clear sky: a ring of light round the sun
-  firefly: { dur: 22, p: 1 / 200, warn: 1.2, note: ['Fireflies', 'Dusk is falling'] }, // a violet dusk full of soft blinking lights
+  eclipse: { dur: 38, p: 1 / 900, warn: 1.6, note: ['Solar eclipse', 'Blocks vanish in the dark'] }, // rare and purely to look at: the day darkens to a ring of fire
+  halo: { dur: 20, p: 1 / 260, warn: 1.2, note: ['Ice halo', 'The balls slide on the ice'] }, // a frozen, crystal-clear sky: a ring of light round the sun
+  firefly: { dur: 22, p: 1 / 200, warn: 1.2, note: ['Fireflies', 'Gems drift like fireflies'] }, // a violet dusk full of soft blinking lights
   blossom: { dur: 20, p: 1 / 170, warn: 1.2, note: ['Cherry blossom', 'Petals on the breeze'] }, // a spring sky with petals drifting down
-  golden: { dur: 36, p: 1 / 240, warn: 1.2, note: ['Golden hour', 'The sun sets over a sea of clouds'] }, // the sky passes from golden light through sunset to blue hour
+  golden: { dur: 36, p: 1 / 240, warn: 1.2, note: ['Golden hour', 'Gems are worth double'] }, // the sky passes from golden light through sunset to blue hour
   alien: { dur: 22, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
 };
 const CHIPS = []; let chipT = 0;
@@ -1005,6 +1005,7 @@ const SNOW = Array.from({ length: 260 }, () => { const z = Math.random() ** 1.6;
 const windHead = []; let windT = 0;
 let windDir = 1, rimA = 0, sunX = -999, tapT = -9, bhPar = 0;
 const ELEC = { base: '#7cc4ff', hi: '#ffffff', lo: '#3b82f6', deep: '#1f56c9', core: '238,248,255', rgb: '124,196,255' };
+const wxOn = k => wx.kind === k && wx.phase !== 'warn' && mode !== 'zen' && wx.a > .3; // an event's effect on play is live (never in Zen, never during the warning)
 const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks slide, so collisions use where they are drawn
 function reset() {
   const p = params();
@@ -1039,7 +1040,7 @@ function addRow() {
   Array.from({ length: per }, (_, i) => i).filter(q => q !== sp).forEach(q => {
     (R() < .3 ? [q, N - 1 - q] : [R() < .5 ? q : N - 1 - q]).forEach(l => things.push({ k: 'b', l, y: nextY, row }));
   });
-  if (R() < .55) things.push({ k: 'g', l: R() < .5 ? sp : N - 1 - sp, y: nextY - R() * 40, ph: R() * 6, row });
+  if (R() < (wxOn('golden') ? .8 : .55)) things.push({ k: 'g', l: R() < .5 ? sp : N - 1 - sp, y: nextY - R() * 40, ph: R() * 6, row, ff: wxOn('firefly') }); // golden hour brings more gems; at dusk they are fireflies
   nextY -= rowGap() * (per === 3 ? 1.12 : 1) * (1 + .6 * Math.max(0, cost - 1));
 }
 reset();
@@ -1146,11 +1147,12 @@ function die(x, y, bi = 0, blk = null) {
   const j = 1 - bi;
   for (const o of things) if (o.k === 'b' && o !== blk && Math.abs(o.y - BY) < 52 && Math.abs(bx[j] - bxOf(o)) < 38) { crash.ball[j] = { at: 0, burst: false, elec: !!o.elec }; o.hitAt = 0; break; }
   if (!crash.ball[j]) crash.ball[j] = { at: (crash.ball[bi].elec ? .12 : 0) + .11, burst: false, elec: crash.ball[bi].elec, chain: true }; // linked twin: shatters a beat later
-  const sp = blk && blk.al ? 'alien' : ''; // special death: scattered by an alien ship
+  const sp = blk && blk.al ? 'alien' : wx.a > .3 && wx.phase !== 'warn' ? ({ halo: 'ice', snow: 'ice', golden: 'ember', firefly: 'fly', blossom: 'petal', eclipse: 'dark' }[wx.kind] || '') : ''; // special deaths: scattered by an alien ship, or taken by the weather
   crash.shown = false; crash.hole = wx.kind === 'bhole' && wx.a > .3 ? 0 : -1; // during the black hole, the debris of a normal shatter is drawn into it
   if (crash.hole >= 0) { beep(90, 1.6, 'sine', .07, -40); hush(900, 1.2, 1.6, .04, 120, .2, .4); [164.81, 155.56, 146.83].forEach((f, i) => bell(f, .012, 3, 'fx', 1, .6 + i * .25)); }
   if (sp) { crash.ball = [0, 1].map(i => ({ at: 99, burst: false, elec: false, sp, x0: bx[i], y0: BY, d: i === bi ? 0 : .14 })); fx.freeze = 0;
-    { [1567.98, 1318.5, 1046.5, 783.99].forEach((f, i) => bell(f, .011, .7, 'fx', .6, i * .06)); hush(5200, 3, .12, .03, 0, 0, .1); beep(620, .35, 'sine', .04, -420); }
+    if (sp === 'alien') { [1567.98, 1318.5, 1046.5, 783.99].forEach((f, i) => bell(f, .011, .7, 'fx', .6, i * .06)); hush(5200, 3, .12, .03, 0, 0, .1); beep(620, .35, 'sine', .04, -420); }
+    else spDeathSound(sp);
     haptic('error'); }
   else { for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (!c) continue; if (c.chain) continue; if (c.elec) c.at = .12; else { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // normal: burst instantly; electrified: a short electrocution flash first
   beep(190, .45, 'sawtooth', .1, -140); haptic('error'); }
@@ -1222,7 +1224,7 @@ function update(dt) {
     fx.dead += dt;
     const drift = won ? Math.max(0, 1 - fx.dead / 1.6) ** 2 : Math.max(0, 1 - fx.dead / .35); // the world glides to a stop instead of carrying on
     const mv = speed * dt * (won ? 1 : .3) * drift; for (const o of things) o.y += mv; if (gate) gate.y += mv;
-    if (!crash.shown && ((crash.ball[0] && (crash.ball[0].abd || crash.ball[0].sp) && fx.dead >= (crash.ball[0].sp === 'alien' ? 1.3 : 1.75)) || (crash.hole >= 0 && fx.dead >= 1.6))) { crash.shown = true; showOver(); } // after the special death has played out
+    if (!crash.shown && ((crash.ball[0] && (crash.ball[0].abd || crash.ball[0].sp) && fx.dead >= (crash.ball[0].sp === 'alien' ? 1.3 : crash.ball[0].sp ? 1.5 : 1.75)) || (crash.hole >= 0 && fx.dead >= 1.6))) { crash.shown = true; showOver(); } // after the special death has played out
     for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY, c.elec); } }
     return;
   }
@@ -1230,8 +1232,9 @@ function update(dt) {
   for (let i = 0; i < 2; i++) {
     // critically damped spring, integrated in small steps so every frame shows real in-between motion
     const ox = bx[i];
-    for (let h = dt; h > 0; h -= .004) { const s = Math.min(.004, h); bv[i] += (SPRING * SPRING * (tx[i] - bx[i]) - 2 * SPRING * bv[i]) * s; bx[i] += bv[i] * s; }
-    if (Math.abs(tx[i] - bx[i]) < .3 && Math.abs(bv[i]) < 6) { bx[i] = tx[i]; bv[i] = 0; }
+    const ice = wxOn('halo') ? wx.a : 0, K = SPRING * (1 - .25 * ice), D = 2 * K * (1 - .45 * ice); // on the ice the balls glide, and slide a little past the column before settling
+    for (let h = dt; h > 0; h -= .004) { const s = Math.min(.004, h); bv[i] += (K * K * (tx[i] - bx[i]) - D * bv[i]) * s; bx[i] += bv[i] * s; }
+    if (Math.abs(tx[i] - bx[i]) < .3 && Math.abs(bv[i]) < 6 && !ice) { bx[i] = tx[i]; bv[i] = 0; }
     // faint trail while sliding between columns
     if (Math.abs(bv[i]) > 60) trail[i].push(ox); else if (trail[i].length) trail[i].shift();
     if (trail[i].length > 5) trail[i].shift();
@@ -1258,7 +1261,7 @@ function update(dt) {
   const lane = W / N;
   const sk = wxSK();
   for (const o of things) {
-    o.y += speed * sk * dt;
+    o.y += speed * sk * dt; if (o.ff) o.ex = LX[o.l] + Math.sin(t * 1.5 + o.ph) * lane * .42; // a firefly gem wanders across its lane
     if (o.k === 'b' && o.y > BY + 40 && !scored.has(o.row)) { scored.add(o.row); if (!(mode === 'normal' && score >= GOAL) && ++score % 10 === 0) { float(W / 2, 300, score + '!', '#e9a23b'); beep(760, .2, 'triangle', .07, 300); } }
     const x = bxOf(o);
     // near miss (visual only): a block slides past right beside a ball that just dodged
@@ -1272,7 +1275,7 @@ function update(dt) {
       if (Math.abs(bx[bi] - x) < (o.k === 'b' ? 30 : 34)) {
         if (o.k === 'b') { if (mode !== 'zen') return die(x, o.y, bi, o); if (!o.zen) { o.zen = true; combo = 1; fx.near = 1; burst(bx[bi], BY, 6, '#ffffff', 140, .4, 0, .8); haptic('soft'); } continue; } // Zen: nothing breaks, the combo just resets
         if (!o.got) {
-          o.got = true; score = mode === 'normal' ? Math.min(GOAL, score + combo) : score + combo; combo = Math.min(8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
+          o.got = true; const gv = combo * (wxOn('golden') ? 2 : 1); score = mode === 'normal' ? Math.min(GOAL, score + gv) : score + gv; if (gv > combo) float(x, o.y - 44, '×2', '#f2a93b'); // golden hour: every gem counts double combo = Math.min(8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
           fx.gem = 1; fx.combo = 1; fx.maxCombo = Math.max(fx.maxCombo, combo); // visual feedback only
           burst(x, o.y, 7, '#ffc867', 160, .4, 60, .9); burst(x, o.y, 3, '#ffffff', 120, .3, 0, .8); float(x, o.y - 24, '+' + (combo - 1 || 1), '#e9a23b');
         }
@@ -1482,6 +1485,48 @@ function drawAbducted(i, c, r, P) { // the ball rising up the beam into the ship
     const fg = ctx.createRadialGradient(ax, ay, 0, ax, ay, R); fg.addColorStop(0, `rgba(255,240,210,${.85 * f})`); fg.addColorStop(.35, `rgba(255,200,130,${.3 * f})`); fg.addColorStop(1, 'rgba(255,190,110,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(ax, ay, R, 0, 7); ctx.fill();
     for (let q = 0; q < 8; q++) { const an = q / 8 * 6.283 + .2, L = R * 1.5; ctx.save(); ctx.translate(ax, ay); ctx.rotate(an); const rg = ctx.createLinearGradient(0, 0, L, 0); rg.addColorStop(0, `rgba(255,236,200,${.35 * f})`); rg.addColorStop(1, 'rgba(255,220,170,0)'); ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(L, 0); ctx.lineTo(0, 3); ctx.fill(); ctx.restore(); } // soft rays of light
     ctx.restore(); } }
+const ICEP = { base: '#d6ebff', hi: '#ffffff', lo: '#9ec6ee', deep: '#6d95c6', core: '240,248,255', rgb: '196,224,255' }, DARKP = { base: '#1a1a24', hi: '#3c3c4c', lo: '#0e0e16', deep: '#050508', core: '70,70,92', rgb: '24,24,34' };
+function spDeathSound(sp) { // each weather death has its own small sound
+  if (sp === 'ice') { [3136, 2637, 2349.3, 1975.5, 1568].forEach((f, i) => bell(f, .009, .5, 'fx', .5, .3 + i * .035)); hush(6000, 2, .25, .03, 0, .3, .2); beep(1200, .3, 'sine', .02, -600); }
+  else if (sp === 'ember') { [783.99, 987.77, 1174.66, 1567.98].forEach((f, i) => bell(f, .009, 2.2, 'fx', .9, i * .12)); hush(900, 1.5, 1.2, .025, 2400, 0, .4); }
+  else if (sp === 'fly') { for (let j = 0; j < 9; j++) bell(1800 + Math.random() * 1600, .005, .5, 'fx', .6, j * .06); hush(3000, 2, .4, .02, 5000, 0, .3); }
+  else if (sp === 'petal') { [1046.5, 1318.5, 1567.98, 2093].forEach((f, i) => bell(f, .008, 1.4, 'fx', .9, i * .08)); hush(2400, 1.2, .8, .025, 900, 0, .3); }
+  else if (sp === 'dark') { beep(110, 1.2, 'sine', .06, -40); [1760, 2217.5, 2637].forEach((f, i) => bell(f, .009, 2, 'fx', 1, .45 + i * .06)); }
+  haptic('error'); }
+function drawSpDeath(i, c, r, P) { // the weather's own way of taking the ball
+  const k = fx.dead - c.d, x = c.x0, y = c.y0, sp = c.sp, side = i ? 1 : -1; if (k < 0) { drawBall(x, y, r, P, side); return; }
+  const R = Math.random;
+  if (!c.ps) { c.ps = []; const n = { ice: 24, ember: 60, fly: 28, petal: 24, dark: 0 }[sp];
+    for (let j = 0; j < n; j++) { const an = R() * 6.283, v = sp === 'ice' ? 90 + R() * 150 : sp === 'ember' ? 20 + R() * 40 : sp === 'fly' ? 50 + R() * 90 : 60 + R() * 110, rr = R() * r * .8;
+      c.ps.push({ x: x + Math.cos(an) * rr, y: y + Math.sin(an) * rr, vx: Math.cos(an) * v, vy: Math.sin(an) * v - (sp === 'ember' ? 30 + R() * 50 : sp === 'petal' ? 40 : 0), rot: R() * 6, vr: (R() - .5) * 9, s: .5 + R() * .7, ph: R() * 7, per: .4 + R() * .5 }); } }
+  ctx.save();
+  if (sp === 'ice') { // the ball frosts over and freezes, cracks, then breaks into shards of ice
+    if (k < .34) { const q = k / .34; drawBall(x, y, r, P, side, 1, 1, .4, 0, 1 - q); drawBall(x, y, r * (1 + .03 * q), ICEP, side, 1, 1, .6, .2 * q, q);
+      ctx.strokeStyle = `rgba(255,255,255,${.9 * smooth(clamp01((q - .45) / .4))})`; ctx.lineWidth = 1.1; ctx.beginPath(); [[-.2, -.9, .1, -.1, -.4, .5], [.5, -.6, .1, -.1, .7, .3], [.1, -.1, -.1, .8, .3, .9]].forEach(([a, b, c2, d, e, f]) => { ctx.moveTo(x + a * r, y + b * r); ctx.lineTo(x + c2 * r, y + d * r); ctx.lineTo(x + e * r, y + f * r); }); ctx.stroke(); }
+    else { const tt = k - .34, q = clamp01(tt / 1.1); if (tt < .25) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (1 - tt / .25) * .7; ctx.drawImage(softBlob('220,240,255'), x - r * 2.5, y - r * 2.5, r * 5, r * 5); ctx.globalCompositeOperation = 'source-over'; }
+      for (const p of c.ps) { const px = p.x + p.vx * tt, py = p.y + p.vy * tt + 200 * tt * tt, sz = r * .55 * p.s; ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * tt); ctx.globalAlpha = (1 - q) ** 1.2;
+        const g = ctx.createLinearGradient(-sz, -sz, sz, sz); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.5, 'rgba(206,232,255,.9)'); g.addColorStop(1, 'rgba(120,170,235,.95)'); ctx.shadowColor = 'rgba(160,210,255,.8)'; ctx.shadowBlur = 6; ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -sz); ctx.lineTo(sz * .7, sz * .4); ctx.lineTo(-sz * .5, sz * .8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = .7; ctx.stroke(); ctx.restore(); } } }
+  else if (sp === 'ember') { // the ball melts into the golden light: it glows, softens and rises away as embers
+    const q = clamp01(k / .55); if (q < 1) { drawBall(x, y - q * 6, r * (1 - .45 * q), GOLDP, side, 1, 1, .6 + q * .4, .3 * q, 1 - q * q); }
+    ctx.globalCompositeOperation = 'lighter'; if (k < .7) { ctx.globalAlpha = Math.sin(k / .7 * Math.PI) * .32; ctx.drawImage(softBlob('255,160,70'), x - r * 3.2, y - r * 3.2, r * 6.4, r * 6.4); }
+    for (const p of c.ps) { const tt = k * (.6 + p.s * .6), px = p.x + p.vx * tt + Math.sin(tt * 3 + p.ph) * 10, py = p.y + p.vy * tt - 30 * tt * tt, life = clamp01(1 - tt / 1.5); if (life <= 0) continue; const sz = (2.4 + 3.2 * p.s) * life, fl = .75 + .25 * Math.sin(tt * 14 + p.ph * 3);
+      ctx.globalAlpha = life * .75 * fl; ctx.drawImage(softBlob('255,150,50'), px - sz * 3, py - sz * 3, sz * 6, sz * 6); ctx.globalAlpha = life * fl; ctx.drawImage(softBlob('255,226,150'), px - sz, py - sz, sz * 2, sz * 2); } } // embers flicker as they rise
+  else if (sp === 'fly') { // the ball bursts into a swarm of fireflies that drift away, blinking
+    const q = clamp01(k / .25); if (q < 1) drawBall(x, y, r * (1 + .15 * q), P, side, 1, 1, 1, q, 1 - q);
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of c.ps) { const tt = k, dmp = 1 - Math.exp(-tt * 2.2), px = p.x + p.vx * dmp / 2.2 * 1.6 + Math.sin(tt * 2.5 + p.ph) * 14 * tt, py = p.y + p.vy * dmp / 2.2 * 1.6 + Math.cos(tt * 2 + p.ph) * 10 * tt - 22 * tt, life = clamp01(1 - (tt - .9) / .7);
+      const bl = .35 + .65 * Math.max(0, Math.sin(tt / p.per * 3.14 + p.ph)), sz = 2.4 + p.s * 2; ctx.globalAlpha = life * bl * .6; ctx.drawImage(softBlob('255,214,110'), px - sz * 4, py - sz * 4, sz * 8, sz * 8); ctx.globalAlpha = life * bl; ctx.drawImage(softBlob('255,250,214'), px - sz, py - sz, sz * 2, sz * 2); } }
+  else if (sp === 'petal') { // the ball bursts into blossom: petals in its own colour and in pink flutter out and drift down
+    const q = clamp01(k / .18); if (q < 1) drawBall(x, y, r * (1 + .2 * q), P, side, 1, 1, .8, .5 * q, 1 - q); if (k < .4) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (1 - k / .4) * .5; ctx.drawImage(softBlob('255,220,236'), x - r * 2.6, y - r * 2.6, r * 5.2, r * 5.2); ctx.globalCompositeOperation = 'source-over'; }
+    for (const [j, p] of c.ps.entries()) { const tt = k, dmp = 1 - Math.exp(-tt * 3), px = p.x + p.vx * dmp / 3 + Math.sin(tt * 2.2 + p.ph) * 18 * tt, py = p.y + p.vy * dmp / 3 + 34 * tt * tt, life = clamp01(1 - (tt - .8) / .7), tb = Math.cos(tt * 4 * p.s + p.ph), sz = 1.1 + p.s * .7;
+      ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * tt * .4); ctx.scale(sz * (.25 + .75 * Math.abs(tb)), sz); ctx.globalAlpha = life; if (j % 3 === 0) { ctx.fillStyle = P.base; ctx.beginPath(); ctx.ellipse(0, 0, 5, 7, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.ellipse(-1.2, -2, 1.6, 2.6, 0, 0, 7); ctx.fill(); } else ctx.drawImage(PETAL(tb < 0), -6, -7, 12, 14); ctx.restore(); } }
+  else if (sp === 'dark') { // the ball goes dark like the moon, then vanishes in a ring of corona light with a single bright point
+    if (k < .32) { const q = k / .32; drawBall(x, y, r, P, side, 1, 1, .3, 0, 1 - q); drawBall(x, y, r, DARKP, side, 1, 1, 0, 0, q); }
+    else { const tt = k - .32, q = clamp01(tt / 1.1), rr = r * (1 + 2.2 * (1 - (1 - q) ** 3)); ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = (1 - q) * .9; const g = ctx.createRadialGradient(x, y, rr * .7, x, y, rr * 1.4); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.35, 'rgba(240,244,255,.9)'); g.addColorStop(1, 'rgba(200,215,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rr * 1.4, 0, 7); ctx.fill();
+      if (tt < .5) { const d = 1 - tt / .5; ctx.globalAlpha = d; ctx.drawImage(softBlob('255,255,255'), x + r * .7 - 10, y - r * .7 - 10, 20, 20); ctx.fillStyle = `rgba(255,255,255,${d * .8})`; ctx.fillRect(x + r * .7 - 22 * d, y - r * .7 - .6, 44 * d, 1.2); ctx.fillRect(x + r * .7 - .6, y - r * .7 - 22 * d, 1.2, 44 * d); } // the diamond ring flashes as it goes
+      if (tt < .25) { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1 - tt / .25; drawBall(x, y, r * (1 - tt), DARKP, side, 1, 1, 0, 0, 1 - tt / .25); } } }
+  ctx.restore(); ctx.globalAlpha = 1; }
 function drawAlienDeath(i, c, r, P) { // hit by an alien ship: the ball flickers like a hologram losing its signal, then comes apart, top first, into little tiles of tinted glass that drift up, turning through the iridescence, and fade
   const k = (fx.dead - c.d), x = c.x0, y = c.y0; if (k < 0) { drawBall(x, y, r, P, i ? 1 : -1); return; }
   if (k < .32) { const q = k / .32; // the flicker: offset slices, colour fringing
@@ -3113,13 +3158,13 @@ function draw() {
   const motion = clamp01((speed - 450) / 500), wetA = (wx.kind === 'storm' || wx.kind === 'rain') && wx.phase !== 'warn' ? wx.a * wx.a * (3 - 2 * wx.a) : 0, snowA = wx.kind === 'snow' && wx.phase !== 'warn' ? wx.a : 0;
   for (const o of things) {
     const x = bxOf(o);
-    if (o.k !== 'b') { drawGem(x, o.y, o.ph); continue; }
+    if (o.k !== 'b') { if (o.ff) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .5 + .3 * Math.sin(t * 5 + o.ph); ctx.drawImage(softBlob('255,214,110'), x - 30, o.y - 30, 60, 60); ctx.restore(); } drawGem(x, o.y, o.ph); continue; }
     if (o.hitAt !== undefined && state === 'dead') { // the block takes the hit: a short jolt and squash
       const k = Math.max(0, fx.dead - o.hitAt), dmp = Math.max(0, 1 - k / .3), sq = Math.max(0, 1 - k / .18);
       ctx.save(); ctx.translate(x + Math.sin(k * 75) * 3.2 * dmp, o.y - 3 * sq); ctx.scale(1 + .07 * sq, 1 - .13 * sq);
       if (o.al) drawAlien(o, 0, 0, bw(), 44); else drawBlock(0, 0, bw(), 44, 0, o.elec); ctx.restore();
     } else { { const bk = wx.kind === 'storm' ? boltK() : 0; if (bk > .08 && wx.bolt) { const sx2 = Math.sign(x - wx.bolt.pts[0][0]) || 1; ctx.fillStyle = `rgba(10,14,28,${.4 * bk})`; ctx.beginPath(); ctx.roundRect(x - bw() / 2 + sx2 * 14 * bk, o.y - 22 + 16 * bk, bw(), 44, 12); ctx.fill(); } } // lightning casts a shadow
-      if (o.al) { drawAlien(o, x, o.y, bw(), 44); continue; } drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec); if (wetA > .02) wetBlock(o, x, o.y, bw(), 44, wetA); if (snowA > .02 || o.sn) snowBlock(o, x, o.y, bw(), 44, snowA); if (wx.kind === 'bhole' && wx.a > .02) holeBlock(x, o.y, bw(), 44, wx.a); }
+      if (o.al) { drawAlien(o, x, o.y, bw(), 44); continue; } const dkv = wxOn('eclipse') ? ECL.tot * (1 - smooth(clamp01((o.y - H * .22) / (H * .3)))) : 0; if (dkv > .01) ctx.globalAlpha = 1 - .86 * dkv; /* in totality the blocks are lost in the dark until they come close */ drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec); ctx.globalAlpha = 1; if (wetA > .02) wetBlock(o, x, o.y, bw(), 44, wetA); if (snowA > .02 || o.sn) snowBlock(o, x, o.y, bw(), 44, snowA); if (wx.kind === 'bhole' && wx.a > .02) holeBlock(x, o.y, bw(), 44, wx.a); }
   }
   drawHaze();
 
@@ -3150,7 +3195,8 @@ function draw() {
     const c = state === 'dead' ? crash.ball[i] : null;
     const ly = BY - ABD.lift + (ABD.lift > 1 ? Math.sin(t * 3.1 + i * 1.7) * 2.5 * ABD.k : 0); // the beam lifts them, swaying
     if (c && c.abd) drawAbducted(i, c, r, goldK > .5 ? GOLDP : P);
-    else if (c && c.sp === 'alien') drawAlienDeath(i, c, r, goldK > .5 ? GOLDP : P); // on a Golden Run every special death is gold too
+    else if (c && c.sp === 'alien') drawAlienDeath(i, c, r, goldK > .5 ? GOLDP : P);
+    else if (c && c.sp) drawSpDeath(i, c, r, goldK > .5 ? GOLDP : P); // on a Golden Run every special death is gold too
     else if (!c) { if (ABD.k > 0 && state === 'play') drawPull(x, ly, r); if (goldK < .99) drawBall(x, ly, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8); if (goldK > .01) drawGoldBall(x, ly, r, i ? 1 : -1, sx, sy, goldK, t); }
     else if (c.chain && !c.burst && !c.elec) { const q = clamp01(fx.dead / c.at); drawBall(x, BY, r * (1 + .12 * q), goldK > .5 ? GOLDP : P, i ? 1 : -1, 1 + .06 * q, 1 - .05 * q, .6 + q * .4, q * .9); } // charging as the pulse arrives
     else if (c.elec && !c.burst) { // electrocution: blue-white flash wrapped in small arcs, then it bursts
@@ -3317,10 +3363,10 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
   ['meteor', 'e-night', 'Meteor shower', 'Shooting stars cross a clear night sky.', 0],
   ['aurora', 'e-aur', 'Aurora', 'The northern lights fill the sky.', 0],
   ['blossom', 'e-bloom', 'Cherry blossom', 'Petals drift down through a soft spring sky.', 0],
-  ['firefly', 'e-fly', 'Fireflies', 'Dusk falls and fireflies glow all around you.', 0],
-  ['halo', 'e-halo', 'Ice halo', 'Diamond dust glitters and a ring of light circles the sun.', 0],
-  ['golden', 'e-gold', 'Golden hour', 'The sun slowly sets over a sea of clouds, from golden light to sunset to the first stars.', 0],
-  ['eclipse', 'e-ecl', 'Solar eclipse', 'Rare. The moon slides across the sun and the day turns to night.', 0],
+  ['firefly', 'e-fly', 'Fireflies', 'Dusk falls and fireflies glow all around. The gems drift across their lanes like fireflies.', 1],
+  ['halo', 'e-halo', 'Ice halo', 'A ring of light circles the sun. On the ice the balls glide, and slide a little past each column.', 1],
+  ['golden', 'e-gold', 'Golden hour', 'The sun sets over a sea of clouds. Gems are worth double, and more of them appear.', 1],
+  ['eclipse', 'e-ecl', 'Solar eclipse', 'Rare. The moon slides across the sun; in the darkness of totality the blocks are hard to see until they come close.', 1],
   ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side, and the beam slowly pulls up anything that stays in the middle. Move out of the middle to break free.', 1],
 ];
 function eventsHTML() {
