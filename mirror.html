@@ -111,14 +111,13 @@
   #wxnote .ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(43,45,66,.06);flex:none}
   #wxnote svg{width:16px;height:16px;fill:none;stroke:var(--ink-2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   #wxnote .tx{display:flex;flex-direction:column;gap:4px;line-height:1.1}
-  #wxnote b{font-size:14px;font-weight:800;letter-spacing:-.005em}
-  #wxnote.dark b{text-shadow:0 1px 2px rgba(0,0,0,.25)}
-  #wxnote small{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+  #wxnote b{font-size:13.5px;font-weight:800;letter-spacing:-.005em}
+  #wxnote small{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
   #wxnote.dark{color:#f5f5f7;background:rgba(40,42,56,.5);border-color:rgba(255,255,255,.16);box-shadow:0 4px 14px rgba(0,0,0,.18),0 1px 0 rgba(255,255,255,.14) inset}
-  #wxnote.dark .ic{background:rgba(255,255,255,.1)} #wxnote.dark svg{stroke:rgba(245,245,247,.82)} #wxnote.dark small{color:rgba(240,240,248,.78)}
+  #wxnote.dark .ic{background:rgba(255,255,255,.1)} #wxnote.dark svg{stroke:rgba(245,245,247,.82)} #wxnote.dark small{color:rgba(235,235,245,.5)}
   /* liquid glass: the scene behind is blurred and its colour lifted; a bright hairline rim and a soft highlight along the top, like Apple's glass */
-  #wxnote{background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,.62));border-color:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.2),0 8px 24px rgba(20,24,40,.14)}
-  #wxnote.dark{background:linear-gradient(180deg,rgba(30,32,48,.42),rgba(18,20,32,.55));border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.22)}
+  #wxnote{background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.34));border-color:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.2),0 8px 24px rgba(20,24,40,.14)}
+  #wxnote.dark{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.07));border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.22)}
   /* Liquid Glass: an edge that catches the light - brightest at the top left, a softer return at the bottom right - and, over the dark event skies, glass that lifts what is behind it a little, as a lens does */
   #pbtn::after,#wxnote::after,#banner::after{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
     background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,0) 32%,rgba(255,255,255,0) 68%,rgba(255,255,255,.32));
@@ -1386,9 +1385,10 @@ const WXICON = { // small line symbols in the same weight as the pause glyph
   snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.6 4.5 12 6.6l2.4-2.1M9.6 19.5 12 17.4l2.4 2.1"/>',
 };
 function wxNote(kind) {
-  const n = $('#wxnote'), dk = ['aurora', 'meteor', 'bhole', 'alien'].includes(kind), [ti, su] = kind === 'rain' ? ['Rain incoming', wx.rv === 'fast' ? 'Slick lanes speed you up' : 'More blocks in the rain'] : WX[kind].note; n.className = kind + (dk ? ' dark' : ''); /* night skies get the dark glass, so the note stays easy to read */ n.innerHTML = `<span class="ic"><svg viewBox="0 0 24 24">${WXICON[kind]}</svg></span><span class="tx"><b>${ti}</b><small>${su}</small></span>`;
+  const n = $('#wxnote'), dk = ['aurora', 'meteor', 'bhole', 'alien'].includes(kind), [ti, su] = kind === 'rain' ? ['Rain incoming', wx.rv === 'fast' ? 'Slick lanes speed you up' : 'More blocks in the rain'] : WX[kind].note; n.className = kind + (dk && (wx.kind !== kind || wx.phase !== 'warn') ? ' dark' : ''); wxNote.dk = dk; /* the note matches the sky it sits on: light while the old sky is still there, dark glass once the night sky has rolled in */ n.innerHTML = `<span class="ic"><svg viewBox="0 0 24 24">${WXICON[kind]}</svg></span><span class="tx"><b>${ti}</b><small>${su}</small></span>`;
   void n.offsetWidth; n.classList.add('show'); { const lo = kind === 'aurora' || kind === 'meteor' || kind === 'fog' ? .75 : 1; bell(880 * lo, .022, 1.2, 'fx', .6); bell(1318.5 * lo, .018, 1.6, 'fx', .6, .11); } /* a soft two-note chime announces every event */ clearTimeout(wxNote.h); wxNote.h = setTimeout(() => n.classList.remove('show'), 2600);
 }
+setInterval(() => { const n = $('#wxnote'); if (!wxNote.dk || !n.classList.contains('show')) return; n.classList.toggle('dark', skyE > .45 || (wx.a > .45 && wx.phase !== 'warn')); }, 120); // switches to dark glass as the night sky arrives
 function wxHide() { $('#wxnote').classList.remove('show'); clearTimeout(wxNote.h); }
 function updateWeather(dt) {
   if (!wx.kind) {
@@ -2936,13 +2936,14 @@ function draw() {
     // the wavy lower edge, symmetric about the centre line
     const edge = x => fy + Math.sin((Math.abs(x - W / 2) / W) * 9 - t * 1.1) * 7 + Math.sin(t * .7) * 3;
     const sheet = () => { ctx.beginPath(); ctx.moveTo(-20, -20); ctx.lineTo(W + 20, -20); for (let x = W + 20; x >= -20; x -= 10) ctx.lineTo(x, edge(x)); ctx.closePath(); };
+    const under = () => { ctx.beginPath(); ctx.moveTo(-20, fy + fade + 4); ctx.lineTo(W + 20, fy + fade + 4); for (let x = W + 20; x >= -20; x -= 10) ctx.lineTo(x, edge(x) - .5); ctx.closePath(); }; // the band below the wavy lip, so the falloff never overlaps the sheet in a straight line
     // soft falloff below the lip so blocks emerge gradually
     const gls = skyE > .02 ? skyE : 0; pGlass(gls > .02, fy, fade, edge); // over an event's GPU sky: real frosted glass behind, so the sky keeps its colours
     if (gls > .02) { ctx.save(); ctx.globalCompositeOperation = 'destination-out'; // the fog hides what is behind it: blocks under the sheet are cleared, and fade back in under its soft lip
-      const eg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); eg.addColorStop(0, `rgba(0,0,0,${gls})`); eg.addColorStop(.45, `rgba(0,0,0,${gls * .35})`); eg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = eg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
+      const eg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); eg.addColorStop(0, `rgba(0,0,0,${gls})`); eg.addColorStop(.45, `rgba(0,0,0,${gls * .35})`); eg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = eg; under(); ctx.fill();
       ctx.fillStyle = `rgba(0,0,0,${gls})`; sheet(); ctx.fill(); ctx.restore(); } // over an event: real frosted glass behind, so the sky keeps its colours
     const fg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); fg.addColorStop(0, `rgba(248,245,241,${.92 * (1 - .86 * gls)})`); fg.addColorStop(1, 'rgba(248,245,241,0)');
-    ctx.fillStyle = fg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
+    ctx.fillStyle = fg; under(); ctx.fill();
     // frosted body: fully opaque so nothing behind it can be read
     const body = ctx.createLinearGradient(0, 0, 0, fy); body.addColorStop(0, `rgba(251,249,246,${1 - .84 * gls})`); body.addColorStop(1, `rgba(243,239,234,${1 - .84 * gls})`);
     ctx.fillStyle = body; sheet(); ctx.fill();
@@ -2963,7 +2964,7 @@ function draw() {
     // glossy lip: soft shadow under a bright highlight line
     const lip = () => { ctx.beginPath(); for (let x = -20; x <= W + 20; x += 10) x === -20 ? ctx.moveTo(x, edge(x)) : ctx.lineTo(x, edge(x)); };
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.save(); ctx.translate(0, 4); ctx.strokeStyle = 'rgba(43,45,66,.06)'; ctx.lineWidth = 8; lip(); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.translate(0, 3); ctx.strokeStyle = `rgba(43,45,66,${.035 * (1 - gls)})`; ctx.lineWidth = 5; ctx.filter = 'blur(2px)'; lip(); ctx.stroke(); ctx.restore(); // a whisper of shadow under the lip, none over event skies
     const lg = ctx.createLinearGradient(0, 0, W, 0); lg.addColorStop(0, 'rgba(255,107,129,.55)'); lg.addColorStop(.5, 'rgba(255,255,255,.95)'); lg.addColorStop(1, 'rgba(46,196,214,.55)');
     ctx.strokeStyle = lg; ctx.lineWidth = 2; lip(); ctx.stroke();
     ctx.restore();
