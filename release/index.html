@@ -1942,7 +1942,7 @@ float rainL(vec2 uv,float asp,float dens,float spd,float sd){vec2 p=vec2((uv.x*a
 vec4 layer(vec2 P,vec2 uv,float s,float sp,float sd){float ca=cos(cvar.y),sa=sin(cvar.y);vec2 Q=vec2(P.x*(cvar.x<0.?-1.:1.),P.y);Q=vec2(ca*Q.x-sa*Q.y,sa*Q.x+ca*Q.y);vec2 p=Q*s+drift*t*sp+sd+cvar.z;vec2 w=vec2(fbm3(p*.55+vec2(t*.06,t*.02)),fbm3(p*.55+vec2(5.2,1.3)-vec2(t*.045,-t*.03)));vec2 m=vec2(t*.035,-t*.05)*sp; /* the clouds billow and change shape as they drift */
   float f=fbm(p+w*1.5+m),f2=fbm(p+w*1.5+m+vec2(.03,-.16));float c=clamp((uv.y-cov.y)/(cov.x-cov.y),0.,1.);c=c*c*(3.-2.*c)*cov.z+band.z*exp(-(((uv.y-band.x)/band.y)*((uv.y-band.x)/band.y)));
   float d=smoothstep(1.-c-cov.w,1.-c+cov.w,f);float lit=clamp((f-f2)*4.5+.55,0.,1.);vec3 col=mix(cd,cl,lit);return vec4(col,d);}
-void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.){float hz=smoothstep(.35,1.,uv.y);uv.x+=(sin(uv.y*90.+t*3.)*.0016+sin(uv.y*37.-t*1.7+uv.x*9.)*.0022)*shim*hz;}
+void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.)uv.x+=sin(uv.y*90.+t*3.)*.0016*shim*smoothstep(.45,1.,uv.y);
   vec3 sky=uv.y<.55?mix(cTop,cMid,uv.y/.55):mix(cMid,cBot,(uv.y-.55)/.45);sky+=hazeC*hazeK*smoothstep(.55,1.,uv.y);
   vec2 P=vec2(uv.x*asp,uv.y);vec2 G=vec2(glow.x*asp,glow.y);float gd=length(P-G);sky+=glowC*glow.z*exp(-gd*gd*5.);
   if(stars>0.)sky+=starfield(P,stars);
@@ -1954,8 +1954,6 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;if(shim>0.){float hz=smoothstep(.
     float R=.34,ring=exp(-(((r-R)/.035)*((r-R)/.035)))*.018;vec3 halo=vec3(1.,.7,.62)*exp(-(((r-R+.01)/.02)*((r-R+.01)/.02)))*.03+vec3(.7,.84,1.)*exp(-(((r-R-.012)/.03)*((r-R-.012)/.03)))*.03+vec3(ring)*.5; /* a faint 22-degree halo, warm inside, cool outside */
     vec2 O=vec2(sun.x*asp,sun.y)+vec2(-.16,.34);float orb=exp(-pow(length(P-O)/.035,2.))*.05+exp(-pow(length(P-O)/.07,2.))*.025;
     sky+=(vec3(1.,.98,.93)*(core+sp)+halo+vec3(.8,.88,1.)*orb)*sun.z;}
-  if(shim>0.){float hz=smoothstep(.5,1.,uv.y);float wv=smoothstep(.45,.85,vn(vec2(uv.x*asp*14.+sin(uv.y*30.+t)*.6,uv.y*55.-t*2.2)));sky+=vec3(1.,.82,.55)*hz*wv*.03*shim; /* heat rising off the ground in shimmering bands */
-    sky+=vec3(1.,.72,.4)*exp(-pow((uv.y-1.)/.18,2.))*.12*shim;} /* a hot, golden glare near the ground */
   if(mw>0.){float v=(P.x-.55*asp)*.86+(P.y-.6)*.5;float band=exp(-v*v*28.)*(.45+.55*fbm3(P*5.+3.));sky+=vec3(.6,.5,.85)*band*mw*.3;}
   float ml=0.;if(moon.w>0.){vec2 q=(P-vec2(moon.x*asp,moon.y))/moon.z;float r=length(q);float o=max(r-1.,0.); /* the moon: luminous, wrapped in its own glow, lighting the air and clouds around it */
     float term0=-.42*sqrt(max(0.,1.-min(q.y*q.y,1.)));float side=smoothstep(-.6,.4,q.x-term0); /* glow comes from the lit side, never fills the dark limb */
@@ -2099,16 +2097,13 @@ void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;
-  vec3 c=mix(vec3(.5,.55,.63),vec3(.7,.73,.78),smoothstep(0.,1.,uv.y));
-  c+=vec3(.2,.18,.14)*exp(-pow((uv.x-.66)*1.6,2.)-pow((uv.y-.16)*2.4,2.))+vec3(.12,.1,.07)*exp(-pow((uv.x-.66)*.8,2.)-pow((uv.y-.2)*1.2,2.)); /* the sun, diffused to a soft bright patch */
+  vec3 c=mix(vec3(.6,.64,.7),vec3(.72,.75,.79),smoothstep(0.,1.,uv.y));
+  c+=vec3(.1,.095,.085)*exp(-pow((uv.x-.66)*1.7,2.)-pow((uv.y-.16)*2.6,2.)); /* the sun, diffused to a soft bright patch */
   for(int i=0;i<3;i++){float fi=float(i),dir=mod(fi,2.)<.5?1.:-1.;
     vec2 p=vec2(uv.x*asp*(.9+fi*.45)+t*(.010+fi*.008)*dir+fi*3.1,uv.y*(4.2+fi*1.8)+fi*5.7);
-    float n=fbm(p+vec2(fbm(p*.5+vec2(t*.011,t*.004))*.9,0.));float n2=fbm(p+vec2(0.,.12)+vec2(fbm(p*.5+vec2(t*.011,t*.004))*.9,0.));n=smoothstep(.36,.84,n); /* soft banks, stretched sideways, slowly rolling */
-    float lit=clamp((n2-fbm(p-vec2(0.,.12)))*2.2+.5,0.,1.);                                          /* light from above catches the tops of the banks, their undersides stay grey */
-    float h=bandF(uv.y,.24+fi*.26,.24+fi*.07)*(.85+.15*sin(t*.2+fi*2.));
-    c=mix(c,mix(vec3(.66,.7,.76),vec3(.93,.93,.94),lit)+fi*.015,n*h*(.5+fi*.15));}
-  { vec2 sp=vec2(.66*asp,.16);vec2 d=vec2(uv.x*asp,uv.y)-sp;float an=atan(d.x,d.y),r=length(d);  /* shafts of light from the hidden sun, broken up by the fog */
-    float rays=smoothstep(.45,1.,fbm3(vec2(an*5.,t*.05)))*smoothstep(.04,.25,r)*exp(-r*1.4);c+=vec3(1.,.96,.88)*rays*.13; }
+    float n=fbm(p+vec2(fbm(p*.5+vec2(t*.006,0.))*.8,0.));n=smoothstep(.38,.82,n); /* soft wisps, stretched sideways like real fog */
+    float h=bandF(uv.y,.24+fi*.26,.24+fi*.07);
+    c=mix(c,vec3(.83,.85,.88)+fi*.02,n*h*(.34+fi*.14));}
   c=mix(c,vec3(.8,.82,.85),.24*smoothstep(.45,1.,uv.y)); /* fog pools low */
   gl_FragColor=vec4(c+dith(),1.);}`,
     blurH: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
@@ -2230,9 +2225,9 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
   snow: () => ({ cTop: '118,132,160', cMid: '146,160,186', cBot: '178,190,210', cd: '96,108,134', cl: '232,238,248', cov: [.04, .98, .9, .22], scl: 1.6, drift: [.02, 0], cloudA: .85, hazeC: '214,224,240', hazeK: .25 }), // Apple's snow: soft, cool overcast, bright and quiet
   hail: () => ({ cvar: [-1, 0, 7.3], cTop: '84,100,128', cMid: '104,120,148', cBot: '128,144,170', cd: '60,70,92', cl: '180,192,210', cov: [.08, 1.02, 1.12, .18], scl: 1.7, drift: [.06, 0], cloudA: 1 }),
   wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '104,130,180', cl: '255,255,255', cov: [-.04, .82, .8, .08], scl: 1.05, drift: [.1 * windDir, 0], cloudA: 1 }),
-  heat: () => ({ cTop: '38,96,178', cMid: '92,146,206', cBot: '226,186,140', hazeC: '120,70,20', hazeK: .35, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
-  sun: () => { const q = wx.phase === 'out' ? 1 : clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .25)) * (wx.phase === 'out' ? 1 : .55 + .45 * smooth(clamp01((1 - q) / .4))); // fading out it holds where it is and dims with the sky, never jumping back // Apple-style: the glare slides in from the edge, peaks, then dissolves
-    const sx = W * (.06 + e * .8), sy = H * (.15 + .05 * Math.sin(q * Math.PI)); /* it glides across the top and stays in view */ const [gx, gy] = toUV(sx, sy);
+  heat: () => ({ cTop: '40,92,170', cMid: '70,130,204', cBot: '108,156,214', hazeC: '90,60,30', hazeK: .22, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
+  sun: () => { const q = clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // Apple-style: the glare slides in from the edge, peaks, then dissolves
+    const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
     return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
   meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], mets: .8, scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
