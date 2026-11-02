@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="2ab740f">
+<meta name="build" content="245c023">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -620,8 +620,8 @@ function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return
   qEma += (ms - qEma) * .05;
   qBase = Math.min(Math.max(ms, 4), qBase + .01); // the screen's own frame time (16.7 ms at 60 Hz, 8.3 at 120), learned from the fastest frames
   qN++; if (ms > qBase * 1.5) qJank++;            // a missed frame: what the eye sees as a stutter, even when the average looks fine
-  if (qN >= 150) { const stutter = qJank / qN > .06; qN = qJank = 0; if (stutter && qLevel < 2) { qLevel++; qSlow = 0; qEma = 16.7; resize(); saveKey('mirrorQ3', qLevel); return; } }
-  if (qEma > qBase * 1.25 && qLevel < 2) { if ((qSlow += ms) > 1500) { qLevel++; qSlow = 0; qEma = 16.7; qN = qJank = 0; resize(); saveKey('mirrorQ3', qLevel); } } else qSlow = Math.max(0, qSlow - ms * .5);
+  if (qN >= 240) { const stutter = qJank / qN > .1; qN = qJank = 0; qTune.bad = stutter ? (qTune.bad || 0) + 1 : 0; if (qTune.bad >= 2 && qLevel < 2) { qTune.bad = 0; qLevel++; qSlow = 0; qEma = 16.7; resize(); saveKey('mirrorQ3', qLevel); return; } } // only steady stutter over several seconds lowers the quality: a one-off hiccup never does
+  if (qEma > qBase * 1.4 && qLevel < 2) { if ((qSlow += ms) > 3000) { qLevel++; qSlow = 0; qEma = 16.7; qN = qJank = 0; resize(); saveKey('mirrorQ3', qLevel); } } else qSlow = Math.max(0, qSlow - ms * .5);
   if (qEma < qBase * 1.08 && qLevel > 0) { if ((qFast += ms) > 6000) { qLevel--; qFast = 0; qRaised = true; resize(); saveKey('mirrorQ3', qLevel); } } else qFast = 0; } // and climbs back whenever the phone has room
 let hudDY = 0, satProbe = null;
 function safeTopPx() { try { if (!satProbe) { satProbe = document.createElement('div'); satProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;padding-top:max(env(safe-area-inset-top),var(--sat,0px))'; document.body.appendChild(satProbe); } return parseFloat(getComputedStyle(satProbe).paddingTop) || 0; } catch (e) { return 0; } }
@@ -2198,7 +2198,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); VA.get(); },
     aurora, bhole, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : qLevel ? .45 : .6) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : qLevel ? .55 : .8) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
