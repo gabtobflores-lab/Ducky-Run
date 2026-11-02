@@ -957,7 +957,7 @@ const ABD = { k: 0, lift: 0, tick: 0 }, ABD_T = 4.2; // the alien beam's pull: s
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 // visual-only feedback timers (they never affect the rules)
 const fx = { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 };
-const crash = { ball: [null, null], shards: [], waves: [], tmpl: null };
+const crash = { ball: [null, null], shards: [], waves: [], tmpl: null, hole: -1 };
 // weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
 // per-second chances once the cooldown has passed; warn = seconds of notice before it starts (longer for events that affect play)
 const WX = {
@@ -1103,7 +1103,7 @@ addEventListener('keydown', e => {
 });
 
 function finish() { // Normal mode: the balls cross the finish line; light washes up the screen and the world eases to a stop
-  state = 'dead'; won = true; shake = 0; fx.freeze = 0; fx.dead = 0; crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null; wxHide();
+  state = 'dead'; won = true; shake = 0; fx.freeze = 0; fx.dead = 0; crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null; crash.hole = -1; wxHide();
   [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .5, 'sine', .06, 0), i * 90)); haptic('success'); // a soft rising chord
   for (let i = 0; i < 2; i++) { burst(bx[i], BY, 14, '#f5b93a', 300, 1.9, 160, 1.6); burst(bx[i], BY, 10, i ? '#2ec4d6' : '#ff6b81', 260, 1.9, 160, 1.5); burst(bx[i], BY, 6, '#ffffff', 200, 1.2, 100, .9); }
   burst(W / 2, BY, 22, '#f5b93a', 460, 2, 220, 1.5); burst(W / 2, BY, 10, '#ffffff', 380, 1.6, 200, .9);
@@ -1120,17 +1120,17 @@ function die(x, y, bi = 0, blk = null) {
   const j = 1 - bi;
   for (const o of things) if (o.k === 'b' && o !== blk && Math.abs(o.y - BY) < 52 && Math.abs(bx[j] - bxOf(o)) < 38) { crash.ball[j] = { at: 0, burst: false, elec: !!o.elec }; o.hitAt = 0; break; }
   if (!crash.ball[j]) crash.ball[j] = { at: (crash.ball[bi].elec ? .12 : 0) + .11, burst: false, elec: crash.ball[bi].elec, chain: true }; // linked twin: shatters a beat later
-  const sp = wx.kind === 'bhole' && wx.a > .3 ? 'hole' : blk && blk.al ? 'alien' : ''; // special deaths: taken by the black hole, or scattered by an alien ship
-  crash.shown = false;
+  const sp = blk && blk.al ? 'alien' : ''; // special death: scattered by an alien ship
+  crash.shown = false; crash.hole = wx.kind === 'bhole' && wx.a > .3 ? 0 : -1; // during the black hole, the debris of a normal shatter is drawn into it
+  if (crash.hole >= 0) { beep(90, 1.6, 'sine', .07, -40); hush(900, 1.2, 1.6, .04, 120, .2, .4); [164.81, 155.56, 146.83].forEach((f, i) => bell(f, .012, 3, 'fx', 1, .6 + i * .25)); }
   if (sp) { crash.ball = [0, 1].map(i => ({ at: 99, burst: false, elec: false, sp, x0: bx[i], y0: BY, d: i === bi ? 0 : .14 })); fx.freeze = 0;
-    if (sp === 'hole') { beep(90, 1.6, 'sine', .08, -40); hush(900, 1.2, 1.4, .05, 120, 0, .4); [164.81, 155.56, 146.83].forEach((f, i) => bell(f, .014, 3, 'fx', 1, .3 + i * .25)); }
-    else { [1567.98, 1318.5, 1046.5, 783.99].forEach((f, i) => bell(f, .011, .7, 'fx', .6, i * .06)); hush(5200, 3, .12, .03, 0, 0, .1); beep(620, .35, 'sine', .04, -420); }
+    { [1567.98, 1318.5, 1046.5, 783.99].forEach((f, i) => bell(f, .011, .7, 'fx', .6, i * .06)); hush(5200, 3, .12, .03, 0, 0, .1); beep(620, .35, 'sine', .04, -420); }
     haptic('error'); }
   else { for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (!c) continue; if (c.chain) continue; if (c.elec) c.at = .12; else { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // normal: burst instantly; electrified: a short electrocution flash first
   beep(190, .45, 'sawtooth', .1, -140); haptic('error'); }
   if (score > bestNow() || (bestBanked && score >= bestNow())) { bests[bkey()] = score; newBest = true; saveBests(); }
   lastRank = recordRun(score);
-  if (!sp) setTimeout(showOver, 750);
+  if (!sp && crash.hole < 0) setTimeout(showOver, 750);
 }
 
 // ---------- Golden Run (Supporter): pass your best and both balls turn to liquid gold ----------
@@ -1196,7 +1196,7 @@ function update(dt) {
     fx.dead += dt;
     const drift = won ? Math.max(0, 1 - fx.dead / 1.6) ** 2 : Math.max(0, 1 - fx.dead / .35); // the world glides to a stop instead of carrying on
     const mv = speed * dt * (won ? 1 : .3) * drift; for (const o of things) o.y += mv; if (gate) gate.y += mv;
-    if (crash.ball[0] && (crash.ball[0].abd || crash.ball[0].sp) && fx.dead >= (crash.ball[0].sp === 'alien' ? 1.3 : 1.75) && !crash.shown) { crash.shown = true; showOver(); } // after the special death has played out
+    if (!crash.shown && ((crash.ball[0] && (crash.ball[0].abd || crash.ball[0].sp) && fx.dead >= (crash.ball[0].sp === 'alien' ? 1.3 : 1.75)) || (crash.hole >= 0 && fx.dead >= 1.6))) { crash.shown = true; showOver(); } // after the special death has played out
     for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY, c.elec); } }
     return;
   }
@@ -1431,7 +1431,7 @@ function updateBeam(dt) {
   if (inb && ABD.k >= 1) abduct();
 }
 function abduct() { // taken by the beam: both balls rise into the ship, stretching and dimming, and vanish in a flash at its aperture
-  state = 'dead'; shake = 0; fx.freeze = 0; fx.dead = 0; crash.shards = []; crash.waves = []; crash.tmpl = null; wxHide(); crash.first = 0;
+  state = 'dead'; shake = 0; fx.freeze = 0; fx.dead = 0; crash.shards = []; crash.waves = []; crash.tmpl = null; crash.hole = -1; wxHide(); crash.first = 0;
   crash.shown = false; crash.ball = [0, 1].map(i => ({ at: 99, burst: false, elec: false, abd: true, y0: BY - ABD.lift, x0: bx[i] }));
   ABD.k = 1; // the beam stays at full brightness while it takes them
   hush(2600, 1.6, .5, .4, 300, 0, .3); beep(140, 1.5, 'sine', .07, 700); haptic('error');
@@ -1465,17 +1465,6 @@ function drawAlienDeath(i, c, r, P) { // hit by an alien ship: the ball flickers
     const eg = ctx.createLinearGradient(-sz / 2, -sz / 2, sz / 2, sz / 2); eg.addColorStop(0, 'rgba(255,255,255,.95)'); eg.addColorStop(.45, 'rgba(255,255,255,.1)'); eg.addColorStop(1, 'rgba(255,255,255,.45)'); ctx.strokeStyle = eg; ctx.lineWidth = 1; ctx.stroke(); ctx.restore(); } // each tile is a little piece of Liquid Glass: bright edge at the top left, a soft return at the bottom right
   ctx.globalAlpha = 1;
   if (k >= .14) { const q = clamp01((k - .14) / .8), rr = r * (1 + (1 - (1 - q) ** 3) * 3); ctx.strokeStyle = `rgba(190,240,255,${.55 * (1 - q)})`; ctx.lineWidth = 1.5 * (1 - q) + .5; ctx.beginPath(); ctx.roundRect(x - rr, y - rr * .7, rr * 2, rr * 1.4, rr * .45); ctx.stroke(); } } // a ring the shape of a block, opening out
-function drawHoleDeath(i, c, r, P) { // during the black hole: the ball is drawn in. Space darkens towards the hole; the ball accelerates along a curving path, stretching, its light reddening, a faint ring of bent light around it, and is gone with a soft pulse at the horizon
-  const hx = W * .8, hy = H * .31, k0 = clamp01((fx.dead - c.d) / 1.5), k = k0 * k0 * (2.2 - 1.2 * k0), dx = hx - c.x0, dy = hy - c.y0, side = i ? 1 : -1;
-  if (i === 0) { const v = clamp01(fx.dead / 1.2) * .4, vg = ctx.createRadialGradient(hx, hy, W * .25, hx, hy, H * 1.1); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(0,0,6,${v})`); ctx.fillStyle = vg; ctx.fillRect(-20, -20, W + 40, H + 40); } // the scene darkens towards the edges, everything leaning in
-  const curve = Math.sin(k * Math.PI) * 70 * side, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L, x = c.x0 + dx * k + nx * curve, y = c.y0 + dy * k + ny * curve;
-  c.tr = c.tr || []; c.tr.push([x, y]); if (c.tr.length > 18) c.tr.shift();
-  if (k0 < 1) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; for (let j = 1; j < c.tr.length; j++) { const a2 = j / c.tr.length; ctx.strokeStyle = `rgba(255,${200 - 80 * k | 0},${150 - 110 * k | 0},${.32 * a2 * a2 * (1 - k0)})`; ctx.lineWidth = r * 1.3 * a2 * (1 - .7 * k); ctx.beginPath(); ctx.moveTo(c.tr[j - 1][0], c.tr[j - 1][1]); ctx.lineTo(c.tr[j][0], c.tr[j][1]); ctx.stroke(); } ctx.restore(); // a tapering streak of its light along the path
-    const ang = Math.atan2(c.tr.length > 1 ? y - c.tr[c.tr.length - 2][1] : dy, c.tr.length > 1 ? x - c.tr[c.tr.length - 2][0] : dx), rr = r * (1 - .75 * k);
-    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); drawBall(0, 0, rr, P, side, 1 + 2.4 * k * k, 1 - .55 * k, .8, .2, 1 - k0 ** 3); ctx.restore(); // stretched along the pull
-    const wg = ctx.createRadialGradient(x, y, 0, x, y, r * 2); wg.addColorStop(0, `rgba(255,160,90,${.45 * k})`); wg.addColorStop(1, 'rgba(255,120,60,0)'); ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, 7); ctx.fill(); // its light reddens
-    const lr = r * (1.5 + .8 * k), lg = ctx.createRadialGradient(x, y, lr * .7, x, y, lr); lg.addColorStop(0, 'rgba(255,220,180,0)'); lg.addColorStop(.75, `rgba(255,220,180,${.22 * k * (1 - k0)})`); lg.addColorStop(1, 'rgba(255,220,180,0)'); ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(x, y, lr, 0, 7); ctx.fill(); } // a faint ring of light bent around it
-  else if (fx.dead - c.d < 2.1) { const q = (fx.dead - c.d - 1.5) / .6, R = W * .16; ctx.save(); ctx.globalCompositeOperation = 'screen'; const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, R); g.addColorStop(0, `rgba(255,230,190,${.35 * (1 - q) * q * 4})`); g.addColorStop(1, 'rgba(255,200,140,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, R, 0, 7); ctx.fill(); ctx.restore(); } } // a last soft pulse of light as it crosses the horizon
 function drawPull(x, y, r) { // while the beam pulls: amber light wraps the ball and motes rise off it toward the ship
   const k = ABD.k; if (k <= 0) return; const g = ctx.createRadialGradient(x, y, r * .6, x, y, r * (2.2 + 1.4 * k)); g.addColorStop(0, `rgba(255,185,105,${.55 * k + .12})`); g.addColorStop(1, 'rgba(255,160,80,0)');
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * (2.2 + 1.4 * k), 0, 7); ctx.fill();
@@ -2677,7 +2666,10 @@ function drawStorm() { // a cloud deck of three blurred, parallaxing layers; lig
   drawBolt(); // the strike leaves the cloud in front of it
 }
 function updateCrash(dt) {
-  for (const f of crash.shards) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += (f.kind === 's' ? 620 : 480) * dt; const d = 1 - 1.6 * dt; f.vx *= d; f.vy *= d; f.rot += (f.spin || 0) * dt; f.life -= dt; }
+  if (crash.hole >= 0) { crash.hole += dt; const hx = W * .8, hy = H * .31; // the black hole draws the pieces in: a moment of normal flight, then a pull that grows as they near it; they shrink and redden as they fall in
+    for (const f of crash.shards) { const dx = hx - f.x, dy = hy - f.y, d = Math.hypot(dx, dy) + 1, pull = Math.min(1, crash.hole / .35) * (1400 + 9e5 / (d + 60)); f.vx += (dx / d * pull - dy / d * pull * .18 * (f.i ? 1 : -1)) * dt; f.vy += (dy / d * pull + dx / d * pull * .18 * (f.i ? 1 : -1)) * dt; // inward, with a little swirl
+      const dm = 1 - 3.4 * dt; f.vx *= dm; f.vy *= dm; f.x += f.vx * dt; f.y += f.vy * dt; f.rot += (f.spin || 0) * dt * 2; f.hs = clamp01(d / (H * .22)); f.life = d < 12 ? 0 : Math.max(f.life, .2); f.red = 1 - f.hs; } }
+  else for (const f of crash.shards) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += (f.kind === 's' ? 620 : 480) * dt; const d = 1 - 1.6 * dt; f.vx *= d; f.vy *= d; f.rot += (f.spin || 0) * dt; f.life -= dt; }
   crash.shards = crash.shards.filter(f => f.life > 0);
   for (const w of crash.waves) w.t += dt; crash.waves = crash.waves.filter(w => w.t < .5);
 }
@@ -2696,7 +2688,7 @@ function drawCrash() {
   }
   for (const f of crash.shards) {
     const P = f.el ? ELEC : PAL[f.i], al = clamp01(f.life / f.max * 1.5);
-    ctx.save(); ctx.globalAlpha = al; ctx.translate(f.x, f.y);
+    ctx.save(); ctx.globalAlpha = al * (f.hs !== undefined ? .35 + .65 * f.hs : 1); ctx.translate(f.x, f.y); if (f.hs !== undefined) ctx.scale(.25 + .75 * f.hs, .25 + .75 * f.hs);
     if (f.kind === 's') { // curved glass shard with a lit edge
       ctx.rotate(f.rot); ctx.scale(f.m, 1);
       const v = f.verts, gg = ctx.createLinearGradient(-f.sz, -f.sz, f.sz, f.sz);
@@ -2901,7 +2893,6 @@ function draw() {
     const ly = BY - ABD.lift + (ABD.lift > 1 ? Math.sin(t * 3.1 + i * 1.7) * 2.5 * ABD.k : 0); // the beam lifts them, swaying
     if (c && c.abd) drawAbducted(i, c, r, P);
     else if (c && c.sp === 'alien') drawAlienDeath(i, c, r, P);
-    else if (c && c.sp === 'hole') drawHoleDeath(i, c, r, P);
     else if (!c) { if (ABD.k > 0 && state === 'play') drawPull(x, ly, r); if (goldK < .99) drawBall(x, ly, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8); if (goldK > .01) drawGoldBall(x, ly, r, i ? 1 : -1, sx, sy, goldK, t); }
     else if (c.chain && !c.burst && !c.elec) { const q = clamp01(fx.dead / c.at); drawBall(x, BY, r * (1 + .12 * q), P, i ? 1 : -1, 1 + .06 * q, 1 - .05 * q, .6 + q * .4, q * .9); } // charging as the pulse arrives
     else if (c.elec && !c.burst) { // electrocution: blue-white flash wrapped in small arcs, then it bursts
@@ -2987,12 +2978,14 @@ function draw() {
 
   // crash: darken + desaturate the frozen scene
   if (state === 'dead' && !won) {
-    const k = crash.ball[0] && (crash.ball[0].abd || crash.ball[0].sp) ? clamp01((fx.dead - (crash.ball[0].sp === 'alien' ? .9 : 1.35)) / .4) : clamp01(fx.dead / .4); // an abduction plays out in full colour first
+    const k = crash.hole >= 0 ? clamp01((fx.dead - 1.2) / .4) : crash.ball[0] && (crash.ball[0].abd || crash.ball[0].sp) ? clamp01((fx.dead - (crash.ball[0].sp === 'alien' ? .9 : 1.35)) / .4) : clamp01(fx.dead / .4); // an abduction plays out in full colour first
     ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${k * .55})`; ctx.fillRect(-20, -20, W + 40, H + 40); ctx.restore();
     ctx.fillStyle = `rgba(43,45,66,${k * .1})`; ctx.fillRect(-20, -20, W + 40, H + 40);
   }
   if (state === 'dead' && won) drawWinLight();
+  if (state === 'dead' && crash.hole >= 0) { const hx = W * .8, hy = H * .31, v = clamp01(crash.hole / 1.2) * .38, vg = ctx.createRadialGradient(hx, hy, W * .25, hx, hy, H * 1.1); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(0,0,6,${v})`); ctx.fillStyle = vg; ctx.fillRect(-20, -20, W + 40, H + 40); } // the scene leans in towards the hole
   if (crash.shards.length || crash.waves.length) drawCrash();
+  if (state === 'dead' && crash.hole > .5 && crash.hole < 1.6) { const q = (crash.hole - .5) / 1.1, hx = W * .8, hy = H * .31, R = W * .16; ctx.save(); ctx.globalCompositeOperation = 'screen'; const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, R); g.addColorStop(0, `rgba(255,220,170,${.4 * Math.sin(q * Math.PI)})`); g.addColorStop(1, 'rgba(255,190,130,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, R, 0, 7); ctx.fill(); ctx.restore(); } // the pieces light the horizon as they cross it
 
   if (state === 'play' || state === 'paused') { ctx.save(); ctx.translate(0, hudDY);
     if (score !== shownScore) { if (score > shownScore) fx.score = 1; shownScore = score; }
