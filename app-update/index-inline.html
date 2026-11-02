@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="d4a081f">
+<meta name="build" content="0bc9f6b">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2124,7 +2124,10 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   vec3 acc=sheetsA(q,.18+.05*sin(t*.03),0.)+sheetsA(q+vec2(.25,.36),1.45+.04*sin(t*.025),3.)*.7*smoothstep(.38,.62,uv.y); /* the main curtains above, and a second display further off filling the lower sky */
   vec3 sky=mix(vec3(.004,.008,.03),vec3(.02,.03,.09),smoothstep(0.,1.,1.-uv.y));sky+=vec3(.05,.03,.14)*smoothstep(.55,1.,uv.y)*.6;
   float L=dot(acc,vec3(.33));acc*=smoothstep(.018,.075,L)*.8+.2; /* a few pure dark gaps open between the curtains */
-  vec3 col=sky*(.75+.25*smoothstep(.01,.08,L))+acc*acc*7.5+acc*.75+pow(acc,vec3(3.))*18.; /* the brightest folds get a defined, almost white core; the glow round them is kept */col+=vec3(.05,.12,.35)*smoothstep(.05,.6,dot(acc,vec3(.33)))*.5; /* a blue glow in the air round the brightest light, as in Apple's */ /* squared: the bright folds stand out, the haze between them falls away */{ float dk=1.-smoothstep(.02,.3,dot(acc,vec3(.4)));col+=starfield(vec2(uv.x*asp,uv.y),1.)*dk*1.3+starfield(vec2(uv.x*asp*1.7+3.1,uv.y*1.7),.8)*dk*.55; } /* stars in the dark sky: bright ones and a finer, fainter field */
+  vec3 col=sky*(.75+.25*smoothstep(.01,.08,L))+acc*acc*7.5+acc*.75+pow(acc,vec3(3.))*18.; /* the brightest folds get a defined, almost white core; the glow round them is kept */
+  { float hi=smoothstep(.06,.22,L),spot=smoothstep(.4,.72,vn(vec2(uv.x*asp*2.2+t*.015,uv.y*1.3-t*.01)+7.)); /* only in a few bright places, drifting slowly */
+    float x=uv.x*asp*38.+sin(uv.y*4.+t*.35)*1.2;float rib=pow(smoothstep(.45,.95,vn(vec2(x,uv.y*1.8-t*.1))),1.5)*(.55+.45*vn(vec2(x*.35,uv.y*.7+t*.05))); /* fine ribbons running up the light */
+    col+=(acc*2.2+vec3(.22,.4,.45))*rib*hi*spot*.85; } /* crisp ribbons of light in certain spots; the soft glow everywhere else is untouched */col+=vec3(.05,.12,.35)*smoothstep(.05,.6,dot(acc,vec3(.33)))*.5; /* a blue glow in the air round the brightest light, as in Apple's */ /* squared: the bright folds stand out, the haze between them falls away */{ float dk=1.-smoothstep(.02,.3,dot(acc,vec3(.4)));col+=starfield(vec2(uv.x*asp,uv.y),1.)*dk*1.3+starfield(vec2(uv.x*asp*1.7+3.1,uv.y*1.7),.8)*dk*.55; } /* stars in the dark sky: bright ones and a finer, fainter field */
   col=1.-exp(-col*1.25);gl_FragColor=vec4(col+dith(),1.);}
 `
   };
