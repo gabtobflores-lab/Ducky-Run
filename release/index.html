@@ -2112,11 +2112,11 @@ float tri(float x){return clamp(abs(fract(x)-.5),.01,.49);}
 vec2 tri2(vec2 p){return vec2(tri(p.x)+tri(p.y),tri(p.y+tri(p.x)));}
 float tnoise(vec2 p){float z=1.8,z2=2.5,rz=0.;p*=rot(p.x*.06);vec2 bp=p;
   for(int i=0;i<5;i++){vec2 dg=tri2(bp*1.85)*.75;dg*=rot(t*.07);p-=dg/z2;bp*=1.3;z2*=.45;z*=.42;p*=1.21+(rz-1.)*.02;rz+=tri(p.x+tri(p.y))*z;p*=-mat2(.95534,.29552,-.29552,.95534);}
-  return clamp(1./pow(rz*29.,1.42),0.,.6);} /* a touch more contrast: crisper rays inside the curtains */
+  return clamp(1./pow(rz*29.,1.58),0.,.65);} /* a touch more contrast: crisper rays inside the curtains */
 vec3 pal(float i){vec3 a=vec3(.2,1.,.6),b=vec3(.2,.75,1.),c=vec3(.35,.4,1.),d=vec3(.7,.35,1.);i=clamp(i*1.3,0.,1.);return i<.33?mix(a,b,i*3.):i<.66?mix(b,c,(i-.33)*3.):mix(c,d,(i-.66)*3.);} /* green at the hem, cyan, blue, violet higher up */
 vec3 sheetsA(vec2 q,float hd,float sd){vec3 ro=vec3(sd*1.7,0.,-6.7),rd=normalize(vec3(q*vec2(1.1,.5),1.3));rd.yz*=rot(.16);rd.xz*=rot(hd); /* looking up into the sky */
   vec3 acc=vec3(0.),avg=vec3(0.);
-  if(rd.y>0.){for(int i=0;i<34;i++){float fi=float(i)*1.18,of=.03*hs(gl_FragCoord.xy+fract(t*3.1)*7.+sd)*smoothstep(0.,15.,fi); /* layer offsets jittered per pixel and frame: no banding */
+  if(rd.y>0.){for(int i=0;i<34;i++){float fi=float(i)*1.18,of=.016*hs(gl_FragCoord.xy+fract(t*3.1)*7.+sd)*smoothstep(0.,15.,fi); /* layer offsets jittered per pixel and frame: no banding */
       float pt=((.8+pow(fi,1.4)*.0022)-ro.y)/(rd.y*2.+.4)-of;vec3 bp=ro+pt*rd;float n=tnoise(bp.zx);
       vec3 c2=pal(fi/40.)*n;avg=mix(avg,c2,.5);acc+=avg*exp2(-fi*.065-2.5)*smoothstep(0.,5.,fi)*1.2;}
     acc*=smoothstep(0.,.1,rd.y);}
@@ -2126,7 +2126,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   vec3 acc=sheetsA(q,.18+.05*sin(t*.03),0.)+sheetsA(q+vec2(.25,.36),1.45+.04*sin(t*.025),3.)*.7*smoothstep(.38,.62,uv.y); /* the main curtains above, and a second display further off filling the lower sky */
   vec3 sky=mix(vec3(.004,.008,.03),vec3(.02,.03,.09),smoothstep(0.,1.,1.-uv.y));sky+=vec3(.05,.03,.14)*smoothstep(.55,1.,uv.y)*.6;
   float L=dot(acc,vec3(.33));acc*=smoothstep(.018,.075,L)*.8+.2; /* a few pure dark gaps open between the curtains */
-  vec3 col=sky*(.75+.25*smoothstep(.01,.08,L))+acc*acc*7.+acc*.8+pow(acc,vec3(3.))*14.; /* the brightest folds get a defined, almost white core; the glow round them is kept */col+=vec3(.05,.12,.35)*smoothstep(.05,.6,dot(acc,vec3(.33)))*.5; /* a blue glow in the air round the brightest light, as in Apple's */ /* squared: the bright folds stand out, the haze between them falls away */{ float dk=1.-smoothstep(.02,.3,dot(acc,vec3(.4)));col+=starfield(vec2(uv.x*asp,uv.y),1.)*dk*1.3+starfield(vec2(uv.x*asp*1.7+3.1,uv.y*1.7),.8)*dk*.55; } /* stars in the dark sky: bright ones and a finer, fainter field */
+  vec3 col=sky*(.75+.25*smoothstep(.01,.08,L))+acc*acc*7.5+acc*.75+pow(acc,vec3(3.))*18.; /* the brightest folds get a defined, almost white core; the glow round them is kept */col+=vec3(.05,.12,.35)*smoothstep(.05,.6,dot(acc,vec3(.33)))*.5; /* a blue glow in the air round the brightest light, as in Apple's */ /* squared: the bright folds stand out, the haze between them falls away */{ float dk=1.-smoothstep(.02,.3,dot(acc,vec3(.4)));col+=starfield(vec2(uv.x*asp,uv.y),1.)*dk*1.3+starfield(vec2(uv.x*asp*1.7+3.1,uv.y*1.7),.8)*dk*.55; } /* stars in the dark sky: bright ones and a finer, fainter field */
   col=1.-exp(-col*1.25);gl_FragColor=vec4(col+dith(),1.);}
 `
   };
@@ -2175,7 +2175,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
     for (const k in ex) gl.uniform2fv(L(k), ex[k]);
     gl.drawArrays(gl.TRIANGLES, 0, 3); return true; };
   // the aurora: an original shader, nothing but maths, so it is sharp at any size and never repeats
-  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 || window.__mdSim ? .9 : qLevel ? 1.3 : 1.75); /* volumetric light is soft: rendered a little lower and scaled up, it stays smooth */ // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
+  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 || window.__mdSim ? .9 : qLevel ? 1.4 : 2.); /* volumetric light is soft: rendered a little lower and scaled up, it stays smooth */ // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
     const w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
     if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
     if (!prog('aurora')) { failed = true; return false; }
