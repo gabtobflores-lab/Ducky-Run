@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="0bc9f6b">
+<meta name="build" content="b53e19a">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -608,15 +608,19 @@ function layout() { W = per === 2 ? 480 : 520; N = per * 2; LX = Array.from({ le
 const bw = () => Math.min(70, W / N * .82);
 let scale = 1, offX = 0, offY = 0, dpr = 1;
 // self-tuning quality: the game watches its own frame time and steps down resolution and the costliest extras until it runs smoothly, then remembers that for this device
-const QDPR = [3, 2, 1.5]; let qLevel = 0; try { qLevel = Math.min(2, Math.max(0, +localStorage.mirrorQ3 || 0)); } catch (e) {}
+const QDPR = [3, 2, 1.5]; let qLevel = 0; try { qLevel = Math.min(1, Math.max(0, +localStorage.mirrorQ3 || 0)); } catch (e) {} // a past slow moment never locks the game at the lowest tier
+let skyQ = 1, skyQs = 1; // the event skies' own resolution, adapting smoothly to the phone without ever lowering the rest of the game
 if (window.__mdSim) qLevel = Math.max(qLevel, 1); // Xcode's simulator draws on the Mac's CPU and GPU: 2x opens and runs much faster there (real iPhones keep 3x)
 let qEma = 16.7, qSlow = 0, qFast = 0, qRaised = false, qBase = 16.7, qN = 0, qJank = 0;
-function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return; qEma += (ms - qEma) * .05;
+const heavySky = () => skyE > .2 && (wx.kind === 'aurora' || wx.kind === 'bhole' || wx.kind === 'alien');
+function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return;
+  if (heavySky()) { const slow = ms > qBase * 1.3; skyQ = Math.max(.45, Math.min(1, skyQ + (slow ? -.012 : .003))); const st = Math.round(skyQ * 20) / 20; if (Math.abs(st - skyQs) >= .05) skyQs = st; return; } // during the heavy skies only the sky adapts
+  qEma += (ms - qEma) * .05;
   qBase = Math.min(Math.max(ms, 4), qBase + .01); // the screen's own frame time (16.7 ms at 60 Hz, 8.3 at 120), learned from the fastest frames
   qN++; if (ms > qBase * 1.5) qJank++;            // a missed frame: what the eye sees as a stutter, even when the average looks fine
   if (qN >= 150) { const stutter = qJank / qN > .06; qN = qJank = 0; if (stutter && qLevel < 2) { qLevel++; qSlow = 0; qEma = 16.7; resize(); saveKey('mirrorQ3', qLevel); return; } }
   if (qEma > qBase * 1.25 && qLevel < 2) { if ((qSlow += ms) > 1500) { qLevel++; qSlow = 0; qEma = 16.7; qN = qJank = 0; resize(); saveKey('mirrorQ3', qLevel); } } else qSlow = Math.max(0, qSlow - ms * .5);
-  if (qEma < 13 && qLevel > 0 && !qRaised) { if ((qFast += ms) > 9000) { qLevel--; qFast = 0; qRaised = true; resize(); saveKey('mirrorQ3', qLevel); } } else qFast = 0; }
+  if (qEma < qBase * 1.08 && qLevel > 0) { if ((qFast += ms) > 6000) { qLevel--; qFast = 0; qRaised = true; resize(); saveKey('mirrorQ3', qLevel); } } else qFast = 0; } // and climbs back whenever the phone has room
 let hudDY = 0, satProbe = null;
 function safeTopPx() { try { if (!satProbe) { satProbe = document.createElement('div'); satProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;padding-top:max(env(safe-area-inset-top),var(--sat,0px))'; document.body.appendChild(satProbe); } return parseFloat(getComputedStyle(satProbe).paddingTop) || 0; } catch (e) { return 0; } }
 function resize() {
@@ -839,7 +843,7 @@ const AMBDEF = {
   ufo: () => { const A = audioGraph(), out = ac.createGain(), o1 = ac.createOscillator(), o2 = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain(), lp = filt('lowpass', 420, 1.2); out.gain.value = 0; // the mothership's soft hum, slowly wavering
     o1.frequency.value = 69.3; o2.frequency.value = 103.8; o2.type = 'triangle'; lfo.frequency.value = .9; lg.gain.value = 3; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); const g1 = ac.createGain(), g2 = ac.createGain(); g1.gain.value = .07; g2.gain.value = .035; o1.connect(g1); o2.connect(g2); g1.connect(lp); g2.connect(lp); lp.connect(out); out.connect(A.amb); [o1, o2, lfo].forEach(o => o.start()); return { out, srcs: [o1, o2, lfo] }; }, // each voice kept low: a hum felt more than heard
 };
-const AMBV = { bhole: .5, bholeAir: .35, ufo: .4, rainHi: .11, rainLo: .14, wind: .2, snowAir: .3, aurora: .55, night: .5, fog: .45, heat: .32 };
+const AMBV = { bhole: .5, bholeAir: .35, ufo: .4, rainHi: .075, rainLo: .095, wind: .15, snowAir: .2, aurora: .55, night: .5, fog: .45, heat: .32 };
 let sndPrev = '', sndAcc = {};
 function sndTick(dt) {
   if (!AB || ac.state !== 'running') return;
@@ -915,7 +919,7 @@ function evMusic(now) { // the event's score, while playing
 const WXNORM = { storm: 1, rain: 1, wind: 1, hail: 1, fog: 1, heat: 1, sun: 1 }; // weather events play the game's normal music, quietly, under their own real sounds
 function musTick() {
   const lobby = (state === 'menu' || state === 'dead') && sndOn('music'), now = ac.currentTime, wxm = !lobby && state === 'play' && WXNORM[wx.kind] && wx.phase !== 'warn' && sndOn('music') ? wx.a : 0, ev = lobby || wxm ? 0 : evMusic(now), want = lobby || wxm > .02;
-  AB.mus.gain.setTargetAtTime(lobby ? .9 : wxm ? wxm * .26 : ev * .5, now, lobby || ev || wxm ? 1.4 : .6); // in play, the music sits well beneath the game
+  AB.mus.gain.setTargetAtTime(lobby ? .9 : wxm ? wxm * .34 : ev * .5, now, lobby || ev || wxm ? 1.4 : .6); // in play, the music sits well beneath the game
   if (!want) { MUS.on = false; return; } // the lobby piece stops scheduling; what is already sounding fades with the bus
   if (!MUS.on && want) { MUS.on = true; MUS.next = now + .1; MUS.note = now + 2.5; }
   while (MUS.next < now + .5) { musChord(MUSP[MUS.ch], MUS.next, 9); MUS.next += 9; MUS.ch = (MUS.ch + 1) % MUSP.length; }
@@ -2026,8 +2030,9 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   float gl=length((P-C)/vec2(RX*1.2,RX*.6));c+=vec3(1.,.5,.18)*exp(-gl*gl*2.)*.07*br*sk;      /* its glow in the air */
   /* the ship */
   float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1,hitG=0.;
-  if(h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
-    for(int i=0;i<64;i++){p=ro+rd*tt;float dd=map(p);if(dd<.0006){hit=1.;break;}tt+=dd*.85;if(tt>7.)break;}
+  if(h>0.){float tt=-b-sqrt(h),hit=0.,dmin=1e3,tmin=0.;vec3 p;
+    for(int i=0;i<64;i++){p=ro+rd*tt;float dd=map(p);if(dd<dmin){dmin=dd;tmin=tt;}if(dd<.0006){hit=1.;break;}tt+=dd*.85;if(tt>7.)break;}
+    float pw=tmin*1.6/(res.y*RX*S);float cov=hit>0.?1.:1.-smoothstep(0.,pw,dmin);if(hit<1.&&cov>0.){p=ro+rd*tmin;hit=1.;} /* edge coverage: the silhouette is smooth, not stair-stepped */
     if(hit>0.){vec3 n=nrm(p),v=-rd,r=reflect(rd,n);float ndv=clamp(dot(n,v),0.,1.),rxz=length(p.xz),ang=atan(p.z,p.x);
       float brush=.85+.15*vn(vec2(rxz*220.,ang*2.));                                              /* brushed metal: fine circular grain */
       vec3 F0=vec3(.42,.42,.46)*brush;vec3 col=env(r)*(F0+(1.-F0)*pow(1.-ndv,5.))+vec3(.012,.012,.016);
@@ -2040,7 +2045,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       E+=mix(AM,vec3(1.,.93,.8),smoothstep(.17,.04,rxz))*smoothstep(.19,.14,rxz)*step(p.y,-.17)*2.6;          /* the aperture */
       col+=vec3(.45,.5,.65)*pow(1.-ndv,3.)*.2;                                                  /* cold light along its edges */
       col+=E*br;col+=vec3(1.,.55,.2)*smoothstep(-.02,-.2,n.y)*.03*br;                             /* the underside catches its own light */
-      c=mix(c,col,sk);hitG=1.;}}
+      c=mix(c,col,sk*cov);hitG=cov;}}
   { vec2 cw=(P-C-vec2(0.,-RX*.13))/vec2(RX*.38,RX*.09);c+=vec3(1.,.52,.18)*exp(-dot(cw,cw))*.7*br*sk*(1.-hitG*.85); } /* the cap's amber ring, hidden above the disc, its light rising over the rim */
   /* fog banks drifting round the ship, thick enough to swallow parts of it; its lights glow through, the fog lit amber from inside */
   { float FK=FOGK;vec2 fq=vec2(P.x*1.6-t*.045,(P.y-C.y)*4.5);vec2 fw2=vec2(fbm3(fq*.8+t*.05),fbm3(fq*.8-t*.035+7.)); /* the fog banks roll past at a visible pace */float fo=smoothstep(.36,.64,fbm(fq*1.3+fw2*1.6));
@@ -2059,14 +2064,14 @@ uniform sampler2D mA,mB;uniform vec2 va,vb;
    beta = theta - thetaE^2/theta. Near the hole the stars stream round it, stretch into arcs and an Einstein ring, and pairs of images are born and
    die at the ring as the sky slowly turns behind - the effect that makes Interstellar's black hole feel alive */
 vec3 lsky(vec2 P,vec2 C,float RE){vec2 d=P-C;float r2=max(dot(d,d),1e-5);vec2 b=d-RE*RE*d/r2;
-  float mag=clamp(RE*RE/r2,0.,4.);vec2 src=C+b+vec2(t*.012,sin(t*.05)*.01);                                    /* the sky drifts slowly behind the hole */
-  vec3 c=starfield(src,.4)*(1.+mag*.8);
+  float mag=clamp(RE*RE/r2,0.,1.);vec2 src=C+b+vec2(t*.012,sin(t*.05)*.01);                                    /* the sky drifts slowly behind the hole */
+  vec3 c=starfield(src,.4)*(1.+mag*.4)*smoothstep(RE*RE*.9,RE*RE*1.6,r2); /* stars brighten a little near the ring but never smear into specks at its edge */
   return c;} /* va: the maps' aspect, and how far the event has arrived; vb: the balls' sideways position (parallax) and seconds since the last tap */
 vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.72,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
 vec3 disk(vec4 m,float far){float wm=smoothstep(.45,.95,m.a);if(wm<=0.)return vec3(0.); /* a soft edge where the light paths stop hitting the disk: no speckled, jagged rim */float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
-  float om=t*2.1*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
-  vec2 pc=vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.);vec2 wq=vec2(fbm3(pc*1.3+vec2(t*.13,0.)),fbm3(pc*1.3+vec2(4.,-t*.11)));  /* the gas churns as it orbits: its pattern is warped by a slowly changing flow, so it never looks like a turning picture */
-  float s=fbm3(pc+wq*1.6)*1.25-.1+.1*sin(r*9.+3.*sin(r*1.7));
+  float om=t*2.6*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
+  vec2 pc=vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.);vec2 wq=vec2(fbm3(pc*1.3+vec2(t*.24,0.)),fbm3(pc*1.3+vec2(4.,-t*.2)));  /* the gas churns as it orbits: its pattern is warped by a slowly changing flow, so it never looks like a turning picture */
+  float s=fbm3(pc+wq*2.)*1.45-.2+.1*sin(r*9.+3.*sin(r*1.7));
   float silk=fbm3(vec2(r*7.5+cos(pr)*.55,sin(pr)*.55+r*.4));s+=.3*(silk-.5);
   float clump=fbm3(vec2(cos(pr),sin(pr))*2.6+vec2(r*1.9,r*.7));s+=.75*(smoothstep(.35,.8,clump)-.35);   /* clouds of brighter and darker gas around the ring, carried round by the turning and sheared into arcs: the motion you see at a glance */                       /* fine concentric silk, as in the film: each ring carries its own pattern round at its own speed */
   s+=.22*pow(max(0.,cos(pr+r*.6)),6.)*exp(-pow((r-3.8)/1.1,2.));                                     /* one soft brighter swell riding the inner disk */
@@ -2109,8 +2114,8 @@ mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,s,-s,c);}
 float tri(float x){return clamp(abs(fract(x)-.5),.01,.49);}
 vec2 tri2(vec2 p){return vec2(tri(p.x)+tri(p.y),tri(p.y+tri(p.x)));}
 float tnoise(vec2 p){float z=1.8,z2=2.5,rz=0.;p*=rot(p.x*.06);vec2 bp=p;
-  for(int i=0;i<5;i++){vec2 dg=tri2(bp*1.85)*.75;dg*=rot(t*.07);p-=dg/z2;bp*=1.3;z2*=.45;z*=.42;p*=1.21+(rz-1.)*.02;rz+=tri(p.x+tri(p.y))*z;p*=-mat2(.95534,.29552,-.29552,.95534);}
-  return clamp(1./pow(rz*29.,1.58),0.,.65);} /* a touch more contrast: crisper rays inside the curtains */
+  for(int i=0;i<5;i++){vec2 dg=tri2(bp*1.85)*.75;dg*=rot(t*.11);   /* the curtains ripple and refold a little faster: lively, never hurried */p-=dg/z2;bp*=1.3;z2*=.45;z*=.42;p*=1.21+(rz-1.)*.02;rz+=tri(p.x+tri(p.y))*z;p*=-mat2(.95534,.29552,-.29552,.95534);}
+  return clamp(1./pow(rz*29.,1.64),0.,.68);} /* a touch more contrast: crisper rays inside the curtains */
 vec3 pal(float i){vec3 a=vec3(.2,1.,.6),b=vec3(.2,.75,1.),c=vec3(.35,.4,1.),d=vec3(.7,.35,1.);i=clamp(i*1.3,0.,1.);return i<.33?mix(a,b,i*3.):i<.66?mix(b,c,(i-.33)*3.):mix(c,d,(i-.66)*3.);} /* green at the hem, cyan, blue, violet higher up */
 vec3 sheetsA(vec2 q,float hd,float sd){vec3 ro=vec3(sd*1.7,0.,-6.7),rd=normalize(vec3(q*vec2(1.1,.5),1.3));rd.yz*=rot(.16);rd.xz*=rot(hd); /* looking up into the sky */
   vec3 acc=vec3(0.),avg=vec3(0.);
@@ -2121,13 +2126,13 @@ vec3 sheetsA(vec2 q,float hd,float sd){vec3 ro=vec3(sd*1.7,0.,-6.7),rd=normalize
   return acc;}
 vec3 sheetsA2(vec2 q,float hd,float sd){return sheetsA(q,hd,sd);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.y)-.42);
-  vec3 acc=sheetsA(q,.18+.05*sin(t*.03),0.)+sheetsA(q+vec2(.25,.36),1.45+.04*sin(t*.025),3.)*.7*smoothstep(.38,.62,uv.y); /* the main curtains above, and a second display further off filling the lower sky */
+  vec3 acc=sheetsA(q,.18+.07*sin(t*.045)+.02*sin(t*.13),0.)+sheetsA(q+vec2(.25,.36),1.45+.05*sin(t*.035),3.)*.7*smoothstep(.38,.62,uv.y); /* the main curtains above, and a second display further off filling the lower sky */
   vec3 sky=mix(vec3(.004,.008,.03),vec3(.02,.03,.09),smoothstep(0.,1.,1.-uv.y));sky+=vec3(.05,.03,.14)*smoothstep(.55,1.,uv.y)*.6;
   float L=dot(acc,vec3(.33));acc*=smoothstep(.018,.075,L)*.8+.2; /* a few pure dark gaps open between the curtains */
   vec3 col=sky*(.75+.25*smoothstep(.01,.08,L))+acc*acc*7.5+acc*.75+pow(acc,vec3(3.))*18.; /* the brightest folds get a defined, almost white core; the glow round them is kept */
-  { float hi=smoothstep(.06,.22,L),spot=smoothstep(.4,.72,vn(vec2(uv.x*asp*2.2+t*.015,uv.y*1.3-t*.01)+7.)); /* only in a few bright places, drifting slowly */
+  { float hi=smoothstep(.06,.22,L),spot=smoothstep(.36,.7,vn(vec2(uv.x*asp*2.2+t*.015,uv.y*1.3-t*.01)+7.)); /* only in a few bright places, drifting slowly */
     float x=uv.x*asp*38.+sin(uv.y*4.+t*.35)*1.2;float rib=pow(smoothstep(.45,.95,vn(vec2(x,uv.y*1.8-t*.1))),1.5)*(.55+.45*vn(vec2(x*.35,uv.y*.7+t*.05))); /* fine ribbons running up the light */
-    col+=(acc*2.2+vec3(.22,.4,.45))*rib*hi*spot*.85; } /* crisp ribbons of light in certain spots; the soft glow everywhere else is untouched */col+=vec3(.05,.12,.35)*smoothstep(.05,.6,dot(acc,vec3(.33)))*.5; /* a blue glow in the air round the brightest light, as in Apple's */ /* squared: the bright folds stand out, the haze between them falls away */{ float dk=1.-smoothstep(.02,.3,dot(acc,vec3(.4)));col+=starfield(vec2(uv.x*asp,uv.y),1.)*dk*1.3+starfield(vec2(uv.x*asp*1.7+3.1,uv.y*1.7),.8)*dk*.55; } /* stars in the dark sky: bright ones and a finer, fainter field */
+    col+=(acc*2.4+vec3(.24,.42,.47))*rib*hi*spot*1.05; } /* crisp ribbons of light in certain spots; the soft glow everywhere else is untouched */col+=vec3(.05,.12,.35)*smoothstep(.05,.6,dot(acc,vec3(.33)))*.5; /* a blue glow in the air round the brightest light, as in Apple's */ /* squared: the bright folds stand out, the haze between them falls away */{ float dk=1.-smoothstep(.02,.3,dot(acc,vec3(.4)));col+=starfield(vec2(uv.x*asp,uv.y),1.)*dk*1.3+starfield(vec2(uv.x*asp*1.7+3.1,uv.y*1.7),.8)*dk*.55; } /* stars in the dark sky: bright ones and a finer, fainter field */
   col=1.-exp(-col*1.25);gl_FragColor=vec4(col+dith(),1.);}
 `
   };
@@ -2176,13 +2181,13 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
     for (const k in ex) gl.uniform2fv(L(k), ex[k]);
     gl.drawArrays(gl.TRIANGLES, 0, 3); return true; };
   // the aurora: an original shader, nothing but maths, so it is sharp at any size and never repeats
-  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 || window.__mdSim ? .9 : qLevel ? 1.4 : 2.); /* volumetric light is soft: rendered a little lower and scaled up, it stays smooth */ // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
+  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, window.__mdSim ? 1 : 2.4) * skyQs; /* volumetric light is soft: rendered a little lower and scaled up, it stays smooth */ // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
     const w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
     if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
     if (!prog('aurora')) { failed = true; return false; }
     const vt = VA.tex(); if (vt && VA.aspect()) return pass('auroravid', [['vid', vt, 0]], null, w, h, { va: [VA.aspect(), 0] }); /* the pre-rendered loop */
     return pass('aurora', [], null, w, h, {}); };
-  const bhole = () => { if (!ok()) return false; const T2 = bhTex(); if (T2) { const sc = Math.min(devicePixelRatio || 1, 2) * (qLevel ? .6 : .75), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc)); if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
+  const bhole = () => { if (!ok()) return false; const T2 = bhTex(); if (T2) { const sc = Math.min(devicePixelRatio || 1, 2.4) * skyQs, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc)); if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
       if (!prog('bholemap')) return false; const ok2 = pass('bholemap', [['mA', T2[0], 0], ['mB', T2[1], 1]], null, w, h, { va: [BHMAP[0].naturalWidth / BHMAP[0].naturalHeight, wx.a], vb: [(bhPar += ((bx ? (bx[0] - W * .25) / (W * .25) : 0) - bhPar) * .06), Math.min(9, t - tapT)] }); return ok2; }
     const vt = VB.tex(); if (!vt || !VB.aspect()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 ? 2 : 3), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
     if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } if (!prog('auroravid')) return false; return pass('auroravid', [['vid', vt, 0]], null, w, h, { va: [VB.aspect(), 0] }); }; // the ray-traced loop, when it is available // one pass, straight to the screen, drawn entirely by the GPU: light enough for full resolution on every iPhone
@@ -2190,7 +2195,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); VA.get(); },
     aurora, bhole, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? (qLevel ? .5 : .68) : qLevel ? .45 : .6) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : qLevel ? .45 : .6) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
@@ -2227,7 +2232,7 @@ let skyE = 0; // how much of the screen the GPU sky covers right now (the 2D bac
 const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
-  const k = wx.kind, cfg = SKYCFG[k]; let U;
+  const k = wx.kind, cfg = SKYCFG[k]; let U; if (wx.kind !== drawSky0.k) { drawSky0.k = wx.kind; skyQ = skyQs = 1; } // each event starts at full sharpness
   if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
@@ -2288,10 +2293,12 @@ function drawSnow(a, near) { // snowfall in depth: far flakes small, sharp and s
   for (const f of SNOW) { if (near ? f.z < .82 : f.z >= .82) continue; const dn = clamp01((a * 1.2 - (f.x * 7.31 + f.y * 3.17) % 1) / .2); if (dn <= 0) continue; // the first few flakes, then the fall thickens
     const z = f.z, sp = (18 + 62 * z) * f.s, y = ((f.y * (H + 80) + t * sp) % (H + 80)) - 40,
       x = ((f.x * (W + 60) + t * (4 + 8 * z) + Math.sin(t * f.f + f.ph) * f.w * (.5 + z)) % (W + 60) + W + 60) % (W + 60) - 30,
-      r = near ? 7 + z * 9 : .9 + z * 3.2, al = near ? .16 + .1 * (1 - z) : .45 + .5 * z;
+      r = near ? 7 + z * 9 : 1.25 + z * 3.8, al = near ? .16 + .1 * (1 - z) : .6 + .4 * z;
     if (!near && z > .35 && state === 'play' && parts.length < 140) for (const o of things) { if (o.k !== 'b' || o.al) continue; const top = o.y - 22, bx0 = bxOf(o); if (Math.abs(x - bx0) < bw() / 2 - 3 && y > top - 2 && y < top + 2.5) { if (Math.random() < .5) parts.push({ x, y: top, vx: (Math.random() - .5) * 26, vy: -14 - Math.random() * 18, g: 60, life: .45, max: .45, r: .8 + z * 1.1, col: 'rgba(255,255,255,.9)' }); break; } } // a flake landing on a block lifts a tiny puff of powder
-    ctx.globalAlpha = al * (.4 + .6 * a) * dn; if (!near && r < 2.2) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .7, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
+    ctx.globalAlpha = al * (.4 + .6 * a) * dn; if (!near) { ctx.globalAlpha *= .55; ctx.drawImage(flakeShade(), x - r * 2.2, y - r * 2.2 + .6, r * 4.4, r * 4.4); ctx.globalAlpha = al * (.4 + .6 * a) * dn; } // a faint cool shadow round each flake, so white flakes read against the pale sky
+    if (!near && r < 2.4) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .75, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
   ctx.globalAlpha = 1; }
+const flakeShade = () => sprite('flkS', 32, 32, g => { const r = g.createRadialGradient(16, 16, 3, 16, 16, 16); r.addColorStop(0, 'rgba(70,90,130,.55)'); r.addColorStop(.5, 'rgba(70,90,130,.18)'); r.addColorStop(1, 'rgba(70,90,130,0)'); g.fillStyle = r; g.fillRect(0, 0, 32, 32); });
 const INF = Array.from({ length: 46 }, (_, i) => ({ ph: Math.random(), r0: .9 + Math.random() * 1.6, a0: Math.random() * 6.283, s: .5 + Math.random() * .8, z: Math.random() }));
 function drawInfall(a) { // specks of glowing gas falling into the black hole: each circles in the plane of the disk, tightening and speeding up as it nears, warming from amber to white, then is gone
   const hx = W * .76, hy = H * .325, R = W * .37; ctx.save(); ctx.globalCompositeOperation = 'screen';
@@ -2383,6 +2390,9 @@ function snowBlock(o, x, y, w, h, k) { // snow settling on a block while it fall
   ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x0 + 3, y0 + th * .6); // the cap drapes slightly over the corners and is gently uneven along its top
   for (let i = 0; i <= 10; i++) { const u = i / 10, xx = x0 + 3 + (w - 6) * u, bump = Math.sin(u * 9.4 + (o.row || 0)) * .35 + Math.sin(u * 3.1 + (o.l || 0)) * .45; ctx.lineTo(xx, y0 - th * (Math.sin(u * Math.PI) ** .35) * (1 + .18 * bump)); }
   ctx.lineTo(x0 + w - 3, y0 + th * .6); ctx.quadraticCurveTo(x0 + w / 2, y0 + th * 1.2, x0 + 3, y0 + th * .6); ctx.fill();
+  ctx.save(); ctx.strokeStyle = `rgba(140,162,200,${.42 * c})`; ctx.lineWidth = .9; ctx.beginPath(); // a fine cool contour along the top of the cap, so it reads crisply against a pale sky
+  for (let i = 0; i <= 10; i++) { const u = i / 10, xx = x0 + 3 + (w - 6) * u, bump = Math.sin(u * 9.4 + (o.row || 0)) * .35 + Math.sin(u * 3.1 + (o.l || 0)) * .45, yy = y0 - th * (Math.sin(u * Math.PI) ** .35) * (1 + .18 * bump) - .4; i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); ctx.restore();
+  if (c > .35) { const q = clamp01((c - .35) / .65); ctx.fillStyle = `rgba(250,252,255,${.92 * q})`; for (const [cx, sd] of [[x0 + 4, -1], [x0 + w - 4, 1]]) { ctx.beginPath(); ctx.ellipse(cx - sd * 1.5, y0 + th * .45 + .8 * q, 5 * q + 1, 1.4 + 1.2 * q, sd * .35, 0, 7); ctx.fill(); } } // as it builds, the snow rounds over the corners and droops a little
   const sh = ctx.createLinearGradient(0, y0 + th * .7, 0, y0 + th * 2.4); sh.addColorStop(0, `rgba(24,30,56,${.22 * c})`); sh.addColorStop(1, 'rgba(24,30,56,0)'); // the snow casts a soft shadow on the block face just below it
   ctx.fillStyle = sh; ctx.beginPath(); ctx.roundRect(x0 + 4, y0 + th * .7, w - 8, th * 1.7, 3); ctx.fill();
   const cs = ctx.createLinearGradient(0, y0 - th, 0, y0 + th); cs.addColorStop(0, 'rgba(190,212,245,0)'); cs.addColorStop(1, `rgba(190,212,245,${.35 * c})`); // its underside is cool and shaded, the top catches the light
@@ -2528,7 +2538,7 @@ function cloudGlow() { // lightning inside the cloud: mostly a crawler racing si
     const pts = boltPts(xs, y0, xe, y0 + (Math.random() - .5) * ch * .35, .38);
     wx.glows.push({ pts, br: forks(pts, 2 + ((Math.random() * 3) | 0), true), t: 0, lead: .14 + Math.random() * .16, st, dur: .14 + .16 + st[st.length - 1].t + .5 });
   } else wx.glows.push({ x: W * (.1 + Math.random() * .8), y: ch * (.05 + Math.random() * .55), t: 0, lead: 0, st, dur: st[st.length - 1].t + .5, r: .7 + Math.random() * .6 });
-  if (wx.kind === 'storm' && Math.random() < .5) thunder(.5 + Math.random() * .9, .035 + Math.random() * .03, 2.6); // the rain stays silent
+  if (wx.kind === 'storm' && Math.random() < .5) thunder(.5 + Math.random() * .9, .024 + Math.random() * .018, 2.6); // the rain stays silent
 }
 function lightning() { // a strike from the cloud base: threads between the blocks to the floor; only now and then does one find a block
   const y0 = -30, st = strokes(), lead = .16 + Math.random() * .12, pre = .3 + Math.random() * .35, ahead = pre + lead; // born up inside the cloud deck: it brightens first, then the leader steps down
@@ -2553,8 +2563,8 @@ function lightning() { // a strike from the cloud base: threads between the bloc
   if (!bolt) { cloudGlow(); wx.nextBolt = .6 + Math.random() * .6; return; } // nowhere clear to land: it stays in the cloud this time, and tries again shortly
   const pz = bolt.o ? pre2 : pre; Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o, pz + lead)), t: 0, pre: pz, lead, st, dur: pz + lead + st[st.length - 1].t + .55 });
   wx.bolt = bolt; wx.flash = 1;
-  const at = bolt.pre + lead; hush(5200, .7, .18, .032, 1800, at, .15); hush(9000, 2, .5, .008, 3000, at + .04, .2); // the crack of the strike, a brief sizzle in the air
-  if (bolt.o) { setTimeout(() => { beep(1500, .12, 'square', .03, -1100); haptic('heavy'); }, at * 1000); thunder(at + .05, .075, 2.4); } else thunder(at + .15 + Math.random() * .3, .055 + Math.random() * .025, 2.6);
+  const at = bolt.pre + lead; hush(5200, .7, .18, .02, 1800, at, .15); hush(9000, 2, .5, .005, 3000, at + .04, .2); // the crack of the strike, a brief sizzle in the air
+  if (bolt.o) { setTimeout(() => { beep(1500, .12, 'square', .018, -1100); haptic('heavy'); }, at * 1000); thunder(at + .05, .05, 2.4); } else thunder(at + .15 + Math.random() * .3, .036 + Math.random() * .016, 2.6);
 }
 function flashK(b) { // brightness after the leader: each stroke flares and decays fast
   const s0 = b ? (b.pre || 0) + b.lead : 0; if (!b || b.t < s0) return 0; const tt = b.t - s0; let k = 0;
@@ -2838,11 +2848,14 @@ function draw() {
   { const n = state !== 'menu' && uiNight() > .5; if (n !== nightOn) { nightOn = n; document.body.classList.toggle('night', n); themeMeta && themeMeta.setAttribute('content', n ? '#0b1020' : '#f6f1ea'); } } // glass and Safari's bars tint to the sky
   ctx = mainCtx;
   const skyOn = drawSky();
-  ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? 1 - skyE : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
+  ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? (skyE > .995 ? 0 : 1) : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
   const sk = RM ? 0 : shake; ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * sk * scale, offY + (Math.random() - .5) * sk * scale);
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   const playing = state !== 'menu';
   if (bgA > .004) { ctx.globalAlpha = bgA; drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
+  if (skyOn && bgA > .004 && skyE > .002) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'destination-out'; // the event sky is revealed like dusk falling: it sweeps down from the top behind a soft edge, never a milky half-transparent wash
+    const Hc = cv.height, f = (skyE * 1.5 - .25) * Hc, band = Hc * .28, g = ctx.createLinearGradient(0, f - band, 0, f + band * .35); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(.55, 'rgba(0,0,0,.75)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, Math.min(Hc, f + band * .35 + 2)); ctx.restore(); }
   ctx.globalAlpha = 1 - skyE * .85; drawDivider(Math.max(pulse * .5, fxA, state === "menu" ? 0 : 0)); ctx.globalAlpha = 1; /* the divider melts into an event sky */
   if (!playing) { ctx.restore(); return; } // the home screen shows only the calm backdrop; the balls live in its preview
 

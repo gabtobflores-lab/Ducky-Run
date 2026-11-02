@@ -82,12 +82,14 @@ if ! xcodebuild -version >/dev/null 2>&1; then
   export DEVELOPER_DIR="$XC/Contents/Developer"
 fi
 echo "Using $(xcodebuild -version 2>/dev/null | head -1)"
+# 120 Hz on ProMotion iPhones: without this key iOS caps the game at 60 frames a second
+for PL in "$APPDIR/Info.plist" "$APPDIR"/*/Info.plist; do [ -f "$PL" ] && /usr/libexec/PlistBuddy -c "Delete :CADisableMinimumFrameDurationOnPhone" -c "Add :CADisableMinimumFrameDurationOnPhone bool true" "$PL" >/dev/null 2>&1 && echo "✓ 120 Hz enabled"; done
 echo; echo "Archiving (a few minutes)…"
 ARCH="$HOME/Desktop/MirrorDrop-$BUILD.xcarchive"
 xcodebuild -project "$PROJ" -scheme "$SCHEME" -configuration Release -destination 'generic/platform=iOS' -archivePath "$ARCH" archive \
   DEVELOPMENT_TEAM="$TEAM" PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE" MARKETING_VERSION=1.0 CURRENT_PROJECT_VERSION="$BUILD" \
   CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-  INFOPLIST_KEY_ITSAppUsesNonExemptEncryption=NO > "$W/archive.log" 2>&1
+  INFOPLIST_KEY_ITSAppUsesNonExemptEncryption=NO INFOPLIST_KEY_CADisableMinimumFrameDurationOnPhone=YES > "$W/archive.log" 2>&1
 if [ ! -d "$ARCH" ]; then echo "✗ Archive failed. The important lines:"; grep -E "error:|failed" "$W/archive.log" | sort -u | head -20; exit 1; fi
 echo "✓ Archived"
 
