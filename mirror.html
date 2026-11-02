@@ -2065,9 +2065,10 @@ vec3 lsky(vec2 P,vec2 C,float RE){vec2 d=P-C;float r2=max(dot(d,d),1e-5);vec2 b=
   return c;} /* va: the maps' aspect, and how far the event has arrived; vb: the balls' sideways position (parallax) and seconds since the last tap */
 vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.72,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
 vec3 disk(vec4 m,float far){float wm=smoothstep(.45,.95,m.a);if(wm<=0.)return vec3(0.); /* a soft edge where the light paths stop hitting the disk: no speckled, jagged rim */float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
-  float om=t*1.5*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
+  float om=t*2.1*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
   float s=fbm3(vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.))*.9+.1*sin(r*9.+3.*sin(r*1.7)); /* silky structure, smooth all the way round */
-  float silk=fbm3(vec2(r*7.5+cos(pr)*.55,sin(pr)*.55+r*.4));s+=.38*(silk-.5);                       /* fine concentric silk, as in the film: each ring carries its own pattern round at its own speed */
+  float silk=fbm3(vec2(r*7.5+cos(pr)*.55,sin(pr)*.55+r*.4));s+=.3*(silk-.5);
+  float clump=fbm3(vec2(cos(pr),sin(pr))*2.6+vec2(r*1.9,r*.7));s+=.75*(smoothstep(.35,.8,clump)-.35);   /* clouds of brighter and darker gas around the ring, carried round by the turning and sheared into arcs: the motion you see at a glance */                       /* fine concentric silk, as in the film: each ring carries its own pattern round at its own speed */
   s+=.22*pow(max(0.,cos(pr+r*.6)),6.)*exp(-pow((r-3.8)/1.1,2.));                                     /* one soft brighter swell riding the inner disk */
   float T=pow(r/2.6,-.75)*pow(max(1.-sqrt(2.4/r),0.),.25);float I=pow(T,2.6)*(.75+.55*s);
   I*=smoothstep(2.6,3.1,r)*pow(clamp((10.-r)/4.,0.,1.),1.5)*(1.+.28*sin(ph));                 /* soft inner and outer edges; the approaching side brighter */
@@ -2106,7 +2107,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;
    Fine vertical rays run through every sheet, as in real curtains. Colour moves across each sheet: a bright cyan-teal lit edge, blue in the body,
    lavender and violet in the folds behind. Deep navy all around; nothing has a hard line */
 float n1(float x,float s){return vn(vec2(x,s))*2.-1.;}
-float SLP,UU;
+float SLP,UU,FR;
 /* one sheet: x0 its centre, A how far the S swings, fr how tight, ph its phase, w its half width; returns its light; UU is the position across it */
 float sheet(vec2 p,float x0,float A,float fr,float ph,float w,float sd,float y0,float y1){
   float y=p.y,arg=y*fr+ph+.35*n1(y*1.1+t*.02,sd);
@@ -2120,17 +2121,20 @@ float sheet(vec2 p,float x0,float A,float fr,float ph,float w,float sd,float y0,
   float rays=.84+.16*smoothstep(.2,.9,fbm3(vec2(p.x*22.+sd*13.+u*1.2,y*.6-t*.05)));   /* soft, wide rays: a texture in the light, not stripes */                      /* silky rays, soft-edged */
   float pulse=.82+.18*sin(y*7.-t*.9+sd*2.)*(.5+.5*sin(t*.31+sd));                                          /* slow waves of brightness travelling down the sheet: it breathes */  /* fine vertical rays */
   float env=smoothstep(y0,y0+.12,y)*(1.-smoothstep(y1-.14,y1,y));
-  float halo=exp(-u*u*.06)*.09;                                                                           /* the luminous air round the sheet, very wide and faint */
+  float halo=exp(-u*u*.06)*.09;
+  float fu=u-.35;float fringe=step(0.,fu)*exp(-fu*1.15)*(1.-exp(-fu*7.));                                   /* the curtain hanging off the lit edge */
+  float strk=smoothstep(.35,.95,vn(vec2(p.x*120.+sd*7.+sin(y*3.+t*.6)*.6,y*.5-t*.08)))*(.6+.4*vn(vec2(p.x*45.+sd,y*1.3+t*.05))); /* soft streaks of light in it, rippling sideways like a curtain in a breeze */
+  FR=fringe*strk*env;                                                                           /* the luminous air round the sheet, very wide and faint */
   return ((edge*fold*1.05+body*.85)*rays*pulse+halo*.7)*env;}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 pp=vec2(p.x/(asp/.46),p.y);
   vec3 a=vec3(0.);
   vec3 CYAN=vec3(.35,.95,.95),TEAL=vec3(.25,.9,.72),BLUE=vec3(.1,.38,1.),VIO=vec3(.48,.32,1.),LAV=vec3(.72,.62,1.);
   /* the far sheet: violet and lavender, swinging the other way behind */
-  float f=sheet(pp,.27,.085,5.2,2.6,.075,7.,.02,.82);vec3 fc=mix(VIO,LAV,smoothstep(-.2,.8,UU));a+=fc*f*.3;
+  float f=sheet(pp,.27,.085,5.2,2.6,.075,7.,.02,.82);vec3 fc=mix(VIO,LAV,smoothstep(-.2,.8,UU));a+=fc*f*.3+mix(LAV,vec3(.5,.9,1.),.4)*FR*.45;
   /* the main sheet: a great S from the top down to just above the balls */
-  float m=sheet(pp,.22,.1,6.1,.4+t*.05,.085,3.,-.05,.74);
+  float m=sheet(pp,.22,.1,6.1,.4+t*.05,.085,3.,-.05,.74);float mfr=FR;
   vec3 mc=mix(mix(VIO,BLUE,.55),BLUE,smoothstep(-1.4,-.4,UU));mc=mix(mc,CYAN,smoothstep(.1,.6,UU));mc=mix(mc,TEAL,smoothstep(.2,.9,UU)*(.45+.5*smoothstep(.35,.7,pp.y)));   /* green-teal lower down, as in a real aurora */
-  mc=mix(mc,vec3(.9,1.,.98),smoothstep(1.3,2.2,m)*.55);   /* the folds burn almost white */a+=mc*m*1.05;
+  mc=mix(mc,vec3(.9,1.,.98),smoothstep(1.3,2.2,m)*.55);   /* the folds burn almost white */a+=mc*m*1.05;a+=mix(CYAN,vec3(.35,1.,.6),.6)*mfr*.95; /* its feathered fringe, tipped green as in a real aurora */
   /* a smaller sheet high on the left, teal fading to blue */
   float s=sheet(pp,.08,.05,7.,1.2,.055,11.,-.05,.42);a+=mix(BLUE,TEAL,smoothstep(-.3,.7,UU))*s*.45;
   /* a low, faint fringe of rays hanging near the bottom, kept dim round the balls */
