@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="ab93c9c">
+<meta name="build" content="c39d6f2">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -110,13 +110,14 @@
   #wxnote .ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(43,45,66,.06);flex:none}
   #wxnote svg{width:16px;height:16px;fill:none;stroke:var(--ink-2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   #wxnote .tx{display:flex;flex-direction:column;gap:4px;line-height:1.1}
-  #wxnote b{font-size:13.5px;font-weight:800;letter-spacing:-.005em}
-  #wxnote small{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+  #wxnote b{font-size:14px;font-weight:800;letter-spacing:-.005em}
+  #wxnote.dark b{text-shadow:0 1px 2px rgba(0,0,0,.25)}
+  #wxnote small{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
   #wxnote.dark{color:#f5f5f7;background:rgba(40,42,56,.5);border-color:rgba(255,255,255,.16);box-shadow:0 4px 14px rgba(0,0,0,.18),0 1px 0 rgba(255,255,255,.14) inset}
-  #wxnote.dark .ic{background:rgba(255,255,255,.1)} #wxnote.dark svg{stroke:rgba(245,245,247,.82)} #wxnote.dark small{color:rgba(235,235,245,.5)}
+  #wxnote.dark .ic{background:rgba(255,255,255,.1)} #wxnote.dark svg{stroke:rgba(245,245,247,.82)} #wxnote.dark small{color:rgba(240,240,248,.78)}
   /* liquid glass: the scene behind is blurred and its colour lifted; a bright hairline rim and a soft highlight along the top, like Apple's glass */
-  #wxnote{background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.34));border-color:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.2),0 8px 24px rgba(20,24,40,.14)}
-  #wxnote.dark{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.07));border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.22)}
+  #wxnote{background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,.62));border-color:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.2),0 8px 24px rgba(20,24,40,.14)}
+  #wxnote.dark{background:linear-gradient(180deg,rgba(30,32,48,.42),rgba(18,20,32,.55));border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.22)}
   /* Liquid Glass: an edge that catches the light - brightest at the top left, a softer return at the bottom right - and, over the dark event skies, glass that lifts what is behind it a little, as a lens does */
   #pbtn::after,#wxnote::after,#banner::after{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
     background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,0) 32%,rgba(255,255,255,0) 68%,rgba(255,255,255,.32));
@@ -837,9 +838,9 @@ const AMBDEF = {
   bhole: () => padLayer([41.2, 61.74, 82.41, 123.47, 185], 420, .9), // a vast, slow, low E: awe rather than fear
   bholeAir: () => noiseLayer(src => { const l = filt('lowpass', 240, .7); src.connect(l); return l; }, .6), // the rush of matter swirling in
   ufo: () => { const A = audioGraph(), out = ac.createGain(), o1 = ac.createOscillator(), o2 = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain(), lp = filt('lowpass', 420, 1.2); out.gain.value = 0; // the mothership's soft hum, slowly wavering
-    o1.frequency.value = 69.3; o2.frequency.value = 103.8; o2.type = 'triangle'; lfo.frequency.value = .9; lg.gain.value = 3; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); o1.connect(lp); o2.connect(lp); lp.connect(out); out.connect(A.amb); [o1, o2, lfo].forEach(o => o.start()); return { out, srcs: [o1, o2, lfo] }; },
+    o1.frequency.value = 69.3; o2.frequency.value = 103.8; o2.type = 'triangle'; lfo.frequency.value = .9; lg.gain.value = 3; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); const g1 = ac.createGain(), g2 = ac.createGain(); g1.gain.value = .07; g2.gain.value = .035; o1.connect(g1); o2.connect(g2); g1.connect(lp); g2.connect(lp); lp.connect(out); out.connect(A.amb); [o1, o2, lfo].forEach(o => o.start()); return { out, srcs: [o1, o2, lfo] }; }, // each voice kept low: a hum felt more than heard
 };
-const AMBV = { bhole: .5, bholeAir: .35, ufo: .4, rainHi: .17, rainLo: .2, wind: .3, snowAir: .3, aurora: .55, night: .5, fog: .45, heat: .32 };
+const AMBV = { bhole: .5, bholeAir: .35, ufo: .4, rainHi: .11, rainLo: .14, wind: .2, snowAir: .3, aurora: .55, night: .5, fog: .45, heat: .32 };
 let sndPrev = '', sndAcc = {};
 function sndTick(dt) {
   if (!AB || ac.state !== 'running') return;
@@ -915,7 +916,7 @@ function evMusic(now) { // the event's score, while playing
 const WXNORM = { storm: 1, rain: 1, wind: 1, hail: 1, fog: 1, heat: 1, sun: 1 }; // weather events play the game's normal music, quietly, under their own real sounds
 function musTick() {
   const lobby = (state === 'menu' || state === 'dead') && sndOn('music'), now = ac.currentTime, wxm = !lobby && state === 'play' && WXNORM[wx.kind] && wx.phase !== 'warn' && sndOn('music') ? wx.a : 0, ev = lobby || wxm ? 0 : evMusic(now), want = lobby || wxm > .02;
-  AB.mus.gain.setTargetAtTime(lobby ? .9 : wxm ? wxm * .45 : ev * .5, now, lobby || ev || wxm ? 1.4 : .6); // in play, the music sits well beneath the game
+  AB.mus.gain.setTargetAtTime(lobby ? .9 : wxm ? wxm * .26 : ev * .5, now, lobby || ev || wxm ? 1.4 : .6); // in play, the music sits well beneath the game
   if (!want) { MUS.on = false; return; } // the lobby piece stops scheduling; what is already sounding fades with the bus
   if (!MUS.on && want) { MUS.on = true; MUS.next = now + .1; MUS.note = now + 2.5; }
   while (MUS.next < now + .5) { musChord(MUSP[MUS.ch], MUS.next, 9); MUS.next += 9; MUS.ch = (MUS.ch + 1) % MUSP.length; }
@@ -2196,10 +2197,11 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 p
   };
 })();
 const pgEl = document.getElementById('pglass'); let pgOn = false;
-function pGlass(on, fy, fade) { // the frosted layer follows the sheet: down to its lip, then fading out over the soft falloff
+function pGlass(on, fy, fade, edge) { // the frosted layer is cut to the sheet's own wavy lip, so the blur ends exactly under the glowing line (a mask does not soften a backdrop blur everywhere)
   if (!on) { if (pgOn) { pgEl.style.display = 'none'; pgOn = false; } return; }
-  const k = innerHeight / cv.height, y1 = (offY + fy * scale) * k, y2 = (offY + (fy + fade) * scale) * k, op = (resumeT > 0 || state === 'paused') ? 1 : clamp01(fogT / .8);
-  pgEl.style.height = y2 + 'px'; const m = `linear-gradient(#000 0,#000 ${(y1 / y2 * 100).toFixed(1)}%,transparent 100%)`; pgEl.style.webkitMaskImage = m; pgEl.style.maskImage = m; pgEl.style.opacity = op;
+  const k = innerHeight / cv.height, op = (resumeT > 0 || state === 'paused') ? 1 : clamp01(fogT / .8);
+  const pts = []; let ymax = 0; for (let x = -20; x <= W + 20; x += 10) { const px = (offX + x * scale) * (innerWidth / cv.width), py = (offY + (edge(x) - 1) * scale) * k; ymax = Math.max(ymax, py); pts.push(`${px.toFixed(1)}px ${py.toFixed(1)}px`); }
+  pgEl.style.height = Math.ceil(ymax + 2) + 'px'; pgEl.style.webkitMaskImage = pgEl.style.maskImage = 'none'; pgEl.style.clipPath = `polygon(0 0,100% 0,${pts.reverse().join(',')})`; pgEl.style.opacity = op;
   if (!pgOn) { pgEl.style.display = 'block'; pgOn = true; } }
 document.body.classList.toggle('evsky', false);
 setInterval(() => document.body.classList.toggle('evsky', !!(wx.kind && wx.a > .3)), 200); // the pause veil switches to frosted glass over event skies
@@ -2359,7 +2361,8 @@ function holeBlock(x, y, w, h, k) { // light from the disk falls on the side of 
   g.addColorStop(0, `rgba(255,214,160,${.42 * f})`); g.addColorStop(1, 'rgba(255,214,160,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.fill();
   ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.clip(); ctx.strokeStyle = `rgba(255,232,196,${.75 * f})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x0 + ux * 2.5, y0 + uy * 2.5, w, h, 12); ctx.stroke(); ctx.restore(); } // a bright rim along the lit edge
 function snowBlock(o, x, y, w, h, k) { // snow settling on a block while it falls through the cold: a soft white cap that builds up, and a cool frosted tint
-  o.sn = Math.min(1, (o.sn || 0) + snowD * .45 * k); const c = o.sn * k; if (c < .02) return;
+  const ramp = wx.kind !== 'snow' ? 1 : wx.phase === 'on' ? .25 + .75 * clamp01(wx.t / 7) : wx.phase === 'out' ? 1 : 0; // the snow only starts settling once it is falling, and settles faster the longer it has snowed
+  if (y > -10) o.sn = Math.min(1, (o.sn || 0) + (snowD || 0) * .32 * k * ramp); const c = (o.sn || 0) * k; if (!(c >= .02)) return; // and only while the block is out in it, on screen
   const x0 = x - w / 2, y0 = y - h / 2, r = 12;
   ctx.fillStyle = `rgba(206,226,255,${.16 * c})`; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, r); ctx.fill(); // frost
   ctx.strokeStyle = `rgba(236,246,255,${.45 * c})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.roundRect(x0 + .6, y0 + .6, w - 1.2, h - 1.2, r); ctx.stroke();
@@ -2537,8 +2540,8 @@ function lightning() { // a strike from the cloud base: threads between the bloc
   if (!bolt) { cloudGlow(); wx.nextBolt = .6 + Math.random() * .6; return; } // nowhere clear to land: it stays in the cloud this time, and tries again shortly
   const pz = bolt.o ? pre2 : pre; Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o, pz + lead)), t: 0, pre: pz, lead, st, dur: pz + lead + st[st.length - 1].t + .55 });
   wx.bolt = bolt; wx.flash = 1;
-  const at = bolt.pre + lead; hush(5200, .7, .18, .045, 1800, at, .15); hush(9000, 2, .5, .012, 3000, at + .04, .2); // the crack of the strike, a brief sizzle in the air
-  if (bolt.o) { setTimeout(() => { beep(1500, .12, 'square', .03, -1100); haptic('heavy'); }, at * 1000); thunder(at + .05, .1, 2.4); } else thunder(at + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
+  const at = bolt.pre + lead; hush(5200, .7, .18, .032, 1800, at, .15); hush(9000, 2, .5, .008, 3000, at + .04, .2); // the crack of the strike, a brief sizzle in the air
+  if (bolt.o) { setTimeout(() => { beep(1500, .12, 'square', .03, -1100); haptic('heavy'); }, at * 1000); thunder(at + .05, .075, 2.4); } else thunder(at + .15 + Math.random() * .3, .055 + Math.random() * .025, 2.6);
 }
 function flashK(b) { // brightness after the leader: each stroke flares and decays fast
   const s0 = b ? (b.pre || 0) + b.lead : 0; if (!b || b.t < s0) return 0; const tt = b.t - s0; let k = 0;
@@ -2932,11 +2935,11 @@ function draw() {
     const edge = x => fy + Math.sin((Math.abs(x - W / 2) / W) * 9 - t * 1.1) * 7 + Math.sin(t * .7) * 3;
     const sheet = () => { ctx.beginPath(); ctx.moveTo(-20, -20); ctx.lineTo(W + 20, -20); for (let x = W + 20; x >= -20; x -= 10) ctx.lineTo(x, edge(x)); ctx.closePath(); };
     // soft falloff below the lip so blocks emerge gradually
-    const gls = skyE > .02 ? skyE : 0; pGlass(gls > .02, fy, fade); // over an event's GPU sky: real frosted glass behind, so the sky keeps its colours
+    const gls = skyE > .02 ? skyE : 0; pGlass(gls > .02, fy, fade, edge); // over an event's GPU sky: real frosted glass behind, so the sky keeps its colours
     if (gls > .02) { ctx.save(); ctx.globalCompositeOperation = 'destination-out'; // the fog hides what is behind it: blocks under the sheet are cleared, and fade back in under its soft lip
-      const eg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); eg.addColorStop(0, `rgba(0,0,0,${gls})`); eg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = eg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
+      const eg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); eg.addColorStop(0, `rgba(0,0,0,${gls})`); eg.addColorStop(.45, `rgba(0,0,0,${gls * .35})`); eg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = eg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
       ctx.fillStyle = `rgba(0,0,0,${gls})`; sheet(); ctx.fill(); ctx.restore(); } // over an event: real frosted glass behind, so the sky keeps its colours
-    const fg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); fg.addColorStop(0, `rgba(248,245,241,${.92 * (1 - .8 * gls)})`); fg.addColorStop(1, 'rgba(248,245,241,0)');
+    const fg = ctx.createLinearGradient(0, fy - 10, 0, fy + fade); fg.addColorStop(0, `rgba(248,245,241,${.92 * (1 - .86 * gls)})`); fg.addColorStop(1, 'rgba(248,245,241,0)');
     ctx.fillStyle = fg; ctx.fillRect(-20, fy - 10, W + 40, fade + 10);
     // frosted body: fully opaque so nothing behind it can be read
     const body = ctx.createLinearGradient(0, 0, 0, fy); body.addColorStop(0, `rgba(251,249,246,${1 - .84 * gls})`); body.addColorStop(1, `rgba(243,239,234,${1 - .84 * gls})`);
@@ -2948,7 +2951,7 @@ function draw() {
     });
     for (let i = 0; i < 3; i++) for (let sd = 0; sd < 2; sd++) { // slow soft billows drifting toward the centre
       const d = ((i * 83 + t * 12) % (W / 2 + 60)) - 30, x = sd ? W - d : d, y = fy - 26 + Math.sin(t * .8 + i * 2) * 8, R = 54 + (i % 2) * 18;
-      const pg = ctx.createRadialGradient(x, y, 0, x, y, R); pg.addColorStop(0, 'rgba(255,255,255,.5)'); pg.addColorStop(1, 'rgba(255,255,255,0)');
+      const pg = ctx.createRadialGradient(x, y, 0, x, y, R); pg.addColorStop(0, `rgba(255,255,255,${.5 * (1 - .8 * gls)})`); pg.addColorStop(1, 'rgba(255,255,255,0)'); // over a dark event sky the billows stay faint, so they never read as blurred blocks
       ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
     }
     const sx = ((t * 60) % (W + 400)) - 200, sh = ctx.createLinearGradient(sx - 90, 0, sx + 90, fy); // slow glass sheen
