@@ -44,6 +44,8 @@
   /* over an event sky the same veil is real frosted glass: the scene behind keeps its own colours, softly blurred, instead of turning milky cream */
   body.evsky #pause,body.evsky #over{background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%)}
   body.evsky.night #pause #pfog,body.evsky.night #over .hint{color:rgba(235,235,245,.75)}
+  body.evsky #pause #pfog{color:var(--ink-2);font-weight:600;text-shadow:0 1px 6px rgba(255,255,255,.55)} body.evsky.night #pause #pfog{color:rgba(240,240,248,.9);text-shadow:0 1px 6px rgba(0,0,20,.45)} /* the fog note stays readable over any event sky */
+  body.evsky #pause .logo{filter:drop-shadow(0 2px 10px rgba(0,0,0,.18))} body.evsky.night #over .big{color:#f3f4f9;text-shadow:0 2px 14px rgba(0,8,30,.45)} body.evsky.night #pause .logo{filter:drop-shadow(0 0 2px rgba(0,8,30,.55)) drop-shadow(0 3px 16px rgba(0,8,30,.5))}
   #pglass{position:fixed;left:0;top:0;width:100%;height:0;pointer-events:none;display:none;-webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);background:rgba(255,255,255,.12)}
   @keyframes in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
   @keyframes out{from{opacity:1}to{opacity:0;transform:scale(.985)}}
