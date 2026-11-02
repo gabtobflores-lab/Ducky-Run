@@ -1919,27 +1919,27 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   c+=starfield(P,.5)*smoothstep(.55,.15,uv.y);
   float sl=exp(-length((P-C)/vec2(asp*.4,.16))); /* the ship's light on the clouds round it, as the moon lights its clouds */
   for(int k=0;k<3;k++){float fk=float(k);vec2 cp=vec2(P.x*(1.2+fk*.4)+t*(.012+fk*.006)+fk*3.,P.y*(3.+fk)-fk);float cl=smoothstep(.36,.9,fbm(cp));cl=cl*cl*(3.-2.*cl)*smoothstep(.02+fk*.1,.45+fk*.2,uv.y)*(1.-.55*exp(-pow((uv.y-.78)/.12,2.))); /* wide, soft fades: no edges, and thinner around the balls */
-    vec3 cc=mix(vec3(.2,.14,.38),vec3(.85,.62,.88),.3+.3*fk/2.)+vec3(.55,1.,.9)*sl*(1.1-fk*.25);c=mix(c,cc,cl*(.45-fk*.1)*sk);} /* soft cloud banks, lit mint from within */
+    vec3 cc=mix(vec3(.2,.14,.38),vec3(.85,.62,.88),.3+.3*fk/2.)+vec3(1.,.72,.45)*sl*(1.1-fk*.25);c=mix(c,cc,cl*(.45-fk*.1)*sk);} /* soft cloud banks, lit mint from within */
   /* the camera: a little below the ship, looking up at it */
   vec3 ro=vec3(0.,-.46,-4.4),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
   float tl=.035*sin(t*.47),tc=cos(tl),ts=sin(tl);vec3 rt0=rt;rt=rt*tc+up*ts;up=up*tc-rt0*ts; /* it hovers with the slightest sway, never rigid */
   vec2 q=(P-C)/RX/S;vec3 rd=normalize(fw+rt*q.x+up*(-q.y));
   /* where the aperture appears on screen, so the beam starts exactly there */
-  vec3 ap=vec3(0.,-.13,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(0.,RX*.15);
+  vec3 ap=vec3(0.,-.13,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(0.,RX*.24);
   vec2 bq=P-Ce;float cs=cos(ba),sn=sin(ba);bq=vec2(cs*bq.x-sn*bq.y,sn*bq.x+cs*bq.y);
   float w0=RX*.06,wdt=w0+max(bq.y,0.)*.2;float cone=smoothstep(wdt,wdt*.15,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*2.3); /* defined at its source, fading as it falls */
   float mist=.6+.55*fbm3(vec2(bq.x*6.,bq.y*2.6+t*.3))+.2*fbm3(vec2(bq.x*15.,bq.y*6.+t*.55));
-  vec3 bcol=mix(vec3(.62,1.,.9),iri(bq.x/wdt*.25+.15+t*.05),.35*smoothstep(.2,1.,abs(bq.x)/wdt));
-  c+=bcol*cone*mist*.26*sk;c+=vec3(.85,1.,.96)*smoothstep(wdt*.35,0.,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*4.)*.3*sk;
+  vec3 bcol=mix(vec3(1.,.8,.55),vec3(1.,.6,.4),.5*smoothstep(.2,1.,abs(bq.x)/wdt)); /* warm amber light */
+  c+=bcol*cone*mist*.26*sk;c+=vec3(1.,.93,.82)*smoothstep(wdt*.35,0.,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*4.)*.3*sk;
   float pool=exp(-pow((P.x-Ce.x-sn*.95)/(asp*.42),2.)-pow((uv.y-1.03)/.1,2.));c+=vec3(.7,.75,1.)*pool*.05*sk;
   /* the soft iridescent glow it casts */
-  float gl=length((P-C)/vec2(RX*1.1,RX*.55));c+=vec3(.8,.7,1.)*exp(-gl*gl*.22)*.5*sk+vec3(.6,1.,.9)*exp(-gl*gl*1.2)*.32*sk; /* a luminous halo, as strong as the moon's */ /* its own soft halo, like the moon's */
+  float gl=length((P-C)/vec2(RX*1.1,RX*.55));c+=vec3(.85,.68,.75)*exp(-gl*gl*.22)*.42*sk+vec3(1.,.72,.45)*exp(-gl*gl*1.2)*.3*sk; /* a luminous halo, as strong as the moon's */ /* its own soft halo, like the moon's */
   /* the ship itself is drawn by the game, in the same soft 2D style as the blocks and balls */
 
   { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
-    c=mix(c,vec3(.26,.24,.44)+vec3(.4,.8,.75)*.15,veil*.55*sk);
+    c=mix(c,vec3(.26,.24,.44)+vec3(.9,.65,.45)*.15,veil*.55*sk);
     float wisp=smoothstep(.5,.85,fbm(vec2(P.x*2.4-t*.03,P.y*7.+1.3)))*exp(-pow((P.y-C.y-RX*.06)/(RX*.18),2.))*exp(-pow((P.x-C.x)/(RX*1.6),2.)); /* thin cloud drifting in front, lit by it */
-    c=mix(c,vec3(.62,.55,.85)+vec3(.3,.6,.55)*.3,wisp*.6*sk); }
+    c=mix(c,vec3(.62,.55,.85)+vec3(.6,.45,.3)*.3,wisp*.6*sk); }
   c=1.-exp(-c*1.35);gl_FragColor=vec4(c+dith(),1.);}`,
     bholemap: `/* the black hole, rendered live from its traced light paths: each pixel knows where its light crossed the disk (first crossing in front,
    second the far side bent over and under the hole); the disk turns faster near the hole, its silky rings drift, the side turning towards us is brighter */
@@ -2182,63 +2182,52 @@ function drawSnow(a, near) { // snowfall in depth: far flakes small, sharp and s
       r = near ? 7 + z * 9 : .9 + z * 3.2, al = near ? .16 + .1 * (1 - z) : .45 + .5 * z;
     ctx.globalAlpha = al * a; if (!near && r < 2.2) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .7, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
   ctx.globalAlpha = 1; }
-function drawUFO(a) { // the mothership of the alien blocks, drawn in the game's own language (seen straight on, soft gradients, a top sheen, soft glow):
-  // their dark iridescent glass shaped into a saucer, a glass cabin with a living light inside, a light running round the rim, a glowing ring beneath where the beam starts, motes rising into it
-  const ea = wx.a * wx.a * (3 - 2 * wx.a), mx = W * .5 + Math.sin(t * .05) * W * .04, my = H * (.23 - .34 * (1 - ea)), hw = W * .25, hh = W * .072, y = my + Math.sin(t * .9) * 2, k = t * .9;
+function drawUFO(a) { // the mothership: a wide disc of dark brushed metal seen from a little below, a low cap ringed with warm light, tiers stepping down underneath,
+  // a ring of amber lights turning round them and a glowing amber aperture where the beam starts. Drawn flat and softly shaded like the rest of the game; amber is the game's own accent
+  const ea = wx.a * wx.a * (3 - 2 * wx.a), mx = W * .5 + Math.sin(t * .05) * W * .04, my = H * (.23 - .34 * (1 - ea)), hw = W * .27, hh = W * .072, y = my + Math.sin(t * .9) * 2;
   ctx.save(); ctx.globalAlpha = a;
   const rad = (x, yy, r0, r1, stops, sy = 1) => { ctx.save(); ctx.translate(x, yy); ctx.scale(1, sy); const g = ctx.createRadialGradient(0, 0, r0, 0, 0, r1); stops.forEach(([o, c]) => g.addColorStop(o, c)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r1, 0, 7); ctx.fill(); ctx.restore(); };
-  const irid = (x0, y0, w, h, al = 1) => { const sh = Math.sin(k) * w * .5, ig = ctx.createLinearGradient(x0 - w * .5 + sh, y0, x0 + w * 1.5 + sh, y0 + h);
-    ig.addColorStop(0, `rgba(160,120,255,${.5 * al})`); ig.addColorStop(.35, `rgba(110,200,255,${.42 * al})`); ig.addColorStop(.65, `rgba(130,255,215,${.4 * al})`); ig.addColorStop(1, `rgba(200,140,255,${.45 * al})`); return ig; };
-  const rimG = (x0, w) => { const rg = ctx.createLinearGradient(x0, 0, x0 + w, 0); rg.addColorStop(0, 'rgba(210,190,255,.85)'); rg.addColorStop(.5, 'rgba(190,245,255,.95)'); rg.addColorStop(1, 'rgba(200,255,230,.85)'); return rg; };
-  const pulse = .5 + .5 * Math.sin(t * 1.7);
-  // its light in the air: a wide iridescent halo, as soft as the moon's
-  rad(mx, y, hw * .2, hw * 1.45, [[0, `rgba(150,210,255,${.2 + .05 * pulse})`], [.5, 'rgba(170,150,255,.07)'], [1, 'rgba(170,150,255,0)']], .55);
-  // a slow pulse of light that leaves the ship every few seconds and fades into the night, like a signal
-  for (let q = 0; q < 2; q++) { const ph = ((t + q * 2.6) % 5.2) / 5.2, r = 1 + ph * 1.1, al = (1 - ph) ** 2 * .4 * ph ** .3; if (al < .01) continue;
-    const rg = ctx.createLinearGradient(mx - hw * r, 0, mx + hw * r, 0); rg.addColorStop(0, `rgba(170,140,255,${al})`); rg.addColorStop(.5, `rgba(150,240,255,${al})`); rg.addColorStop(1, `rgba(150,255,220,${al})`);
-    ctx.strokeStyle = rg; ctx.lineWidth = 1.6 * (1 - ph) + .4; ctx.beginPath(); ctx.ellipse(mx, y, hw * r, hh * .5 * r * 1.25, 0, 0, 7); ctx.stroke(); }
-  // its arrival: a ring of light opening out as it glides in, so its coming feels like an occasion
-  if (ea < .995) { const q = 1 - ea, al = ea * q * 2.4; const rg = ctx.createRadialGradient(mx, y, 0, mx, y, hw * (1.2 + q * 1.6)); rg.addColorStop(0, `rgba(230,255,250,${.5 * al})`); rg.addColorStop(.7, `rgba(150,240,255,${.25 * al})`); rg.addColorStop(1, 'rgba(150,240,255,0)');
-    ctx.save(); ctx.translate(mx, y); ctx.scale(1, .5); ctx.translate(-mx, -y); ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(mx, y, hw * (1.2 + q * 1.6), 0, 7); ctx.fill(); ctx.restore(); }
-  // a few points of light twinkling in the air round it, as if it trails stardust
-  for (let i = 0; i < 9; i++) { const h1 = hash(i * 7.1 + 3), h2 = hash(i * 3.7 + 11), ang = h1 * 6.283 + t * .05 * (h2 - .5), rr = 1.08 + .45 * h2, sx2 = mx + Math.cos(ang) * hw * rr, sy2 = y + Math.sin(ang) * hh * .5 * rr * 2.2 - hh * .2,
-      tw = Math.max(0, Math.sin(t * (.8 + h2) + h1 * 20)) ** 6; if (tw < .02) continue; const L = 3 + 5 * tw;
-    ctx.fillStyle = `rgba(230,255,252,${.9 * tw})`; ctx.fillRect(sx2 - L, sy2 - .5, L * 2, 1); ctx.fillRect(sx2 - .5, sy2 - L, 1, L * 2); ctx.globalAlpha = a * tw * .8; ctx.drawImage(softBlob('190,250,240'), sx2 - 5, sy2 - 5, 10, 10); ctx.globalAlpha = a; }
-  // motes of light drifting up the beam towards the ship
-  ctx.save(); ctx.globalCompositeOperation = 'screen'; const by = y + hh * .45, bh = H * .5;
+  const ell = (x, yy, rx, ry, a0 = 0, a1 = 7) => { ctx.beginPath(); ctx.ellipse(x, yy, rx, ry, 0, a0, a1); };
+  const pulse = .5 + .5 * Math.sin(t * 1.7), AMB = '255,170,80';
+  // its warm light in the air round it
+  rad(mx, y + hh * .2, hw * .15, hw * 1.4, [[0, `rgba(${AMB},${.16 + .05 * pulse})`], [.55, 'rgba(255,150,90,.05)'], [1, 'rgba(255,150,90,0)']], .55);
+  // a slow pulse of light that leaves it every few seconds and fades into the night, like a signal
+  for (let q = 0; q < 2; q++) { const ph = ((t + q * 2.6) % 5.2) / 5.2, r = 1 + ph * 1.1, al = (1 - ph) ** 2 * .35 * ph ** .3; if (al < .01) continue;
+    ctx.strokeStyle = `rgba(255,200,130,${al})`; ctx.lineWidth = 1.6 * (1 - ph) + .4; ell(mx, y + hh * .2, hw * r, hh * .5 * r * 1.2); ctx.stroke(); }
+  if (ea < .995) { const q = 1 - ea, al = ea * q * 2.4; rad(mx, y, 0, hw * (1.2 + q * 1.6), [[0, `rgba(255,230,190,${.5 * al})`], [.7, `rgba(255,180,110,${.22 * al})`], [1, 'rgba(255,180,110,0)']], .5); } // its arrival: a ring of light opening out
+  for (let i = 0; i < 9; i++) { const h1 = hash(i * 7.1 + 3), h2 = hash(i * 3.7 + 11), ang = h1 * 6.283 + t * .05 * (h2 - .5), rr = 1.08 + .45 * h2, sx2 = mx + Math.cos(ang) * hw * rr, sy2 = y + Math.sin(ang) * hh * .5 * rr * 2.2,
+      tw = Math.max(0, Math.sin(t * (.8 + h2) + h1 * 20)) ** 6; if (tw < .02) continue; const L = 3 + 5 * tw; // stardust twinkling round it
+    ctx.fillStyle = `rgba(255,240,215,${.9 * tw})`; ctx.fillRect(sx2 - L, sy2 - .5, L * 2, 1); ctx.fillRect(sx2 - .5, sy2 - L, 1, L * 2); ctx.globalAlpha = a * tw * .8; ctx.drawImage(softBlob('255,215,160'), sx2 - 5, sy2 - 5, 10, 10); ctx.globalAlpha = a; }
+  // motes of light drifting up the beam
+  ctx.save(); ctx.globalCompositeOperation = 'screen'; const by = y + hh * .6, bh = H * .5;
   for (const m of MOTES) { const u = ((m.y - t * .06 * m.s) % 1 + 1) % 1, py = by + bh * u, px = mx + m.x * (hw * .1 + hw * .3 * u) + Math.sin(t * 1.2 + m.z * 9) * 3, r = 1 + 2 * m.z;
-    ctx.globalAlpha = a * (.25 + .5 * m.z) * Math.min(1, (1 - u) * 2.5) * Math.min(1, u * 5); ctx.drawImage(softBlob('200,255,240'), px - r * 2, py - r * 2, r * 4, r * 4); }
+    ctx.globalAlpha = a * (.25 + .5 * m.z) * Math.min(1, (1 - u) * 2.5) * Math.min(1, u * 5); ctx.drawImage(softBlob('255,220,170'), px - r * 2, py - r * 2, r * 4, r * 4); }
   ctx.restore(); ctx.globalAlpha = a;
-  // the glowing ring beneath, where the beam leaves the ship
-  rad(mx, by, 0, hw * .34, [[0, `rgba(235,255,250,${.75 + .2 * pulse})`], [.35, 'rgba(150,255,225,.45)'], [1, 'rgba(120,230,255,0)']], .32);
-  // the hull: a saucer of tinted glass, like the game's glass but deeper - light from behind shows through it; bright edges where its curve catches the light
-  const hull = () => { ctx.beginPath(); ctx.ellipse(mx, y, hw, hh * .5, 0, 0, 7); };
-  ctx.fillStyle = 'rgba(10,10,30,.16)'; ctx.beginPath(); ctx.ellipse(mx, y + 7, hw * .96, hh * .48, 0, 0, 7); ctx.fill(); // its soft shadow
-  let g = ctx.createLinearGradient(0, y - hh * .5, 0, y + hh * .5); g.addColorStop(0, 'rgba(70,72,140,.62)'); g.addColorStop(.55, 'rgba(34,36,82,.72)'); g.addColorStop(1, 'rgba(18,18,48,.86)'); ctx.fillStyle = g; hull(); ctx.fill();
-  ctx.save(); hull(); ctx.clip(); ctx.fillStyle = irid(mx - hw, y - hh * .5, hw * 2, hh, .75); ctx.fillRect(mx - hw, y - hh, hw * 2, hh * 2);
-  const sx = mx + Math.sin(t * .6) * hw * .8; rad(sx, y - hh * .32, 0, hw * .34, [[0, 'rgba(255,255,255,.4)'], [1, 'rgba(255,255,255,0)']], .22); // a gleam sliding slowly through the glass
-  // a band of light running round inside the glass, its colour turning slowly through the iridescence
-  ctx.globalCompositeOperation = 'screen'; const ph = t * .35, bg2 = ctx.createLinearGradient(mx - hw, 0, mx + hw, 0);
-  for (let q = 0; q <= 4; q++) { const c = [[170, 140, 255], [120, 220, 255], [140, 255, 220], [200, 160, 255], [170, 140, 255]][q], w8 = .5 + .5 * Math.sin(ph * 2 + q * 1.4); bg2.addColorStop(q / 4, `rgba(${c},${.6 + .4 * w8})`); }
-  ctx.strokeStyle = bg2; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(170,240,255,1)'; ctx.shadowBlur = 12; ctx.beginPath(); ctx.ellipse(mx, y + hh * .02, hw * .9, hh * .26, 0, .12, Math.PI - .12); ctx.stroke(); ctx.shadowBlur = 0;
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = 'rgba(8,8,28,.28)'; ctx.beginPath(); ctx.ellipse(mx, y + hh * .48, hw * .9, hh * .2, 0, 0, 7); ctx.fill(); // the underside turns away
-  ctx.restore();
-  const eg = ctx.createLinearGradient(0, y - hh * .5, 0, y + hh * .5); eg.addColorStop(0, 'rgba(255,255,255,.85)'); eg.addColorStop(.4, 'rgba(200,230,255,.25)'); eg.addColorStop(1, 'rgba(160,255,230,.55)');
-  ctx.strokeStyle = eg; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.ellipse(mx, y, hw - .7, hh * .5 - .7, 0, 0, 7); ctx.stroke(); // bright edges: white along the top, a mint catch-light underneath
-  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(mx, y - hh * .05, hw * .82, hh * .32, 0, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke(); // the line where the upper curve meets the rim
-  // the cabin: a glass dome with a soft light breathing inside it, like the heart of the balls
-  const dw = hw * .3, dh = hh * .95, dy = y - hh * .28, dome = () => { ctx.beginPath(); ctx.ellipse(mx, dy, dw, dh, 0, Math.PI, 0); ctx.closePath(); };
-  g = ctx.createLinearGradient(0, dy - dh, 0, dy); g.addColorStop(0, 'rgba(90,96,170,.5)'); g.addColorStop(1, 'rgba(34,38,90,.75)'); ctx.fillStyle = g; dome(); ctx.fill();
-  ctx.save(); dome(); ctx.clip(); ctx.fillStyle = irid(mx - dw, dy - dh, dw * 2, dh, .8); ctx.fillRect(mx - dw, dy - dh, dw * 2, dh);
-  const beat = .8 + .2 * Math.sin(t * 2.6); ctx.globalCompositeOperation = 'screen'; rad(mx, dy - dh * .32, 0, dw * 1.15, [[0, `rgba(235,255,250,${.95 * beat})`], [.4, `rgba(120,250,220,${.65 * beat})`], [1, 'rgba(110,190,255,.1)']], .9); ctx.globalCompositeOperation = 'source-over';
-  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(mx, dy, dw * .78, dh * .78, 0, Math.PI * 1.18, Math.PI * 1.42); ctx.stroke(); // a curved glint on the glass
-  ctx.restore();
-  const dg = ctx.createLinearGradient(mx - dw, dy - dh, mx + dw, dy); dg.addColorStop(0, 'rgba(255,255,255,.9)'); dg.addColorStop(.5, 'rgba(210,235,255,.3)'); dg.addColorStop(1, 'rgba(160,255,230,.6)');
-  ctx.strokeStyle = dg; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.ellipse(mx, dy, dw - .6, dh - .6, 0, Math.PI, 0); ctx.stroke(); // the glass edge, brightest where the light falls
-  // the night air between us and it: a faint veil, so it sits far back behind the blocks in play
-  ctx.fillStyle = 'rgba(92,80,150,.1)'; hull(); ctx.fill();
-  ctx.save(); ctx.globalCompositeOperation = 'screen'; rad(mx, dy - dh * .3, 0, dw * 1.9, [[0, `rgba(140,255,225,${.22 * beat})`], [1, 'rgba(140,255,225,0)']], .7); ctx.restore(); // the cabin's light spilling into the air round it
+  // the cap on top, ringed with warm light where it meets the disc
+  let g = ctx.createLinearGradient(0, y - hh * .85, 0, y - hh * .2); g.addColorStop(0, '#6b6c7c'); g.addColorStop(1, '#2c2d3a'); ctx.fillStyle = g; ell(mx, y - hh * .28, hw * .24, hh * .5, Math.PI, 0); ctx.fill();
+  ctx.save(); ell(mx, y - hh * .28, hw * .24, hh * .5, Math.PI, 0); ctx.clip(); rad(mx + hw * .1, y - hh * .62, 0, hw * .16, [[0, 'rgba(255,255,255,.5)'], [1, 'rgba(255,255,255,0)']], .5); ctx.restore(); // its sheen
+  ctx.save(); ctx.shadowColor = `rgba(${AMB},.95)`; ctx.shadowBlur = 12; const og = ctx.createLinearGradient(mx - hw * .25, 0, mx + hw * .25, 0); og.addColorStop(0, 'rgba(255,150,60,.6)'); og.addColorStop(.5, `rgba(255,200,120,${.85 + .15 * pulse})`); og.addColorStop(1, 'rgba(255,150,60,.6)');
+  ctx.fillStyle = og; ell(mx, y - hh * .3, hw * .25, hh * .15); ctx.fill(); ctx.restore(); rad(mx, y - hh * .34, 0, hw * .42, [[0, `rgba(${AMB},${.35 + .1 * pulse})`], [1, 'rgba(255,150,60,0)']], .35); // the glowing ring, its light spilling round the cap
+  // the disc: thin, wide, dark brushed metal; the light catches its upper face and slides slowly across it, a fine bright bevel round the edge
+  const disc = () => ell(mx, y, hw, hh * .34);
+  g = ctx.createLinearGradient(0, y - hh * .34, 0, y + hh * .34); g.addColorStop(0, '#5d5f72'); g.addColorStop(.45, '#3a3b4c'); g.addColorStop(.55, '#1f2030'); g.addColorStop(1, '#16161f'); ctx.fillStyle = g; disc(); ctx.fill();
+  ctx.save(); disc(); ctx.clip(); const sx = mx + hw * (.35 + .25 * Math.sin(t * .4)); rad(sx, y - hh * .18, 0, hw * .55, [[0, 'rgba(255,255,255,.42)'], [.5, 'rgba(255,255,255,.1)'], [1, 'rgba(255,255,255,0)']], .16);
+  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1; ell(mx, y - hh * .04, hw * .86, hh * .22, Math.PI, 0); ctx.stroke(); ell(mx, y - hh * .07, hw * .64, hh * .15, Math.PI, 0); ctx.stroke(); ctx.restore(); // panel lines
+  const bv = ctx.createLinearGradient(mx - hw, 0, mx + hw, 0); bv.addColorStop(0, 'rgba(255,255,255,.15)'); bv.addColorStop(.75, 'rgba(255,255,255,.6)'); bv.addColorStop(1, 'rgba(255,255,255,.25)');
+  ctx.strokeStyle = bv; ctx.lineWidth = 1.2; ell(mx, y, hw - .6, hh * .34 - .6, Math.PI * .02, Math.PI * .98); ctx.stroke(); ell(mx, y, hw - .6, hh * .34 - .6, Math.PI * 1.05, Math.PI * 1.95); ctx.globalAlpha = a * .5; ctx.stroke(); ctx.globalAlpha = a;
+  for (let i = 0; i < 6; i++) { const ang = .35 + i * (Math.PI - .7) / 5, lx = mx + Math.cos(ang) * hw * .86, ly = y + Math.sin(ang) * hh * .22; rad(lx, ly, 0, 5, [[0, `rgba(255,200,120,${.8 + .2 * pulse})`], [1, 'rgba(255,150,60,0)']]); } // sparse lights under the rim
+  // the tiers underneath, with fine grooves, and a ring of amber lights turning round them
+  g = ctx.createLinearGradient(0, y, 0, y + hh * .55); g.addColorStop(0, '#2a2b3a'); g.addColorStop(1, '#1a1a26'); ctx.fillStyle = g; ell(mx, y + hh * .2, hw * .66, hh * .32, 0, Math.PI); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 1; for (let k = 0; k < 3; k++) { ell(mx, y + hh * (.12 + k * .06), hw * (.64 - k * .05), hh * (.26 - k * .02), .15, Math.PI - .15); ctx.stroke(); }
+  for (let i = 0; i < 15; i++) { const ang = .1 + i * (Math.PI - .2) / 14, lx = mx + Math.cos(ang) * hw * .56, ly = y + hh * .2 + Math.sin(ang) * hh * .22, f = .55 + .45 * Math.sin(ang), on = .35 + .65 * Math.max(0, Math.sin(t * 2.2 - i * .55)) ** 2;
+    rad(lx, ly, 0, 9 * f, [[0, `rgba(255,215,150,${on})`], [.4, `rgba(255,160,70,${.6 * on})`], [1, 'rgba(255,140,60,0)']]); ctx.fillStyle = `rgba(255,240,215,${.4 + .6 * on})`; ell(lx, ly, 2.4 * f, 1.7 * f); ctx.fill(); }
+  g = ctx.createLinearGradient(0, y + hh * .3, 0, y + hh * .62); g.addColorStop(0, '#30313f'); g.addColorStop(1, '#1b1b27'); ctx.fillStyle = g; ell(mx, y + hh * .42, hw * .36, hh * .2, 0, Math.PI); ctx.fill(); // the lower hub
+  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ell(mx, y + hh * .42, hw * .36, hh * .2, .1, Math.PI - .1); ctx.stroke();
+  // the aperture: warm light pouring out where the beam begins
+  rad(mx, by, 0, hw * .36, [[0, `rgba(255,240,215,${.8 + .2 * pulse})`], [.3, 'rgba(255,180,90,.55)'], [1, 'rgba(255,150,60,0)']], .28);
+  ctx.save(); ctx.shadowColor = `rgba(${AMB},1)`; ctx.shadowBlur = 14; const ag = ctx.createRadialGradient(mx, by, 0, mx, by, hw * .17); ag.addColorStop(0, '#fff4e0'); ag.addColorStop(.6, '#ffc069'); ag.addColorStop(1, '#f08f1c');
+  ctx.fillStyle = ag; ell(mx, by, hw * .17, hh * .085); ctx.fill(); ctx.restore();
+  ctx.fillStyle = 'rgba(92,80,150,.1)'; disc(); ctx.fill(); // a faint veil of night air: it sits far back, behind the blocks in play
   ctx.restore(); }
 const MOTES = Array.from({ length: 44 }, () => ({ x: Math.random() * 2 - 1, y: Math.random(), s: .5 + Math.random(), z: Math.random() }));
 function drawMother(a) { // the mothership: a vast smooth disc high in the sky, softly shaded like a pebble, a mint rim light, a ring of pulsing lights, and a broad beam with motes of light rising in it
