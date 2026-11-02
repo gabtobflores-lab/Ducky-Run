@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="e146a16">
+<meta name="build" content="77c658b">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2061,7 +2061,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;
    A few restrained highlights sit in the main mass */
 float n1(float x,float s){return vn(vec2(x,s))*2.-1.;}
 vec2 warp(vec2 p,float s){return vec2(n1(p.y*1.1+t*.021+s,s+1.)+.5*n1(p.y*2.3-t*.017,s+5.),n1(p.x*1.4-t*.019,s+3.))*.035;}
-float MU,MY;
+float MU,MY,SL;
 /* one mass: c its centre at the hem, lean its slope, h0..h1 its top and hem, w its half width, amp how far it bends, rk how much ray texture */
 float lay(vec2 p,vec2 c,float lean,float h0,float h1,float w,float amp,float sd,float rk){
   vec2 q=p+warp(p,sd);float y=q.y;
@@ -2069,22 +2069,24 @@ float lay(vec2 p,vec2 c,float lean,float h0,float h1,float w,float amp,float sd,
   float ww=w*(.7+.5*vn(vec2(y*1.1-t*.015,sd+4.)));
   float u=(q.x-cx)/ww;MU=u;MY=y;
   float across=exp(-u*u*(u<0.?1.25:.7));                                                     /* a little more defined on one side, where the sheet turns */
-  float env=smoothstep(h0,h0+(h1-h0)*.6,y)*(1.-smoothstep(h1-.05,h1+.05,y));              /* a long fade upward, a soft hem below */
+  float hb=h1+SL*(q.x-c.x);float env=smoothstep(h0,h0+(hb-h0)*.6,y)*(1.-smoothstep(hb-.05,hb+.05,y)); /* SL tilts the hem */              /* a long fade upward, a soft hem below */
   float rays=1.-rk+rk*smoothstep(.28,.78,vn(vec2(u*1.9+sd*7.,y*.28+t*.01)))*(.8+.2*vn(vec2(u*5.5+sd,y*.5-t*.015)));
   return across*env*rays;}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 pp=vec2(p.x/(asp/.46),p.y);
   vec3 a=vec3(0.);
   vec3 BLUE=vec3(.08,.3,1.),CYAN=vec3(.3,.88,1.),VIO=vec3(.42,.3,1.),TEAL=vec3(.22,.8,.8);
   vec2 hz,vz;
-  /* a broad mass of light that bends as it falls, a mid layer behind it, a soft blue layer low on the left, a violet far veil to the right */
-  hz=vec2(.22,.48);vz=vec2(.4,.9);
-  float d=lay(pp,vec2(.35,.6),.18,.02,.6,.07,.04,14.,.35);a+=mix(BLUE,VIO,.3)*d*.4; /* a mid layer behind, for depth */
-  float m=lay(pp,vec2(.24,.67),.32,-.35,.67,.085,.08,11.,.5);float k=smoothstep(.2,.67,MY);a+=mix(BLUE,CYAN,k)*m*(.5+1.1*k);
-  float h=lay(pp,vec2(.215,.67),.32,.3,.65,.013,.08,11.,0.);a+=vec3(.75,1.,1.)*h*.45;
-  float cr=lay(pp,vec2(.24,.67),.32,.15,.66,.06,.08,11.,.85);float ck=smoothstep(.3,.62,MY);a+=mix(CYAN,vec3(.8,1.,1.),.3)*cr*ck*.55; /* within the core, a few more defined bright rays */
-  float lf=lay(pp,vec2(.3,.95),.1,.7,.97,.06,.03,15.,.6);a+=mix(BLUE,VIO,.4)*lf*.3; /* a faint low fragment */
-  float s=lay(pp,vec2(.08,.85),.12,.25,.85,.075,.05,12.,.3);a+=BLUE*s*.45;
-  float f=lay(pp,vec2(.41,.45),.06,-.2,.45,.07,.03,13.,.35);a+=mix(VIO,BLUE,.35)*f*.6;
+  /* laid out like Apple's Messages aurora: one wide cyan mass leaning down to the centre right, a bright blue-violet streak beside it on the right,
+     faint streaks low on the left, a hint of teal at the top, violet glowing low on the right */
+  hz=vec2(.28,.52);vz=vec2(.35,.95);SL=0.;
+  float d=lay(pp,vec2(.38,.62),.1,-.05,.62,.06,.03,14.,.35);a+=mix(BLUE,VIO,.35)*d*.35; /* the far layer behind on the right */
+  SL=.55;float m=lay(pp,vec2(.285,.65),.17,-.3,.65,.09,.05,11.,.55);float k=smoothstep(.2,.65,MY);a+=mix(BLUE,CYAN,k)*m*(.45+1.15*k);
+  float cr=lay(pp,vec2(.29,.64),.17,.15,.64,.065,.05,11.,.85);float ck=smoothstep(.3,.62,MY);a+=mix(CYAN,vec3(.8,1.,1.),.35)*cr*ck*.6; /* the bright rays in the core */
+  float h=lay(pp,vec2(.255,.64),.17,.25,.62,.012,.05,11.,0.);a+=vec3(.75,1.,1.)*h*.4;SL=0.;
+  float v=lay(pp,vec2(.35,.56),.08,.2,.56,.022,.025,16.,.4);a+=mix(vec3(.2,.38,1.),vec3(.36,.3,1.),smoothstep(.3,.55,MY))*v*1.15; /* the blue-violet streak */
+  float s=lay(pp,vec2(.1,.86),.16,.55,.86,.05,.03,12.,.45);a+=mix(vec3(.16,.6,.85),BLUE,.4)*s*.4; /* faint streaks low on the left */
+  float f=lay(pp,vec2(.06,.6),.15,-.1,.6,.04,.03,13.,.5);a+=BLUE*f*.22;
+  a+=vec3(.15,.6,.5)*exp(-dot(pp-vec2(.28,.06),pp-vec2(.28,.06))/.012)*.12; /* teal high up */
   /* the coloured air the light sits in: cyan haze round the light, indigo-violet low down, deep navy in the corners */
   vec3 bg=mix(vec3(.008,.016,.05),vec3(.025,.028,.1),uv.y);
   bg+=vec3(.03,.2,.5)*exp(-dot(pp-hz,pp-hz)/.045)*.45+vec3(.22,.14,.5)*exp(-dot(pp-vz,pp-vz)/.08)*.55;
