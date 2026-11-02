@@ -1423,7 +1423,7 @@ function updateWeather(dt) {
   }
 }
 // ---------- the ship's beam: it slowly lifts the balls while they stay in the middle columns beneath it; held too long, they are taken ----------
-const apPos = () => [W * .5 + Math.sin(t * .05) * W * .04, H * .23 + W * .055]; // where the beam leaves the ship
+const apPos = () => [W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * .23 + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2 + W * .055]; // where the beam leaves the ship
 function updateBeam(dt) {
   const on = wx.kind === 'alien' && wx.phase === 'on' && wx.a > .6 && state === 'play' && mode !== 'zen', inb = on && pos === per - 1;
   ABD.k = inb ? Math.min(1, ABD.k + dt / ABD_T) : 0; // stepping out of the middle frees them at once
@@ -2015,14 +2015,15 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   c+=vec3(1.,.5,.2)*exp(-pow((uv.y-1.02)/.14,2.))*exp(-pow((P.x-C.x)/(asp*.3),2.))*.12*sk;     /* the glow where the beam reaches the ground */
   /* the camera: a little below the ship, looking up at it; the ship sways very slightly */
   vec3 ro=vec3(0.,-.62,-4.3),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
-  float tl=.025*sin(t*.41),tc=cos(tl),ts=sin(tl);vec3 rt0=rt;rt=rt*tc+up*ts;up=up*tc-rt0*ts;
+  float tl=.035*sin(t*.41)+.012*sin(t*1.13),tc=cos(tl),ts=sin(tl);vec3 rt0=rt;rt=rt*tc+up*ts;up=up*tc-rt0*ts;
   vec2 q=(P-C)/RX/S;vec3 rd=normalize(fw+rt*q.x+up*(-q.y));
   vec3 ap=vec3(0.,-.19,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(aq.x,-aq.y)*RX*S;   /* the beam starts exactly at the aperture */
   vec2 bq=P-Ce;float cs=cos(ba),sn=sin(ba);bq=vec2(cs*bq.x-sn*bq.y,sn*bq.x+cs*bq.y);
   float w0=RX*.12,wdt=w0+max(bq.y,0.)*.22;float cone=smoothstep(wdt,wdt*.1,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*1.6);
   float mist=.55+.6*fbm3(vec2(bq.x*5.,bq.y*2.2-t*.35))+.25*fbm3(vec2(bq.x*14.,bq.y*5.-t*.6));
   vec2 dg=vec2(bq.x*70.,bq.y*36.+t*2.2);float dh=hs(floor(dg));float dust=dh>.965?exp(-dot(fract(dg)-.5,fract(dg)-.5)*14.)*(dh-.965)/.035:0.;  /* dust rising in it */
-  c+=vec3(1.,.66,.32)*cone*(mist*.22+dust*1.)*br*sk*(1.+1.6*pk);   /* it brightens as it pulls */c+=vec3(1.,.88,.7)*smoothstep(wdt*.3,0.,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*3.)*.35*br*sk;
+  float rings=.75+.25*smoothstep(.55,1.,sin(bq.y*26.-t*3.4));float scan=.8+.2*sin(t*.9+bq.x*30.);   /* pulses of light travelling down the beam, a slow shimmer across it */
+  c+=vec3(1.,.66,.32)*cone*(mist*.22*rings*scan+dust*1.)*br*sk*(1.+1.6*pk);   /* it brightens as it pulls */c+=vec3(1.,.88,.7)*smoothstep(wdt*.3,0.,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*3.)*.35*br*sk;
   float gl=length((P-C)/vec2(RX*1.2,RX*.6));c+=vec3(1.,.5,.18)*exp(-gl*gl*2.)*.07*br*sk;      /* its glow in the air */
   /* the ship */
   float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1,hitG=0.;
@@ -2035,15 +2036,15 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       col*=1.-.5*smoothstep(.96,1.,abs(sin(rxz*30.)))*step(p.y,-.03);                             /* and grooves round the tiers */
       vec3 E=vec3(0.),AM=vec3(1.,.55,.18);
       E+=AM*smoothstep(.03,.0,abs(rxz-.29))*smoothstep(.03,.06,p.y)*smoothstep(.12,.09,p.y)*3.5;   /* the amber ring round the cap */
-      float sa=(fract(ang/6.2832*15.+.5)-.5)*6.2832/15.*rxz;float la=length(vec2(sa,rxz-.6));E+=(vec3(1.,.82,.55)*smoothstep(.028,.008,la)*3.+vec3(1.,.45,.12)*smoothstep(.07,.0,la)*.8)*step(p.y,-.04); /* a ring of round amber lights round the tiers */   /* a ring of amber lights round the tiers */
-      float sb=(fract(ang/6.2832*7.+.62)-.5)*6.2832/7.*rxz;float lb=length(vec2(sb,rxz-.86));E+=(vec3(1.,.8,.5)*smoothstep(.025,.006,lb)*2.6+vec3(1.,.42,.1)*smoothstep(.06,0.,lb)*.6)*step(p.y,-.01); /* a few lights under the rim */
+      float angR=ang+t*.32;float sa=(fract(angR/6.2832*15.+.5)-.5)*6.2832/15.*rxz;float la=length(vec2(sa,rxz-.6));E+=(vec3(1.,.82,.55)*smoothstep(.028,.008,la)*3.+vec3(1.,.45,.12)*smoothstep(.07,.0,la)*.8)*step(p.y,-.04); /* a ring of round amber lights round the tiers */   /* a ring of amber lights round the tiers */
+      float sb=(fract((ang-t*.18)/6.2832*7.+.62)-.5)*6.2832/7.*rxz;float lb=length(vec2(sb,rxz-.86));E+=(vec3(1.,.8,.5)*smoothstep(.025,.006,lb)*2.6+vec3(1.,.42,.1)*smoothstep(.06,0.,lb)*.6)*step(p.y,-.01); /* a few lights under the rim */
       E+=mix(AM,vec3(1.,.93,.8),smoothstep(.17,.04,rxz))*smoothstep(.19,.14,rxz)*step(p.y,-.17)*2.6;          /* the aperture */
       col+=vec3(.45,.5,.65)*pow(1.-ndv,3.)*.2;                                                  /* cold light along its edges */
       col+=E*br;col+=vec3(1.,.55,.2)*smoothstep(-.02,-.2,n.y)*.03*br;                             /* the underside catches its own light */
       c=mix(c,col,sk);hitG=1.;}}
   { vec2 cw=(P-C-vec2(0.,-RX*.13))/vec2(RX*.38,RX*.09);c+=vec3(1.,.52,.18)*exp(-dot(cw,cw))*.7*br*sk*(1.-hitG*.85); } /* the cap's amber ring, hidden above the disc, its light rising over the rim */
   /* fog banks drifting round the ship, thick enough to swallow parts of it; its lights glow through, the fog lit amber from inside */
-  { float FK=FOGK;vec2 fq=vec2(P.x*1.6-t*.025,(P.y-C.y)*4.5);vec2 fw2=vec2(fbm3(fq*.8+t*.03),fbm3(fq*.8-t*.02+7.));float fo=smoothstep(.36,.64,fbm(fq*1.3+fw2*1.6));
+  { float FK=FOGK;vec2 fq=vec2(P.x*1.6-t*.045,(P.y-C.y)*4.5);vec2 fw2=vec2(fbm3(fq*.8+t*.05),fbm3(fq*.8-t*.035+7.)); /* the fog banks roll past at a visible pace */float fo=smoothstep(.36,.64,fbm(fq*1.3+fw2*1.6));
     float band=exp(-pow((P.y-C.y-RX*.02)/(RX*.62),2.))*exp(-pow((P.x-C.x)/(RX*2.6),2.));
     vec2 fd=(P-C)/vec2(RX*.9,RX*.35);float inner=exp(-dot(fd,fd));
     c=mix(c,vec3(.075,.072,.085)+vec3(1.,.5,.2)*inner*.3*br,fo*band*FK*sk); }
@@ -2231,7 +2232,7 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U;
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04, H * (.23 - .34 * (1 - ea))); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .05, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
   if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' ? k : 'clouds', U))) return false;
