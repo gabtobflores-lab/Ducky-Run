@@ -651,8 +651,8 @@ const params = () => ({ start: 270 + 230 * diff, step: 18 + 36 * diff, max: 600 
 // Speed-ups shrink as you get faster: the first jumps are big, later ones smaller, approaching the top speed.
 const LEVEL_TIME = 10;
 const targetSpeed = n => { const p = params(), k = 1 - Math.min(.55, 2.4 * (2 + .8 * diff) * p.step / (p.max - p.start)); return p.start + (p.max - p.start) * (1 - Math.pow(k, n)); };
-const rowGap = () => { const p = params(), k = wx.kind === 'rain' && wx.rv === 'dense' && wx.phase !== 'warn' ? wx.a : 0; return Math.max((p.gap - level * p.shrink) * (1 - .22 * k), speed * p.minTime * (1 - .1 * k)); }; // rain can bring the rows closer together, never closer than the fair minimum
-const wxSK = () => wx.kind === 'snow' ? 1 - .24 * wx.a : wx.kind === 'rain' && wx.rv === 'fast' ? 1 + .12 * wx.a : 1; // snow slows the blocks in the cold; a fast rain speeds them up a little
+const rowGap = () => { const p = params(), k = wx.kind === 'rain' && wx.rv === 'dense' && wx.phase !== 'warn' && mode !== 'zen' ? wx.a : 0; return Math.max((p.gap - level * p.shrink) * (1 - .22 * k), speed * p.minTime * (1 - .1 * k)); }; // rain can bring the rows closer together, never closer than the fair minimum
+const wxSK = () => mode === 'zen' ? 1 : wx.kind === 'snow' ? 1 - .24 * wx.a : wx.kind === 'rain' && wx.rv === 'fast' ? 1 + .12 * wx.a : 1; // snow slows the blocks in the cold; a fast rain speeds them up a little
 // ---------- unlocks: what each pack opens (0 free, 1 Plus, 2 Pro, 3 Max, 4 Supporter) ----------
 const TIERS = ['free', 'plus', 'pro', 'max', 'supporter'], TIER_NAMES = ['Free', 'Plus', 'Pro', 'Max', 'Supporter'];
 let ent = 0; try { ent = Math.min(4, Math.max(0, +localStorage.mirrorEnt | 0)); } catch (e) {}
@@ -1190,7 +1190,7 @@ function update(dt) {
     for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY, c.elec); } }
     return;
   }
-  const wo = windOffset(), tx = [LX[pos] + wo, LX[N - 1 - pos] + wo];
+  const wo = mode === 'zen' ? 0 : windOffset(), tx = [LX[pos] + wo, LX[N - 1 - pos] + wo]; // in Zen, events are only to look at
   for (let i = 0; i < 2; i++) {
     // critically damped spring, integrated in small steps so every frame shows real in-between motion
     const ox = bx[i];
@@ -1414,7 +1414,7 @@ function updateWeather(dt) {
 // ---------- the ship's beam: it slowly lifts the balls while they stay in the middle columns beneath it; held too long, they are taken ----------
 const apPos = () => [W * .5 + Math.sin(t * .05) * W * .04, H * .23 + W * .055]; // where the beam leaves the ship
 function updateBeam(dt) {
-  const on = wx.kind === 'alien' && wx.phase === 'on' && wx.a > .6 && state === 'play', inb = on && pos === per - 1;
+  const on = wx.kind === 'alien' && wx.phase === 'on' && wx.a > .6 && state === 'play' && mode !== 'zen', inb = on && pos === per - 1;
   ABD.k = inb ? Math.min(1, ABD.k + dt / ABD_T) : 0; // stepping out of the middle frees them at once
   ABD.lift += ((inb ? 5 + 36 * ABD.k ** 1.4 : 0) - ABD.lift) * Math.min(1, dt * (inb ? 2.5 : 9));
   if (inb) { ABD.tick -= dt; if (ABD.tick <= 0) { ABD.tick = .75 - .55 * ABD.k; beep(160 + 260 * ABD.k, .25, 'sine', .018 + .03 * ABD.k, 40); haptic(ABD.k > .6 ? 'medium' : 'light'); } } else ABD.tick = 0; // a low pulse that quickens as it pulls
@@ -1441,7 +1441,7 @@ function drawPull(x, y, r) { // while the beam pulls: amber light wraps the ball
 function updateAliens(dt) {
   if (wx.kind === 'alien' && wx.phase === 'on' && wx.a > .5) for (const o of things) if (o.k === 'b' && !o.alc && o.y > -70) { o.alc = true;
     if (!o.elec && !o.zap && Math.random() < .5) { o.al = 1; o.at = 0; const av = (BY - o.y) / Math.max(1, speed * wxSK()), m = N - 1 - o.l, partner = things.some(q => q !== o && q.k === 'b' && q.row === o.row && q.l === m);
-      o.tw = !partner && m !== o.l && av > 1.6 ? .6 + Math.random() * Math.min(.5, av - 1.6) : -1; } } // warp well before the ship reaches the balls: always over a second to react
+      o.tw = mode !== 'zen' && !partner && m !== o.l && av > 1.6 ? .6 + Math.random() * Math.min(.5, av - 1.6) : -1; } } // warp well before the ship reaches the balls: always over a second to react
   for (const o of things) if (o.al) { o.at += dt;
     if (o.tw > 0 && !o.wpre && o.at >= o.tw - .6) { o.wpre = true; if (state === 'play') { beep(420, .55, 'sine', .02, 260); } } // a soft rising tone as the ghost of its destination appears
     if (o.tw > 0 && !o.warped && o.at >= o.tw) { o.warped = true; o.wf = 0; o.lFrom = o.l; o.l = N - 1 - o.l; if (state === 'play') { beep(1180, .22, 'sine', .035, -700); bell(1567.98, .012, .9, 'fx', .6, .04); haptic('light'); burst(LX[o.lFrom], o.y, 6, '#b9a8ff', 140, .35, 0, .8); burst(LX[o.l], o.y, 8, '#c4fff0', 160, .4, 0, .9); } }
@@ -2496,7 +2496,7 @@ function lightning() { // a strike from the cloud base: threads between the bloc
   if (cand.length && (must || Math.random() < .33)) {
     for (const o of cand.sort(() => Math.random() - .5)) { // every fair target in turn
       for (let i = 0; i < 16 && !bolt; i++) { const pts = boltPts(LX[o.l] + (Math.random() - .5) * (i < 6 ? 140 : W * .8), y0, LX[o.l], o.y + speed * aZ - 22); if (!blocked(pts, o, aZ)) bolt = { o, pts }; } // aimed at where the block will be; later tries come in from further across the sky, around the blocks above
-      if (bolt) { o.zap = true; pre2 = preZ; wx.hits = (wx.hits || 0) + 1; break; }
+      if (bolt) { o.zap = mode !== 'zen'; pre2 = preZ; wx.hits = (wx.hits || 0) + 1; break; }
     }
     if (!bolt && must) { cloudGlow(); wx.nextBolt = .5; return; } // no clear path to any of them yet: try again moments later // it becomes electrified the moment the bolt lands
   }
@@ -3026,7 +3026,7 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
 ];
 function eventsHTML() {
   return `<div class="sgrp guide${evOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="events" aria-expanded="${evOpen}"><span class="gi e-aur"><svg viewBox="0 0 24 24">${WXICON.aurora}</svg></span><b>Events</b><span class="gchev" aria-hidden="true">›</span></button>`
-    + `<div class="gbody"><div><div class="gintro">There are ${EVINFO.length} events in Mirror Drop. They arrive at random during a run, with a note just before they start. Some only change the sky; others change how the game plays.</div>`
+    + `<div class="gbody"><div><div class="gintro">There are ${EVINFO.length} events in Mirror Drop. They arrive at random during a run, with a note just before they start. Some only change the sky; others change how the game plays. In Zen, every event is only to look at.</div>`
     + EVINFO.map(([k, c, n, x, p]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${WXICON[k]}</svg></span><span class="gtx"><b>${n}<span class="etag ${p ? 'p' : 'v'}">${p ? 'AFFECTS PLAY' : 'VISUAL'}</span></b><small>${x}</small></span></div>`).join('') + `</div></div></div></div>`; }
 const BAD = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'cock', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'fag', 'retard', 'rape', 'nazi', 'hitler', 'porn', 'penis', 'vagina', 'boob', 'jizz', 'wank', 'twat', 'kike', 'spic', 'chink', 'dildo', 'anus', 'tits', 'piss', 'damn', 'hell'];
 function nameProblem(n) { // nicknames stay friendly: letters, numbers and a few marks, nothing rude even when spelled with numbers
