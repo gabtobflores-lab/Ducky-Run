@@ -58,7 +58,8 @@
   .label{font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--ink-2)}
 
   /* cards */
-  .card{width:min(330px,86vw);background:var(--card);border:1px solid rgba(255,255,255,.85);border-radius:var(--r-card);box-shadow:var(--sh-card)}
+  .card{width:min(330px,86vw);background:var(--card);border:1px solid rgba(255,255,255,.85);border-radius:var(--r-card);box-shadow:var(--sh-card);position:relative}
+  .card::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.45));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)} /* Liquid Glass edge */
   .diff{display:flex;flex-direction:column;gap:6px;padding:13px 16px 11px}
   .dl{display:flex;justify-content:space-between;align-items:baseline}
   .dname,#pername{font-size:17px;font-weight:800;letter-spacing:.02em}
@@ -1750,6 +1751,8 @@ const ICE = () => sprite('ice3', 64, 64, (g) => { // a hailstone in layers: clea
   rg = g.createRadialGradient(c - 4, c - 4, 0, c, c, R * .75); rg.addColorStop(0, 'rgba(248,252,255,.95)'); rg.addColorStop(1, 'rgba(230,242,252,.2)'); g.fillStyle = rg; g.beginPath(); g.arc(c, c, R * .75, 0, 7); g.fill(); // cloudy body
   rg = g.createRadialGradient(c + 4, c + 9, 0, c + 4, c + 9, R * .4); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(1, 'rgba(210,240,255,0)'); g.fillStyle = rg; g.beginPath(); g.arc(c + 4, c + 9, R * .4, 0, 7); g.fill(); // caustic core
   g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.5; g.beginPath(); g.arc(c, c, R - 1.5, 3.6, 5.2); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.ellipse(c - 10, c - 12, 5.5, 3.5, -.6, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(225,240,255,.45)'; g.lineWidth = 1.1; g.beginPath(); g.arc(c, c, R - 1.2, .35, 1.25); g.stroke(); // Liquid Glass: the light returns faintly along the opposite edge
+  g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(150,195,255,.1)'; g.fillRect(0, 0, 64, 64); // a faint cool tint, like tinted glass
 });
 const hailWake = () => sprite('hwake', 16, 96, (g, w, h) => { const lg = g.createLinearGradient(0, 0, 0, h); lg.addColorStop(0, 'rgba(230,240,252,0)'); lg.addColorStop(1, 'rgba(240,248,255,.9)'); g.fillStyle = lg; g.beginPath(); g.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, 7); g.fill(); });
 const hailTrail = () => sprite('htrail', 4, 64, (g, w, h) => { const lg = g.createLinearGradient(0, 0, 0, h); lg.addColorStop(0, 'rgba(235,244,252,0)'); lg.addColorStop(1, 'rgba(235,244,252,1)'); g.fillStyle = lg; g.fillRect(0, 0, w, h); });
@@ -2708,6 +2711,8 @@ function drawAlien(o, x, y, w, h) { // an alien ship in the shape of a block: ir
   ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.beginPath(); ctx.roundRect(x0 + 6, y0 + 3, w - 12, 3, 2); ctx.fill(); ctx.restore(); // the top sheen every block has
   const rg = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); rg.addColorStop(0, 'rgba(210,190,255,.9)'); rg.addColorStop(.5, 'rgba(190,245,255,.95)'); rg.addColorStop(1, 'rgba(200,255,230,.9)');
   ctx.strokeStyle = rg; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x0 + .75, y0 + .75, w - 1.5, h - 1.5, r); ctx.stroke();
+  { const lg = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); lg.addColorStop(0, 'rgba(255,255,255,.85)'); lg.addColorStop(.3, 'rgba(255,255,255,0)'); lg.addColorStop(.72, 'rgba(255,255,255,0)'); lg.addColorStop(1, 'rgba(255,255,255,.4)');
+    ctx.strokeStyle = lg; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(x0 + 1.5, y0 + 1.5, w - 3, h - 3, r - 1); ctx.stroke(); } // Liquid Glass: the edge catches the light at the top left and returns it faintly at the bottom right
   ctx.save(); ctx.shadowColor = 'rgba(190,240,255,.9)'; ctx.shadowBlur = 10; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(x - w * .29, y - 3.5, w * .58, 7, 3.5); ctx.fill(); ctx.restore(); // the bar, glowing white where every block carries gold
   if (o.warped && wf < 1) { ctx.strokeStyle = `rgba(210,250,255,${1 - wf})`; ctx.lineWidth = 2; const gr = wf * 16; ctx.beginPath(); ctx.roundRect(x0 - gr, y0 - gr, w + gr * 2, h + gr * 2, r + gr); ctx.stroke(); }
 }
