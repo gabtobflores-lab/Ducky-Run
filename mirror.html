@@ -1363,10 +1363,10 @@ function shatter(i, x, y, el = false) {
   const tmpl = crash.tmpl || (crash.tmpl = crashTemplate()), m = i === 0 ? 1 : -1;
   for (const f of tmpl) {
     const vx = Math.cos(f.a) * f.v * m * (el ? 1.15 : 1), vy = Math.sin(f.a) * f.v * (el ? 1.15 : 1);
-    crash.shards.push({ ...f, x: x + vx * .018, y: y + vy * .018, vx, vy, rot: 0, spin: (f.spin || 0) * m, max: f.life, i, m, el, white: f.white || (el && Math.random() < .35) });
+    crash.shards.push({ ...f, x: x + vx * .018, y: y + vy * .018, vx, vy, rot: 0, spin: (f.spin || 0) * m, max: f.life, i, m, el, gold: goldK > .5 && !el, white: f.white || (el && Math.random() < .35) });
   }
   if (el) for (let k = 0; k < 10; k++) { const a = Math.random() * 6.283, v = 220 + Math.random() * 380; crash.shards.push({ kind: 'z', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: .28, max: .28, i, m, el, sz: 6 + Math.random() * 6, a }); }
-  crash.waves.push({ x, y: y - 12, t: 0, i, el });
+  crash.waves.push({ x, y: y - 12, t: 0, i, el, gold: goldK > .5 && !el }); // on a Golden Run the burst is gold
   shake = Math.max(shake, el ? 4.5 : 3.5); // very small, synced with the burst
   beep(el ? 1300 : i ? 980 : 880, .18, el ? 'square' : 'triangle', .05, -800); haptic('heavy');
 }
@@ -2679,7 +2679,7 @@ function updateCrash(dt) {
 }
 function drawCrash() {
   for (const w of crash.waves) { // translucent shockwave + a glossy refraction glint sweeping around it
-    const k = w.t / .5, e = ease(k), R = 18 + e * 120, P = w.el ? ELEC : PAL[w.i];
+    const k = w.t / .5, e = ease(k), R = 18 + e * 120, P = w.el ? ELEC : w.gold ? GOLDP : PAL[w.i];
     const fg = ctx.createRadialGradient(w.x, w.y, R * .55, w.x, w.y, R);
     fg.addColorStop(0, 'rgba(255,255,255,0)'); fg.addColorStop(.85, `rgba(255,255,255,${.16 * (1 - k)})`); fg.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(w.x, w.y, R, 0, 7); ctx.fill();
@@ -2691,7 +2691,7 @@ function drawCrash() {
     if (w.t < .12) { const fk = 1 - w.t / .12; const fl = ctx.createRadialGradient(w.x, w.y + 12, 0, w.x, w.y + 12, 46); fl.addColorStop(0, `rgba(255,255,255,${fk})`); fl.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(w.x, w.y + 12, 46, 0, 7); ctx.fill(); }
   }
   for (const f of crash.shards) {
-    const P = f.el ? ELEC : PAL[f.i], al = clamp01(f.life / f.max * 1.5);
+    const P = f.el ? ELEC : f.gold ? GOLDP : PAL[f.i], al = clamp01(f.life / f.max * 1.5);
     ctx.save(); ctx.globalAlpha = al * (f.hs !== undefined ? .35 + .65 * f.hs : 1); ctx.translate(f.x, f.y); if (f.hs !== undefined) ctx.scale(.25 + .75 * f.hs, .25 + .75 * f.hs);
     if (f.kind === 's') { // curved glass shard with a lit edge
       ctx.rotate(f.rot); ctx.scale(f.m, 1);
@@ -2898,7 +2898,7 @@ function draw() {
     if (c && c.abd) drawAbducted(i, c, r, P);
     else if (c && c.sp === 'alien') drawAlienDeath(i, c, r, P);
     else if (!c) { if (ABD.k > 0 && state === 'play') drawPull(x, ly, r); if (goldK < .99) drawBall(x, ly, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8); if (goldK > .01) drawGoldBall(x, ly, r, i ? 1 : -1, sx, sy, goldK, t); }
-    else if (c.chain && !c.burst && !c.elec) { const q = clamp01(fx.dead / c.at); drawBall(x, BY, r * (1 + .12 * q), P, i ? 1 : -1, 1 + .06 * q, 1 - .05 * q, .6 + q * .4, q * .9); } // charging as the pulse arrives
+    else if (c.chain && !c.burst && !c.elec) { const q = clamp01(fx.dead / c.at); drawBall(x, BY, r * (1 + .12 * q), goldK > .5 ? GOLDP : P, i ? 1 : -1, 1 + .06 * q, 1 - .05 * q, .6 + q * .4, q * .9); } // charging as the pulse arrives
     else if (c.elec && !c.burst) { // electrocution: blue-white flash wrapped in small arcs, then it bursts
       drawBall(x, BY, r * (1 + .06 * Math.random()), ELEC, i ? 1 : -1, 1, 1, 1, .85);
       const eg = ctx.createRadialGradient(x, BY, 10, x, BY, 54); eg.addColorStop(0, 'rgba(190,225,255,.55)'); eg.addColorStop(1, 'rgba(190,225,255,0)');
@@ -2906,7 +2906,7 @@ function draw() {
     }
     else { // impact frame: the ball squashes flat and flares white as it bursts, gone within ~60ms
       const k = clamp01((fx.dead - (c.bt || 0)) / .06);
-      if (k < 1) drawBall(x, BY + 3, r, c.elec ? ELEC : P, i ? 1 : -1, 1.32 + .25 * k, .7 - .3 * k, 1, 1, 1 - k);
+      if (k < 1) drawBall(x, BY + 3, r, c.elec ? ELEC : goldK > .5 ? GOLDP : P, i ? 1 : -1, 1.32 + .25 * k, .7 - .3 * k, 1, 1, 1 - k);
     }
     if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv; drawArrow(x, BY - ABD.lift, (x < W / 2 ? 1 : -1) * nd, .32 + fx.arrow * .4, ease(fx.arrow)); }
   }
