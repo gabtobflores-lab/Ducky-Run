@@ -2003,8 +2003,8 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);float 
   /* the main curtain, carrying the core of light */
   float m=curtain(pp,.2,.15,.085,1.05,.03,1.,.08,vec4(-.15,.1,.62,.88),u);float fo=1.+1.1*smoothstep(.15,.55,FOLD); /* the turning part of the sheet glows brighter */
   float core=.25+1.15*exp(-pow((pp.y-.5)/.17,2.))*(.75+.25*vn(vec2(pp.y*2.-t*.03,9.)));
-  vec3 mc=mix(vec3(.1,.38,1.),vec3(.28,1.,.95),smoothstep(.1,.9,core-.25));mc=mix(mc,vec3(.75,1.,.98),smoothstep(1.,1.4,core*m)*.6);mc=mix(mc,vec3(.3,.9,.62),smoothstep(.32,0.,pp.y)*.45);
-  a+=mc*m*core*fo*streaks(u,pp.y,1.)*1.7;
+  vec3 mc=mix(vec3(.1,.38,1.),vec3(.28,1.,.95),smoothstep(.1,.9,core-.25));mc=mix(mc,vec3(.8,1.,1.),smoothstep(1.,1.4,core*m)*.35);mc=mix(mc,vec3(.3,.9,.62),smoothstep(.32,0.,pp.y)*.45);
+  a+=mc*m*core*fo*streaks(u,pp.y,1.)*1.8;
   /* a second curtain behind it on the right, bluer and quieter */
   float b=curtain(pp,.35,.1,.05,1.4,-.016,4.,.045,vec4(.02,.16,.5,.72),u);
   a+=mix(vec3(.3,.42,1.),vec3(.55,.32,1.),smoothstep(.2,.7,pp.y))*b*streaks(u,pp.y,4.)*1.15;
