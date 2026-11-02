@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
+<meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -209,7 +209,7 @@
   .g0{background:linear-gradient(160deg,#5b5f7e,#2b2d42)}
   .e-sky{background:linear-gradient(160deg,#7fb0ef,#3d78d6)} .e-grey{background:linear-gradient(160deg,#a8b1c2,#6c778c)} .e-storm{background:linear-gradient(160deg,#6f7c96,#3c465c)}
   .e-warm{background:linear-gradient(160deg,#ffc36b,#f08a3c)} .e-night{background:linear-gradient(160deg,#6d63c9,#2f2a73)} .e-aur{background:linear-gradient(160deg,#4fd8d6,#2a6fd0)}
-  .e-snow{background:linear-gradient(160deg,#b8cff0,#7c9cd6)} .e-hole{background:linear-gradient(160deg,#4a3f2a,#120f0a)} .e-alien{background:linear-gradient(160deg,#9b8cff,#3fc9b0)}
+  .e-snow{background:linear-gradient(160deg,#b8cff0,#7c9cd6)} .e-hole{background:linear-gradient(160deg,#4a3f2a,#120f0a)}.e-ecl{background:linear-gradient(160deg,#e0a35a,#1d1a3a)}.e-halo{background:linear-gradient(160deg,#cfe6ff,#6fa6e8)}.e-fly{background:linear-gradient(160deg,#e79a8c,#3a2f74)}.e-bloom{background:linear-gradient(160deg,#ffc7d9,#f08cb0)} .e-alien{background:linear-gradient(160deg,#9b8cff,#3fc9b0)}
   .etag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;vertical-align:1px}
   .etag.v{background:rgba(43,45,66,.07);color:var(--ink-3)} .etag.p{background:rgba(232,67,95,.12);color:#c8304c}
   .gintro{padding:10px 14px 2px;font-size:13px;font-weight:500;line-height:1.4;color:var(--ink-2);opacity:0;transition:opacity .3s var(--ease)} .guide.open .gintro{opacity:1}
@@ -635,7 +635,7 @@ function resize() {
 }
 addEventListener('resize', () => { resize(); syncSafeArea(); }); layout(); syncSafeArea(); setTimeout(syncSafeArea, 400);
 const rand = (a, b) => a + Math.random() * (b - a);
-const clamp01 = x => Math.min(1, Math.max(0, x));
+const clamp01 = x => Math.min(1, Math.max(0, x)), clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
 // ---------- difficulty ----------
 const NAMES = ['Chill', 'Easy', 'Normal', 'Hard', 'Insane', 'Impossible'];
@@ -843,10 +843,14 @@ const AMBDEF = {
   heat: () => padLayer([174.61, 261.63, 392, 440], 1000, .6), // a warm Fadd9 in the glare
   bhole: () => padLayer([41.2, 61.74, 82.41, 123.47, 185], 420, .9), // a vast, slow, low E: awe rather than fear
   bholeAir: () => noiseLayer(src => { const l = filt('lowpass', 240, .7); src.connect(l); return l; }, .6), // the rush of matter swirling in
+  eclipse: () => padLayer([55, 82.41, 110, 164.81, 207.65], 620, .9), // a low, open A: the hush as the light goes
+  halo: () => padLayer([293.66, 440, 587.33, 739.99, 880], 2200, .8), // a bright, glassy D in the frozen air
+  dusk: () => padLayer([130.81, 196, 246.94, 329.63], 900, .7), // a warm Cmaj7 for the summer dusk
+  spring: () => padLayer([196, 293.66, 392, 493.88, 587.33], 1600, .7), // a light G for the spring breeze
   ufo: () => { const A = audioGraph(), out = ac.createGain(), o1 = ac.createOscillator(), o2 = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain(), lp = filt('lowpass', 420, 1.2); out.gain.value = 0; // the mothership's soft hum, slowly wavering
     o1.frequency.value = 69.3; o2.frequency.value = 103.8; o2.type = 'triangle'; lfo.frequency.value = .9; lg.gain.value = 3; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); const g1 = ac.createGain(), g2 = ac.createGain(); g1.gain.value = .07; g2.gain.value = .035; o1.connect(g1); o2.connect(g2); g1.connect(lp); g2.connect(lp); lp.connect(out); out.connect(A.amb); [o1, o2, lfo].forEach(o => o.start()); return { out, srcs: [o1, o2, lfo] }; }, // each voice kept low: a hum felt more than heard
 };
-const AMBV = { bhole: .5, bholeAir: .35, ufo: .4, rainHi: .075, rainLo: .095, wind: .15, snowAir: .2, aurora: .55, night: .5, fog: .45, heat: .32 };
+const AMBV = { eclipse: .5, halo: .4, dusk: .45, spring: .42, bhole: .5, bholeAir: .35, ufo: .4, rainHi: .075, rainLo: .095, wind: .15, snowAir: .2, aurora: .55, night: .5, fog: .45, heat: .32 };
 let sndPrev = '', sndAcc = {};
 function sndTick(dt) {
   if (!AB || ac.state !== 'running') return;
@@ -854,6 +858,7 @@ function sndTick(dt) {
   if (k === 'storm') { T.rainHi = a; T.rainLo = a * .9; T.wind = a * .3; } else if (k === 'rain') { T.rainHi = a * .72; T.rainLo = a * .55; } else if (k === 'hail') { T.rainHi = a * .45; T.rainLo = a * .55; T.wind = a * .25; }
   if (k === 'wind') T.wind = a * (.35 + .65 * Math.abs(windOffset()) / 22); if (k === 'snow') { T.snowAir = a; T.wind = a * .18; }
   if (k === 'aurora') T.aurora = a; if (k === 'meteor') T.night = a; if (k === 'fog') T.fog = a; if (k === 'heat') T.heat = a; if (k === 'sun') T.heat = a * .4; if (k === 'bhole') { T.bhole = a; T.bholeAir = a * (.6 + .4 * Math.sin(t * .17)); } if (k === 'alien') T.ufo = a;
+  if (k === 'eclipse') T.eclipse = a * (.3 + .7 * ECL.dk); if (k === 'halo') T.halo = a; if (k === 'firefly') T.dusk = a; if (k === 'blossom') { T.spring = a; T.wind = a * (.1 + .12 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
   for (const n of Object.keys(AMBDEF)) { const tg = (T[n] || 0) * AMBV[n]; let L = AMBL[n];
     if (!L && tg > .001) { try { L = AMBL[n] = AMBDEF[n](); L.idle = 0; } catch (e) { continue; } }
     if (!L) continue; L.out.gain.setTargetAtTime(tg, now, tg > L.out.gain.value ? 1.1 : .7);
@@ -868,6 +873,9 @@ function sndTick(dt) {
     if (k === 'hail' && r('hail', 9 * a)) { bell(3200 + Math.random() * 2800, .006 * a, .09, 'fx', .1); hush(5000, 4, .025, .012 * a); } // ice ticking on the ground
     if (k === 'snow' && r('snow', .32 * a)) bell([1760, 1975.5, 2217.5, 2637][Math.random() * 4 | 0], .006 * a, 3, 'fx', .9); // a rare glint of ice crystals
     if (k === 'bhole' && r('bh', .12 * a)) bell([164.81, 246.94, 329.63][Math.random() * 3 | 0], .02 * a, 7, 'fx', 1); // now and then a deep, slow tone, like light bending
+    if (k === 'firefly' && r('cric', 1.1 * a)) { const f = 4300 + Math.random() * 500, n = 2 + (Math.random() * 2 | 0); for (let j = 0; j < n; j++) bell(f, .0028 * a, .05, 'fx', .15, j * .07); } // crickets in the grass, far off
+    if (k === 'blossom' && r('bl', .25 * a)) bell([783.99, 880, 1046.5, 1174.66, 1318.5][Math.random() * 5 | 0], .007 * a, 3, 'fx', .9); // a soft chime on the breeze
+    if (k === 'halo' && r('ice', .45 * a)) bell([2349.3, 2637, 3136, 3520][Math.random() * 4 | 0], .004 * a, 1.6, 'fx', .9); // ice crystals catching the light
     if (k === 'aurora' && r('aur', .22 * a)) bell([739.99, 880, 1108.7, 1318.5][Math.random() * 4 | 0], .009 * a, 4, 'fx', .9); // slow notes drifting over the lights
   }
   if (k !== sndPrev) sndPrev = k;
@@ -877,6 +885,8 @@ function sndTick(dt) {
   if (k !== 'alien') sndAcc.alDone = 0;
   if (play && k === 'sun' && wx.phase === 'on' && !sndAcc.sunDone) { sndAcc.sunDone = 1; [1318.5, 1760, 2217.5].forEach((f, i) => bell(f, .012, 2.2, 'fx', .9, i * .09)); hush(1200, 1.4, 1.2, .015, 3200); } // the glare arrives with a shimmer
   if (k !== 'sun') sndAcc.sunDone = 0;
+  if (play && k === 'eclipse') { if (ECL.dr > .55 && !sndAcc.ecDr) { sndAcc.ecDr = 1; [1760, 2217.5, 2637, 3520].forEach((f, i) => bell(f, .008, 2.6, 'fx', .95, i * .07)); } if (ECL.dr < .1) sndAcc.ecDr = 0; // the diamond ring flashes with a shimmer
+    if (ECL.tot > .6 && !sndAcc.ecTot) { sndAcc.ecTot = 1; [220, 329.63, 440, 554.37].forEach((f, i) => bell(f, .011, 6, 'fx', 1, i * .5)); } if (ECL.tot < .2) sndAcc.ecTot = 0; } // and totality arrives with a slow, open chord
   musTick(); alienMus(play && k === 'alien' && wx.phase !== 'warn' && sndOn('music') ? wx.a : 0);
 }
 // lobby music: an endless, quiet generative piece. Slow pad chords (Dmaj9, Bm11, Gmaj9, Asus) with soft bell notes from the D major pentatonic drifting over them
@@ -899,6 +909,10 @@ function musChord(fr, t0, len, cut = 950) { const A = AB, lp = filt('lowpass', c
 // during play, each event brings its own quiet score on the music bus (so the Music switch silences it): slow chords that carry its mood and a few soft piano notes.
 // Calm for the gentle skies, darker and lower for the storm and the black hole, never loud: it sits beneath the game. The alien invasion keeps its own piece (alienMus)
 const EVMUS = {
+  eclipse: { ch: [[55, 82.41, 110, 130.81, 164.81], [49, 73.42, 98, 123.47, 146.83], [43.65, 65.41, 87.31, 110, 130.81], [49, 73.42, 98, 116.54, 146.83]], mel: [440, 493.88, 523.25, 659.26], cut: 700, gap: 5 }, // A minor, slow and awed
+  halo: { ch: [[146.83, 220, 293.66, 369.99, 440], [123.47, 185, 246.94, 293.66, 369.99], [98, 146.83, 196, 246.94, 293.66], [110, 164.81, 220, 277.18, 329.63]], mel: [1174.66, 1318.5, 1479.98, 1760], cut: 1600, gap: 4 }, // D major, glassy and high
+  firefly: { ch: [[87.31, 130.81, 174.61, 220, 261.63], [98, 146.83, 196, 246.94, 293.66], [73.42, 110, 146.83, 174.61, 220], [82.41, 123.47, 164.81, 196, 246.94]], mel: [523.25, 587.33, 659.26, 783.99, 880], cut: 900, gap: 4.5 }, // warm F, a summer evening
+  blossom: { ch: [[130.81, 196, 261.63, 329.63, 392], [110, 164.81, 220, 261.63, 329.63], [87.31, 130.81, 174.61, 220, 261.63], [98, 146.83, 196, 246.94, 293.66]], mel: [783.99, 880, 1046.5, 1174.66, 1318.5], cut: 1400, gap: 3.8 }, // C major, light as the petals
   storm: { ch: [[73.42, 110, 146.83, 174.61, 220], [58.27, 116.54, 146.83, 174.61, 220], [65.41, 98, 130.81, 155.56, 196], [55, 110, 146.83, 164.81, 220]], mel: [293.66, 349.23, 392, 440, 523.25], cut: 700, gap: 5 }, // D minor, low and rolling
   rain: { ch: [[110, 164.81, 220, 261.63, 329.63], [87.31, 130.81, 174.61, 220, 261.63], [65.41, 130.81, 164.81, 196, 246.94], [98, 146.83, 196, 246.94, 293.66]], mel: [440, 523.25, 587.33, 659.26, 783.99], cut: 900, gap: 4 }, // A minor, wistful
   snow: { ch: [[65.41, 130.81, 164.81, 196, 246.94], [110, 164.81, 220, 261.63, 329.63], [87.31, 174.61, 220, 261.63, 329.63], [98, 146.83, 196, 246.94, 329.63]], mel: [1046.5, 1174.66, 1318.5, 1567.98, 1760], cut: 1100, gap: 3.5 }, // C major, music-box high notes
@@ -974,7 +988,10 @@ const WX = {
   meteor: { dur: 22, p: 1 / 150, warn: 1.2, note: ['Meteor shower', 'Look up'] },
   rain: { dur: 20, p: 1 / 120, warn: 2.2, note: ['Rain incoming', 'Wet lanes ahead'] }, // a gentler storm: soft glows in the cloud, no strikes and no thunder; each shower either brings more blocks or a slight speed-up
   snow: { dur: 22, p: 1 / 150, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
-  bhole: { dur: 28, p: 1 / 1700, warn: 1.6, note: ['Black hole', 'Gravity bends the starlight'] }, // very rare and purely to look at
+  eclipse: { dur: 30, p: 1 / 900, warn: 1.6, note: ['Solar eclipse', 'The moon is crossing the sun'] }, // rare and purely to look at: the day darkens to a ring of fire
+  halo: { dur: 20, p: 1 / 260, warn: 1.2, note: ['Ice halo', 'Diamond dust in the air'] }, // a frozen, crystal-clear sky: a ring of light round the sun
+  firefly: { dur: 22, p: 1 / 200, warn: 1.2, note: ['Fireflies', 'Dusk is falling'] }, // a violet dusk full of soft blinking lights
+  blossom: { dur: 20, p: 1 / 170, warn: 1.2, note: ['Cherry blossom', 'Petals on the breeze'] }, // a spring sky with petals drifting down
   alien: { dur: 22, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
 };
 const CHIPS = []; let chipT = 0;
@@ -1387,11 +1404,15 @@ const WXICON = { // small line symbols in the same weight as the pause glyph
   meteor: '<path d="M4 4l10 10M9 4l7 7M4 9l7 7" opacity=".55"/><circle cx="17" cy="17" r="3"/>',
   rain: CLOUD + '<path d="M9 18l-1 2.5M12.5 18l-1 2.5M16 18l-1 2.5"/>',
   bhole: '<circle cx="12" cy="12" r="3.2"/><path d="M3 13.2c3-2.2 15-2.2 18 0M5.2 9.5a7.5 7.5 0 0 1 13.6 0" opacity=".7"/>',
+  eclipse: '<circle cx="12" cy="12" r="5.2"/><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M5.5 18.5l1.4-1.4M17.1 6.9l1.4-1.4" opacity=".5"/><circle cx="17.3" cy="7" r="1.1" fill="currentColor" stroke="none"/>',
+  halo: '<circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="12" r="7.2" opacity=".75"/><path d="M2.5 12h2.2M19.3 12h2.2" stroke-width="2.6"/>',
+  firefly: '<circle cx="8" cy="9" r="1.6"/><circle cx="16.5" cy="7" r="1.1"/><circle cx="15" cy="15.5" r="1.9"/><circle cx="7" cy="17" r="1"/><path d="M8 5.2v1M8 11.8v1M4.2 9h1M10.8 9h1M15 11.4v1.2M15 18.4v1.2M11 15.5h1.2M17.8 15.5h1.2" opacity=".5"/>',
+  blossom: '<path d="M12 11.2c-1.6-2.6-1.2-5.4 0-6.7 1.2 1.3 1.6 4.1 0 6.7zM12.8 11.8c2.9-1.1 5.5-.1 6.4 1.4-1.6.8-4.3.6-6.4-1.4zM12.5 12.9c.7 3 -.6 5.4-2.3 6-.6-1.7.2-4.3 2.3-6zM11.4 12.8c-2.1 2.2-4.8 2.5-6.3 1.5 1-1.5 3.6-2.4 6.3-1.5zM11.2 11.7C8.1 11.6 6.2 9.6 6.1 7.8c1.8.1 4.1 1.6 5.1 3.9z"/><circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none"/>',
   alien: '<path d="M4 14.5c0-1.9 3.6-3.4 8-3.4s8 1.5 8 3.4-3.6 2.6-8 2.6-8-.7-8-2.6z"/><path d="M8.4 11.6a3.6 3.6 0 0 1 7.2 0"/><path d="M9 20l1-2.6M15 20l-1-2.6" opacity=".6"/>',
   snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.6 4.5 12 6.6l2.4-2.1M9.6 19.5 12 17.4l2.4 2.1"/>',
 };
 function wxNote(kind) {
-  const n = $('#wxnote'), dk = ['aurora', 'meteor', 'bhole', 'alien'].includes(kind), [ti, su] = kind === 'rain' ? ['Rain incoming', wx.rv === 'fast' ? 'Slick lanes speed you up' : 'More blocks in the rain'] : WX[kind].note; n.className = kind + (dk && (wx.kind !== kind || wx.phase !== 'warn') ? ' dark' : ''); wxNote.dk = dk; /* the note matches the sky it sits on: light while the old sky is still there, dark glass once the night sky has rolled in */ n.innerHTML = `<span class="ic"><svg viewBox="0 0 24 24">${WXICON[kind]}</svg></span><span class="tx"><b>${ti}</b><small>${su}</small></span>`;
+  const n = $('#wxnote'), dk = ['aurora', 'meteor', 'bhole', 'alien', 'firefly'].includes(kind), [ti, su] = kind === 'rain' ? ['Rain incoming', wx.rv === 'fast' ? 'Slick lanes speed you up' : 'More blocks in the rain'] : WX[kind].note; n.className = kind + (dk && (wx.kind !== kind || wx.phase !== 'warn') ? ' dark' : ''); wxNote.dk = dk; /* the note matches the sky it sits on: light while the old sky is still there, dark glass once the night sky has rolled in */ n.innerHTML = `<span class="ic"><svg viewBox="0 0 24 24">${WXICON[kind]}</svg></span><span class="tx"><b>${ti}</b><small>${su}</small></span>`;
   void n.offsetWidth; n.classList.add('show'); { const lo = kind === 'aurora' || kind === 'meteor' || kind === 'fog' ? .75 : 1; bell(880 * lo, .022, 1.2, 'fx', .6); bell(1318.5 * lo, .018, 1.6, 'fx', .6, .11); } /* a soft two-note chime announces every event */ clearTimeout(wxNote.h); wxNote.h = setTimeout(() => n.classList.remove('show'), 2600);
 }
 setInterval(() => { const n = $('#wxnote'); if (!wxNote.dk || !n.classList.contains('show')) return; n.classList.toggle('dark', skyE > .45 || (wx.a > .45 && wx.phase !== 'warn')); }, 120); // switches to dark glass as the night sky arrives
@@ -1410,7 +1431,7 @@ function updateWeather(dt) {
     else if (wx.phase === 'on' && wx.t >= WX[wx.kind].dur) { wx.phase = 'out'; wx.t = 0; }
     else if (wx.phase === 'out' && wx.p <= 0) { wx.kind = ''; wx.phase = ''; wx.cool = 30 + Math.random() * 30; } // long quiet spell before the next one
   }
-  { const quick = wx.kind === 'sun' || wx.kind === 'wind', slow = wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien', fin = quick ? .7 : slow ? 4 : 3, fout = quick ? .8 : slow ? 3.2 : 2.6; // the night skies arrive and leave unhurried // seconds to fade in and out
+  { const quick = wx.kind === 'sun' || wx.kind === 'wind', slow = wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' || wx.kind === 'eclipse' || wx.kind === 'firefly', fin = quick ? .7 : slow ? 4 : 3, fout = quick ? .8 : slow ? 3.2 : 2.6; // the night skies arrive and leave unhurried // seconds to fade in and out
     wx.p = wx.phase === 'on' ? Math.min(1, wx.p + dt / fin) : Math.max(0, wx.p - dt / fout); const p = wx.p; wx.a = p * p * p * (p * (p * 6 - 15) + 10); } // smootherstep: starts and settles gently, no pop
   for (const h of hailHits) h.t += dt; while (hailHits.length && hailHits[0].t > .4) hailHits.shift();
   wx.flash = Math.max(0, wx.flash - dt * 3);
@@ -1512,7 +1533,7 @@ function skyField(alpha, paint) {
   if (!skyC || skyC.width !== fw || skyC.height !== fh) { skyC = document.createElement('canvas'); skyC.width = fw; skyC.height = fh; skyX = skyC.getContext('2d'); }
   skyX.setTransform(1, 0, 0, 1, 0, 0); skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = 1; skyX.clearRect(0, 0, fw, fh); skyX.setTransform(1 / 8, 0, 0, 1 / 8, 0, 0);
   paint(skyX); if (LIGHTS[wx.kind]) LIGHTS[wx.kind](skyX);
-  const vk = { bhole: .35, alien: .6, storm: .55, rain: .42, snow: .3, hail: .4, aurora: .6, meteor: .65 }[wx.kind]; if (vk) { skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = vk; skyX.drawImage(vignette(), 0, 0, W, H); skyX.globalAlpha = 1; } // the sky falls off into shadow at the edges, like a lens
+  const vk = { firefly: .4, eclipse: .3, bhole: .35, alien: .6, storm: .55, rain: .42, snow: .3, hail: .4, aurora: .6, meteor: .65 }[wx.kind]; if (vk) { skyX.globalCompositeOperation = 'source-over'; skyX.globalAlpha = vk; skyX.drawImage(vignette(), 0, 0, W, H); skyX.globalAlpha = 1; } // the sky falls off into shadow at the edges, like a lens
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'medium'; ctx.globalAlpha = alpha; ctx.drawImage(skyC, 0, 0, fw * 8, fh * 8); ctx.globalAlpha = 1; // one smooth upscale straight to the screen
 }
 function light(g, x, y, r, stops, op = 'source-over') { // an off-centre radial light, the way scattered light really pools in a sky
@@ -1543,6 +1564,10 @@ const SKY = {
     skyGrad(g, [[0, '12,10,38'], [.35, '34,26,82'], [.68, '78,52,132'], [.88, '132,84,156'], [1, '176,112,166']]); // a violet night warming to pink at the horizon // Apple's clear night: deep, rich blue, never black
     glow(g, '120,150,210', W * .78, H * .13, W * .7, H * .35, .35); glow(g, '220,130,190', W * .5, H * 1.03, W * 1.2, H * .18, .4);
   },
+  eclipse: g => { const d = ECL.dk; skyGrad(g, [[0, `${46 - 40 * d | 0},${96 - 88 * d | 0},${178 - 150 * d | 0}`], [.7, `${110 - 90 * d | 0},${160 - 140 * d | 0},${222 - 170 * d | 0}`], [1, `${150 + 80 * d | 0},${190 - 60 * d | 0},${230 - 150 * d | 0}`]]); },
+  halo: g => { skyGrad(g, [[0, '42,98,188'], [.6, '120,170,230'], [1, '214,232,248']]); glow(g, '255,255,255', W * .5, H * .25, W * .3, W * .3, .5); },
+  firefly: g => { skyGrad(g, [[0, '22,26,66'], [.55, '74,58,120'], [1, '226,140,120']]); },
+  blossom: g => { skyGrad(g, [[0, '84,140,214'], [.55, '140,184,234'], [1, '246,214,226']]); },
   wind: g => { skyGrad(g, [[0, '64,112,186'], [.5, '86,138,206'], [1, '118,164,222']]); }, /* Apple's clear, rich blue */
   sun: g => { skyGrad(g, [[0, '46,92,166'], [.45, '74,124,194'], [1, '112,156,214']]); }, // Apple's sunny blue: rich, slightly dusty
   aurora: g => { /* a northern-lights night: near-black navy overhead, deepening to indigo and violet-blue below; the curtains themselves are drawn by drawAurora */
@@ -1724,8 +1749,8 @@ function nightSky(a, starA) { // stars with a slow twinkle on top of the cached 
     ctx.globalAlpha = a * tw * .25; ctx.fillRect(sd.x * W - 3, sd.y * H * .7 + .3, 7.6, 1); ctx.fillRect(sd.x * W + .3, sd.y * H * .7 - 3, 1, 7.6); }
   ctx.globalAlpha = 1;
 }
-const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? wx.a : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'rain' ? wx.a * .7 : wx.kind === 'snow' ? wx.a * .35 : wx.kind === 'fog' ? wx.a * .15 : 0; // the pale fog keeps dark text
-const uiNight = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? smooth((wx.a - .33) / .06) : smooth((nightK() - .3) / .3); /* a night event dims the room quickly, so the ink flips in one short step just as the twilight passes mid-tone, never sitting grey on grey */ // 0 = the Wind (day) style, 1 = the Aurora (night) style
+const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? wx.a : wx.kind === 'eclipse' ? wx.a * ECL.dk : wx.kind === 'firefly' ? wx.a * .9 : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'rain' ? wx.a * .7 : wx.kind === 'snow' ? wx.a * .35 : wx.kind === 'fog' ? wx.a * .15 : 0; // the pale fog keeps dark text
+const uiNight = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? smooth((wx.a - .33) / .06) : wx.kind === 'eclipse' ? smooth((nightK() - .16) / .06) : wx.kind === 'firefly' ? smooth((nightK() - .36) / .08) : smooth((nightK() - .3) / .3); /* a night event dims the room quickly, so the ink flips in one short step just as the twilight passes mid-tone, never sitting grey on grey */ // 0 = the Wind (day) style, 1 = the Aurora (night) style
 const hudInk = al => { const k = uiNight(); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .5})`; };
 const SPR = {};
 const vignette = () => sprite('vig', 256, 512, (g, w, h) => { const r = g.createRadialGradient(w / 2, h * .45, h * .22, w / 2, h * .5, h * .72); r.addColorStop(0, 'rgba(4,6,18,0)'); r.addColorStop(1, 'rgba(4,6,18,.75)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
@@ -2095,6 +2120,52 @@ void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)
   c+=vec3(1.,.72,.42)*gl/12.*.09;
   c*=1.15*5.5*va.y;
   c=1.-exp(-c*1.35);c=pow(c,vec3(1./1.06));gl_FragColor=vec4(c+dith(),1.);}`,
+    eclipse: `/* a total solar eclipse: the moon slides across the sun; the day dims to a deep twilight with a sunset glow all round the horizon;
+   a diamond ring flashes as the last light goes; then the pearly corona, its streamers and a few pink prominences round the black moon */
+uniform vec2 sp,mp,rr;uniform vec4 ek;
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2(sp.x*asp,sp.y),M=vec2(mp.x*asp,mp.y);float Rs=rr.x,Rm=rr.y,dk=ek.x,tot=ek.y,dr=ek.z,vis=ek.w,px=1.2/res.y;
+  vec3 day=mix(vec3(.18,.38,.72),vec3(.47,.66,.9),smoothstep(0.,1.,uv.y));
+  vec3 ecl=mix(vec3(.012,.018,.06),vec3(.05,.05,.15),smoothstep(0.,.75,uv.y));ecl=mix(ecl,vec3(.86,.48,.26),smoothstep(.74,1.,uv.y)*.7);ecl+=vec3(.5,.3,.4)*smoothstep(.55,.85,uv.y)*.08; /* in totality: a twilight sky with sunset all round the horizon */
+  vec3 base=mix(day,ecl,dk);
+  vec2 d=P-S;float r=length(d),an=atan(d.y,d.x),cr=r/Rs;
+  vec3 L=starfield(P,1.)*smoothstep(.55,1.,dk)*.9;
+  { vec2 V=S+vec2(-.2,.17);float vd=length(P-V);L+=vec3(1.,.97,.9)*(exp(-vd*vd/(px*px*5.))*1.4+exp(-vd*vd/(px*px*60.))*.2)*smoothstep(.6,1.,dk); } /* Venus comes out */
+  float rays=fbm3(vec2(an*2.6,cr*.35-t*.012))*.65+fbm3(vec2(an*8.+1.7,cr*.22+t*.01))*.35;float out1=max(cr,1.);
+  float lng=fbm3(vec2(an*1.7+.6,cr*.12-t*.008));float cor=(pow(out1,-4.5)*2.2+pow(out1,-2.4)*.9*pow(rays,2.)*2.+pow(out1,-1.)*.4*pow(smoothstep(.35,.85,lng),2.)*(.6+.4*abs(sin(an*2.+.5))))*smoothstep(.985,1.03,cr); /* the corona: a bright inner glow and long, fine streamers */
+  L+=mix(vec3(.82,.88,1.),vec3(1.,.97,.93),exp(-(cr-1.)*2.5))*cor*tot*1.25;
+  L+=vec3(1.,.32,.42)*smoothstep(.6,.82,vn(vec2(an*6.,4.)))*exp(-pow((cr-1.025)/.022,2.))*tot*1.3; /* prominences: little pink flames at the limb */
+  L+=vec3(.6,.7,.9)*exp(-r*r*2.)*.06*tot; /* the corona lights the sky around it */
+  vec3 c=1.-(1.-base)*exp(-L);
+  float md=length(P-M),moon=1.-smoothstep(Rm-px,Rm+px,md);
+  c=mix(c,vec3(.012,.013,.022)+vec3(.02,.025,.04)*(1.-md/Rm),moon*clamp(dk*1.8,0.,1.)); /* the new moon: invisible in the blue sky until it is over the sun */
+  float sun=(1.-smoothstep(Rs-px,Rs+px,r))*(1.-moon);float limb=sqrt(max(0.,1.-min(cr*cr,1.)));
+  vec3 F=vec3(1.,.97,.9)*sun*(2.2+1.2*limb);
+  F+=vec3(1.,.96,.88)*(exp(-r/(Rs*.55))*.5+exp(-r/(Rs*2.4))*.32+exp(-r/(Rs*9.))*.14)*pow(vis,1.5); /* the glare shrinks as the sun is covered */
+  vec2 dir=length(M-S)>1e-5?normalize(M-S):vec2(1.,0.);vec2 B=S-dir*Rs;float bd=length(P-B),ba=atan(P.y-B.y,P.x-B.x);
+  F+=vec3(1.,.98,.94)*dr*(exp(-bd*bd/(Rs*Rs*.004))*3.+exp(-bd/(Rs*.35))*.9+exp(-bd/(Rs*1.6))*.3+pow(abs(cos(ba*2.+.4)),160.)*exp(-bd/(Rs*2.2))*.7); /* the diamond ring: one blazing point and a short starburst */
+  { float ang=acos(clamp(dot(normalize(d),-dir),-1.,1.));float beads=smoothstep(.45,.8,vn(vec2(an*26.,2.)))*exp(-pow((cr-1.)/.012,2.))*exp(-ang*ang*5.);F+=vec3(1.,.95,.88)*beads*dr*1.6; } /* Baily's beads along the limb */
+  c=1.-(1.-c)*exp(-F);
+  gl_FragColor=vec4(c+dith(),1.);}`,
+    halo: `/* diamond dust on a frozen day: a crisp blue sky, the sun ringed by a 22-degree halo (red inside, white outside), bright sun dogs either side,
+   the upper tangent arc, a faint parhelic line, and ice crystals glinting in the air; the halo brightens and fades as the crystals drift */
+uniform vec2 sp,hr;
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2(sp.x*asp,sp.y);float R=hr.x;
+  vec3 sky=mix(vec3(.13,.34,.7),vec3(.56,.74,.93),pow(uv.y,.85));sky=mix(sky,vec3(.86,.92,.98),smoothstep(.72,1.,uv.y)*.65);
+  vec2 d=P-S;float r=length(d),x=(r-R)/R;
+  float den=.62+.38*fbm3(P*2.2+vec2(t*.035,t*.012)),den2=.62+.38*fbm3(P*1.6+vec2(-t*.03,3.));
+  sky*=1.-.1*(1.-smoothstep(.5,1.,r/R)); /* the sky inside the ring is a shade darker, as it is in a real halo */
+  vec3 L=(vec3(1.,.4,.28)*exp(-pow((x+.004)/.011,2.))*.75+vec3(1.,.82,.5)*exp(-pow((x-.012)/.018,2.))*.55+vec3(.92,.96,1.)*exp(-max(x-.02,0.)/.13)*smoothstep(-.01,.03,x)*.32)*den;
+  for(int i=0;i<2;i++){float sg=i==0?-1.:1.;vec2 q=P-(S+vec2(sg*R*1.05,0.));float hx=q.x*sg;
+    vec3 pc=hx<0.?vec3(1.,.42,.32):mix(vec3(1.,.92,.75),vec3(.72,.86,1.),clamp(hx/(R*.07),0.,1.));
+    float core=exp(-pow(q.y/(R*.045),2.))*exp(-pow(hx/(R*.03),2.));float soft=exp(-pow(q.y/(R*.09),2.))*exp(-pow(hx/(R*.07),2.));
+    float tail=exp(-pow(q.y/(R*.025),2.))*exp(-max(hx,0.)/(R*.4))*smoothstep(-.01*R,.03*R,hx);
+    L+=pc*(core*2.1+soft*.6+tail*.28)*den2*(.85+.15*sin(t*.6+sg));} /* the sun dogs, coloured like a little rainbow, red toward the sun */
+  { float xx=(P.x-S.x)/R,yc=S.y-R*1.01+R*.33*xx*xx,dy=(P.y-yc)/R;L+=vec3(1.,.9,.74)*exp(-pow(dy/.011,2.))*exp(-pow(xx/.6,2.))*.45*den; } /* the upper tangent arc */
+  L+=vec3(1.)*exp(-pow((P.y-S.y)/(R*.005),2.))*.12*exp(-abs(P.x-S.x)/(R*2.2))*den2; /* the parhelic line through the sun */
+  L+=vec3(1.,.98,.94)*(exp(-r*r/(R*R*.0007))*2.4+exp(-r/(R*.08))*.6+exp(-r/(R*.45))*.16);
+  { vec2 g=P*64.+vec2(t*.5,t*1.1);vec2 id=floor(g);float h=hs(id);if(h>.94){vec2 f=fract(g)-.5-vec2(hs(id+1.)-.5,hs(id+2.)-.5)*.5;float tw=pow(max(0.,sin(t*(1.4+h*3.)+h*40.)),16.);
+    L+=mix(vec3(.82,.92,1.),vec3(1.,.92,.82),fract(h*13.))*(exp(-dot(f,f)*500.)+(exp(-abs(f.x)*70.)*exp(-f.y*f.y*1800.)+exp(-abs(f.y)*70.)*exp(-f.x*f.x*1800.))*.5)*tw*(.5+.8*exp(-r/(R*1.3))); } } /* diamond dust glinting */
+  vec3 c=1.-(1.-sky)*exp(-L);gl_FragColor=vec4(c+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;
@@ -2201,7 +2272,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); VA.get(); },
     aurora, bhole, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : qLevel ? .55 : .8) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : name === 'eclipse' || name === 'halo' ? 1.2 : qLevel ? .55 : .8) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
@@ -2221,6 +2292,44 @@ function pGlass(on, fy, fade, edge) { // the frosted layer is cut to the sheet's
 document.body.classList.toggle('evsky', false);
 setInterval(() => document.body.classList.toggle('evsky', !!(wx.kind && wx.a > .3)), 200); // the pause veil switches to frosted glass over event skies
 const toUV = (x, y) => [(offX + x * scale) / cv.width, (offY + y * scale) / cv.height]; // game coordinates to screen fractions, for the sky shaders
+const ECL = { dk: 0, tot: 0, dr: 0, vis: 1, d: -2.3 };
+function eclTick() { // where the moon is: it slides across slowly, lingers over the sun for totality, then moves on
+  const ep = wx.kind !== 'eclipse' ? 0 : wx.phase === 'on' ? clamp01(wx.t / WX.eclipse.dur) : wx.phase === 'out' ? 1 : 0, x = (ep - .5) * 2, u = Math.max(0, Math.abs(x) - .18) / .82, d = (x < 0 ? -1 : 1) * Math.pow(u, 1.1) * 2.3, D = Math.abs(d), rm = 1.03;
+  let ov = 0; if (D <= rm - 1) ov = Math.PI; else if (D < 1 + rm) { const a1 = Math.acos(clamp((D * D + 1 - rm * rm) / (2 * D), -1, 1)), a2 = Math.acos(clamp((D * D + rm * rm - 1) / (2 * D * rm), -1, 1)); ov = a1 + rm * rm * a2 - .5 * Math.sqrt(Math.max(0, (-D + 1 + rm) * (D + 1 - rm) * (D - 1 + rm) * (D + 1 + rm))); }
+  ECL.d = d; ECL.vis = clamp01(1 - ov / Math.PI); ECL.dk = Math.pow(1 - ECL.vis, 2.6); ECL.tot = 1 - smooth(clamp01((D - .03) / .05)); ECL.dr = D > .03 ? smooth(clamp01((D - .03) / .012)) * Math.exp(-(D - .042) / .07) * (D < .3 ? 1 : 0) : 0; }
+function eclU() { eclTick(); const [sx, sy] = toUV(W * .62, H * .2), Rs = W * .085 * scale / cv.height, asp = cv.width / cv.height, dx = .944, dy = -.33;
+  return { sp: [sx, sy], mp: [sx + dx * ECL.d * Rs / asp, sy + dy * ECL.d * Rs], rr: [Rs, Rs * 1.03], ek: [ECL.dk, ECL.tot, Math.min(1, ECL.dr), ECL.vis] }; }
+const FLY = Array.from({ length: 96 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random() ** 1.5, ph: Math.random() * 7, f1: .12 + Math.random() * .22, f2: .1 + Math.random() * .18, per: 2.4 + Math.random() * 3.4, off: Math.random(), w: 16 + Math.random() * 34 }));
+function drawFireflies(a, near) { // soft lights drifting on their own slow paths, each blinking on and off at its own rhythm; the near ones large and out of focus
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const halo = softBlob('186,255,104'), core = softBlob('250,255,206');
+  for (const f of FLY) { if (near ? f.z < .86 : f.z >= .86) continue; const dn = clamp01((a * 1.25 - (f.x * 7.31 + f.y * 3.17) % 1) / .25); if (dn <= 0) continue;
+    const x = f.x * W + Math.sin(t * f.f1 + f.ph) * f.w + Math.sin(t * f.f1 * 2.3 + f.ph * 2) * f.w * .35, y = H * (.16 + .82 * Math.sqrt(f.y)) + Math.cos(t * f.f2 + f.ph * 1.3) * f.w * .7 + Math.sin(t * .07 + f.ph) * 10;
+    const u = (t / f.per + f.off) % 1, pulse = u < .42 ? Math.sin(u / .42 * Math.PI) ** 2 : 0, gl = (.07 + .93 * pulse) * dn * a, s = near ? 2.2 + f.z * 1.8 : .85 + f.z * 1.5;
+    ctx.globalAlpha = gl * (near ? .22 : .55); ctx.drawImage(halo, x - 16 * s, y - 16 * s, 32 * s, 32 * s);
+    ctx.globalAlpha = gl * (near ? .32 : .95); ctx.drawImage(core, x - 3.2 * s, y - 3.2 * s, 6.4 * s, 6.4 * s); }
+  ctx.restore(); ctx.globalAlpha = 1; }
+function duskHills(a) { // low hills in silhouette along the bottom, the nearer one darker
+  [[.865, 16, '62,46,98', .85], [.925, 12, '28,22,54', .95]].forEach(([b, am, c, al], i) => { ctx.fillStyle = `rgba(${c},${al * a})`; ctx.beginPath(); ctx.moveTo(-10, H + 20);
+    for (let x = -10; x <= W + 10; x += 6) ctx.lineTo(x, H * b + Math.sin(x * .011 + 1 + i * 2.1) * am + Math.sin(x * .029 + 2 + i) * am * .4); ctx.lineTo(W + 10, H + 20); ctx.closePath(); ctx.fill(); }); }
+const PET = Array.from({ length: 96 }, () => { const z = Math.random() ** 1.4; return { x: Math.random(), y: Math.random(), z, r: Math.random() * 7, vr: (Math.random() - .5) * 1.8, tp: Math.random() * 7, tf: 1.1 + Math.random() * 2.1, sw: 10 + Math.random() * 24, sf: .4 + Math.random() * .6 }; }); let petT = 0, petG = 0;
+const PETAL = back => sprite('petal' + back, 96, 112, g => { g.scale(2, 2); g.beginPath(); g.moveTo(24, 54); g.bezierCurveTo(4, 40, 4, 14, 17, 5); g.quadraticCurveTo(21, 3, 24, 10); g.quadraticCurveTo(27, 3, 31, 5); g.bezierCurveTo(44, 14, 44, 40, 24, 54); g.closePath(); // a cherry petal: rounded, with the little notch at its tip
+  const rg = g.createRadialGradient(24, 50, 2, 24, 26, 34); rg.addColorStop(0, back ? 'rgb(232,136,166)' : 'rgb(242,156,186)'); rg.addColorStop(.45, back ? 'rgb(244,186,206)' : 'rgb(252,204,220)'); rg.addColorStop(1, back ? 'rgb(248,220,230)' : 'rgb(255,238,244)'); g.fillStyle = rg; g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = .8; g.stroke(); g.strokeStyle = 'rgba(222,118,154,.22)'; g.beginPath(); g.moveTo(24, 50); g.quadraticCurveTo(22.6, 30, 24, 14); g.stroke(); });
+function drawPetals(a, near) { // petals tumbling down on the breeze, turning as they fall; now and then a gust carries them sideways
+  if (!near) { const dt = Math.min(.05, Math.max(0, t - petT)); petT = t; petG += dt * (16 + 110 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
+  for (const p of PET) { if (near ? p.z < .86 : p.z >= .86) continue; const dn = clamp01((a * 1.2 - (p.x * 7.31 + p.y * 3.17) % 1) / .2); if (dn <= 0) continue;
+    const z = p.z, sp = (20 + 46 * z) * (.8 + p.sf * .4), y = ((p.y * (H + 80) + t * sp) % (H + 80)) - 40, x = ((p.x * (W + 80) + petG * (.5 + z) + Math.sin(t * p.sf + p.r) * p.sw) % (W + 80) + W + 80) % (W + 80) - 40;
+    const tb = Math.cos(t * p.tf + p.tp), s = near ? 1.15 + z * .8 : .34 + z * .55;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(p.r + t * p.vr + Math.sin(t * p.sf * 1.7) * .4); ctx.scale(s * (.22 + .78 * Math.abs(tb)), s); ctx.globalAlpha = a * dn * (near ? .7 : .92); ctx.drawImage(PETAL(tb < 0), -12, -14, 24, 28); ctx.restore(); }
+  ctx.globalAlpha = 1; }
+const GLINT = Array.from({ length: 30 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random(), per: 1.8 + Math.random() * 2.8, off: Math.random() }));
+const glintS = () => sprite('glint', 96, 96, g => { const c = 48, rg = g.createRadialGradient(c, c, 0, c, c, 14); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(1, 'rgba(225,240,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 96, 96);
+  [[1, 0], [0, 1]].forEach(([u, v]) => { const lg = g.createLinearGradient(c - u * 48, c - v * 48, c + u * 48, c + v * 48); lg.addColorStop(0, 'rgba(230,242,255,0)'); lg.addColorStop(.5, 'rgba(255,255,255,.95)'); lg.addColorStop(1, 'rgba(230,242,255,0)'); g.fillStyle = lg; if (u) g.fillRect(0, c - 1, 96, 2); else g.fillRect(c - 1, 0, 2, 96); }); });
+function drawGlints(a) { // diamond dust close to the lens: crystals drifting down, each flashing as it turns to the sun
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const sp = glintS();
+  for (const g of GLINT) { const u = (t / g.per + g.off) % 1, k = u < .2 ? Math.sin(u / .2 * Math.PI) : 0; if (k <= 0) continue; const y = ((g.y * (H + 40) + t * (5 + 9 * g.z)) % (H + 40)) - 20, x = g.x * W + Math.sin(t * .3 + g.off * 9) * 12, s = 7 + g.z * 12;
+    ctx.globalAlpha = k * a * (.55 + .45 * g.z); ctx.drawImage(sp, x - s, y - s, s * 2, s * 2); }
+  ctx.restore(); ctx.globalAlpha = 1; }
 const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, cloud shadow and light, and where the clouds gather
   storm: () => ({ cTop: '44,52,70', cMid: '64,76,96', cBot: '88,100,120', cd: '28,33,46', cl: '146,156,174', cov: [.08, 1.02, 1.15, .16], scl: 1.8, drift: [.05, 0], cloudA: 1, rain: 1 }),
   alien: () => ({ cvar: [-1, -.22, 21.7], cTop: '10,8,30', cMid: '24,22,66', cBot: '44,58,108', cd: '8,8,26', cl: '120,130,210', cov: [.02, .9, .55, .12], scl: 1.6, drift: [.02, 0], cloudA: .55, stars: 1, glow: [...toUV(W * (.5 + .18 * Math.sin(t * .05)), H * .17), .35], glowC: '130,255,220' }), // a luminous indigo twilight, lit mint by the ship
@@ -2232,6 +2341,8 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
   sun: () => { const q = wx.phase === 'out' ? 1 : clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // (once it has finished its sweep it stays gone: fading out never restarts it at the left edge) // Apple-style: the glare slides in from the edge, peaks, then dissolves
     const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
     return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
+  firefly: () => ({ cvar: [1, .12, 5.3], cTop: '20,24,64', cMid: '78,60,124', cBot: '232,146,122', cd: '58,46,96', cl: '244,178,170', cov: [.92, .52, .55, .12], scl: 1.5, drift: [.015, 0], cloudA: .7, stars: .55, glow: [...toUV(W * .3, H * 1.02), .4], glowC: '255,160,110' }), // Apple's dusk: deep blue overhead, violet, then a warm glow where the sun has gone
+  blossom: () => ({ cvar: [-1, .2, 9.1], cTop: '84,140,214', cMid: '140,184,234', cBot: '246,214,226', cd: '214,200,228', cl: '255,252,255', cov: [-.05, .5, .45, .14], scl: 1.15, drift: [.035, 0], cloudA: .8, glow: [...toUV(W * .86, H * .05), .08], glowC: '255,246,236' }), // a soft spring sky: clear blue fading to blossom pink, white clouds drifting
   meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], mets: .8, scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
 let skyE = 0; // how much of the screen the GPU sky covers right now (the 2D backdrop fades out as it rises)
@@ -2239,14 +2350,14 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U; if (wx.kind !== drawSky0.k) { drawSky0.k = wx.kind; skyQ = skyQs = 1; } // each event starts at full sharpness
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
-    if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (k === 'eclipse') U = eclU(); else if (k === 'halo') { const [hx, hy] = toUV(W * .5 + Math.sin(t * .05) * W * .015, H * .25), R = W * .36 * scale / cv.height; U = { sp: [hx, hy], hr: [R, wx.a] }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg()); if (k === 'firefly' || k === 'blossom') U.glow = [U.glow[0], U.glow[1], U.glow[2], 0]; else delete U.glow; delete U.bolt; /* the shader's glow takes four values; the older skies were designed without it, so they keep their look and stop sending a mismatched value every frame */
+    /* (the storm's bolt glow is drawn by the 2D layer; the cloud shader's bolt light was never wired to a matching value, so nothing is sent) */
   } else return false;
-  if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' ? k : 'clouds', U))) return false;
+  if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' || k === 'eclipse' || k === 'halo' ? k : 'clouds', U))) return false;
   const a = wx.a; skyE = a * a * (3 - 2 * a); return true; }
 function drawBackWeather() { // events that live behind the blocks and balls
   const a = wx.a; if (!wx.kind || a < .01) return;
-  const SA = { bhole: 1, alien: 1, storm: .95, rain: .95, snow: .95, hail: .95, fog: .92, heat: .9, wind: .95, sun: .85, aurora: 1, meteor: 1 }[wx.kind];
+  const SA = { eclipse: 1, halo: .95, firefly: 1, blossom: .95, bhole: 1, alien: 1, storm: .95, rain: .95, snow: .95, hail: .95, fog: .92, heat: .9, wind: .95, sun: .85, aurora: 1, meteor: 1 }[wx.kind];
   const G = skyE > 0; // the GPU sky is painting this event
   if (SA && !G) skyField(SA * a * a * (3 - 2 * a), SKY[wx.kind]);
   if (wx.kind === 'fog' && !G) { const fg = FOGGL(); if (fg) { ctx.globalAlpha = .95 * a * a * (3 - 2 * a); ctx.drawImage(fg, 0, 0, W, H); ctx.globalAlpha = 1; } } // the fog itself, painted on the GPU
@@ -2274,6 +2385,9 @@ function drawBackWeather() { // events that live behind the blocks and balls
   });
   if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
+  if (wx.kind === 'firefly') { duskHills(a); drawFireflies(a, false); } // the dusk: hills in silhouette, fireflies above them
+  if (wx.kind === 'blossom') drawPetals(a, false);
+  if (wx.kind === 'eclipse' && !G) eclTick();
   if (wx.kind === 'alien' && !G) drawUFO(a); // without the GPU sky, the hand-drawn ship; with it, the sky renders the ship in 3D // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
   if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
@@ -2415,6 +2529,9 @@ function drawFrontWeather() { // light and glass in front of the scene
     ctx.save(); ctx.globalCompositeOperation = 'screen';
     ctx.restore();
   }
+  if (wx.kind === 'firefly' && wx.a > .01) drawFireflies(wx.a, true); // a few fireflies drift close past the lens
+  if (wx.kind === 'blossom' && wx.a > .01) drawPetals(wx.a, true);
+  if (wx.kind === 'halo' && wx.a > .01) drawGlints(wx.a);
   if (wx.kind === 'snow' && wx.a > .01) drawSnow(wx.a, true); // a few large flakes drift past close to the lens
   if ((wx.kind === 'hail' || wx.kind === 'snow') && wx.a > .01) { // cold frost gathering in the corners of the glass
     const f = frost(); ctx.globalAlpha = (wx.kind === 'snow' ? .4 : .3) * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
@@ -3093,7 +3210,10 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
   ['sun', 'e-warm', 'Sun flash', 'A brief burst of glare.', 0],
   ['meteor', 'e-night', 'Meteor shower', 'Shooting stars cross a clear night sky.', 0],
   ['aurora', 'e-aur', 'Aurora', 'The northern lights fill the sky.', 0],
-  ['bhole', 'e-hole', 'Black hole', 'Very rare. Gravity bends the starlight around it.', 0],
+  ['blossom', 'e-bloom', 'Cherry blossom', 'Petals drift down through a soft spring sky.', 0],
+  ['firefly', 'e-fly', 'Fireflies', 'Dusk falls and fireflies glow all around you.', 0],
+  ['halo', 'e-halo', 'Ice halo', 'Diamond dust glitters and a ring of light circles the sun.', 0],
+  ['eclipse', 'e-ecl', 'Solar eclipse', 'Rare. The moon slides across the sun and the day turns to night.', 0],
   ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side, and the beam slowly pulls up anything that stays in the middle. Move out of the middle to break free.', 1],
 ];
 function eventsHTML() {
