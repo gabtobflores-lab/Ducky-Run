@@ -1839,9 +1839,10 @@ vec3 meteorsGL(vec2 P,float asp,float k){vec3 c=vec3(0.);for(int i=0;i<7;i++){fl
     float qe=1.-pow(1.-q,1.6);                                                     /* fast at first, easing as it burns up */
     float len=(.07+.09*h2)*(.4+.6*sin(min(q*1.4,1.)*1.5708));vec2 head=st+dir*(qe*(.24+.12*h3));vec2 d=P-head;float al=dot(d,-dir),pp=abs(dot(d,vec2(-dir.y,dir.x)));
     float life=sin(q*3.1416)*(.45+.55*h);
-    float tail=step(0.,al)*pow(max(1.-al/len,0.),2.2);float wv=.0011+.0022*(1.-al/len);  /* the trail tapers from the head */
-    float core=exp(-((pp/wv)*(pp/wv)));float glow=exp(-((pp/(wv*4.))*(pp/(wv*4.))))*.35;
-    vec3 tc=mix(vec3(.55,.62,1.),vec3(1.,.98,.95),pow(max(1.-al/len,0.),3.));             /* white-hot at the head, cooling to blue along the trail */
+    float ac=max(al,0.),pd=al<0.?length(d):pp;                                    /* ahead of the head, distance is measured round it: a rounded tip, never a flat cut */
+    float tail=pow(max(1.-ac/len,0.),2.2);float wv=.0011+.0022*(1.-ac/len);  /* the trail tapers from the head */
+    float core=exp(-((pd/wv)*(pd/wv)));float glow=exp(-((pd/(wv*4.))*(pd/(wv*4.))))*.35;
+    vec3 tc=mix(vec3(.55,.62,1.),vec3(1.,.98,.95),pow(max(1.-ac/len,0.),3.));             /* white-hot at the head, cooling to blue along the trail */
     c+=tc*(core+glow)*tail*life;
     float hd=dot(d,d);c+=vec3(1.,.98,.94)*(exp(-hd/(.0016*.0016))*1.2+exp(-hd/(.008*.008))*.18)*life; /* a bright head with a soft bloom */
     c+=vec3(.45,.5,.85)*exp(-hd/(.12*.12))*.05*life;}}                               /* it lights the sky around it, faintly */
@@ -1914,7 +1915,9 @@ vec3 iri(float a){a=fract(a);vec3 c1=vec3(.62,.42,1.),c2=vec3(1.,.45,.72),c3=vec
   return a<.25?mix(c1,c2,a*4.):a<.5?mix(c2,c3,(a-.25)*4.):a<.75?mix(c3,c4,(a-.5)*4.):mix(c4,c1,(a-.75)*4.);}
 float sdE(vec3 p,vec3 r){float k0=length(p/r),k1=length(p/(r*r));return k0*(k0-1.)/k1;}
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
-float map(vec3 p){float lens=sdE(p,vec3(1.,.11,1.));float crown=sdE(p-vec3(0.,.07,0.),vec3(.34,.09,.34));return smin(lens,crown,.07);} /* a thin lens with a low crown */
+float body(vec3 p){float lens=sdE(p,vec3(1.,.12,1.));float collar=sdE(p-vec3(0.,.06,0.),vec3(.46,.08,.46));return smin(lens,collar,.08);} /* a thin lens rising to a soft collar */
+float dome(vec3 p){return sdE(p-vec3(0.,.12,0.),vec3(.29,.17,.29));} /* a frosted glass dome set in the collar, lit softly from within */
+float map(vec3 p){return min(body(p),dome(p));}
 vec3 nrm(vec3 p){vec2 e=vec2(.0015,-.0015);return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));}
 vec3 studio(vec3 r){vec3 c=vec3(.025,.022,.05)+vec3(.05,.04,.1)*smoothstep(-.3,.6,r.y); /* the dark studio, a little night violet */
   c+=vec3(.22,.22,.28)*smoothstep(-.4,.9,r.y); /* a soft fill sweeping up the studio */
@@ -1931,10 +1934,11 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   for(int k=0;k<3;k++){float fk=float(k);vec2 cp=vec2(P.x*(1.2+fk*.4)+t*(.012+fk*.006)+fk*3.,P.y*(3.+fk)-fk);float cl=smoothstep(.36,.9,fbm(cp));cl=cl*cl*(3.-2.*cl)*smoothstep(.02+fk*.1,.45+fk*.2,uv.y)*(1.-.55*exp(-pow((uv.y-.78)/.12,2.))); /* wide, soft fades: no edges, and thinner around the balls */
     vec3 cc=mix(vec3(.2,.14,.38),vec3(.85,.62,.88),.3+.3*fk/2.)+vec3(.55,1.,.9)*sl*(1.1-fk*.25);c=mix(c,cc,cl*(.45-fk*.1)*sk);} /* soft cloud banks, lit mint from within */
   /* the camera: a little below the ship, looking up at it */
-  vec3 ro=vec3(0.,-.62,-4.4),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
+  vec3 ro=vec3(0.,-.46,-4.4),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
+  float tl=.035*sin(t*.47),tc=cos(tl),ts=sin(tl);vec3 rt0=rt;rt=rt*tc+up*ts;up=up*tc-rt0*ts; /* it hovers with the slightest sway, never rigid */
   vec2 q=(P-C)/RX/S;vec3 rd=normalize(fw+rt*q.x+up*(-q.y));
   /* where the aperture appears on screen, so the beam starts exactly there */
-  vec3 ap=vec3(0.,-.12,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(aq.x,-aq.y)*RX*S;
+  vec3 ap=vec3(0.,-.13,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(aq.x,-aq.y)*RX*S;
   vec2 bq=P-Ce;float cs=cos(ba),sn=sin(ba);bq=vec2(cs*bq.x-sn*bq.y,sn*bq.x+cs*bq.y);
   float w0=RX*.06,wdt=w0+max(bq.y,0.)*.2;float cone=smoothstep(wdt,wdt*.15,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*2.3); /* defined at its source, fading as it falls */
   float mist=.6+.55*fbm3(vec2(bq.x*6.,bq.y*2.6+t*.3))+.2*fbm3(vec2(bq.x*15.,bq.y*6.+t*.55));
@@ -1943,6 +1947,8 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   float pool=exp(-pow((P.x-Ce.x-sn*.95)/(asp*.42),2.)-pow((uv.y-1.03)/.1,2.));c+=vec3(.7,.75,1.)*pool*.05*sk;
   /* the soft iridescent glow it casts */
   float gl=length((P-C)/vec2(RX*1.1,RX*.55));c+=vec3(.8,.7,1.)*exp(-gl*gl*.22)*.5*sk+vec3(.6,1.,.9)*exp(-gl*gl*1.2)*.32*sk; /* a luminous halo, as strong as the moon's */ /* its own soft halo, like the moon's */
+  { vec3 dp=vec3(0.,.2,0.)-ro;vec2 dq=vec2(dot(dp,rt),dot(dp,up))/dot(dp,fw);vec2 Cd=C+vec2(dq.x,-dq.y)*RX*S;
+    float dg=length((P-Cd)/vec2(RX*.42,RX*.2));c+=vec3(.55,1.,.92)*exp(-dg*dg)*.16*sk; } /* the dome's soft glow in the air above the ship */
   /* the ship */
   float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1;
   if(h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
@@ -1951,6 +1957,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       float ao=clamp(1.-3.*(.06-map(p+n*.06)),0.,1.)*clamp(1.-2.*(.15-map(p+n*.15)),0.,1.); /* soft occlusion in the creases */
       float rxz=length(p.xz);vec3 col;
       float ang=atan(p.z,p.x);
+      bool glass=dome(p)<body(p)+.0005;
       vec3 F0=vec3(.42,.43,.47);vec3 fr=F0+(1.-F0)*pow(1.-ndv,5.);
       col=studio(r)*fr*.95+vec3(.04,.04,.07); /* dark titanium: the studio's soft lights slide across it */
       col+=vec3(1.)*pow(max(dot(r,normalize(vec3(-.45,.85,-.35))),0.),90.)*.9; /* the key light's crisp highlight */
@@ -1958,8 +1965,13 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
       col+=vec3(.78,1.,.95)*seam*(1.3+.25*sin(ang*3.-t*.8));
       if(p.y<-.02){col*=.7;
         float dots=smoothstep(.012,0.,abs(rxz-.62))*pow(max(0.,sin(ang*18.-t*.6)),24.);col+=vec3(.75,1.,.95)*dots*1.4; /* tiny lights, slowly turning */
-        col+=vec3(.9,1.,.98)*smoothstep(.11,.06,rxz)*1.6+vec3(.5,1.,.9)*smoothstep(.22,.06,rxz)*.35;} /* the aperture */
-      col*=.35+.65*ao;
+        col+=vec3(.9,1.,.98)*smoothstep(.13,.06,rxz)*2.2+vec3(.5,1.,.9)*smoothstep(.26,.06,rxz)*.45;} /* the aperture */
+      if(glass){float br=.85+.15*sin(t*.9);                                         /* frosted glass, glowing from inside: brightest through its middle, soft at the edges */
+        vec3 inner=mix(vec3(.35,.75,.75),vec3(.9,1.,.97),smoothstep(0.,.9,n.y))*(.45+.55*ndv)*br*1.7;
+        col=inner+studio(r)*(.04+.96*pow(1.-ndv,5.))*.75+vec3(1.)*pow(max(dot(r,normalize(vec3(-.45,.85,-.35))),0.),140.)*.8;
+        col+=vec3(.6,1.,.92)*smoothstep(.02,0.,abs(p.y-.12))*.25;}
+      if(!glass)col+=vec3(.5,1.,.9)*exp(-pow(length(p.xz)/.42,2.))*smoothstep(-.02,.1,p.y)*smoothstep(.0,.6,n.y)*.25; /* the dome's light falling on the collar round it */                  /* where the glass meets the collar, a faint line of its light */
+      else col*=.35+.65*ao;
       col=mix(col,vec3(.3,.24,.46),.06); /* a little distance haze, the same violet as the night: it sits in the same air as the clouds */
       c=mix(c,col,sk);}}
   { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
@@ -2007,22 +2019,27 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;
    thin sheet of light hanging along the sky's field lines. Where the curve doubles back the sheet overlaps itself: a real fold, brighter where we see it
    edge-on, its front and back faces lit differently. Rays rise from the edge and fade upward from cyan through blue to violet */
 uniform vec2 P[72];
-void main(){vec2 p=UV();float asp=res.x/res.y;vec2 q=vec2(p.x*asp-(p.y-.5)*.12,p.y);   /* rays lean slightly, as curtains seen at an angle */
+void main(){vec2 p=UV();float asp=res.x/res.y;float xv=.62*asp,yv=-1.1;vec2 q=vec2(xv+(p.x*asp-xv)*(.6-yv)/(p.y-yv),p.y);   /* the rays run along the field lines, which in perspective fan out from a point high above the screen */
   vec3 sky=mix(vec3(.006,.01,.026),vec3(.012,.024,.06),smoothstep(0.,.7,p.y));sky=mix(sky,vec3(.10,.08,.32),smoothstep(.6,1.05,p.y)*.8);
   vec3 a=vec3(0.);
   for(int i=0;i<71;i++){if(i==23||i==47)continue;                                   /* three formations of 24 points: near, middle, far */
     float amp=i<23?1.:i<47?.5:.3,rise0=i<23?.115:i<47?.075:.05,sd=i<23?0.:i<47?3.:7.;float kk=mod(float(i),24.);
-    vec2 A=P[i],B=P[i+1];float lo=min(A.x,B.x),hi=max(A.x,B.x);if(q.x<lo-.004||q.x>hi+.004)continue;
+    vec2 A=P[i],B=P[i+1];float lo=min(A.x,B.x),hi=max(A.x,B.x),sg=.02+.008*float(i>=23);if(q.x<lo-sg||q.x>hi+sg)continue;
     float dx=B.x-A.x,tt=clamp((q.x-A.x)/(abs(dx)<1e-4?1e-4:dx),0.,1.),hy=mix(A.y,B.y,tt),d=hy-q.y; /* d > 0: above the sheet's lower edge */
     float s=(kk+tt)/23.;
-    float seg=length(B-A),dens=clamp(seg/max(abs(dx),seg*.3),1.,3.2);            /* edge-on: where the curve runs along the rays, the sheet stacks up */
+    /* how much of this piece of sheet lies over this column: the piece is smeared across a small width (the rays' own thickness), so pieces join
+       seamlessly and a fold, where the curve turns and runs along the rays, gathers many layers into one bright, soft-edged band instead of a cut */
+    float seg=length(B-A),ua=(q.x-A.x)/sg,ub=(q.x-B.x)/sg;
+    float cov=abs(dx)>sg*.02?(smoothstep(-1.,1.,ua)-smoothstep(-1.,1.,ub))/dx*seg:seg*.75*max(1.-ua*ua,0.)/sg;
+    float dens=3.4*(1.-exp(-max(cov,0.)/3.4));
     float face=dx>0.?1.:.58;                                                        /* the sheet's two faces catch the light differently */
     float rise=rise0*(.62+.38*sin(s*9.+sd+t*.13))*(.8+.2*dens);                     /* the sheet swells and tapers along its length */
     float edge=smoothstep(-.012,.006,d),up=exp(-max(d,0.)/rise)*.88+exp(-max(d,0.)/(rise*1.9))*.12; /* a bright lower body with a long soft fade */
     up*=smoothstep(rise*4.2,rise*1.4,d); /* the sheet's height tapers away: it never becomes an endless column */
-    float side=smoothstep(0.,.012,min(q.x-lo,hi-q.x)+step(.02,abs(dx))*.02); /* where the sheet turns, its silhouette softens */
-    float rays=.7+.3*smoothstep(.15,.95,vn(vec2(s*24.+sd*9.,d*.8-t*.03)));          /* fine rays running up the sheet */
-    rays*=.9+.1*vn(vec2(s*80.+sd,d*1.6-t*.05));
+    float side=1.;
+    float rays=.78+.22*smoothstep(.2,.9,vn(vec2(s*34.+sd*9.,d*.6-t*.03)));          /* fine rays running up the sheet */
+    rays*=.88+.12*vn(vec2(s*90.+sd,d*1.2-t*.05));
+    rays*=.55+.45*smoothstep(.2,.8,vn(vec2(s*3.2+sd*5.,t*.04)));                    /* brighter stretches and quieter ones along the sheet */
     float k2=clamp(d/(rise*2.4),0.,1.);
     vec3 col=mix(vec3(.55,.96,.95),vec3(.06,.78,.95),smoothstep(0.,.2,k2));          /* a bright hem, cyan above it */
     col=mix(col,vec3(.08,.42,.95),smoothstep(.2,.6,k2));col=mix(col,vec3(.36,.24,.88),smoothstep(.55,1.,k2)); /* blue, then violet at the top */
