@@ -35,7 +35,7 @@ LAB = r'''
   <button type="button" id="labbtn" aria-expanded="false">Events</button></div>
 <script>
 (() => {
-  const NAMES = { fog: 'Fog', rain: 'Rain', storm: 'Storm', wind: 'Wind', snow: 'Snow', hail: 'Hail', heat: 'Heat Wave', sun: 'Sun Flash', meteor: 'Meteor Shower', aurora: 'Aurora', alien: 'Alien Invasion', eclipse: 'Solar Eclipse', halo: 'Ice Halo', firefly: 'Fireflies', blossom: 'Cherry Blossom' };
+  const NAMES = { fog: 'Fog', rain: 'Rain', storm: 'Storm', wind: 'Wind', snow: 'Snow', hail: 'Hail', heat: 'Heat Wave', sun: 'Sun Flash', meteor: 'Meteor Shower', aurora: 'Aurora', alien: 'Alien Invasion', golden: 'Golden Hour', eclipse: 'Solar Eclipse', halo: 'Ice Halo', firefly: 'Fireflies', blossom: 'Cherry Blossom' };
   const PLAY = { rain: 'more blocks or faster', storm: 'lightning', wind: 'pushes the balls', snow: 'slower blocks', alien: 'warps and the beam', fog: 'harder to see' };
   try { ent = 4; } catch (e) {}
   let random = true; const grid = document.getElementById('labgrid'), sheet = document.getElementById('labsheet'), btn = document.getElementById('labbtn'), now = document.getElementById('labnow');
