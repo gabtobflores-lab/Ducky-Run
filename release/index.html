@@ -2121,51 +2121,63 @@ void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)
   c+=vec3(1.,.72,.42)*gl/12.*.09;
   c*=1.15*5.5*va.y;
   c=1.-exp(-c*1.35);c=pow(c,vec3(1./1.06));gl_FragColor=vec4(c+dith(),1.);}`,
-    eclipse: `/* a total solar eclipse: the moon slides across the sun; the day dims to a deep twilight with a sunset glow all round the horizon;
-   a diamond ring flashes as the last light goes; then the pearly corona, its streamers and a few pink prominences round the black moon */
-uniform vec2 sp,mp,rr;uniform vec4 ek;
-void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2(sp.x*asp,sp.y),M=vec2(mp.x*asp,mp.y);float Rs=rr.x,Rm=rr.y,dk=ek.x,tot=ek.y,dr=ek.z,vis=ek.w,px=1.2/res.y;
-  vec3 day=mix(vec3(.18,.38,.72),vec3(.47,.66,.9),smoothstep(0.,1.,uv.y));
-  vec3 ecl=mix(vec3(.012,.018,.06),vec3(.05,.05,.15),smoothstep(0.,.75,uv.y));ecl=mix(ecl,vec3(.86,.48,.26),smoothstep(.74,1.,uv.y)*.7);ecl+=vec3(.5,.3,.4)*smoothstep(.55,.85,uv.y)*.08; /* in totality: a twilight sky with sunset all round the horizon */
+    eclipse: `/* a total solar eclipse, photographic: the real moon (the same photograph as the meteor night) slides across the sun, its near side faintly lit by earthshine;
+   the day dims to a deep twilight with sunset all round the horizon and thin clouds lit from below; a diamond ring flashes with Baily's beads as the last light goes;
+   then the corona - a bright inner glow, long helmet streamers and fine radial filaments - with a few pink prominences round the black moon */
+uniform vec2 sp,mp,rr;uniform vec4 ek;uniform sampler2D tex;
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2(sp.x*asp,sp.y),M=vec2(mp.x*asp,mp.y);float Rs=rr.x,Rm=rr.y,dk=ek.x,tot=ek.y,dr=ek.z,vis=ek.w,px=1.1/res.y;
+  vec3 day=mix(vec3(.16,.36,.72),vec3(.5,.69,.92),pow(uv.y,.9));day+=vec3(.25,.22,.16)*exp(-pow(length(P-S)*2.2,2.))*.25;
+  vec3 ecl=mix(vec3(.008,.012,.045),vec3(.035,.04,.12),smoothstep(0.,.7,uv.y));ecl=mix(ecl,vec3(.42,.26,.34),smoothstep(.6,.86,uv.y)*.55);ecl=mix(ecl,vec3(.95,.55,.28),smoothstep(.8,1.,uv.y)*.85);
   vec3 base=mix(day,ecl,dk);
-  vec2 d=P-S;float r=length(d),an=atan(d.y,d.x),cr=r/Rs;
+  { float cy=smoothstep(.76,.86,uv.y)*(1.-smoothstep(.94,1.,uv.y));float n=fbm(vec2(P.x*2.4+t*.006,uv.y*13.+.3*fbm3(vec2(P.x*3.,uv.y*4.))));float cl=smoothstep(.48,.72,n)*cy; /* thin clouds low along the horizon */
+    vec3 cc=mix(vec3(.93,.95,.98),mix(vec3(.16,.1,.18),vec3(1.,.55,.3),smoothstep(.85,.95,uv.y)*.8),dk);base=mix(base,cc,cl*.65); }
+  vec2 d=P-S;float r=length(d),cr=r/Rs;vec2 dn=d/max(r,1e-5);float lr=log(max(cr,1.));
   vec3 L=starfield(P,1.)*smoothstep(.55,1.,dk)*.9;
-  { vec2 V=S+vec2(-.2,.17);float vd=length(P-V);L+=vec3(1.,.97,.9)*(exp(-vd*vd/(px*px*5.))*1.4+exp(-vd*vd/(px*px*60.))*.2)*smoothstep(.6,1.,dk); } /* Venus comes out */
-  float rays=fbm3(vec2(an*2.6,cr*.35-t*.012))*.65+fbm3(vec2(an*8.+1.7,cr*.22+t*.01))*.35;float out1=max(cr,1.);
-  float lng=fbm3(vec2(an*1.7+.6,cr*.12-t*.008));float cor=(pow(out1,-4.5)*2.2+pow(out1,-2.4)*.9*pow(rays,2.)*2.+pow(out1,-1.)*.4*pow(smoothstep(.35,.85,lng),2.)*(.6+.4*abs(sin(an*2.+.5))))*smoothstep(.985,1.03,cr); /* the corona: a bright inner glow and long, fine streamers */
-  L+=mix(vec3(.82,.88,1.),vec3(1.,.97,.93),exp(-(cr-1.)*2.5))*cor*tot*1.25;
-  L+=vec3(1.,.32,.42)*smoothstep(.6,.82,vn(vec2(an*6.,4.)))*exp(-pow((cr-1.025)/.022,2.))*tot*1.3; /* prominences: little pink flames at the limb */
-  L+=vec3(.6,.7,.9)*exp(-r*r*2.)*.06*tot; /* the corona lights the sky around it */
+  { vec2 V=S+vec2(-.2,.17);float vd=length(P-V);L+=vec3(1.,.97,.9)*(exp(-vd*vd/(px*px*5.))*1.5+exp(-vd*vd/(px*px*70.))*.22)*smoothstep(.6,1.,dk); } /* Venus */
+  float helm=fbm3(dn*1.9+vec2(3.1,1.7)+lr*vec2(.25,-.18)),fil=fbm3(dn*7.5+lr*vec2(.5,.3)+vec2(t*.004,0.)),fine=vn(dn*34.+lr*vec2(.9,-.6));
+  float hel=pow(smoothstep(.3,.8,helm),1.5),eq=pow(abs(dn.x*.94-dn.y*.34),1.4); /* the streamers gather toward the sun's equator, as at solar minimum */
+  float cor=pow(max(cr,1.),-7.)*3.+pow(max(cr,1.),-3.2)*(.45+1.4*hel*(.5+.8*eq))*(.75+.5*fil)+pow(max(cr,1.),-1.25)*.3*hel*eq*(.6+.8*fine)+pow(max(cr,1.),-2.4)*.25*smoothstep(.55,.9,fine)*fil;
+  cor*=smoothstep(.99,1.02,cr);
+  L+=mix(vec3(.78,.86,1.),vec3(1.,.96,.9),exp(-(cr-1.)*1.8))*cor*tot*1.15;
+  L+=vec3(1.,.3,.42)*smoothstep(.62,.84,vn(dn*7.+4.))*exp(-pow((cr-1.02)/.02,2.))*tot*1.4; /* prominences: little pink flames at the limb */
+  L+=vec3(1.,.4,.5)*exp(-pow((cr-1.004)/.006,2.))*tot*.6; /* the thin red chromosphere */
+  L+=vec3(.55,.66,.9)*exp(-r*r*1.6)*.05*tot;
   vec3 c=1.-(1.-base)*exp(-L);
-  float md=length(P-M),moon=1.-smoothstep(Rm-px,Rm+px,md);
-  c=mix(c,vec3(.012,.013,.022)+vec3(.02,.025,.04)*(1.-md/Rm),moon*clamp(dk*1.8,0.,1.)); /* the new moon: invisible in the blue sky until it is over the sun */
+  vec2 mq=(P-M)/Rm;float md=length(mq),moon=1.-smoothstep(1.-px/Rm,1.+px/Rm,md);
+  if(md<1.02){vec3 tc=texture2D(tex,mq*.5*.9875+.5).rgb;vec3 es=tc*vec3(.62,.72,.92)*(.07+.04*(1.-md))*(.3+.7*dk); /* the moon's near side, lit only by earthshine: the real surface, just visible */
+    c=mix(c,vec3(.006,.007,.012)+es,moon*clamp(smoothstep(.12,.6,dk)+(1.-smoothstep(Rs*.98,Rs*1.04,r)),0.,1.));}
   float sun=(1.-smoothstep(Rs-px,Rs+px,r))*(1.-moon);float limb=sqrt(max(0.,1.-min(cr*cr,1.)));
-  vec3 F=vec3(1.,.97,.9)*sun*(2.2+1.2*limb);
-  F+=vec3(1.,.96,.88)*(exp(-r/(Rs*.55))*.5+exp(-r/(Rs*2.4))*.32+exp(-r/(Rs*9.))*.14)*pow(vis,1.5); /* the glare shrinks as the sun is covered */
-  vec2 dir=length(M-S)>1e-5?normalize(M-S):vec2(1.,0.);vec2 B=S-dir*Rs;float bd=length(P-B),ba=atan(P.y-B.y,P.x-B.x);
-  F+=vec3(1.,.98,.94)*dr*(exp(-bd*bd/(Rs*Rs*.004))*3.+exp(-bd/(Rs*.35))*.9+exp(-bd/(Rs*1.6))*.3+pow(abs(cos(ba*2.+.4)),160.)*exp(-bd/(Rs*2.2))*.7); /* the diamond ring: one blazing point and a short starburst */
-  { float ang=acos(clamp(dot(normalize(d),-dir),-1.,1.));float beads=smoothstep(.45,.8,vn(vec2(an*26.,2.)))*exp(-pow((cr-1.)/.012,2.))*exp(-ang*ang*5.);F+=vec3(1.,.95,.88)*beads*dr*1.6; } /* Baily's beads along the limb */
+  vec3 F=mix(vec3(1.,.82,.6),vec3(1.,.99,.96),limb)*sun*(2.+1.6*limb);
+  F+=vec3(1.,.95,.86)*(exp(-r/(Rs*.5))*.55+exp(-r/(Rs*2.2))*.3+exp(-r/(Rs*8.))*.13)*pow(vis,1.4);
+  vec2 dir=length(M-S)>1e-5?normalize(M-S):vec2(1.,0.);vec2 B=S-dir*Rs;vec2 bv=P-B;float bd=length(bv),ba=atan(bv.y,bv.x);
+  float star=pow(abs(cos(ba*3.+.3)),220.)*exp(-bd/(Rs*1.6))+pow(abs(cos(ba*3.+.82)),400.)*exp(-bd/(Rs*.9))*.6;
+  F+=vec3(1.,.98,.94)*dr*(exp(-bd*bd/(Rs*Rs*.003))*3.2+exp(-bd/(Rs*.3))*.9+exp(-bd/(Rs*1.4))*.32+star*.8); /* the diamond ring: one blazing point and a fine six-point star */
+  { float ang=acos(clamp(dot(dn,-dir),-1.,1.));float beads=smoothstep(.45,.8,vn(dn*30.+2.))*exp(-pow((cr-1.)/.012,2.))*exp(-ang*ang*5.);F+=vec3(1.,.95,.88)*beads*dr*1.8; } /* Baily's beads */
   c=1.-(1.-c)*exp(-F);
   gl_FragColor=vec4(c+dith(),1.);}`,
-    halo: `/* diamond dust on a frozen day: a crisp blue sky, the sun ringed by a 22-degree halo (red inside, white outside), bright sun dogs either side,
-   the upper tangent arc, a faint parhelic line, and ice crystals glinting in the air; the halo brightens and fades as the crystals drift */
+    halo: `/* diamond dust under a thin veil of cirrostratus on a frozen day: a crisp, deep blue sky; the sun as a camera sees it; a 22-degree halo (red inside, white outside)
+   brightening and fading as the crystals drift; vivid sun dogs either side; the upper tangent arc; a faint parhelic line; and ice glinting in the air */
 uniform vec2 sp,hr;
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2(sp.x*asp,sp.y);float R=hr.x;
-  vec3 sky=mix(vec3(.13,.34,.7),vec3(.56,.74,.93),pow(uv.y,.85));sky=mix(sky,vec3(.86,.92,.98),smoothstep(.72,1.,uv.y)*.65);
+  vec3 sky=mix(vec3(.09,.28,.64),vec3(.5,.7,.92),pow(uv.y,.8));sky=mix(sky,vec3(.84,.9,.97),smoothstep(.7,1.,uv.y)*.7);
   vec2 d=P-S;float r=length(d),x=(r-R)/R;
-  float den=.62+.38*fbm3(P*2.2+vec2(t*.035,t*.012)),den2=.62+.38*fbm3(P*1.6+vec2(-t*.03,3.));
-  sky*=1.-.1*(1.-smoothstep(.5,1.,r/R)); /* the sky inside the ring is a shade darker, as it is in a real halo */
-  vec3 L=(vec3(1.,.4,.28)*exp(-pow((x+.004)/.011,2.))*.75+vec3(1.,.82,.5)*exp(-pow((x-.012)/.018,2.))*.55+vec3(.92,.96,1.)*exp(-max(x-.02,0.)/.13)*smoothstep(-.01,.03,x)*.32)*den;
+  float veil=fbm(vec2(P.x*1.3+t*.01,P.y*5.5+.6*fbm3(P*2.+vec2(t*.006,0.))));veil=smoothstep(.3,.85,veil); /* the thin, streaky high cloud the halo forms in */
+  sky=mix(sky,vec3(.86,.91,.97),veil*.22+.06);
+  float den=.45+.75*veil,den2=.55+.6*fbm3(P*1.6+vec2(-t*.03,3.));
+  sky*=1.-.12*(1.-smoothstep(.5,1.,r/R));
+  vec3 L=(vec3(1.,.38,.26)*exp(-pow((x+.004)/.01,2.))*.8+vec3(1.,.8,.46)*exp(-pow((x-.011)/.016,2.))*.6+vec3(.92,.96,1.)*exp(-max(x-.02,0.)/.14)*smoothstep(-.01,.03,x)*.36)*den;
   for(int i=0;i<2;i++){float sg=i==0?-1.:1.;vec2 q=P-(S+vec2(sg*R*1.05,0.));float hx=q.x*sg;
-    vec3 pc=hx<0.?vec3(1.,.42,.32):mix(vec3(1.,.92,.75),vec3(.72,.86,1.),clamp(hx/(R*.07),0.,1.));
-    float core=exp(-pow(q.y/(R*.045),2.))*exp(-pow(hx/(R*.03),2.));float soft=exp(-pow(q.y/(R*.09),2.))*exp(-pow(hx/(R*.07),2.));
-    float tail=exp(-pow(q.y/(R*.025),2.))*exp(-max(hx,0.)/(R*.4))*smoothstep(-.01*R,.03*R,hx);
-    L+=pc*(core*2.1+soft*.6+tail*.28)*den2*(.85+.15*sin(t*.6+sg));} /* the sun dogs, coloured like a little rainbow, red toward the sun */
-  { float xx=(P.x-S.x)/R,yc=S.y-R*1.01+R*.33*xx*xx,dy=(P.y-yc)/R;L+=vec3(1.,.9,.74)*exp(-pow(dy/.011,2.))*exp(-pow(xx/.6,2.))*.45*den; } /* the upper tangent arc */
-  L+=vec3(1.)*exp(-pow((P.y-S.y)/(R*.005),2.))*.12*exp(-abs(P.x-S.x)/(R*2.2))*den2; /* the parhelic line through the sun */
-  L+=vec3(1.,.98,.94)*(exp(-r*r/(R*R*.0007))*2.4+exp(-r/(R*.08))*.6+exp(-r/(R*.45))*.16);
+    vec3 pc=hx<-.006*R?vec3(1.,.35,.24):hx<.01*R?vec3(1.,.78,.4):mix(vec3(.95,.97,1.),vec3(.62,.8,1.),clamp(hx/(R*.08),0.,1.));
+    float core=exp(-pow(q.y/(R*.05),2.))*exp(-pow(hx/(R*.028),2.));float soft=exp(-pow(q.y/(R*.1),2.))*exp(-pow(hx/(R*.075),2.));
+    float tail=exp(-pow(q.y/(R*.022),2.))*exp(-max(hx,0.)/(R*.45))*smoothstep(-.01*R,.03*R,hx);
+    L+=pc*(core*2.4+soft*.6+tail*.3)*den2*(.85+.15*sin(t*.6+sg));}
+  { float xx=(P.x-S.x)/R,yc=S.y-R*1.01+R*.33*xx*xx,dy=(P.y-yc)/R;L+=vec3(1.,.88,.7)*exp(-pow(dy/.011,2.))*exp(-pow(xx/.6,2.))*.5*den; }
+  L+=vec3(1.)*exp(-pow((P.y-S.y)/(R*.005),2.))*.13*exp(-abs(P.x-S.x)/(R*2.2))*den2;
+  L+=vec3(1.,.98,.94)*(exp(-r*r/(R*R*.0007))*2.6+exp(-r/(R*.07))*.65+exp(-r/(R*.4))*.18+exp(-r/(R*1.6))*.08);
+  { float an=atan(d.y,d.x);L+=vec3(1.,.97,.92)*pow(abs(cos(an*3.+.2)),80.)*exp(-r/(R*.18))*.35; } /* a faint six-point star in the lens */
+  { vec2 C=vec2(.5*asp,.5),ax=C-S;for(int k=0;k<3;k++){float fk=float(k);vec2 G=S+ax*(1.3+fk*.45);float gd=length(P-G),gr=R*(.05+fk*.035);L+=mix(vec3(.6,.9,.8),vec3(.8,.7,1.),fk*.5)*smoothstep(gr,gr*.8,gd)*.035;} } /* faint lens ghosts across the frame */
   { vec2 g=P*64.+vec2(t*.5,t*1.1);vec2 id=floor(g);float h=hs(id);if(h>.94){vec2 f=fract(g)-.5-vec2(hs(id+1.)-.5,hs(id+2.)-.5)*.5;float tw=pow(max(0.,sin(t*(1.4+h*3.)+h*40.)),16.);
-    L+=mix(vec3(.82,.92,1.),vec3(1.,.92,.82),fract(h*13.))*(exp(-dot(f,f)*500.)+(exp(-abs(f.x)*70.)*exp(-f.y*f.y*1800.)+exp(-abs(f.y)*70.)*exp(-f.x*f.x*1800.))*.5)*tw*(.5+.8*exp(-r/(R*1.3))); } } /* diamond dust glinting */
+    L+=mix(vec3(.82,.92,1.),vec3(1.,.92,.82),fract(h*13.))*(exp(-dot(f,f)*500.)+(exp(-abs(f.x)*70.)*exp(-f.y*f.y*1800.)+exp(-abs(f.y)*70.)*exp(-f.x*f.x*1800.))*.5)*tw*(.5+.8*exp(-r/(R*1.3))); } }
   vec3 c=1.-(1.-sky)*exp(-L);gl_FragColor=vec4(c+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
@@ -2279,7 +2291,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
       gl.uniform2f(L('res'), w, h); gl.uniform1f(L('t'), t % 1000);
       for (const k in U) { const v = U[k], l = L(k); if (!l) continue; if (typeof v === 'number') gl.uniform1f(l, v); else if (typeof v === 'string') gl.uniform3fv(l, rgb(v)); else if (v.length === 2) gl.uniform2fv(l, v); else if (v.length === 3) gl.uniform3fv(l, v); else gl.uniform4fv(l, v); }
-      if (name === 'clouds') { moonTex(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(L('tex'), 0); }
+      if (name === 'clouds' || name === 'eclipse') { moonTex(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(L('tex'), 0); }
       gl.drawArrays(gl.TRIANGLES, 0, 3); return true; }
   };
 })();
@@ -2301,27 +2313,53 @@ function eclTick() { // where the moon is: it slides across slowly, lingers over
 function eclU() { eclTick(); const [sx, sy] = toUV(W * .62, H * .2), Rs = W * .085 * scale / cv.height, asp = cv.width / cv.height, dx = .944, dy = -.33;
   return { sp: [sx, sy], mp: [sx + dx * ECL.d * Rs / asp, sy + dy * ECL.d * Rs], rr: [Rs, Rs * 1.03], ek: [ECL.dk, ECL.tot, Math.min(1, ECL.dr), ECL.vis] }; }
 const FLY = Array.from({ length: 96 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random() ** 1.5, ph: Math.random() * 7, f1: .12 + Math.random() * .22, f2: .1 + Math.random() * .18, per: 2.4 + Math.random() * 3.4, off: Math.random(), w: 16 + Math.random() * 34 }));
+const BOKEH = () => sprite('bokeh', 96, 96, g => { const rg = g.createRadialGradient(48, 48, 0, 48, 48, 46); rg.addColorStop(0, 'rgba(224,255,150,.55)'); rg.addColorStop(.72, 'rgba(214,255,130,.7)'); rg.addColorStop(.9, 'rgba(236,255,170,.95)'); rg.addColorStop(1, 'rgba(214,255,130,0)'); g.fillStyle = rg; g.beginPath(); g.arc(48, 48, 46, 0, 7); g.fill(); });
 function drawFireflies(a, near) { // soft lights drifting on their own slow paths, each blinking on and off at its own rhythm; the near ones large and out of focus
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const halo = softBlob('186,255,104'), core = softBlob('250,255,206');
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const halo = softBlob('186,255,104'), core = softBlob('250,255,206'), bok = BOKEH();
   for (const f of FLY) { if (near ? f.z < .86 : f.z >= .86) continue; const dn = clamp01((a * 1.25 - (f.x * 7.31 + f.y * 3.17) % 1) / .25); if (dn <= 0) continue;
     const x = f.x * W + Math.sin(t * f.f1 + f.ph) * f.w + Math.sin(t * f.f1 * 2.3 + f.ph * 2) * f.w * .35, y = H * (.16 + .82 * Math.sqrt(f.y)) + Math.cos(t * f.f2 + f.ph * 1.3) * f.w * .7 + Math.sin(t * .07 + f.ph) * 10;
     const u = (t / f.per + f.off) % 1, pulse = u < .42 ? Math.sin(u / .42 * Math.PI) ** 2 : 0, gl = (.07 + .93 * pulse) * dn * a, s = near ? 2.2 + f.z * 1.8 : .85 + f.z * 1.5;
-    ctx.globalAlpha = gl * (near ? .22 : .55); ctx.drawImage(halo, x - 16 * s, y - 16 * s, 32 * s, 32 * s);
-    ctx.globalAlpha = gl * (near ? .32 : .95); ctx.drawImage(core, x - 3.2 * s, y - 3.2 * s, 6.4 * s, 6.4 * s); }
+    if (near) { ctx.globalAlpha = gl * .16; ctx.drawImage(halo, x - 16 * s, y - 16 * s, 32 * s, 32 * s); ctx.globalAlpha = gl * .5; ctx.drawImage(bok, x - 6 * s, y - 6 * s, 12 * s, 12 * s); continue; } // out of focus: a soft disc with a brighter rim, like a lens sees it
+    ctx.globalAlpha = gl * .55; ctx.drawImage(halo, x - 16 * s, y - 16 * s, 32 * s, 32 * s);
+    ctx.globalAlpha = gl * .95; ctx.drawImage(core, x - 3.2 * s, y - 3.2 * s, 6.4 * s, 6.4 * s); }
   ctx.restore(); ctx.globalAlpha = 1; }
-function duskHills(a) { // low hills in silhouette along the bottom, the nearer one darker
-  [[.865, 16, '62,46,98', .85], [.925, 12, '28,22,54', .95]].forEach(([b, am, c, al], i) => { ctx.fillStyle = `rgba(${c},${al * a})`; ctx.beginPath(); ctx.moveTo(-10, H + 20);
-    for (let x = -10; x <= W + 10; x += 6) ctx.lineTo(x, H * b + Math.sin(x * .011 + 1 + i * 2.1) * am + Math.sin(x * .029 + 2 + i) * am * .4); ctx.lineTo(W + 10, H + 20); ctx.closePath(); ctx.fill(); }); }
+const hillY = (x, i) => H * [.865, .925][i] + Math.sin(x * .011 + 1 + i * 2.1) * [16, 12][i] + Math.sin(x * .029 + 2 + i) * [16, 12][i] * .4;
+const GRASS = Array.from({ length: 150 }, (_, i) => ({ x: (i + Math.random() * .8) / 150, h: 9 + Math.random() ** 1.6 * 30, l: (Math.random() - .5) * .5, w: .9 + Math.random() * 1.1, ph: Math.random() * 7, i: Math.random() < .35 ? 0 : 1 }));
+function duskHills(a) { // low hills in silhouette along the bottom, the nearer one darker; grass along their crests, swaying in the evening air
+  [['74,56,112', .85], ['24,19,48', .97]].forEach(([c, al], i) => { const g = ctx.createLinearGradient(0, H * .84, 0, H); g.addColorStop(0, `rgba(${c},${al * a})`); g.addColorStop(1, `rgba(${i ? '14,11,30' : '40,30,70'},${al * a})`); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-10, H + 20);
+    for (let x = -10; x <= W + 10; x += 6) ctx.lineTo(x, hillY(x, i)); ctx.lineTo(W + 10, H + 20); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = `rgba(${c},${al * a})`; ctx.lineCap = 'round';
+    for (const b of GRASS) { if (b.i !== i) continue; const x = b.x * W, y = hillY(x, i) + 2, sw = Math.sin(t * .9 + b.ph + x * .02) * 2.2 + Math.sin(t * .37 + x * .007) * 2, hh = b.h * (i ? 1 : .6);
+      ctx.lineWidth = b.w * (i ? 1 : .7); ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + b.l * hh * .3, y - hh * .6, x + b.l * hh + sw, y - hh); ctx.stroke(); }
+    if (!i) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .18 * a; ctx.drawImage(softBlob('255,150,120'), -W * .2, H * .8, W * 1.4, H * .12); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } }); } // the last light of the sunset rim-lights the far hill
 const PET = Array.from({ length: 96 }, () => { const z = Math.random() ** 1.4; return { x: Math.random(), y: Math.random(), z, r: Math.random() * 7, vr: (Math.random() - .5) * 1.8, tp: Math.random() * 7, tf: 1.1 + Math.random() * 2.1, sw: 10 + Math.random() * 24, sf: .4 + Math.random() * .6 }; }); let petT = 0, petG = 0;
 const PETAL = back => sprite('petal' + back, 96, 112, g => { g.scale(2, 2); g.beginPath(); g.moveTo(24, 54); g.bezierCurveTo(4, 40, 4, 14, 17, 5); g.quadraticCurveTo(21, 3, 24, 10); g.quadraticCurveTo(27, 3, 31, 5); g.bezierCurveTo(44, 14, 44, 40, 24, 54); g.closePath(); // a cherry petal: rounded, with the little notch at its tip
   const rg = g.createRadialGradient(24, 50, 2, 24, 26, 34); rg.addColorStop(0, back ? 'rgb(232,136,166)' : 'rgb(242,156,186)'); rg.addColorStop(.45, back ? 'rgb(244,186,206)' : 'rgb(252,204,220)'); rg.addColorStop(1, back ? 'rgb(248,220,230)' : 'rgb(255,238,244)'); g.fillStyle = rg; g.fill();
   g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = .8; g.stroke(); g.strokeStyle = 'rgba(222,118,154,.22)'; g.beginPath(); g.moveTo(24, 50); g.quadraticCurveTo(22.6, 30, 24, 14); g.stroke(); });
+const PETALSOFT = back => sprite('petals' + back, 14, 16, g => g.drawImage(PETAL(back), 0, 0, 14, 16)); // drawn small and scaled up: soft, out of focus, close to the lens
+const BRANCH = (() => { const R = (a, b) => a + Math.random() * (b - a), segs = [], fl = []; // in units of the screen width, from a point just off the left edge
+  const grow = (x, y, an, len, w, n, f) => { const pts = [[x, y]]; for (let k = 0; k < n; k++) { const ang = an + Math.sin(k * 1.7 + w) * .16 + R(-.06, .06), nx = x + Math.cos(ang) * len / n, ny = y + Math.sin(ang) * len / n; segs.push([x, y, nx, ny, w * (1 - k / n * .6)]); x = nx; y = ny; pts.push([x, y]);
+      if (f && k > 0) for (let j = 0; j < (k === n - 1 ? 3 : 2); j++) if (Math.random() < .8) fl.push([x + R(-.03, .03), y + R(-.035, .02), R(.85, 1.2), R(0, 6), Math.random() < .2]); } return pts; };
+  const m = grow(-.05, 0, -.1, .64, 8, 7, true); grow(m[2][0], m[2][1], -.85, .2, 3.6, 4, true); grow(m[3][0], m[3][1], .45, .18, 3, 4, true); grow(m[5][0], m[5][1], -.6, .16, 2.4, 3, true); grow(m[4][0], m[4][1], .9, .1, 2, 3, true);
+  return { segs, fl }; })();
+function drawBranch(a) { // a flowering cherry branch reaching in from the left, swaying a little in the breeze
+  const sw = Math.sin(t * .55) * .014 + Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6) * .025, oy = H * .27;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(-W * .05, oy); ctx.rotate(sw); ctx.translate(W * .05, -oy); ctx.lineCap = 'round';
+  for (const [x0, y0, x1, y1, w] of BRANCH.segs) { ctx.strokeStyle = '#4b3641'; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x0 * W, oy + y0 * W); ctx.lineTo(x1 * W, oy + y1 * W); ctx.stroke(); }
+  for (const [x0, y0, x1, y1, w] of BRANCH.segs) { ctx.strokeStyle = 'rgba(176,138,146,.4)'; ctx.lineWidth = Math.max(.7, w * .3); ctx.beginPath(); ctx.moveTo(x0 * W, oy + y0 * W - w * .22); ctx.lineTo(x1 * W, oy + y1 * W - w * .22); ctx.stroke(); } // dark bark with a soft highlight along its top
+  const pt = PETAL(false), pb = PETAL(true);
+  for (const [x, y, sc, r0, bud] of BRANCH.fl) { const X = x * W, Y = oy + y * W, z = sc * (1 + .035 * Math.sin(t * 1.3 + r0));
+    if (bud) { ctx.fillStyle = 'rgb(236,124,164)'; ctx.beginPath(); ctx.ellipse(X, Y, 3.6 * z, 5 * z, r0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,220,232,.7)'; ctx.beginPath(); ctx.ellipse(X - 1 * z, Y - 1.5 * z, 1.4 * z, 2.2 * z, r0, 0, 7); ctx.fill(); continue; }
+    for (let k = 0; k < 5; k++) { ctx.save(); ctx.translate(X, Y); ctx.rotate(r0 + k * 1.2566); ctx.drawImage(k % 2 ? pb : pt, -7.5 * z, -16 * z, 15 * z, 17 * z); ctx.restore(); }
+    const cg = ctx.createRadialGradient(X, Y, 0, X, Y, 4.5 * z); cg.addColorStop(0, 'rgba(206,66,112,.95)'); cg.addColorStop(1, 'rgba(240,140,176,0)'); ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(X, Y, 4.5 * z, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgb(255,212,132)'; for (let k = 0; k < 7; k++) { const an = r0 + k * .8976; ctx.beginPath(); ctx.arc(X + Math.cos(an) * 4.2 * z, Y + Math.sin(an) * 4.2 * z, .9 * z, 0, 7); ctx.fill(); } } // the flower's pink heart and its golden stamens
+  ctx.restore(); ctx.globalAlpha = 1; }
 function drawPetals(a, near) { // petals tumbling down on the breeze, turning as they fall; now and then a gust carries them sideways
   if (!near) { const dt = Math.min(.05, Math.max(0, t - petT)); petT = t; petG += dt * (16 + 110 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
   for (const p of PET) { if (near ? p.z < .86 : p.z >= .86) continue; const dn = clamp01((a * 1.2 - (p.x * 7.31 + p.y * 3.17) % 1) / .2); if (dn <= 0) continue;
     const z = p.z, sp = (20 + 46 * z) * (.8 + p.sf * .4), y = ((p.y * (H + 80) + t * sp) % (H + 80)) - 40, x = ((p.x * (W + 80) + petG * (.5 + z) + Math.sin(t * p.sf + p.r) * p.sw) % (W + 80) + W + 80) % (W + 80) - 40;
     const tb = Math.cos(t * p.tf + p.tp), s = near ? 1.15 + z * .8 : .34 + z * .55;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(p.r + t * p.vr + Math.sin(t * p.sf * 1.7) * .4); ctx.scale(s * (.22 + .78 * Math.abs(tb)), s); ctx.globalAlpha = a * dn * (near ? .7 : .92); ctx.drawImage(PETAL(tb < 0), -12, -14, 24, 28); ctx.restore(); }
+    ctx.save(); ctx.translate(x, y); ctx.rotate(p.r + t * p.vr + Math.sin(t * p.sf * 1.7) * .4); ctx.scale(s * (.22 + .78 * Math.abs(tb)), s); ctx.globalAlpha = a * dn * (near ? .75 : .92); ctx.drawImage(near ? PETALSOFT(tb < 0) : PETAL(tb < 0), -12, -14, 24, 28); ctx.restore(); }
   ctx.globalAlpha = 1; }
 const GLINT = Array.from({ length: 30 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random(), per: 1.8 + Math.random() * 2.8, off: Math.random() }));
 const glintS = () => sprite('glint', 96, 96, g => { const c = 48, rg = g.createRadialGradient(c, c, 0, c, c, 14); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(1, 'rgba(225,240,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 96, 96);
@@ -2342,7 +2380,7 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
   sun: () => { const q = wx.phase === 'out' ? 1 : clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // (once it has finished its sweep it stays gone: fading out never restarts it at the left edge) // Apple-style: the glare slides in from the edge, peaks, then dissolves
     const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
     return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
-  firefly: () => ({ cvar: [1, .12, 5.3], cTop: '20,24,64', cMid: '78,60,124', cBot: '232,146,122', cd: '58,46,96', cl: '244,178,170', cov: [.92, .52, .55, .12], scl: 1.5, drift: [.015, 0], cloudA: .7, stars: .55, glow: [...toUV(W * .3, H * 1.02), .4], glowC: '255,160,110' }), // Apple's dusk: deep blue overhead, violet, then a warm glow where the sun has gone
+  firefly: () => ({ cvar: [1, .12, 5.3], cTop: '20,24,64', cMid: '78,60,124', cBot: '232,146,122', cd: '58,46,96', cl: '244,178,170', cov: [.92, .52, .55, .12], scl: 1.5, drift: [.015, 0], cloudA: .7, stars: .55, glow: [...toUV(W * .3, H * 1.02), .4], glowC: '255,160,110', moon: [...toUV(W * .76, H * .13), W * .055 * scale / cv.height, .85] }), // Apple's dusk: deep blue overhead, violet, then a warm glow where the sun has gone
   blossom: () => ({ cvar: [-1, .2, 9.1], cTop: '84,140,214', cMid: '140,184,234', cBot: '246,214,226', cd: '214,200,228', cl: '255,252,255', cov: [-.05, .5, .45, .14], scl: 1.15, drift: [.035, 0], cloudA: .8, glow: [...toUV(W * .86, H * .05), .08], glowC: '255,246,236' }), // a soft spring sky: clear blue fading to blossom pink, white clouds drifting
   meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], mets: .8, scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
@@ -2387,7 +2425,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
   if (wx.kind === 'firefly') { duskHills(a); drawFireflies(a, false); } // the dusk: hills in silhouette, fireflies above them
-  if (wx.kind === 'blossom') drawPetals(a, false);
+  if (wx.kind === 'blossom') { drawPetals(a, false); drawBranch(a); }
   if (wx.kind === 'eclipse' && !G) eclTick();
   if (wx.kind === 'alien' && !G) drawUFO(a); // without the GPU sky, the hand-drawn ship; with it, the sky renders the ship in 3D // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
