@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="50dcf34">
+<meta name="build" content="a5c8095">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1893,53 +1893,65 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   if(dd.y<0.)c+=disk*smoothstep(R*.99,R*1.02,r);else c+=disk;
   c+=vec3(1.,.7,.4)*(.18*exp(-abs(dd.y)/(R*.5))*exp(-abs(dd.x)/(R*6.))+.14*exp(-max(r-R,0.)/(R*.9)))*bk*smoothstep(R*.98,R*1.06,r); /* bloom */
   c=1.-exp(-c*1.55);c=pow(c,vec3(.95));gl_FragColor=vec4(c+dith(),1.);}`,
-    alien: `/* the invasion, rendered like an Apple product shot: the ship is a real 3D shape (ray-marched distance fields), lit by a studio: a large softbox overhead,
-   a strip light at the side and a coloured back light. Titanium reflects the studio with Fresnel, the glass dome mirrors it, soft occlusion in the creases;
-   a thin iridescent rim light, a ring of lights turning underneath, and the beam pouring from the lit aperture */
+    alien: `/* the invasion: a vast dark disc hangs low under a heavy overcast night. It is a real 3D shape (ray-marched): a wide, thin disc of dark brushed metal,
+   a low cap ringed with amber light, tiers stepping down underneath with a ring of amber lights and a glowing aperture that pours a beam of light down.
+   The metal reflects the dark sky and the amber glow beneath it; the clouds round it are lit amber from below. Its lights breathe slowly, and now and then surge */
 uniform vec2 sc;uniform float sk,ba;
-vec3 iri(float a){a=fract(a);vec3 c1=vec3(.62,.42,1.),c2=vec3(1.,.45,.72),c3=vec3(1.,.68,.38),c4=vec3(.38,.62,1.);
-  return a<.25?mix(c1,c2,a*4.):a<.5?mix(c2,c3,(a-.25)*4.):a<.75?mix(c3,c4,(a-.5)*4.):mix(c4,c1,(a-.75)*4.);}
 float sdE(vec3 p,vec3 r){float k0=length(p/r),k1=length(p/(r*r));return k0*(k0-1.)/k1;}
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
-float body(vec3 p){float lens=sdE(p,vec3(1.,.12,1.));float collar=sdE(p-vec3(0.,.06,0.),vec3(.46,.08,.46));return smin(lens,collar,.08);} /* a thin lens rising to a soft collar */
-float dome(vec3 p){return sdE(p-vec3(0.,.12,0.),vec3(.29,.17,.29));} /* a frosted glass dome set in the collar, lit softly from within */
-float map(vec3 p){return min(body(p),dome(p));}
-vec3 nrm(vec3 p){vec2 e=vec2(.0015,-.0015);return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));}
-vec3 studio(vec3 r){vec3 c=vec3(.025,.022,.05)+vec3(.05,.04,.1)*smoothstep(-.3,.6,r.y); /* the dark studio, a little night violet */
-  c+=vec3(.22,.22,.28)*smoothstep(-.4,.9,r.y); /* a soft fill sweeping up the studio */
-  c+=vec3(1.)*smoothstep(.3,.75,r.y)*1.05; /* the large softbox overhead */
-  c+=vec3(.55,.58,.7)*exp(-pow((r.y+.05)/.12,2.))*.5; /* a horizon line of light, for the gradient highlight along the rim */
-  float az=atan(r.z,r.x);c+=vec3(.9,.93,1.)*exp(-pow((az+2.2)/.28,2.))*smoothstep(-.15,.35,r.y)*smoothstep(.75,.3,r.y)*.7; /* a tall strip light at the side */
-  c+=iri(az/6.2832+t*.03)*exp(-pow((az-1.)/.6,2.))*smoothstep(.3,-.2,r.y)*.35; /* a coloured back light */
-  c+=vec3(.2,.26,.42)*smoothstep(-.05,-.85,r.y); /* light bouncing up from the beam and the ground below */
+float map(vec3 p){float disc=sdE(p,vec3(1.,.075,1.)),cap=sdE(p-vec3(0.,.06,0.),vec3(.3,.15,.3));
+  float t1=sdE(p-vec3(0.,-.055,0.),vec3(.7,.075,.7)),t2=sdE(p-vec3(0.,-.1,0.),vec3(.42,.06,.42)),t3=sdE(p-vec3(0.,-.14,0.),vec3(.2,.045,.2));
+  return min(min(smin(disc,cap,.02),smin(t1,t2,.015)),min(t3,disc));}
+vec3 nrm(vec3 p){vec2 e=vec2(.001,-.001);return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));}
+vec3 env(vec3 r){vec3 c=vec3(.03,.034,.045)+vec3(.12,.13,.16)*smoothstep(-.1,.8,r.y);        /* the overcast sky above */
+  c+=vec3(.55,.28,.1)*smoothstep(.05,-.7,r.y)*.38;                                                 /* the amber glow below, from its own beam on the clouds */
+  c+=vec3(.16,.13,.12)*exp(-pow(r.y/.12,2.));                                                     /* a dim horizon */
+  c+=vec3(.6,.65,.78)*pow(max(dot(r,normalize(vec3(.6,.55,-.4))),0.),10.)*1.1;                     /* a cold moon somewhere behind the clouds */
   return c;}
-void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(sc.x*asp,sc.y);float RX=asp*.25;
-  vec3 c=mix(vec3(.047,.039,.149),vec3(.243,.165,.44),smoothstep(0.,.62,uv.y));c=mix(c,vec3(.6,.38,.6),smoothstep(.55,1.05,uv.y)); /* the meteor shower's night: deep blue-violet to rose at the horizon */ /* the game's night: deep indigo to violet, warming at the horizon */
-  c+=starfield(P,.5)*smoothstep(.55,.15,uv.y);
-  float sl=exp(-length((P-C)/vec2(asp*.4,.16))); /* the ship's light on the clouds round it, as the moon lights its clouds */
-  for(int k=0;k<3;k++){float fk=float(k);vec2 cp=vec2(P.x*(1.2+fk*.4)+t*(.012+fk*.006)+fk*3.,P.y*(3.+fk)-fk);float cl=smoothstep(.36,.9,fbm(cp));cl=cl*cl*(3.-2.*cl)*smoothstep(.02+fk*.1,.45+fk*.2,uv.y)*(1.-.55*exp(-pow((uv.y-.78)/.12,2.))); /* wide, soft fades: no edges, and thinner around the balls */
-    vec3 cc=mix(vec3(.2,.14,.38),vec3(.85,.62,.88),.3+.3*fk/2.)+vec3(1.,.72,.45)*sl*(1.1-fk*.25);c=mix(c,cc,cl*(.45-fk*.1)*sk);} /* soft cloud banks, lit mint from within */
-  /* the camera: a little below the ship, looking up at it */
-  vec3 ro=vec3(0.,-.46,-4.4),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
-  float tl=.035*sin(t*.47),tc=cos(tl),ts=sin(tl);vec3 rt0=rt;rt=rt*tc+up*ts;up=up*tc-rt0*ts; /* it hovers with the slightest sway, never rigid */
+void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2(sc.x*asp,sc.y);float RX=asp*.33;
+  float br=.72+.28*sin(t*1.25),surge=smoothstep(.93,1.,sin(t*.37)*.5+.5);br+=surge*.6;            /* its lights breathe; now and then they surge */
+  /* a heavy, slowly churning overcast night, lit amber from beneath where the ship is */
+  vec3 c=mix(vec3(.015,.02,.035),vec3(.035,.035,.05),smoothstep(.0,1.,uv.y));
+  vec2 sd2=(P-C)/vec2(asp*.42,.16);float sl=exp(-dot(sd2,sd2));
+  for(int k=0;k<3;k++){float fk=float(k);vec2 cp=vec2(P.x*(1.4+fk*.5)+t*(.01+fk*.005)+fk*3.,P.y*(2.6+fk*.8)-fk+t*.006);vec2 wq=vec2(fbm3(cp*.7+t*.02),fbm3(cp*.7-t*.015+4.));
+    float cl=smoothstep(.3,.85,fbm(cp+wq*1.2));float under=smoothstep(.45,.7,fbm(cp+wq*1.2+vec2(0.,.12)));        /* the cloud and how much of it faces down */
+    vec3 cc=vec3(.04,.045,.062)+vec3(.05,.055,.07)*(fk/2.)+vec3(1.,.48,.18)*sl*(.18+.5*(1.-under))*(.5+.5*br)*(1.-fk*.25);
+    c=mix(c,cc,cl*(.8-fk*.15)*sk);}
+  c+=vec3(1.,.5,.2)*exp(-pow((uv.y-1.02)/.14,2.))*exp(-pow((P.x-C.x)/(asp*.3),2.))*.12*sk;     /* the glow where the beam reaches the ground */
+  /* the camera: a little below the ship, looking up at it; the ship sways very slightly */
+  vec3 ro=vec3(0.,-.62,-4.3),fw=normalize(-ro),rt=normalize(cross(vec3(0.,1.,0.),fw)),up=cross(fw,rt);float S=4.4;
+  float tl=.025*sin(t*.41),tc=cos(tl),ts=sin(tl);vec3 rt0=rt;rt=rt*tc+up*ts;up=up*tc-rt0*ts;
   vec2 q=(P-C)/RX/S;vec3 rd=normalize(fw+rt*q.x+up*(-q.y));
-  /* where the aperture appears on screen, so the beam starts exactly there */
-  vec3 ap=vec3(0.,-.13,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(0.,RX*.24);
+  vec3 ap=vec3(0.,-.19,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(aq.x,-aq.y)*RX*S;   /* the beam starts exactly at the aperture */
   vec2 bq=P-Ce;float cs=cos(ba),sn=sin(ba);bq=vec2(cs*bq.x-sn*bq.y,sn*bq.x+cs*bq.y);
-  float w0=RX*.06,wdt=w0+max(bq.y,0.)*.2;float cone=smoothstep(wdt,wdt*.15,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*2.3); /* defined at its source, fading as it falls */
-  float mist=.6+.55*fbm3(vec2(bq.x*6.,bq.y*2.6+t*.3))+.2*fbm3(vec2(bq.x*15.,bq.y*6.+t*.55));
-  vec3 bcol=mix(vec3(1.,.8,.55),vec3(1.,.6,.4),.5*smoothstep(.2,1.,abs(bq.x)/wdt)); /* warm amber light */
-  c+=bcol*cone*mist*.26*sk;c+=vec3(1.,.93,.82)*smoothstep(wdt*.35,0.,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*4.)*.3*sk;
-  float pool=exp(-pow((P.x-Ce.x-sn*.95)/(asp*.42),2.)-pow((uv.y-1.03)/.1,2.));c+=vec3(.7,.75,1.)*pool*.05*sk;
-  /* the soft iridescent glow it casts */
-  float gl=length((P-C)/vec2(RX*1.1,RX*.55));c+=vec3(.85,.68,.75)*exp(-gl*gl*.22)*.42*sk+vec3(1.,.72,.45)*exp(-gl*gl*1.2)*.3*sk; /* a luminous halo, as strong as the moon's */ /* its own soft halo, like the moon's */
-  /* the ship itself is drawn by the game, in the same soft 2D style as the blocks and balls */
-
-  { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
-    c=mix(c,vec3(.26,.24,.44)+vec3(.9,.65,.45)*.15,veil*.55*sk);
-    float wisp=smoothstep(.5,.85,fbm(vec2(P.x*2.4-t*.03,P.y*7.+1.3)))*exp(-pow((P.y-C.y-RX*.06)/(RX*.18),2.))*exp(-pow((P.x-C.x)/(RX*1.6),2.)); /* thin cloud drifting in front, lit by it */
-    c=mix(c,vec3(.62,.55,.85)+vec3(.6,.45,.3)*.3,wisp*.6*sk); }
-  c=1.-exp(-c*1.35);gl_FragColor=vec4(c+dith(),1.);}`,
+  float w0=RX*.12,wdt=w0+max(bq.y,0.)*.22;float cone=smoothstep(wdt,wdt*.1,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*1.6);
+  float mist=.55+.6*fbm3(vec2(bq.x*5.,bq.y*2.2-t*.35))+.25*fbm3(vec2(bq.x*14.,bq.y*5.-t*.6));
+  vec2 dg=vec2(bq.x*70.,bq.y*36.+t*2.2);float dh=hs(floor(dg));float dust=dh>.965?exp(-dot(fract(dg)-.5,fract(dg)-.5)*14.)*(dh-.965)/.035:0.;  /* dust rising in it */
+  c+=vec3(1.,.66,.32)*cone*(mist*.3+dust*1.2)*br*sk;c+=vec3(1.,.88,.7)*smoothstep(wdt*.3,0.,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*3.)*.35*br*sk;
+  float gl=length((P-C)/vec2(RX*1.2,RX*.6));c+=vec3(1.,.5,.18)*exp(-gl*gl*2.)*.07*br*sk;      /* its glow in the air */
+  /* the ship */
+  float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1,hitG=0.;
+  if(h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
+    for(int i=0;i<64;i++){p=ro+rd*tt;float dd=map(p);if(dd<.0006){hit=1.;break;}tt+=dd*.85;if(tt>7.)break;}
+    if(hit>0.){vec3 n=nrm(p),v=-rd,r=reflect(rd,n);float ndv=clamp(dot(n,v),0.,1.),rxz=length(p.xz),ang=atan(p.z,p.x);
+      float brush=.85+.15*vn(vec2(rxz*220.,ang*2.));                                              /* brushed metal: fine circular grain */
+      vec3 F0=vec3(.42,.42,.46)*brush;vec3 col=env(r)*(F0+(1.-F0)*pow(1.-ndv,5.))+vec3(.012,.012,.016);
+      col*=1.-.35*smoothstep(.995,1.,abs(sin(rxz*42.)))*step(.0,p.y);                            /* panel seams across the top */
+      col*=1.-.5*smoothstep(.96,1.,abs(sin(rxz*30.)))*step(p.y,-.03);                             /* and grooves round the tiers */
+      vec3 E=vec3(0.),AM=vec3(1.,.55,.18);
+      E+=AM*smoothstep(.03,.0,abs(rxz-.29))*smoothstep(.03,.06,p.y)*smoothstep(.12,.09,p.y)*3.5;   /* the amber ring round the cap */
+      float sa=(fract(ang/6.2832*15.+.5)-.5)*6.2832/15.*rxz;float la=length(vec2(sa,rxz-.6));E+=(vec3(1.,.85,.6)*smoothstep(.028,.008,la)*4.+vec3(1.,.5,.15)*smoothstep(.07,.0,la)*1.6)*step(p.y,-.04); /* a ring of round amber lights round the tiers */   /* a ring of amber lights round the tiers */
+      float sb=(fract(ang/6.2832*7.+.62)-.5)*6.2832/7.*rxz;float lb=length(vec2(sb,rxz-.86));E+=(vec3(1.,.82,.55)*smoothstep(.025,.006,lb)*3.5+vec3(1.,.45,.12)*smoothstep(.06,0.,lb)*1.2)*step(p.y,-.01); /* a few lights under the rim */
+      E+=mix(AM,vec3(1.,.93,.8),smoothstep(.17,.04,rxz))*smoothstep(.19,.14,rxz)*step(p.y,-.17)*4.;          /* the aperture */
+      col+=vec3(.45,.5,.65)*pow(1.-ndv,3.)*.35;                                                  /* cold light along its edges */
+      col+=E*br;col+=vec3(1.,.55,.2)*smoothstep(-.02,-.2,n.y)*.08*br;                             /* the underside catches its own light */
+      c=mix(c,col,sk);hitG=1.;}}
+  { vec2 cw=(P-C-vec2(0.,-RX*.13))/vec2(RX*.38,RX*.09);c+=vec3(1.,.52,.18)*exp(-dot(cw,cw))*.7*br*sk*(1.-hitG*.85); } /* the cap's amber ring, hidden above the disc, its light rising over the rim */
+  /* thin cloud drifting in front of it, lit from below */
+  float wisp=smoothstep(.5,.85,fbm(vec2(P.x*2.2-t*.03,P.y*6.+1.3)))*exp(-pow((P.y-C.y-RX*.04)/(RX*.2),2.))*exp(-pow((P.x-C.x)/(RX*1.5),2.));
+  c=mix(c,vec3(.12,.1,.1)+vec3(1.,.55,.22)*.12*br,wisp*.55*sk);
+  c*=1.-.35*smoothstep(.45,1.1,length((uv-vec2(.5,.45))*vec2(1.,.8)));                              /* a heavy vignette */
+  c=1.-exp(-c*1.5);gl_FragColor=vec4(c+dith(),1.);}`,
     bholemap: `/* the black hole, rendered live from its traced light paths: each pixel knows where its light crossed the disk (first crossing in front,
    second the far side bent over and under the hole); the disk turns faster near the hole, its silky rings drift, the side turning towards us is brighter */
 uniform sampler2D mA,mB;uniform vec2 va; /* va: the maps' aspect, and how far the event has arrived */
@@ -2143,7 +2155,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   });
   if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
-  if (wx.kind === 'alien') { if (G) drawUFO(a); else drawMother(a); } // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
+  if (wx.kind === 'alien' && !G) drawUFO(a); // without the GPU sky, the hand-drawn ship; with it, the sky renders the ship in 3D // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
   if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
     ctx.globalAlpha = (.18 + .3 * (1 - z)) * a; ctx.drawImage(softBlob('240,246,255'), x - r, y - r, r * 2, r * 2); } ctx.globalAlpha = 1; }); // layers of out-of-focus ice drifting in the air
