@@ -838,7 +838,7 @@ const AMBDEF = {
   bhole: () => padLayer([41.2, 61.74, 82.41, 123.47, 185], 420, .9), // a vast, slow, low E: awe rather than fear
   bholeAir: () => noiseLayer(src => { const l = filt('lowpass', 240, .7); src.connect(l); return l; }, .6), // the rush of matter swirling in
   ufo: () => { const A = audioGraph(), out = ac.createGain(), o1 = ac.createOscillator(), o2 = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain(), lp = filt('lowpass', 420, 1.2); out.gain.value = 0; // the mothership's soft hum, slowly wavering
-    o1.frequency.value = 69.3; o2.frequency.value = 103.8; o2.type = 'triangle'; lfo.frequency.value = .9; lg.gain.value = 3; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); o1.connect(lp); o2.connect(lp); lp.connect(out); out.connect(A.amb); [o1, o2, lfo].forEach(o => o.start()); return { out, srcs: [o1, o2, lfo] }; },
+    o1.frequency.value = 69.3; o2.frequency.value = 103.8; o2.type = 'triangle'; lfo.frequency.value = .9; lg.gain.value = 3; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); const g1 = ac.createGain(), g2 = ac.createGain(); g1.gain.value = .07; g2.gain.value = .035; o1.connect(g1); o2.connect(g2); g1.connect(lp); g2.connect(lp); lp.connect(out); out.connect(A.amb); [o1, o2, lfo].forEach(o => o.start()); return { out, srcs: [o1, o2, lfo] }; }, // each voice kept low: a hum felt more than heard
 };
 const AMBV = { bhole: .5, bholeAir: .35, ufo: .4, rainHi: .11, rainLo: .14, wind: .2, snowAir: .3, aurora: .55, night: .5, fog: .45, heat: .32 };
 let sndPrev = '', sndAcc = {};
