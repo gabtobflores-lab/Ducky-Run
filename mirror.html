@@ -2103,7 +2103,7 @@ float lay(vec2 p,vec2 c,float lean,float h0,float h1,float w,float amp,float sd,
   float ww=w*(.7+.5*vn(vec2(y*1.1-t*.015,sd+4.)));
   float u=(q.x-cx)/ww;MU=u;MY=y;
   float across=exp(-u*u*(u<0.?1.25:.7));                                                     /* a little more defined on one side, where the sheet turns */
-  float hb=h1+SL*(q.x-c.x);float env=smoothstep(h0,h0+(hb-h0)*.6,y)*(1.-smoothstep(hb-.05,hb+.05,y)); /* SL tilts the hem */              /* a long fade upward, a soft hem below */
+  float hb=h1+SL*(q.x-c.x)-abs(SL)*1.6*(q.x-c.x)*(q.x-c.x); /* SL tilts the hem, and curves it */float env=smoothstep(h0,h0+(hb-h0)*.6,y)*(1.-smoothstep(hb-.05,hb+.05,y)); /* SL tilts the hem */              /* a long fade upward, a soft hem below */
   float rays=1.-rk+rk*smoothstep(.28,.78,vn(vec2(u*1.9+sd*7.,y*.28+t*.01)))*(.8+.2*vn(vec2(u*5.5+sd,y*.5-t*.015)));
   return across*env*rays;}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 pp=vec2(p.x/(asp/.46),p.y);
@@ -2115,7 +2115,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 p
   hz=vec2(.28,.52);vz=vec2(.35,.95);SL=0.;
   float d=lay(pp,vec2(.38,.62),.1,-.05,.62,.06,.03,14.,.35);a+=mix(BLUE,VIO,.35)*d*.35; /* the far layer behind on the right */
   SL=.55;float m=lay(pp,vec2(.285,.65),.17,-.3,.65,.09,.05,11.,.55);float k=smoothstep(.2,.65,MY);a+=mix(BLUE,CYAN,k)*m*(.45+1.15*k);
-  float cr=lay(pp,vec2(.29,.64),.17,.15,.64,.065,.05,11.,.85);float ck=smoothstep(.3,.62,MY);a+=mix(CYAN,vec3(.8,1.,1.),.35)*cr*ck*.6; /* the bright rays in the core */
+  float cr=lay(pp,vec2(.29,.64),.17,.15,.64,.065,.05,11.,.85);float ck=smoothstep(.3,.62,MY);a+=mix(CYAN,vec3(.85,1.,1.),.45)*cr*ck*.75; /* the bright rays in the core */
   float h=lay(pp,vec2(.255,.64),.17,.25,.62,.012,.05,11.,0.);a+=vec3(.75,1.,1.)*h*.4;SL=0.;
   float v=lay(pp,vec2(.35,.56),.08,.2,.56,.022,.025,16.,.4);a+=mix(vec3(.2,.38,1.),vec3(.36,.3,1.),smoothstep(.3,.55,MY))*v*1.15; /* the blue-violet streak */
   float s=lay(pp,vec2(.1,.86),.16,.55,.86,.05,.03,12.,.45);a+=mix(vec3(.16,.6,.85),BLUE,.4)*s*.4; /* faint streaks low on the left */
