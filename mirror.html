@@ -2225,8 +2225,8 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
   hail: () => ({ cvar: [-1, 0, 7.3], cTop: '84,100,128', cMid: '104,120,148', cBot: '128,144,170', cd: '60,70,92', cl: '180,192,210', cov: [.08, 1.02, 1.12, .18], scl: 1.7, drift: [.06, 0], cloudA: 1 }),
   wind: () => ({ cTop: '62,110,184', cMid: '86,138,206', cBot: '120,166,222', cd: '104,130,180', cl: '255,255,255', cov: [-.04, .82, .8, .08], scl: 1.05, drift: [.1 * windDir, 0], cloudA: 1 }),
   heat: () => ({ cTop: '40,92,170', cMid: '70,130,204', cBot: '108,156,214', hazeC: '90,60,30', hazeK: .22, cov: [0, 1, 0, .1], shim: 1, glow: [...toUV(W * .78, H * .09), .4], glowC: '255,246,232', sun: [...toUV(W * .78, H * .09), 1, 0] }),
-  sun: () => { const q = clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // Apple-style: the glare slides in from the edge, peaks, then dissolves
-    const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
+  sun: () => { const q = wx.phase === 'out' ? 1 : clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .25)) * (wx.phase === 'out' ? 1 : .55 + .45 * smooth(clamp01((1 - q) / .4))); // fading out it holds where it is and dims with the sky, never jumping back // Apple-style: the glare slides in from the edge, peaks, then dissolves
+    const sx = W * (.06 + e * .8), sy = H * (.15 + .05 * Math.sin(q * Math.PI)); /* it glides across the top and stays in view */ const [gx, gy] = toUV(sx, sy);
     return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
   meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], mets: .8, scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
