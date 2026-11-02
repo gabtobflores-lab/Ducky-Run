@@ -2063,14 +2063,13 @@ uniform sampler2D mA,mB;uniform vec2 va,vb;
 vec3 lsky(vec2 P,vec2 C,float RE){vec2 d=P-C;float r2=max(dot(d,d),1e-5);vec2 b=d-RE*RE*d/r2;
   float mag=clamp(RE*RE/r2,0.,4.);vec2 src=C+b+vec2(t*.012,sin(t*.05)*.01);                                    /* the sky drifts slowly behind the hole */
   vec3 c=starfield(src,.4)*(1.+mag*.8);
-  c+=vec3(.5,.46,.6)*exp(-pow((src.y-.62-.18*(src.x-C.x))/.09,2.))*.03*(.6+.4*fbm3(src*vec2(6.,14.)));           /* a faint Milky Way, bent with the rest */
   return c;} /* va: the maps' aspect, and how far the event has arrived; vb: the balls' sideways position (parallax) and seconds since the last tap */
 vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.72,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
 vec3 disk(vec4 m,float far){float wm=smoothstep(.45,.95,m.a);if(wm<=0.)return vec3(0.); /* a soft edge where the light paths stop hitting the disk: no speckled, jagged rim */float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
   float om=t*1.5*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
   float s=fbm3(vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.))*.9+.1*sin(r*9.+3.*sin(r*1.7)); /* silky structure, smooth all the way round */
-  float fil=fbm3(vec2(cos(pr)*3.2,sin(pr)*3.2)+vec2(r*5.5,0.));s+=.85*(smoothstep(.42,.82,fil)-.3);   /* fine filaments of gas, sheared into streaks by the turning */
-  float hs1=pow(max(0.,cos(pr*2.+r*.9)),18.)*exp(-pow((r-3.6)/.7,2.))*.9;s+=hs1;                    /* a couple of hot clumps orbiting close in */
+  float silk=fbm3(vec2(r*7.5+cos(pr)*.55,sin(pr)*.55+r*.4));s+=.38*(silk-.5);                       /* fine concentric silk, as in the film: each ring carries its own pattern round at its own speed */
+  s+=.22*pow(max(0.,cos(pr+r*.6)),6.)*exp(-pow((r-3.8)/1.1,2.));                                     /* one soft brighter swell riding the inner disk */
   float T=pow(r/2.6,-.75)*pow(max(1.-sqrt(2.4/r),0.),.25);float I=pow(T,2.6)*(.75+.55*s);
   I*=smoothstep(2.6,3.1,r)*pow(clamp((10.-r)/4.,0.,1.),1.5)*(1.+.28*sin(ph));                 /* soft inner and outer edges; the approaching side brighter */
   return hot(clamp((r-2.6)/3.4,0.,1.))*I*(far>.5?1.15:1.)*wm;}
@@ -2116,10 +2115,10 @@ float sheet(vec2 p,float x0,float A,float fr,float ph,float w,float sd,float y0,
   float sl=A*fr*cos(arg);SLP=abs(sl);                                                        /* how steeply the sheet runs sideways here */
   float ww=w*(.8+.35*vn(vec2(y*1.6-t*.018,sd+5.)));
   float u=(p.x-cx)/ww/sqrt(1.+sl*sl);UU=u;                                                   /* measured across the sheet, so it keeps its width as it turns */
-  float edge=exp(-pow((u-.45)/.5,2.));                                                      /* the lit edge */
-  float body=exp(-u*u*.7)*.6+exp(-u*u*.18)*.12;                                             /* the soft body and a wide glow round it */
+  float edge=exp(-pow((u-.35)/.62,2.));                                                      /* the lit edge */
+  float body=exp(-u*u*.5)*.62+exp(-u*u*.14)*.16;                                             /* the soft body and a wide glow round it */
   float fold=1.+.9*smoothstep(.6,2.4,SLP);                                                  /* where it turns we look along it */
-  float rays=.74+.26*smoothstep(.15,.95,fbm3(vec2(p.x*38.+sd*13.+u*1.5,y*.8-t*.05)));                      /* silky rays, soft-edged */
+  float rays=.84+.16*smoothstep(.2,.9,fbm3(vec2(p.x*22.+sd*13.+u*1.2,y*.6-t*.05)));   /* soft, wide rays: a texture in the light, not stripes */                      /* silky rays, soft-edged */
   float pulse=.82+.18*sin(y*7.-t*.9+sd*2.)*(.5+.5*sin(t*.31+sd));                                          /* slow waves of brightness travelling down the sheet: it breathes */  /* fine vertical rays */
   float env=smoothstep(y0,y0+.12,y)*(1.-smoothstep(y1-.14,y1,y));
   float halo=exp(-u*u*.06)*.09;                                                                           /* the luminous air round the sheet, very wide and faint */
@@ -2128,10 +2127,10 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 p
   vec3 a=vec3(0.);
   vec3 CYAN=vec3(.35,.95,.95),TEAL=vec3(.25,.9,.72),BLUE=vec3(.1,.38,1.),VIO=vec3(.48,.32,1.),LAV=vec3(.72,.62,1.);
   /* the far sheet: violet and lavender, swinging the other way behind */
-  float f=sheet(pp,.27,.085,5.2,2.6,.075,7.,.02,.82);vec3 fc=mix(VIO,LAV,smoothstep(-.2,.8,UU));a+=fc*f*.38;
+  float f=sheet(pp,.27,.085,5.2,2.6,.075,7.,.02,.82);vec3 fc=mix(VIO,LAV,smoothstep(-.2,.8,UU));a+=fc*f*.3;
   /* the main sheet: a great S from the top down to just above the balls */
   float m=sheet(pp,.22,.1,6.1,.4+t*.05,.085,3.,-.05,.74);
-  vec3 mc=mix(VIO,BLUE,smoothstep(-1.2,-.2,UU));mc=mix(mc,CYAN,smoothstep(.1,.6,UU));mc=mix(mc,TEAL,smoothstep(.2,.9,UU)*(.45+.5*smoothstep(.35,.7,pp.y)));   /* green-teal lower down, as in a real aurora */
+  vec3 mc=mix(mix(VIO,BLUE,.55),BLUE,smoothstep(-1.4,-.4,UU));mc=mix(mc,CYAN,smoothstep(.1,.6,UU));mc=mix(mc,TEAL,smoothstep(.2,.9,UU)*(.45+.5*smoothstep(.35,.7,pp.y)));   /* green-teal lower down, as in a real aurora */
   mc=mix(mc,vec3(.9,1.,.98),smoothstep(1.3,2.2,m)*.55);   /* the folds burn almost white */a+=mc*m*1.05;
   /* a smaller sheet high on the left, teal fading to blue */
   float s=sheet(pp,.08,.05,7.,1.2,.055,11.,-.05,.42);a+=mix(BLUE,TEAL,smoothstep(-.3,.7,UU))*s*.45;
@@ -2277,7 +2276,6 @@ function drawBackWeather() { // events that live behind the blocks and balls
   });
   if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
-  if (wx.kind === 'bhole') drawInfall(a); // matter spiralling in, so the hole is always visibly at work
   if (wx.kind === 'alien' && !G) drawUFO(a); // without the GPU sky, the hand-drawn ship; with it, the sky renders the ship in 3D // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
   if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
