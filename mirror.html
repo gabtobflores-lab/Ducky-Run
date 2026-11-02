@@ -2064,14 +2064,14 @@ uniform sampler2D mA,mB;uniform vec2 va,vb;
    beta = theta - thetaE^2/theta. Near the hole the stars stream round it, stretch into arcs and an Einstein ring, and pairs of images are born and
    die at the ring as the sky slowly turns behind - the effect that makes Interstellar's black hole feel alive */
 vec3 lsky(vec2 P,vec2 C,float RE){vec2 d=P-C;float r2=max(dot(d,d),1e-5);vec2 b=d-RE*RE*d/r2;
-  float mag=clamp(RE*RE/r2,0.,4.);vec2 src=C+b+vec2(t*.012,sin(t*.05)*.01);                                    /* the sky drifts slowly behind the hole */
-  vec3 c=starfield(src,.4)*(1.+mag*.8);
+  float mag=clamp(RE*RE/r2,0.,1.);vec2 src=C+b+vec2(t*.012,sin(t*.05)*.01);                                    /* the sky drifts slowly behind the hole */
+  vec3 c=starfield(src,.4)*(1.+mag*.4)*smoothstep(RE*RE*.9,RE*RE*1.6,r2); /* stars brighten a little near the ring but never smear into specks at its edge */
   return c;} /* va: the maps' aspect, and how far the event has arrived; vb: the balls' sideways position (parallax) and seconds since the last tap */
 vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.72,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
 vec3 disk(vec4 m,float far){float wm=smoothstep(.45,.95,m.a);if(wm<=0.)return vec3(0.); /* a soft edge where the light paths stop hitting the disk: no speckled, jagged rim */float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
-  float om=t*2.1*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
-  vec2 pc=vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.);vec2 wq=vec2(fbm3(pc*1.3+vec2(t*.13,0.)),fbm3(pc*1.3+vec2(4.,-t*.11)));  /* the gas churns as it orbits: its pattern is warped by a slowly changing flow, so it never looks like a turning picture */
-  float s=fbm3(pc+wq*1.6)*1.25-.1+.1*sin(r*9.+3.*sin(r*1.7));
+  float om=t*2.6*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
+  vec2 pc=vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.);vec2 wq=vec2(fbm3(pc*1.3+vec2(t*.24,0.)),fbm3(pc*1.3+vec2(4.,-t*.2)));  /* the gas churns as it orbits: its pattern is warped by a slowly changing flow, so it never looks like a turning picture */
+  float s=fbm3(pc+wq*2.)*1.45-.2+.1*sin(r*9.+3.*sin(r*1.7));
   float silk=fbm3(vec2(r*7.5+cos(pr)*.55,sin(pr)*.55+r*.4));s+=.3*(silk-.5);
   float clump=fbm3(vec2(cos(pr),sin(pr))*2.6+vec2(r*1.9,r*.7));s+=.75*(smoothstep(.35,.8,clump)-.35);   /* clouds of brighter and darker gas around the ring, carried round by the turning and sheared into arcs: the motion you see at a glance */                       /* fine concentric silk, as in the film: each ring carries its own pattern round at its own speed */
   s+=.22*pow(max(0.,cos(pr+r*.6)),6.)*exp(-pow((r-3.8)/1.1,2.));                                     /* one soft brighter swell riding the inner disk */
