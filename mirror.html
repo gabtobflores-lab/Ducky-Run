@@ -2179,13 +2179,13 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 p
     for (const k in ex) gl.uniform2fv(L(k), ex[k]);
     gl.drawArrays(gl.TRIANGLES, 0, 3); return true; };
   // the aurora: an original shader, nothing but maths, so it is sharp at any size and never repeats
-  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 || window.__mdSim ? 1.25 : 1.6); // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
+  const aurora = () => { if (!ok()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 0 || window.__mdSim ? 1.1 : 1.35); // always the phone's full sharpness (only the lowest quality tier steps down, and only to 2x)
     const w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
     if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
     if (!prog('aurora')) { failed = true; return false; }
     const vt = VA.tex(); if (vt && VA.aspect()) return pass('auroravid', [['vid', vt, 0]], null, w, h, { va: [VA.aspect(), 0] }); /* the pre-rendered loop */
     return pass('aurora', [], null, w, h, {}); };
-  const bhole = () => { if (!ok()) return false; const T2 = bhTex(); if (T2) { const sc = Math.min(devicePixelRatio || 1, 2), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc)); if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
+  const bhole = () => { if (!ok()) return false; const T2 = bhTex(); if (T2) { const sc = Math.min(devicePixelRatio || 1, 2) * (qLevel ? .6 : .75), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc)); if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
       if (!prog('bholemap')) return false; const ok2 = pass('bholemap', [['mA', T2[0], 0], ['mB', T2[1], 1]], null, w, h, { va: [BHMAP[0].naturalWidth / BHMAP[0].naturalHeight, wx.a], vb: [(bhPar += ((bx ? (bx[0] - W * .25) / (W * .25) : 0) - bhPar) * .06), Math.min(9, t - tapT)] }); return ok2; }
     const vt = VB.tex(); if (!vt || !VB.aspect()) return false; const sc = Math.min(devicePixelRatio || 1, qLevel > 1 ? 2 : 3), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
     if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } if (!prog('auroravid')) return false; return pass('auroravid', [['vid', vt, 0]], null, w, h, { va: [VB.aspect(), 0] }); }; // the ray-traced loop, when it is available // one pass, straight to the screen, drawn entirely by the GPU: light enough for full resolution on every iPhone
@@ -2193,7 +2193,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 p
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); VA.get(); },
     aurora, bhole, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? (qLevel ? .7 : 1) : qLevel ? .45 : .6), w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? (qLevel ? .5 : .68) : qLevel ? .45 : .6) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
