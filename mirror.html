@@ -925,6 +925,7 @@ let state = 'menu', t = 0, shake = 0, demoT = 0;
 let fog = 0, resumeT = 0, fogT = 0; const bv = [0, 0], trail = [[], []], SPRING = 36;
 let goldOn = false, goldK = 0, goldAt = -9; // Golden Run (Supporter)
 let bestBanked = false; // this run's score was already saved when the app went to the background
+const ABD = { k: 0, lift: 0, tick: 0 }, ABD_T = 4.2; // the alien beam's pull: seconds in it before it takes the balls
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 // visual-only feedback timers (they never affect the rules)
 const fx = { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 };
@@ -940,7 +941,7 @@ const WX = {
   rain: { dur: 16, p: 1 / 120, warn: 2.2, note: ['Rain incoming', 'Wet lanes ahead'] }, // a gentler storm: soft glows in the cloud, no strikes and no thunder; each shower either brings more blocks or a slight speed-up
   snow: { dur: 16, p: 1 / 150, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
   bhole: { dur: 20, p: 1 / 1700, warn: 1.6, note: ['Black hole', 'Gravity bends the starlight'] }, // very rare and purely to look at
-  alien: { dur: 18, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Ships can warp across'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
+  alien: { dur: 18, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
 };
 const CHIPS = []; let chipT = 0;
 const HAIL = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1.8 + Math.random() * Math.random() * 3.6, s: .75 + Math.random() * .6 })), hailHits = [];
@@ -953,7 +954,7 @@ const ELEC = { base: '#7cc4ff', hi: '#ffffff', lo: '#3b82f6', deep: '#1f56c9', c
 const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks slide, so collisions use where they are drawn
 function reset() {
   const p = params();
-  pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
+  ABD.k = ABD.lift = 0; pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
   fog = 0; resumeT = 0; fogT = 0;
   bestBanked = false; lastRank = 0; score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false; gate = null;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
@@ -1027,7 +1028,7 @@ $('#pmenu').onclick = () => { if (fresh()) return; show('#pause', false); goMenu
 function goMenu() { wxHide(); show('#over', false); endDaily(); state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
 function showOver() {
   if (state !== 'dead') return;
-  $('#over .logo').innerHTML = won ? '<span class="c">COMPLETE</span>' : '<span class="p">CRASH</span>';
+  $('#over .logo').innerHTML = won ? '<span class="c">COMPLETE</span>' : crash.ball[0] && crash.ball[0].abd ? '<span class="p">TAKEN</span>' : '<span class="p">CRASH</span>';
   $('#onew').textContent = newBest ? 'NEW BEST' : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo x${fx.maxCombo}` : '';
   syncDiffUI(); $('#oshare').classList.toggle('hide', !score); show('#over', true);
   $('#onote').textContent = freeHardRun ? 'That was today\'s free Hard run. Unlock Hard to play it any time.' : '';
@@ -1161,6 +1162,7 @@ function update(dt) {
     fx.dead += dt;
     const drift = won ? Math.max(0, 1 - fx.dead / 1.6) ** 2 : Math.max(0, 1 - fx.dead / .35); // the world glides to a stop instead of carrying on
     const mv = speed * dt * (won ? 1 : .3) * drift; for (const o of things) o.y += mv; if (gate) gate.y += mv;
+    if (crash.ball[0] && crash.ball[0].abd && fx.dead >= 1.75 && !crash.shown) { crash.shown = true; showOver(); } // after the abduction has played out
     for (let j = 0; j < 2; j++) { const c = crash.ball[j]; if (c && !c.burst && fx.dead >= c.at) { c.burst = true; c.bt = fx.dead; shatter(j, bx[j], BY, c.elec); } }
     return;
   }
@@ -1191,7 +1193,7 @@ function update(dt) {
     banner = capped ? 'MAX SPEED' : 'SPEED UP!'; beep(380 + Math.min(level, 12) * 35, .4, 'triangle', .08, 280); haptic('medium');
   }
   speed += (targetSpeed(level) - speed) * Math.min(1, dt * 2.5);
-  updateWeather(dt); updateAliens(dt); updateGold(dt);
+  updateWeather(dt); updateAliens(dt); updateBeam(dt); updateGold(dt); if (state !== 'play') return;
 
   const lane = W / N;
   const sk = wxSK();
@@ -1385,6 +1387,33 @@ function updateWeather(dt) {
     o.ex = A + (B - A) * (p1 - p2); o.l = Math.abs(o.ex - A) <= Math.abs(o.ex - B) ? o.l0 : N - 1 - o.l0;
   }
 }
+// ---------- the ship's beam: it slowly lifts the balls while they stay in the middle columns beneath it; held too long, they are taken ----------
+const apPos = () => [W * .5 + Math.sin(t * .05) * W * .04, H * .23 + W * .055]; // where the beam leaves the ship
+function updateBeam(dt) {
+  const on = wx.kind === 'alien' && wx.phase === 'on' && wx.a > .6 && state === 'play', inb = on && pos === per - 1;
+  ABD.k = inb ? Math.min(1, ABD.k + dt / ABD_T) : 0; // stepping out of the middle frees them at once
+  ABD.lift += ((inb ? 5 + 36 * ABD.k ** 1.4 : 0) - ABD.lift) * Math.min(1, dt * (inb ? 2.5 : 9));
+  if (inb) { ABD.tick -= dt; if (ABD.tick <= 0) { ABD.tick = .75 - .55 * ABD.k; beep(160 + 260 * ABD.k, .25, 'sine', .018 + .03 * ABD.k, 40); haptic(ABD.k > .6 ? 'medium' : 'light'); } } else ABD.tick = 0; // a low pulse that quickens as it pulls
+  if (inb && ABD.k >= 1) abduct();
+}
+function abduct() { // taken by the beam: both balls rise into the ship, stretching and dimming, and vanish in a flash at its aperture
+  state = 'dead'; shake = 0; fx.freeze = 0; fx.dead = 0; crash.shards = []; crash.waves = []; crash.tmpl = null; wxHide(); crash.first = 0;
+  crash.shown = false; crash.ball = [0, 1].map(i => ({ at: 99, burst: false, elec: false, abd: true, y0: BY - ABD.lift, x0: bx[i] }));
+  hush(2600, 1.6, .5, .4, 300, 0, .3); beep(140, 1.5, 'sine', .07, 700); haptic('error');
+  if (score > bestNow() || (bestBanked && score >= bestNow())) { bests[bkey()] = score; newBest = true; saveBests(); }
+  lastRank = recordRun(score); }
+function drawAbducted(i, c, r, P) { // the ball rising up the beam into the ship
+  const [ax, ay] = apPos(), k = clamp01(fx.dead / 1.25), e = k * k * (3 - 2 * k), x = c.x0 + (ax - c.x0) * e + Math.sin(fx.dead * 9 + i * 3) * 6 * (1 - e), y = c.y0 + (ay - c.y0) * e;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2); g.addColorStop(0, `rgba(255,190,110,${.5 * (1 - k * .5)})`); g.addColorStop(1, 'rgba(255,160,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, 7); ctx.fill();
+  if (k < 1) drawBall(x, y, r * (1 - .72 * e), P, i ? 1 : -1, 1 - .3 * e, 1 + .6 * e, .9, .5 * e, 1 - .5 * e);
+  if (Math.random() < .6) parts.push({ x: x + (Math.random() - .5) * r, y, vx: (Math.random() - .5) * 30, vy: -60 - Math.random() * 80, g: 0, life: .6, max: .6, r: 1.5 + Math.random() * 1.5, col: 'rgba(255,215,160,.9)' });
+  if (k >= 1 && !c.gone) { c.gone = true; for (let q = 0; q < 24; q++) { const an = Math.random() * 7, v = 60 + Math.random() * 140; parts.push({ x: ax, y: ay, vx: Math.cos(an) * v, vy: Math.sin(an) * v * .5, g: 40, life: .8, max: .8, r: 1.5 + Math.random() * 2, col: 'rgba(255,220,170,.95)' }); }
+    if (i === 0) { bell(1318.5, .02, 1.6, 'fx', .5); bell(987.77, .018, 1.8, 'fx', .5, .06); } }
+  if (k >= 1 && fx.dead < 1.6) { const f = 1 - (fx.dead - 1.25) / .35, fg = ctx.createRadialGradient(ax, ay, 0, ax, ay, 90); fg.addColorStop(0, `rgba(255,236,200,${.8 * f})`); fg.addColorStop(1, 'rgba(255,190,110,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(ax, ay, 90, 0, 7); ctx.fill(); } }
+function drawPull(x, y, r) { // while the beam pulls: amber light wraps the ball and motes rise off it toward the ship
+  const k = ABD.k; if (k <= 0) return; const g = ctx.createRadialGradient(x, y, r * .6, x, y, r * (2.2 + 1.4 * k)); g.addColorStop(0, `rgba(255,185,105,${.55 * k + .12})`); g.addColorStop(1, 'rgba(255,160,80,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * (2.2 + 1.4 * k), 0, 7); ctx.fill();
+  if (Math.random() < .25 + .6 * k) parts.push({ x: x + (Math.random() - .5) * r * 1.6, y: y - r * .3, vx: (Math.random() - .5) * 12, vy: -50 - 90 * k, g: 0, life: .7, max: .7, r: 1 + Math.random() * 1.6, col: 'rgba(255,215,160,.85)' }); }
 function updateAliens(dt) {
   if (wx.kind === 'alien' && wx.phase === 'on' && wx.a > .5) for (const o of things) if (o.k === 'b' && !o.alc && o.y > -70) { o.alc = true;
     if (!o.elec && !o.zap && Math.random() < .5) { o.al = 1; o.at = 0; const av = (BY - o.y) / Math.max(1, speed * wxSK()), m = N - 1 - o.l, partner = things.some(q => q !== o && q.k === 'b' && q.row === o.row && q.l === m);
@@ -1903,7 +1932,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
     alien: `/* the invasion: a vast dark disc hangs low under a heavy overcast night. It is a real 3D shape (ray-marched): a wide, thin disc of dark brushed metal,
    a low cap ringed with amber light, tiers stepping down underneath with a ring of amber lights and a glowing aperture that pours a beam of light down.
    The metal reflects the dark sky and the amber glow beneath it; the clouds round it are lit amber from below. Its lights breathe slowly, and now and then surge */
-uniform vec2 sc;uniform float sk,ba;
+uniform vec2 sc;uniform float sk,ba,pk;
 float sdE(vec3 p,vec3 r){float k0=length(p/r),k1=length(p/(r*r));return k0*(k0-1.)/k1;}
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
 float map(vec3 p){float disc=sdE(p,vec3(1.,.075,1.)),cap=sdE(p-vec3(0.,.06,0.),vec3(.3,.15,.3));
@@ -1934,7 +1963,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   float w0=RX*.12,wdt=w0+max(bq.y,0.)*.22;float cone=smoothstep(wdt,wdt*.1,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*1.6);
   float mist=.55+.6*fbm3(vec2(bq.x*5.,bq.y*2.2-t*.35))+.25*fbm3(vec2(bq.x*14.,bq.y*5.-t*.6));
   vec2 dg=vec2(bq.x*70.,bq.y*36.+t*2.2);float dh=hs(floor(dg));float dust=dh>.965?exp(-dot(fract(dg)-.5,fract(dg)-.5)*14.)*(dh-.965)/.035:0.;  /* dust rising in it */
-  c+=vec3(1.,.66,.32)*cone*(mist*.3+dust*1.2)*br*sk;c+=vec3(1.,.88,.7)*smoothstep(wdt*.3,0.,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*3.)*.35*br*sk;
+  c+=vec3(1.,.66,.32)*cone*(mist*.3+dust*1.2)*br*sk*(1.+1.6*pk);   /* it brightens as it pulls */c+=vec3(1.,.88,.7)*smoothstep(wdt*.3,0.,abs(bq.x))*smoothstep(-.01,.02,bq.y)*exp(-max(bq.y,0.)*3.)*.35*br*sk;
   float gl=length((P-C)/vec2(RX*1.2,RX*.6));c+=vec3(1.,.5,.18)*exp(-gl*gl*2.)*.07*br*sk;      /* its glow in the air */
   /* the ship */
   float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1,hitG=0.;
@@ -2127,7 +2156,7 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U;
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04, H * (.23 - .34 * (1 - ea))); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .14 }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04, H * (.23 - .34 * (1 - ea))); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .05, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0] }, cfg());
     if (k === 'storm') { const b = wx.bolt, bk = boltK(); if (b && b.pts) { const [bx, by] = toUV(b.pts[0][0], cloudH() * .4); U.bolt = [bx, by, Math.max(bk * 1.4, b.pre && b.t < b.pre + b.lead ? .35 * clamp01(b.t / b.pre) : 0)]; } }
   } else return false;
   if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' ? k : 'clouds', U))) return false;
@@ -2788,7 +2817,9 @@ function draw() {
       ctx.globalAlpha = .2; ctx.lineWidth = 36; ctx.beginPath(); ctx.moveTo(trail[i][trail[i].length >> 1], BY); ctx.lineTo(x, BY); ctx.stroke(); ctx.globalAlpha = 1;
     }
     const c = state === 'dead' ? crash.ball[i] : null;
-    if (!c) { if (goldK < .99) drawBall(x, BY, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8); if (goldK > .01) drawGoldBall(x, BY, r, i ? 1 : -1, sx, sy, goldK, t); }
+    const ly = BY - ABD.lift + (ABD.lift > 1 ? Math.sin(t * 3.1 + i * 1.7) * 2.5 * ABD.k : 0); // the beam lifts them, swaying
+    if (c && c.abd) drawAbducted(i, c, r, P);
+    else if (!c) { if (ABD.k > 0 && state === 'play') drawPull(x, ly, r); if (goldK < .99) drawBall(x, ly, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8); if (goldK > .01) drawGoldBall(x, ly, r, i ? 1 : -1, sx, sy, goldK, t); }
     else if (c.chain && !c.burst && !c.elec) { const q = clamp01(fx.dead / c.at); drawBall(x, BY, r * (1 + .12 * q), P, i ? 1 : -1, 1 + .06 * q, 1 - .05 * q, .6 + q * .4, q * .9); } // charging as the pulse arrives
     else if (c.elec && !c.burst) { // electrocution: blue-white flash wrapped in small arcs, then it bursts
       drawBall(x, BY, r * (1 + .06 * Math.random()), ELEC, i ? 1 : -1, 1, 1, 1, .85);
@@ -2799,7 +2830,7 @@ function draw() {
       const k = clamp01((fx.dead - (c.bt || 0)) / .06);
       if (k < 1) drawBall(x, BY + 3, r, c.elec ? ELEC : P, i ? 1 : -1, 1.32 + .25 * k, .7 - .3 * k, 1, 1, 1 - k);
     }
-    if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv; drawArrow(x, BY, (x < W / 2 ? 1 : -1) * nd, .32 + fx.arrow * .4, ease(fx.arrow)); }
+    if (state === 'play') { const nd = (pos + dirv > per - 1 || pos + dirv < 0) ? -dirv : dirv; drawArrow(x, BY - ABD.lift, (x < W / 2 ? 1 : -1) * nd, .32 + fx.arrow * .4, ease(fx.arrow)); }
   }
   if (goldOn) drawGoldBurst();
   parts.forEach(q => { ctx.globalAlpha = Math.max(0, q.life / q.max); ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 7); ctx.fill(); });
@@ -2873,7 +2904,7 @@ function draw() {
 
   // crash: darken + desaturate the frozen scene
   if (state === 'dead' && !won) {
-    const k = clamp01(fx.dead / .4);
+    const k = crash.ball[0] && crash.ball[0].abd ? clamp01((fx.dead - 1.35) / .4) : clamp01(fx.dead / .4); // an abduction plays out in full colour first
     ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${k * .55})`; ctx.fillRect(-20, -20, W + 40, H + 40); ctx.restore();
     ctx.fillStyle = `rgba(43,45,66,${k * .1})`; ctx.fillRect(-20, -20, W + 40, H + 40);
   }
@@ -2953,7 +2984,7 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
   ['meteor', 'e-night', 'Meteor shower', 'Shooting stars cross a clear night sky.', 0],
   ['aurora', 'e-aur', 'Aurora', 'The northern lights fill the sky.', 0],
   ['bhole', 'e-hole', 'Black hole', 'Very rare. Gravity bends the starlight around it.', 0],
-  ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side.', 1],
+  ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side, and the beam slowly pulls up anything that stays in the middle. Move out of the middle to break free.', 1],
 ];
 function eventsHTML() {
   return `<div class="sgrp guide${evOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="events" aria-expanded="${evOpen}"><span class="gi e-aur"><svg viewBox="0 0 24 24">${WXICON.aurora}</svg></span><b>Events</b><span class="gchev" aria-hidden="true">›</span></button>`
