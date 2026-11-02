@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="e31fec4">
+<meta name="build" content="7df0dcc">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1924,7 +1924,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   float tl=.035*sin(t*.47),tc=cos(tl),ts=sin(tl);vec3 rt0=rt;rt=rt*tc+up*ts;up=up*tc-rt0*ts; /* it hovers with the slightest sway, never rigid */
   vec2 q=(P-C)/RX/S;vec3 rd=normalize(fw+rt*q.x+up*(-q.y));
   /* where the aperture appears on screen, so the beam starts exactly there */
-  vec3 ap=vec3(0.,-.13,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(aq.x,-aq.y)*RX*S;
+  vec3 ap=vec3(0.,-.13,0.)-ro;vec2 aq=vec2(dot(ap,rt),dot(ap,up))/dot(ap,fw);vec2 Ce=C+vec2(0.,RX*.15);
   vec2 bq=P-Ce;float cs=cos(ba),sn=sin(ba);bq=vec2(cs*bq.x-sn*bq.y,sn*bq.x+cs*bq.y);
   float w0=RX*.06,wdt=w0+max(bq.y,0.)*.2;float cone=smoothstep(wdt,wdt*.15,abs(bq.x))*smoothstep(-.004,.015,bq.y)*exp(-max(bq.y,0.)*2.3); /* defined at its source, fading as it falls */
   float mist=.6+.55*fbm3(vec2(bq.x*6.,bq.y*2.6+t*.3))+.2*fbm3(vec2(bq.x*15.,bq.y*6.+t*.55));
@@ -1933,33 +1933,8 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   float pool=exp(-pow((P.x-Ce.x-sn*.95)/(asp*.42),2.)-pow((uv.y-1.03)/.1,2.));c+=vec3(.7,.75,1.)*pool*.05*sk;
   /* the soft iridescent glow it casts */
   float gl=length((P-C)/vec2(RX*1.1,RX*.55));c+=vec3(.8,.7,1.)*exp(-gl*gl*.22)*.5*sk+vec3(.6,1.,.9)*exp(-gl*gl*1.2)*.32*sk; /* a luminous halo, as strong as the moon's */ /* its own soft halo, like the moon's */
-  { vec3 dp=vec3(0.,.2,0.)-ro;vec2 dq=vec2(dot(dp,rt),dot(dp,up))/dot(dp,fw);vec2 Cd=C+vec2(dq.x,-dq.y)*RX*S;
-    float dg=length((P-Cd)/vec2(RX*.42,RX*.2));c+=vec3(.55,1.,.92)*exp(-dg*dg)*.16*sk; } /* the dome's soft glow in the air above the ship */
-  /* the ship */
-  float b=dot(ro,rd),h=b*b-dot(ro,ro)+1.1;
-  if(h>0.){float tt=-b-sqrt(h),hit=0.;vec3 p;
-    for(int i=0;i<56;i++){p=ro+rd*tt;float dd=map(p);if(dd<.0008){hit=1.;break;}tt+=dd;if(tt>7.)break;}
-    if(hit>0.){vec3 n=nrm(p),v=-rd,r=reflect(rd,n);float ndv=clamp(dot(n,v),0.,1.);
-      float ao=clamp(1.-3.*(.06-map(p+n*.06)),0.,1.)*clamp(1.-2.*(.15-map(p+n*.15)),0.,1.); /* soft occlusion in the creases */
-      float rxz=length(p.xz);vec3 col;
-      float ang=atan(p.z,p.x);
-      bool glass=dome(p)<body(p)+.0005;
-      vec3 F0=vec3(.42,.43,.47);vec3 fr=F0+(1.-F0)*pow(1.-ndv,5.);
-      col=studio(r)*fr*.95+vec3(.04,.04,.07); /* dark titanium: the studio's soft lights slide across it */
-      col+=vec3(1.)*pow(max(dot(r,normalize(vec3(-.45,.85,-.35))),0.),90.)*.9; /* the key light's crisp highlight */
-      float seam=smoothstep(.012,0.,abs(p.y+.004))*smoothstep(.9,.99,rxz); /* a fine seam of light round the rim */
-      col+=vec3(.78,1.,.95)*seam*(1.3+.25*sin(ang*3.-t*.8));
-      if(p.y<-.02){col*=.7;
-        float dots=smoothstep(.012,0.,abs(rxz-.62))*pow(max(0.,sin(ang*18.-t*.6)),24.);col+=vec3(.75,1.,.95)*dots*1.4; /* tiny lights, slowly turning */
-        col+=vec3(.9,1.,.98)*smoothstep(.13,.06,rxz)*2.2+vec3(.5,1.,.9)*smoothstep(.26,.06,rxz)*.45;} /* the aperture */
-      if(glass){float br=.85+.15*sin(t*.9);                                         /* frosted glass, glowing from inside: brightest through its middle, soft at the edges */
-        vec3 inner=mix(vec3(.35,.75,.75),vec3(.9,1.,.97),smoothstep(0.,.9,n.y))*(.45+.55*ndv)*br*1.7;
-        col=inner+studio(r)*(.04+.96*pow(1.-ndv,5.))*.75+vec3(1.)*pow(max(dot(r,normalize(vec3(-.45,.85,-.35))),0.),140.)*.8;
-        col+=vec3(.6,1.,.92)*smoothstep(.02,0.,abs(p.y-.12))*.25;}
-      if(!glass)col+=vec3(.5,1.,.9)*exp(-pow(length(p.xz)/.42,2.))*smoothstep(-.02,.1,p.y)*smoothstep(.0,.6,n.y)*.25; /* the dome's light falling on the collar round it */                  /* where the glass meets the collar, a faint line of its light */
-      else col*=.35+.65*ao;
-      col=mix(col,vec3(.3,.24,.46),.06); /* a little distance haze, the same violet as the night: it sits in the same air as the clouds */
-      c=mix(c,col,sk);}}
+  /* the ship itself is drawn by the game, in the same soft 2D style as the blocks and balls */
+
   { vec2 cq=vec2(P.x*1.8+t*.02,P.y*6.);float veil=smoothstep(.42,.8,fbm(cq))*exp(-pow((P.y-C.y+RX*.05)/(RX*.22),2.)); /* a thin veil of cloud drifting across the ship */
     c=mix(c,vec3(.26,.24,.44)+vec3(.4,.8,.75)*.15,veil*.55*sk);
     float wisp=smoothstep(.5,.85,fbm(vec2(P.x*2.4-t*.03,P.y*7.+1.3)))*exp(-pow((P.y-C.y-RX*.06)/(RX*.18),2.))*exp(-pow((P.x-C.x)/(RX*1.6),2.)); /* thin cloud drifting in front, lit by it */
@@ -2176,7 +2151,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   });
   if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
-  if (wx.kind === 'alien' && !G) drawMother(a); // the hand-drawn ship only when the GPU sky is unavailable
+  if (wx.kind === 'alien') { if (G) drawUFO(a); else drawMother(a); } // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
   if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
     ctx.globalAlpha = (.18 + .3 * (1 - z)) * a; ctx.drawImage(softBlob('240,246,255'), x - r, y - r, r * 2, r * 2); } ctx.globalAlpha = 1; }); // layers of out-of-focus ice drifting in the air
@@ -2204,6 +2179,29 @@ function drawSnow(a, near) { // snowfall in depth: far flakes small, sharp and s
       r = near ? 7 + z * 9 : .9 + z * 3.2, al = near ? .16 + .1 * (1 - z) : .45 + .5 * z;
     ctx.globalAlpha = al * a; if (!near && r < 2.2) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .7, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
   ctx.globalAlpha = 1; }
+function drawUFO(a) { // the ship in the game's own language: seen straight on like the blocks, soft vertical gradients, a thin top highlight, soft shadow and glow
+  const ea = wx.a * wx.a * (3 - 2 * wx.a), mx = W * .5 + Math.sin(t * .05) * W * .04, my = H * (.23 - .34 * (1 - ea)), hw = W * .24, hh = W * .075, bob = Math.sin(t * .9) * 2, y = my + bob;
+  ctx.save(); ctx.globalAlpha = a;
+  const glow = (rgb, r, al) => { const g = ctx.createRadialGradient(mx, y, r * .1, mx, y, r); g.addColorStop(0, `rgba(${rgb},${al})`); g.addColorStop(1, `rgba(${rgb},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(mx, y, r, r * .55, 0, 0, 7); ctx.fill(); };
+  { // the mothership of the alien blocks that fall in this event - their dark glass, drifting iridescence, iridescent rim and glowing white bar
+    const k = t * .9, irid = (x0, y0, w, h) => { const sh = Math.sin(k) * w * .5, ig = ctx.createLinearGradient(x0 - w * .5 + sh, y0, x0 + w * 1.5 + sh, y0 + h);
+      ig.addColorStop(0, 'rgba(160,120,255,.5)'); ig.addColorStop(.35, 'rgba(110,200,255,.42)'); ig.addColorStop(.65, 'rgba(130,255,215,.4)'); ig.addColorStop(1, 'rgba(200,140,255,.45)'); return ig; };
+    const rim = (x0, y0, w, h) => { const rg = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); rg.addColorStop(0, 'rgba(210,190,255,.9)'); rg.addColorStop(.5, 'rgba(190,245,255,.95)'); rg.addColorStop(1, 'rgba(200,255,230,.9)'); return rg; };
+    glow('140,200,255', hw * 1.3, .2 + .04 * Math.sin(k * 2));
+    ctx.fillStyle = 'rgba(10,10,30,.22)'; ctx.beginPath(); ctx.roundRect(mx - hw + 4, y - hh * .5 + 7, hw * 2 - 8, hh, hh / 2); ctx.fill(); // its soft shadow
+    const part = (x0, y0, w, h, rr) => { const g = ctx.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, '#2b2d55'); g.addColorStop(1, '#15163a');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, rr); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y0, w, h, rr); ctx.clip(); ctx.fillStyle = irid(x0, y0, w, h); ctx.fillRect(x0, y0, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.beginPath(); ctx.roundRect(x0 + 8, y0 + 3, w - 16, 3, 2); ctx.fill(); ctx.restore(); // the top sheen every block has
+      ctx.strokeStyle = rim(x0, y0, w, h); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x0 + .75, y0 + .75, w - 1.5, h - 1.5, rr); ctx.stroke(); };
+    part(mx - hw * .3, y - hh * 1.15, hw * .6, hh * 1.05, [hh * .52, hh * .52, 8, 8]); // the cabin
+    part(mx - hw, y - hh * .5, hw * 2, hh, hh / 2); // the hull
+    ctx.save(); ctx.shadowColor = 'rgba(190,240,255,.9)'; ctx.shadowBlur = 10; ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 3; i++) { const on = .55 + .45 * Math.max(0, Math.sin(t * 1.6 - i * 1.1)); ctx.globalAlpha = a * on; ctx.beginPath(); ctx.roundRect(mx + (i - 1) * hw * .58 - hw * .2, y - 3.5, hw * .4, 7, 3.5); ctx.fill(); } // its lights: the white bars the alien blocks carry, breathing in turn
+    ctx.restore(); ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(92,80,150,.3)'; ctx.beginPath(); ctx.roundRect(mx - hw, y - hh * .5, hw * 2, hh, hh / 2); ctx.roundRect(mx - hw * .3, y - hh * 1.15, hw * .6, hh * 1.05, [hh * .52, hh * .52, 8, 8]); ctx.fill(); // the night air between us and it: it sits far back, behind the blocks in play
+  }
+  ctx.restore(); }
 const MOTES = Array.from({ length: 44 }, () => ({ x: Math.random() * 2 - 1, y: Math.random(), s: .5 + Math.random(), z: Math.random() }));
 function drawMother(a) { // the mothership: a vast smooth disc high in the sky, softly shaded like a pebble, a mint rim light, a ring of pulsing lights, and a broad beam with motes of light rising in it
   const mx = W * (.5 + .18 * Math.sin(t * .05)), my = H * .17 + Math.sin(t * .5) * 3, mw = W * .92, mh = W * .13, sw = Math.sin(t * .23) * .16;
