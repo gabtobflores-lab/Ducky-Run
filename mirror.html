@@ -2849,11 +2849,14 @@ function draw() {
   { const n = state !== 'menu' && uiNight() > .5; if (n !== nightOn) { nightOn = n; document.body.classList.toggle('night', n); themeMeta && themeMeta.setAttribute('content', n ? '#0b1020' : '#f6f1ea'); } } // glass and Safari's bars tint to the sky
   ctx = mainCtx;
   const skyOn = drawSky();
-  ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? 1 - skyE : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
+  ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? (skyE > .995 ? 0 : 1) : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
   const sk = RM ? 0 : shake; ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * sk * scale, offY + (Math.random() - .5) * sk * scale);
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   const playing = state !== 'menu';
   if (bgA > .004) { ctx.globalAlpha = bgA; drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
+  if (skyOn && bgA > .004 && skyE > .002) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'destination-out'; // the event sky is revealed like dusk falling: it sweeps down from the top behind a soft edge, never a milky half-transparent wash
+    const Hc = cv.height, f = (skyE * 1.5 - .25) * Hc, band = Hc * .28, g = ctx.createLinearGradient(0, f - band, 0, f + band * .35); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(.55, 'rgba(0,0,0,.75)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, Math.min(Hc, f + band * .35 + 2)); ctx.restore(); }
   ctx.globalAlpha = 1 - skyE * .85; drawDivider(Math.max(pulse * .5, fxA, state === "menu" ? 0 : 0)); ctx.globalAlpha = 1; /* the divider melts into an event sky */
   if (!playing) { ctx.restore(); return; } // the home screen shows only the calm backdrop; the balls live in its preview
 
