@@ -117,6 +117,12 @@
   /* liquid glass: the scene behind is blurred and its colour lifted; a bright hairline rim and a soft highlight along the top, like Apple's glass */
   #wxnote{background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.34));border-color:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.2),0 8px 24px rgba(20,24,40,.14)}
   #wxnote.dark{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.07));border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.22)}
+  /* Liquid Glass: an edge that catches the light - brightest at the top left, a softer return at the bottom right - and, over the dark event skies, glass that lifts what is behind it a little, as a lens does */
+  #pbtn::after,#wxnote::after,#banner::after{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+    background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,0) 32%,rgba(255,255,255,0) 68%,rgba(255,255,255,.32));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+  body.night #pbtn::after,#wxnote.dark::after{opacity:.6}
+  body.evsky #pbtn,body.evsky #wxnote{-webkit-backdrop-filter:blur(18px) saturate(190%) brightness(1.12);backdrop-filter:blur(18px) saturate(190%) brightness(1.12)}
   body.night #pbtn{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));border-color:rgba(255,255,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 6px 18px rgba(0,0,0,.24)} body.night #pbtn i{background:rgba(245,245,247,.9)}
   #banner{position:fixed;left:50%;top:0;z-index:4;pointer-events:none;opacity:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 34px 13px;border-radius:26px;white-space:nowrap;
     background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.6));border:1px solid rgba(255,255,255,.9);-webkit-backdrop-filter:blur(26px) saturate(200%);backdrop-filter:blur(26px) saturate(200%);
