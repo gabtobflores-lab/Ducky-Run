@@ -953,7 +953,7 @@ let state = 'menu', t = 0, shake = 0, demoT = 0;
 let fog = 0, resumeT = 0, fogT = 0; const bv = [0, 0], trail = [[], []], SPRING = 36;
 let goldOn = false, goldK = 0, goldAt = -9; // Golden Run (Supporter)
 let bestBanked = false; // this run's score was already saved when the app went to the background
-const ABD = { k: 0, lift: 0, tick: 0 }, ABD_T = 4.2; // the alien beam's pull: seconds in it before it takes the balls
+const ABD = { k: 0, lift: 0, tick: 0 }, ABD_T = 2.4; // the alien beam's pull: seconds in it before it takes the balls
 let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, level, levelT, fxA, banner, newBest;
 // visual-only feedback timers (they never affect the rules)
 const fx = { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 };
@@ -1455,11 +1455,11 @@ function drawAlienDeath(i, c, r, P) { // hit by an alien ship: the ball flickers
   const k = (fx.dead - c.d), x = c.x0, y = c.y0; if (k < 0) { drawBall(x, y, r, P, i ? 1 : -1); return; }
   if (k < .32) { const q = k / .32; // the flicker: offset slices, colour fringing
     ctx.save(); ctx.globalCompositeOperation = 'screen'; for (const [dx, col] of [[-3.5 * q, '160,120,255'], [3.5 * q, '120,255,220']]) { ctx.globalAlpha = .5; const g = ctx.createRadialGradient(x + dx, y, 0, x + dx, y, r * 1.1); g.addColorStop(0, `rgba(${col},.8)`); g.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + dx, y, r * 1.1, 0, 7); ctx.fill(); } ctx.restore();
-    for (let s = 0; s < 6; s++) { const sy = y - r + s * r / 3, off = Math.sin(k * 90 + s * 2.3) * 8 * q; if (k > .2 + s * .02) continue; ctx.save(); ctx.beginPath(); ctx.rect(x - r * 2, sy, r * 4, r / 3 + .5); ctx.clip(); drawBall(x + off, y, r, P, i ? 1 : -1, 1, 1, .9, .3 * q, 1 - .3 * q); ctx.restore(); } } // the slices give way from the top
+    for (let s = 0; s < 6; s++) { const sy = y - r + s * r / 3, off = Math.sin(k * 40 + s * 2.3) * 6 * Math.sin(q * Math.PI); if (k > .2 + s * .02) continue; ctx.save(); ctx.beginPath(); ctx.rect(x - r * 2, sy, r * 4, r / 3 + .5); ctx.clip(); drawBall(x + off, y, r, P, i ? 1 : -1, 1, 1, .9, .3 * q, 1 - .3 * q); ctx.restore(); } } // the slices give way from the top
   if (!c.tiles) { c.tiles = []; for (let gx = -2; gx <= 2; gx++) for (let gy = -2; gy <= 2; gy++) { const px = gx * r * .38, py = gy * r * .38; if (px * px + py * py > r * r * .95) continue; const an = Math.atan2(py, px) + (Math.random() - .5) * .6, v = 40 + Math.random() * 70;
     c.tiles.push({ x: x + px, y: y + py, vx: Math.cos(an) * v * .7, vy: Math.sin(an) * v * .5 - 50 - Math.random() * 40, rot: Math.random() * 6, vr: (Math.random() - .5) * 4, s: r * (.36 + Math.random() * .12), h: Math.random(), dl: .14 + (py + r) / (2 * r) * .14 }); } }
   if (k < .55) { const q = clamp01(k / .55); ctx.save(); ctx.globalCompositeOperation = 'screen'; const bg = ctx.createRadialGradient(x, y, 0, x, y, r * 3); bg.addColorStop(0, `rgba(170,200,255,${.35 * Math.sin(q * Math.PI)})`); bg.addColorStop(1, 'rgba(170,140,255,0)'); ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(x, y, r * 3, 0, 7); ctx.fill(); ctx.restore(); } // a soft bloom of its light
-  const cols = [[170, 140, 255], [120, 210, 255], [140, 255, 220], [210, 160, 255]];
+  const cols = goldK > .5 ? [[255, 214, 120], [255, 236, 170], [242, 180, 70], [255, 200, 110]] : [[170, 140, 255], [120, 210, 255], [140, 255, 220], [210, 160, 255]];
   for (const tl of c.tiles) { const tt = k - tl.dl; if (tt < 0) continue; const q = clamp01(tt / .95), ez = 1 - (1 - q) ** 2, px = tl.x + tl.vx * tt, py = tl.y + tl.vy * tt + 20 * tt * tt, sz = tl.s * (1 - .55 * ez), hue = (tl.h + q * .6) % 1;
     const ci = hue * 4, c0 = cols[ci | 0], c1 = cols[(ci + 1 | 0) % 4], f = ci % 1, col = c0.map((v, j) => v + (c1[j] - v) * f | 0).join(',');
     ctx.save(); ctx.translate(px, py); ctx.rotate(tl.rot + tl.vr * tt); ctx.globalAlpha = (1 - q) ** 1.3 * .95; ctx.shadowColor = `rgba(${col},.9)`; ctx.shadowBlur = 8; ctx.fillStyle = `rgba(${col},.62)`; ctx.beginPath(); ctx.roundRect(-sz / 2, -sz / 2, sz, sz, sz * .3); ctx.fill(); ctx.shadowBlur = 0;
@@ -2058,20 +2058,19 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
 uniform sampler2D mA,mB;uniform vec2 va,vb; /* va: the maps' aspect, and how far the event has arrived; vb: the balls' sideways position (parallax) and seconds since the last tap */
 vec3 hot(float k){return mix(vec3(1.,.96,.88),mix(vec3(1.,.72,.4),vec3(.85,.4,.16),smoothstep(.55,1.,k)),smoothstep(0.,.8,k));}
 vec3 disk(vec4 m,float far){float wm=smoothstep(.45,.95,m.a);if(wm<=0.)return vec3(0.); /* a soft edge where the light paths stop hitting the disk: no speckled, jagged rim */float r=2.6+m.r*7.4;float ph=atan(m.b*2.-1.,m.g*2.-1.);
-  float om=t*.9*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
+  float om=t*1.5*pow(3./r,1.5);float pr=ph-om;                                               /* Keplerian: inner rings turn faster */
   float s=fbm3(vec2(cos(pr),sin(pr))*(1.6+r*.15)+vec2(r*1.3,0.))*.9+.1*sin(r*9.+3.*sin(r*1.7)); /* silky structure, smooth all the way round */
-  float fil=fbm3(vec2(cos(pr)*3.2,sin(pr)*3.2)+vec2(r*5.5,0.));s+=.55*(smoothstep(.45,.85,fil)-.3);   /* fine filaments of gas, sheared into streaks by the turning */
+  float fil=fbm3(vec2(cos(pr)*3.2,sin(pr)*3.2)+vec2(r*5.5,0.));s+=.85*(smoothstep(.42,.82,fil)-.3);   /* fine filaments of gas, sheared into streaks by the turning */
   float hs1=pow(max(0.,cos(pr*2.+r*.9)),18.)*exp(-pow((r-3.6)/.7,2.))*.9;s+=hs1;                    /* a couple of hot clumps orbiting close in */
   float T=pow(r/2.6,-.75)*pow(max(1.-sqrt(2.4/r),0.),.25);float I=pow(T,2.6)*(.75+.55*s);
   I*=smoothstep(2.6,3.1,r)*pow(clamp((10.-r)/4.,0.,1.),1.5)*(1.+.28*sin(ph));                 /* soft inner and outer edges; the approaching side brighter */
   return hot(clamp((r-2.6)/3.4,0.,1.))*I*(far>.5?1.15:1.)*wm;}
 void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)*sa/va.x;else q.y=.5+(p.y-.5)*va.x/sa;
-  q.x-=vb.x*.012;q+=vec2(sin(t*.21),cos(t*.17))*.0025;                                         /* depth: the hole sits far behind the play, shifting a little against the balls, and drifts very slightly */
-  { vec2 d=(p-vec2(.8,.31))*vec2(sa,1.);float L=length(d),R=vb.y*.5,w=exp(-pow((L-R)/.03,2.))*exp(-vb.y*1.4); q+=d/max(L,.001)*w*.007; } /* each tap sends a faint ripple out through the light round the hole */
+  q+=vec2(sin(t*.21),cos(t*.17))*.0015;                                         /* depth: the hole sits far behind the play, shifting a little against the balls, and drifts very slightly */
   vec4 A=texture2D(mA,q),B=texture2D(mB,q);float sm=(1.-smoothstep(.15,.6,A.a))*(1.-smoothstep(.15,.6,B.a));
   { vec2 tx=vec2(1./360.,1./780.);float aA=0.,aB=0.;for(int i=0;i<4;i++){vec2 o=vec2(i==0?1.:i==1?-1.:0.,i==2?1.:i==3?-1.:0.)*tx;aA+=texture2D(mA,q+o).a;aB+=texture2D(mB,q+o).a;}
     A.a=min(A.a,(A.a+aA)/5.);B.a=min(B.a,(B.a+aB)/5.);B.a*=smoothstep(.55,.85,(B.a+aB)/5.); } /* a hit counts fully only where its neighbours agree: the thin ring stays clean, without stray specks */
-  vec3 c=vec3(.004,.004,.008)+starfield(vec2(p.x*sa+t*.004-vb.x*.006,p.y),.35)*sm; /* the stars drift slowly, and less than the hole does: they are further still */
+  vec3 c=vec3(.004,.004,.008)+starfield(vec2(p.x*sa+t*.004,p.y),.35)*sm; /* the stars drift slowly, and less than the hole does: they are further still */
   vec3 dB=disk(B,1.),dA=disk(A,0.);
   c=c*(1.-clamp(length(dB)*1.6,0.,.97))+dB;c=c*(1.-clamp(length(dA)*1.6,0.,.97))+dA;   /* far side first, then the near crossing in front */
   vec3 gl=vec3(0.);for(int k=0;k<12;k++){float a=float(k)*2.39996,rr=.012+.05*fract(float(k)*.618);vec2 o=vec2(cos(a),sin(a))*rr*vec2(1.,sa/va.x); /* soft bloom: light spilling round the bright disk, as through a lens */
@@ -2095,42 +2094,42 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;
     blurV: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
     comp: `uniform sampler2D tex;uniform sampler2D tex2;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 s=texture2D(tex,uv).rgb;vec3 b=texture2D(tex2,uv).rgb;vec3 c=clamp(s+(s-b)*.16+b*.03,0.,1.); /* a light unsharp mask brings out the fine rays */gl_FragColor=vec4(c+dith(),1.);}`,
     auroravid: `uniform sampler2D vid;uniform vec2 va;void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)*sa/va.x;else q.y=.5+(p.y-.5)*va.x/sa;gl_FragColor=vec4(texture2D(vid,q).rgb+dith(),1.);}`,
-    aurora: `/* an original abstract aurora built from a few broad, soft masses of light at different depths, inside a soft field of coloured air.
-   Each mass is a wide, smooth shape whose outline is slowly deformed by low-frequency warping (the shape itself changes; nothing just slides), brightest
-   near its lower hem and fading upward; rays are only a wide, gentle texture inside it. Far layers are wider, softer and dimmer; the near layer is crisper.
-   A few restrained highlights sit in the main mass */
+    aurora: `/* an original aurora blending Apple's Messages aurora with a real one: broad, soft sheets of light that sweep down the sky in a slow S, folding
+   as they turn. Each sheet is a wide band around a smooth curve; where it turns we look along it, so it glows brighter and its lit edge sharpens.
+   Fine vertical rays run through every sheet, as in real curtains. Colour moves across each sheet: a bright cyan-teal lit edge, blue in the body,
+   lavender and violet in the folds behind. Deep navy all around; nothing has a hard line */
 float n1(float x,float s){return vn(vec2(x,s))*2.-1.;}
-vec2 warp(vec2 p,float s){return vec2(n1(p.y*1.1+t*.021+s,s+1.)+.5*n1(p.y*2.3-t*.017,s+5.),n1(p.x*1.4-t*.019,s+3.))*.035;}
-float MU,MY,SL;
-/* one mass: c its centre at the hem, lean its slope, h0..h1 its top and hem, w its half width, amp how far it bends, rk how much ray texture */
-float lay(vec2 p,vec2 c,float lean,float h0,float h1,float w,float amp,float sd,float rk){
-  vec2 q=p+warp(p,sd);float y=q.y;
-  float cx=c.x+(y-c.y)*lean+amp*(n1(y*.9+t*.018,sd)+.4*n1(y*2.1-t*.025,sd+2.));
-  float ww=w*(.7+.5*vn(vec2(y*1.1-t*.015,sd+4.)));
-  float u=(q.x-cx)/ww;MU=u;MY=y;
-  float across=exp(-u*u*(u<0.?1.25:.7));                                                     /* a little more defined on one side, where the sheet turns */
-  float hb=h1+SL*(q.x-c.x)-abs(SL)*1.6*(q.x-c.x)*(q.x-c.x); /* SL tilts the hem, and curves it */float env=smoothstep(h0,h0+(hb-h0)*.6,y)*(1.-smoothstep(hb-.05,hb+.05,y)); /* SL tilts the hem */              /* a long fade upward, a soft hem below */
-  float rays=1.-rk+rk*smoothstep(.28,.78,vn(vec2(u*1.9+sd*7.,y*.28+t*.01)))*(.8+.2*vn(vec2(u*5.5+sd,y*.5-t*.015)));
-  return across*env*rays;}
+float SLP,UU;
+/* one sheet: x0 its centre, A how far the S swings, fr how tight, ph its phase, w its half width; returns its light; UU is the position across it */
+float sheet(vec2 p,float x0,float A,float fr,float ph,float w,float sd,float y0,float y1){
+  float y=p.y,arg=y*fr+ph+.35*n1(y*1.1+t*.02,sd);
+  float cx=x0+A*sin(arg)+.018*n1(y*2.3-t*.03,sd+3.);
+  float sl=A*fr*cos(arg);SLP=abs(sl);                                                        /* how steeply the sheet runs sideways here */
+  float ww=w*(.8+.35*vn(vec2(y*1.6-t*.018,sd+5.)));
+  float u=(p.x-cx)/ww/sqrt(1.+sl*sl);UU=u;                                                   /* measured across the sheet, so it keeps its width as it turns */
+  float edge=exp(-pow((u-.45)/.5,2.));                                                      /* the lit edge */
+  float body=exp(-u*u*.7)*.6+exp(-u*u*.18)*.12;                                             /* the soft body and a wide glow round it */
+  float fold=1.+.9*smoothstep(.6,2.4,SLP);                                                  /* where it turns we look along it */
+  float rays=.72+.28*smoothstep(.2,.9,vn(vec2(p.x*55.+sd*13.,y*1.1-t*.06)))*(.9+.1*vn(vec2(p.x*150.+sd,y*2.5)));  /* fine vertical rays */
+  float env=smoothstep(y0,y0+.12,y)*(1.-smoothstep(y1-.14,y1,y));
+  return (edge*fold*.75+body)*rays*env;}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 p=vec2(uv.x*asp,uv.y);vec2 pp=vec2(p.x/(asp/.46),p.y);
   vec3 a=vec3(0.);
-  vec3 BLUE=vec3(.08,.3,1.),CYAN=vec3(.3,.88,1.),VIO=vec3(.42,.3,1.),TEAL=vec3(.22,.8,.8);
-  vec2 hz,vz;
-  /* laid out like Apple's Messages aurora: one wide cyan mass leaning down to the centre right, a bright blue-violet streak beside it on the right,
-     faint streaks low on the left, a hint of teal at the top, violet glowing low on the right */
-  hz=vec2(.28,.52);vz=vec2(.35,.95);SL=0.;
-  float d=lay(pp,vec2(.38,.62),.1,-.05,.62,.06,.03,14.,.35);a+=mix(BLUE,VIO,.35)*d*.35; /* the far layer behind on the right */
-  SL=.55;float m=lay(pp,vec2(.285,.65),.17,-.3,.65,.09,.05,11.,.55);float k=smoothstep(.2,.65,MY);a+=mix(BLUE,CYAN,k)*m*(.45+1.15*k);
-  float cr=lay(pp,vec2(.29,.64),.17,.15,.64,.065,.05,11.,.85);float ck=smoothstep(.3,.62,MY);a+=mix(CYAN,vec3(.85,1.,1.),.45)*cr*ck*.75; /* the bright rays in the core */
-  float h=lay(pp,vec2(.255,.64),.17,.25,.62,.012,.05,11.,0.);a+=vec3(.75,1.,1.)*h*.4;SL=0.;
-  float v=lay(pp,vec2(.35,.56),.08,.2,.56,.022,.025,16.,.4);a+=mix(vec3(.2,.38,1.),vec3(.36,.3,1.),smoothstep(.3,.55,MY))*v*1.15; /* the blue-violet streak */
-  float s=lay(pp,vec2(.1,.86),.16,.55,.86,.05,.03,12.,.45);a+=mix(vec3(.16,.6,.85),BLUE,.4)*s*.4; /* faint streaks low on the left */
-  float f=lay(pp,vec2(.06,.6),.15,-.1,.6,.04,.03,13.,.5);a+=BLUE*f*.22;
-  a+=vec3(.15,.6,.5)*exp(-dot(pp-vec2(.28,.06),pp-vec2(.28,.06))/.012)*.12; /* teal high up */
-  /* the coloured air the light sits in: cyan haze round the light, indigo-violet low down, deep navy in the corners */
-  vec3 bg=mix(vec3(.008,.016,.05),vec3(.025,.028,.1),uv.y);
-  bg+=vec3(.03,.2,.5)*exp(-dot(pp-hz,pp-hz)/.045)*.45+vec3(.22,.14,.5)*exp(-dot(pp-vz,pp-vz)/.08)*.55;
-  vec3 col=1.-exp(-(bg+a*1.75)*1.2);
+  vec3 CYAN=vec3(.35,.95,.95),TEAL=vec3(.25,.9,.72),BLUE=vec3(.1,.38,1.),VIO=vec3(.48,.32,1.),LAV=vec3(.72,.62,1.);
+  /* the far sheet: violet and lavender, swinging the other way behind */
+  float f=sheet(pp,.27,.085,5.2,2.6,.075,7.,.02,.82);vec3 fc=mix(VIO,LAV,smoothstep(-.2,.8,UU));a+=fc*f*.38;
+  /* the main sheet: a great S from the top down to just above the balls */
+  float m=sheet(pp,.22,.1,6.1,.4+t*.05,.085,3.,-.05,.74);
+  vec3 mc=mix(VIO,BLUE,smoothstep(-1.2,-.2,UU));mc=mix(mc,CYAN,smoothstep(.1,.6,UU));mc=mix(mc,TEAL,smoothstep(.3,.9,UU)*(.4+.45*smoothstep(.3,.7,pp.y)));
+  mc=mix(mc,vec3(.88,1.,1.),smoothstep(1.8,2.6,m)*.5);a+=mc*m*1.05;
+  /* a smaller sheet high on the left, teal fading to blue */
+  float s=sheet(pp,.08,.05,7.,1.2,.055,11.,-.05,.42);a+=mix(BLUE,TEAL,smoothstep(-.3,.7,UU))*s*.45;
+  /* a low, faint fringe of rays hanging near the bottom, kept dim round the balls */
+  { float fr=exp(-pow((pp.y-.92)/.07,2.))*(.7+.3*vn(vec2(pp.x*30.,pp.y*1.2-t*.05)));a+=mix(TEAL,BLUE,.55)*fr*.1; }
+  /* the coloured air: blue haze round the light, violet low on the right, deep navy in the corners */
+  vec3 bg=mix(vec3(.006,.012,.04),vec3(.02,.022,.08),uv.y);
+  bg+=vec3(.03,.16,.42)*exp(-dot(pp-vec2(.22,.45),pp-vec2(.22,.45))/.05)*.28+vec3(.2,.12,.45)*exp(-dot(pp-vec2(.36,.9),pp-vec2(.36,.9))/.06)*.5;
+  vec3 col=1.-exp(-(bg+a*1.5)*1.2);col=pow(col,vec3(1.12)); /* a little more contrast: deep gaps between the sheets */
   float lum=dot(col,vec3(.3,.5,.2));col+=starfield(p,.25)*(1.-smoothstep(.05,.2,lum));
   gl_FragColor=vec4(col+dith(),1.);}
 `
@@ -2267,6 +2266,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   });
   if (wx.kind === 'wind' && !G) lowres(() => { for (let k = 0; k < 3; k++) { const span = W * 2.2, x = ((t * (300 + k * 90) + k * 300) % span) - W * .6, X = windDir > 0 ? x : W - x; // pressure waves rolling through the air
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
+  if (wx.kind === 'bhole') drawInfall(a); // matter spiralling in, so the hole is always visibly at work
   if (wx.kind === 'alien' && !G) drawUFO(a); // without the GPU sky, the hand-drawn ship; with it, the sky renders the ship in 3D // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
   if (wx.kind === 'hail') (G ? f => f() : lowres)(() => { for (let k = 0; k < (G ? 40 : 70); k++) { const sd = SEEDS[k % 24], z = .3 + hash(k) * .7, x = ((hash(k * 3.1) * W + t * 18 * z + Math.sin(t * .7 + k) * 14) % (W + 20)) - 10, y = ((hash(k * 7.7) * H + t * (70 + 140 * z)) % (H + 20)) - 10, r = 2 + z * 5;
@@ -2293,8 +2293,17 @@ function drawSnow(a, near) { // snowfall in depth: far flakes small, sharp and s
     const z = f.z, sp = (18 + 62 * z) * f.s, y = ((f.y * (H + 80) + t * sp) % (H + 80)) - 40,
       x = ((f.x * (W + 60) + t * (4 + 8 * z) + Math.sin(t * f.f + f.ph) * f.w * (.5 + z)) % (W + 60) + W + 60) % (W + 60) - 30,
       r = near ? 7 + z * 9 : .9 + z * 3.2, al = near ? .16 + .1 * (1 - z) : .45 + .5 * z;
+    if (!near && z > .35 && state === 'play' && parts.length < 140) for (const o of things) { if (o.k !== 'b' || o.al) continue; const top = o.y - 22, bx0 = bxOf(o); if (Math.abs(x - bx0) < bw() / 2 - 3 && y > top - 2 && y < top + 2.5) { if (Math.random() < .5) parts.push({ x, y: top, vx: (Math.random() - .5) * 26, vy: -14 - Math.random() * 18, g: 60, life: .45, max: .45, r: .8 + z * 1.1, col: 'rgba(255,255,255,.9)' }); break; } } // a flake landing on a block lifts a tiny puff of powder
     ctx.globalAlpha = al * (.4 + .6 * a) * dn; if (!near && r < 2.2) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .7, 0, 7); ctx.fill(); } else ctx.drawImage(dot, x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); }
   ctx.globalAlpha = 1; }
+const INF = Array.from({ length: 46 }, (_, i) => ({ ph: Math.random(), r0: .9 + Math.random() * 1.6, a0: Math.random() * 6.283, s: .5 + Math.random() * .8, z: Math.random() }));
+function drawInfall(a) { // specks of glowing gas falling into the black hole: each circles in the plane of the disk, tightening and speeding up as it nears, warming from amber to white, then is gone
+  const hx = W * .76, hy = H * .325, R = W * .37; ctx.save(); ctx.globalCompositeOperation = 'screen';
+  for (const m of INF) { const k = ((t * .07 * m.s + m.ph) % 1), rr = R * (m.r0 * .9 * (1 - k) ** 1.6 + 1.08), an = m.a0 + (t * .9 * m.s + 1 / Math.max(.15, rr / R)) * 1.2, x = hx + Math.cos(an) * rr, y = hy + Math.sin(an) * rr * .2 + rr * .02, fade = Math.min(1, k * 5) * Math.min(1, (1 - k) * 6), hot = 1 - (rr / R - 1.08) / 1.5;
+    if (Math.sin(an) < 0) continue; // behind the hole, hidden by it
+    const sz = (1.6 + 2.8 * m.z) * (.7 + .6 * hot), col = hot > .6 ? '255,240,215' : '255,190,120'; ctx.globalAlpha = a * fade * (.35 + .5 * m.z); ctx.drawImage(softBlob(col), x - sz * 2.4, y - sz * 2.4, sz * 4.8, sz * 4.8);
+    const tx = -Math.sin(an) * rr * .06, ty = Math.cos(an) * rr * .26 * .06; ctx.strokeStyle = `rgba(${col},${.35 * a * fade * m.z})`; ctx.lineWidth = sz * .45; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - tx * 3, y - ty * 3); ctx.stroke(); } // a short streak behind each, along its orbit
+  ctx.restore(); }
 function drawUFO(a) { // the mothership: a wide disc of dark brushed metal seen from a little below, a low cap ringed with warm light, tiers stepping down underneath,
   // a ring of amber lights turning round them and a glowing amber aperture where the beam starts. Drawn flat and softly shaded like the rest of the game; amber is the game's own accent
   const ea = wx.a * wx.a * (3 - 2 * wx.a), mx = W * .5 + Math.sin(t * .05) * W * .04, my = H * (.23 - .34 * (1 - ea)), hw = W * .27, hh = W * .072, y = my + Math.sin(t * .9) * 2;
@@ -2608,7 +2617,8 @@ function drawRain() { // storm, behind the gameplay: cool uneven sky, two scroll
   const q = Math.max(0, Math.min(5, Math.round((sl - .01) / .012))), spr = rainStreak(q), slq = .01 + q * .012;
   for (const d of RAIN) {
     const sp = 600 + d.z * 950, x = ((d.x * (W + 80) + t * sp * slq * d.s) % (W + 80)) - 40, y = ((d.y * (H + 80) + t * sp * d.s) % (H + 80)) - 40, L = d.l;
-    const dn = clamp01((e * 1.2 - (d.x * 7.31 + d.y * 3.17) % 1) / .2); if (dn <= 0) continue; // the shower builds: a few drops first, then more and more; it thins the same way as it passes
+    const dn = clamp01((e * 1.2 - (d.x * 7.31 + d.y * 3.17) % 1) / .2); if (dn <= 0) continue;
+    if (d.z > .45 && state === 'play' && parts.length < 140 && Math.random() < .5) for (const o of things) { if (o.k !== 'b') continue; const top = o.y - 22; if (Math.abs(x - bxOf(o)) < bw() / 2 - 3 && y > top && y < top + 18) { for (let q = 0; q < 2; q++) parts.push({ x: x + (Math.random() - .5) * 4, y: top - 1, vx: (Math.random() - .5) * 90, vy: -40 - Math.random() * 60, g: 520, life: .28, max: .28, r: .7 + Math.random() * .8, col: 'rgba(225,235,250,.85)' }); break; } } // drops landing on a block splash off its top // the shower builds: a few drops first, then more and more; it thins the same way as it passes
     ctx.globalAlpha = Math.min(1, (.4 + .6 * e) * dn * (.14 + d.z * .46) * (.55 + .45 * d.v) * lit); ctx.drawImage(spr, x - spr.width * L / 96 + 3, y - L, spr.width * L / 96 * (.8 + d.z * .5), L);
   }
   for (let k = 0; k < 6; k++) { const sd = SEEDS[k + 11], sp = 1700 + sd.k * 700, L = 140 + sd.k * 120, wdt = 7 + sd.k * 6, x = ((sd.x * 997 + Math.floor((t * sp + sd.y * (H + L)) / (H + L)) * 211) % W), y = ((t * sp + sd.y * (H + L)) % (H + L)) - L; // big out-of-focus drops right in front of the lens
@@ -2902,8 +2912,8 @@ function draw() {
     }
     const c = state === 'dead' ? crash.ball[i] : null;
     const ly = BY - ABD.lift + (ABD.lift > 1 ? Math.sin(t * 3.1 + i * 1.7) * 2.5 * ABD.k : 0); // the beam lifts them, swaying
-    if (c && c.abd) drawAbducted(i, c, r, P);
-    else if (c && c.sp === 'alien') drawAlienDeath(i, c, r, P);
+    if (c && c.abd) drawAbducted(i, c, r, goldK > .5 ? GOLDP : P);
+    else if (c && c.sp === 'alien') drawAlienDeath(i, c, r, goldK > .5 ? GOLDP : P); // on a Golden Run every special death is gold too
     else if (!c) { if (ABD.k > 0 && state === 'play') drawPull(x, ly, r); if (goldK < .99) drawBall(x, ly, r, P, i ? 1 : -1, sx, sy, state === 'dead' ? .25 : glow, fx.gem * .8); if (goldK > .01) drawGoldBall(x, ly, r, i ? 1 : -1, sx, sy, goldK, t); }
     else if (c.chain && !c.burst && !c.elec) { const q = clamp01(fx.dead / c.at); drawBall(x, BY, r * (1 + .12 * q), goldK > .5 ? GOLDP : P, i ? 1 : -1, 1 + .06 * q, 1 - .05 * q, .6 + q * .4, q * .9); } // charging as the pulse arrives
     else if (c.elec && !c.burst) { // electrocution: blue-white flash wrapped in small arcs, then it bursts
