@@ -2096,13 +2096,16 @@ void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;
-  vec3 c=mix(vec3(.6,.64,.7),vec3(.72,.75,.79),smoothstep(0.,1.,uv.y));
-  c+=vec3(.1,.095,.085)*exp(-pow((uv.x-.66)*1.7,2.)-pow((uv.y-.16)*2.6,2.)); /* the sun, diffused to a soft bright patch */
+  vec3 c=mix(vec3(.5,.55,.63),vec3(.7,.73,.78),smoothstep(0.,1.,uv.y));
+  c+=vec3(.2,.18,.14)*exp(-pow((uv.x-.66)*1.6,2.)-pow((uv.y-.16)*2.4,2.))+vec3(.12,.1,.07)*exp(-pow((uv.x-.66)*.8,2.)-pow((uv.y-.2)*1.2,2.)); /* the sun, diffused to a soft bright patch */
   for(int i=0;i<3;i++){float fi=float(i),dir=mod(fi,2.)<.5?1.:-1.;
     vec2 p=vec2(uv.x*asp*(.9+fi*.45)+t*(.010+fi*.008)*dir+fi*3.1,uv.y*(4.2+fi*1.8)+fi*5.7);
-    float n=fbm(p+vec2(fbm(p*.5+vec2(t*.006,0.))*.8,0.));n=smoothstep(.38,.82,n); /* soft wisps, stretched sideways like real fog */
-    float h=bandF(uv.y,.24+fi*.26,.24+fi*.07);
-    c=mix(c,vec3(.83,.85,.88)+fi*.02,n*h*(.34+fi*.14));}
+    float n=fbm(p+vec2(fbm(p*.5+vec2(t*.011,t*.004))*.9,0.));float n2=fbm(p+vec2(0.,.12)+vec2(fbm(p*.5+vec2(t*.011,t*.004))*.9,0.));n=smoothstep(.36,.84,n); /* soft banks, stretched sideways, slowly rolling */
+    float lit=clamp((n2-fbm(p-vec2(0.,.12)))*2.2+.5,0.,1.);                                          /* light from above catches the tops of the banks, their undersides stay grey */
+    float h=bandF(uv.y,.24+fi*.26,.24+fi*.07)*(.85+.15*sin(t*.2+fi*2.));
+    c=mix(c,mix(vec3(.66,.7,.76),vec3(.93,.93,.94),lit)+fi*.015,n*h*(.5+fi*.15));}
+  { vec2 sp=vec2(.66*asp,.16);vec2 d=vec2(uv.x*asp,uv.y)-sp;float an=atan(d.x,d.y),r=length(d);  /* shafts of light from the hidden sun, broken up by the fog */
+    float rays=smoothstep(.45,1.,fbm3(vec2(an*5.,t*.05)))*smoothstep(.04,.25,r)*exp(-r*1.4);c+=vec3(1.,.96,.88)*rays*.13; }
   c=mix(c,vec3(.8,.82,.85),.24*smoothstep(.45,1.,uv.y)); /* fog pools low */
   gl_FragColor=vec4(c+dith(),1.);}`,
     blurH: `uniform sampler2D tex;uniform vec2 dir;void main(){vec2 uv=gl_FragCoord.xy/res;vec3 c=vec3(0.);float ws=0.;for(int i=-7;i<=7;i++){float w=exp(-float(i*i)/22.);c+=texture2D(tex,uv+dir*float(i)).rgb*w;ws+=w;}gl_FragColor=vec4(c/ws,1.);}`,
