@@ -1750,7 +1750,7 @@ function nightSky(a, starA) { // stars with a slow twinkle on top of the cached 
   ctx.globalAlpha = 1;
 }
 const nightK = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? wx.a : wx.kind === 'eclipse' ? wx.a * ECL.dk : wx.kind === 'firefly' ? wx.a * .9 : wx.kind === 'storm' ? wx.a * .85 : wx.kind === 'rain' ? wx.a * .7 : wx.kind === 'snow' ? wx.a * .35 : wx.kind === 'fog' ? wx.a * .15 : 0; // the pale fog keeps dark text
-const uiNight = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? smooth((wx.a - .33) / .06) : wx.kind === 'eclipse' ? smooth((nightK() - .16) / .06) : wx.kind === 'firefly' ? smooth((nightK() - .36) / .08) : smooth((nightK() - .3) / .3); /* a night event dims the room quickly, so the ink flips in one short step just as the twilight passes mid-tone, never sitting grey on grey */ // 0 = the Wind (day) style, 1 = the Aurora (night) style
+const uiNight = () => wx.kind === 'aurora' || wx.kind === 'meteor' || wx.kind === 'bhole' || wx.kind === 'alien' ? smooth((wx.a - .33) / .06) : wx.kind === 'eclipse' ? smooth((nightK() - .26) / .06) : wx.kind === 'firefly' ? smooth((nightK() - .36) / .08) : smooth((nightK() - .3) / .3); /* a night event dims the room quickly, so the ink flips in one short step just as the twilight passes mid-tone, never sitting grey on grey */ // 0 = the Wind (day) style, 1 = the Aurora (night) style
 const hudInk = al => { const k = uiNight(); return `rgba(${43 + 202 * k | 0},${45 + 202 * k | 0},${66 + 186 * k | 0},${al + (1 - al) * k * .5})`; };
 const SPR = {};
 const vignette = () => sprite('vig', 256, 512, (g, w, h) => { const r = g.createRadialGradient(w / 2, h * .45, h * .22, w / 2, h * .5, h * .72); r.addColorStop(0, 'rgba(4,6,18,0)'); r.addColorStop(1, 'rgba(4,6,18,.75)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
@@ -2124,18 +2124,21 @@ void main(){vec2 p=UV();float sa=res.x/res.y;vec2 q=p;if(sa<va.x)q.x=.5+(p.x-.5)
    the day dims to a deep twilight with sunset all round the horizon and thin clouds lit from below; a diamond ring flashes with Baily's beads as the last light goes;
    then the corona - a bright inner glow, long helmet streamers and fine radial filaments - with a few pink prominences round the black moon */
 uniform vec2 sp,mp,rr;uniform vec4 ek;uniform sampler2D tex;
+vec4 elayer(vec2 P,vec2 uv,float s,float sp,float sd,float lo,float hi,float amt){vec2 p=P*s+vec2(.02*t*sp,0.)+sd;vec2 w=vec2(fbm3(p*.55+vec2(t*.03,t*.01)),fbm3(p*.55+vec2(5.2,1.3)-vec2(t*.02,-t*.015)));vec2 m=vec2(t*.02,-t*.03)*sp;
+  float f=fbm(p+w*1.5+m),f2=fbm(p+w*1.5+m+vec2(.03,-.16));float c=clamp((uv.y-lo)/(hi-lo),0.,1.);c=c*c*(3.-2.*c)*amt;float dd=smoothstep(1.-c-.1,1.-c+.1,f);float lit=clamp((f-f2)*4.5+.55,0.,1.);return vec4(vec3(lit),dd);}
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2(sp.x*asp,sp.y),M=vec2(mp.x*asp,mp.y);float Rs=rr.x,Rm=rr.y,dk=ek.x,tot=ek.y,dr=ek.z,vis=ek.w,px=1.1/res.y;
   vec3 day=mix(vec3(.16,.36,.72),vec3(.5,.69,.92),pow(uv.y,.9));day+=vec3(.25,.22,.16)*exp(-pow(length(P-S)*2.2,2.))*.25;
   vec3 ecl=mix(vec3(.008,.012,.045),vec3(.035,.04,.12),smoothstep(0.,.7,uv.y));ecl=mix(ecl,vec3(.42,.26,.34),smoothstep(.6,.86,uv.y)*.55);ecl=mix(ecl,vec3(.95,.55,.28),smoothstep(.8,1.,uv.y)*.85);
   vec3 base=mix(day,ecl,dk);
-  { float cy=smoothstep(.76,.86,uv.y)*(1.-smoothstep(.94,1.,uv.y));float n=fbm(vec2(P.x*2.4+t*.006,uv.y*13.+.3*fbm3(vec2(P.x*3.,uv.y*4.))));float cl=smoothstep(.48,.72,n)*cy; /* thin clouds low along the horizon */
-    vec3 cc=mix(vec3(.93,.95,.98),mix(vec3(.16,.1,.18),vec3(1.,.55,.3),smoothstep(.85,.95,uv.y)*.8),dk);base=mix(base,cc,cl*.65); }
+  for(int i=0;i<2;i++){float fi=float(i);vec4 L0=elayer(P,uv,fi<.5?1.15:1.7,fi<.5?.6:1.,fi*3.1+1.,.5+fi*.06,.95,.8+fi*.1); /* fair-weather clouds below the sun: white in daylight, then dark against the eclipse glow with their undersides lit orange from the horizon */
+    float hz=smoothstep(.6,1.,uv.y);vec3 sh=mix(vec3(.6,.68,.82),vec3(.05,.04,.08)+vec3(.3,.12,.08)*hz,dk),li=mix(vec3(1.,.99,.97),vec3(.16,.1,.14)+vec3(.95,.5,.26)*hz*(1.-L0.r*.4),dk);
+    base=mix(base,mix(sh,li,L0.r),L0.a*(fi<.5?.75:.95));}
   vec2 d=P-S;float r=length(d),cr=r/Rs;vec2 dn=d/max(r,1e-5);float lr=log(max(cr,1.));
   vec3 L=starfield(P,1.)*smoothstep(.55,1.,dk)*.9;
   { vec2 V=S+vec2(-.2,.17);float vd=length(P-V);L+=vec3(1.,.97,.9)*(exp(-vd*vd/(px*px*5.))*1.5+exp(-vd*vd/(px*px*70.))*.22)*smoothstep(.6,1.,dk); } /* Venus */
   float helm=fbm3(dn*1.9+vec2(3.1,1.7)+lr*vec2(.25,-.18)),fil=fbm3(dn*7.5+lr*vec2(.5,.3)+vec2(t*.004,0.)),fine=vn(dn*34.+lr*vec2(.9,-.6));
   float hel=pow(smoothstep(.3,.8,helm),1.5),eq=pow(abs(dn.x*.94-dn.y*.34),1.4); /* the streamers gather toward the sun's equator, as at solar minimum */
-  float cor=pow(max(cr,1.),-7.)*3.+pow(max(cr,1.),-3.2)*(.45+1.4*hel*(.5+.8*eq))*(.75+.5*fil)+pow(max(cr,1.),-1.25)*.3*hel*eq*(.6+.8*fine)+pow(max(cr,1.),-2.4)*.25*smoothstep(.55,.9,fine)*fil;
+  float cor=pow(max(cr,1.),-7.)*3.+pow(max(cr,1.),-3.2)*(.45+1.4*hel*(.5+.8*eq))*(.75+.5*fil)+pow(max(cr,1.),-1.05)*.34*pow(smoothstep(.4,.85,fbm3(dn*1.3+vec2(7.,2.)+lr*vec2(.12,.08))),1.6)*eq*(.6+.8*fine)+pow(max(cr,1.),-2.4)*.25*smoothstep(.55,.9,fine)*fil;
   cor*=smoothstep(.99,1.02,cr);
   L+=mix(vec3(.78,.86,1.),vec3(1.,.96,.9),exp(-(cr-1.)*1.8))*cor*tot*1.15;
   L+=vec3(1.,.3,.42)*smoothstep(.62,.84,vn(dn*7.+4.))*exp(-pow((cr-1.02)/.02,2.))*tot*1.4; /* prominences: little pink flames at the limb */
@@ -2144,7 +2147,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2
   vec3 c=1.-(1.-base)*exp(-L);
   vec2 mq=(P-M)/Rm;float md=length(mq),moon=1.-smoothstep(1.-px/Rm,1.+px/Rm,md);
   if(md<1.02){vec3 tc=texture2D(tex,mq*.5*.9875+.5).rgb;vec3 es=tc*vec3(.62,.72,.92)*(.07+.04*(1.-md))*(.3+.7*dk); /* the moon's near side, lit only by earthshine: the real surface, just visible */
-    c=mix(c,vec3(.006,.007,.012)+es,moon*clamp(smoothstep(.12,.6,dk)+(1.-smoothstep(Rs*.98,Rs*1.04,r)),0.,1.));}
+    c=mix(c,vec3(.006,.007,.012)+es,moon*clamp(smoothstep(.35,.8,dk)+(1.-smoothstep(Rs*.98,Rs*1.04,r)),0.,1.));}
   float sun=(1.-smoothstep(Rs-px,Rs+px,r))*(1.-moon);float limb=sqrt(max(0.,1.-min(cr*cr,1.)));
   vec3 F=mix(vec3(1.,.82,.6),vec3(1.,.99,.96),limb)*sun*(2.+1.6*limb);
   F+=vec3(1.,.95,.86)*(exp(-r/(Rs*.5))*.55+exp(-r/(Rs*2.2))*.3+exp(-r/(Rs*8.))*.13)*pow(vis,1.4);
@@ -2160,16 +2163,16 @@ uniform vec2 sp,hr;
 void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),S=vec2(sp.x*asp,sp.y);float R=hr.x;
   vec3 sky=mix(vec3(.09,.28,.64),vec3(.5,.7,.92),pow(uv.y,.8));sky=mix(sky,vec3(.84,.9,.97),smoothstep(.7,1.,uv.y)*.7);
   vec2 d=P-S;float r=length(d),x=(r-R)/R;
-  float veil=fbm(vec2(P.x*1.3+t*.01,P.y*5.5+.6*fbm3(P*2.+vec2(t*.006,0.))));veil=smoothstep(.3,.85,veil); /* the thin, streaky high cloud the halo forms in */
-  sky=mix(sky,vec3(.86,.91,.97),veil*.22+.06);
+  float veil=fbm(vec2(P.x*1.1+t*.01,P.y*5.+.7*fbm3(P*1.8+vec2(t*.006,0.))));veil=smoothstep(.32,.85,veil);float fib=fbm(vec2(P.x*2.2-P.y*.8+t*.012,P.y*26.+P.x*3.)); /* the thin, streaky high cloud the halo forms in, with fine fibres */
+  sky=mix(sky,vec3(.9,.94,.99),clamp(veil*.3+veil*smoothstep(.45,.75,fib)*.35+.05,0.,1.));sky+=vec3(.12,.1,.06)*exp(-r/(R*.9))*veil;
   float den=.45+.75*veil,den2=.55+.6*fbm3(P*1.6+vec2(-t*.03,3.));
   sky*=1.-.12*(1.-smoothstep(.5,1.,r/R));
-  vec3 L=(vec3(1.,.38,.26)*exp(-pow((x+.004)/.01,2.))*.8+vec3(1.,.8,.46)*exp(-pow((x-.011)/.016,2.))*.6+vec3(.92,.96,1.)*exp(-max(x-.02,0.)/.14)*smoothstep(-.01,.03,x)*.36)*den;
+  vec3 L=(vec3(1.,.36,.24)*exp(-pow((x+.004)/.012,2.))*.95+vec3(1.,.8,.46)*exp(-pow((x-.013)/.02,2.))*.75+vec3(.94,.97,1.)*exp(-max(x-.025,0.)/.16)*smoothstep(-.01,.035,x)*.5)*den;
   for(int i=0;i<2;i++){float sg=i==0?-1.:1.;vec2 q=P-(S+vec2(sg*R*1.05,0.));float hx=q.x*sg;
     vec3 pc=hx<-.006*R?vec3(1.,.35,.24):hx<.01*R?vec3(1.,.78,.4):mix(vec3(.95,.97,1.),vec3(.62,.8,1.),clamp(hx/(R*.08),0.,1.));
     float core=exp(-pow(q.y/(R*.05),2.))*exp(-pow(hx/(R*.028),2.));float soft=exp(-pow(q.y/(R*.1),2.))*exp(-pow(hx/(R*.075),2.));
     float tail=exp(-pow(q.y/(R*.022),2.))*exp(-max(hx,0.)/(R*.45))*smoothstep(-.01*R,.03*R,hx);
-    L+=pc*(core*2.4+soft*.6+tail*.3)*den2*(.85+.15*sin(t*.6+sg));}
+    L+=pc*(core*3.+soft*.85+tail*.4)*den2*(.85+.15*sin(t*.6+sg));}
   { float xx=(P.x-S.x)/R,yc=S.y-R*1.01+R*.33*xx*xx,dy=(P.y-yc)/R;L+=vec3(1.,.88,.7)*exp(-pow(dy/.011,2.))*exp(-pow(xx/.6,2.))*.5*den; }
   L+=vec3(1.)*exp(-pow((P.y-S.y)/(R*.005),2.))*.13*exp(-abs(P.x-S.x)/(R*2.2))*den2;
   L+=vec3(1.,.98,.94)*(exp(-r*r/(R*R*.0007))*2.6+exp(-r/(R*.07))*.65+exp(-r/(R*.4))*.18+exp(-r/(R*1.6))*.08);
@@ -2312,21 +2315,26 @@ function eclTick() { // where the moon is: it slides across slowly, lingers over
 function eclU() { eclTick(); const [sx, sy] = toUV(W * .62, H * .2), Rs = W * .085 * scale / cv.height, asp = cv.width / cv.height, dx = .944, dy = -.33;
   return { sp: [sx, sy], mp: [sx + dx * ECL.d * Rs / asp, sy + dy * ECL.d * Rs], rr: [Rs, Rs * 1.03], ek: [ECL.dk, ECL.tot, Math.min(1, ECL.dr), ECL.vis] }; }
 const FLY = Array.from({ length: 96 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random() ** 1.5, ph: Math.random() * 7, f1: .12 + Math.random() * .22, f2: .1 + Math.random() * .18, per: 2.4 + Math.random() * 3.4, off: Math.random(), w: 16 + Math.random() * 34 }));
-const BOKEH = () => sprite('bokeh', 96, 96, g => { const rg = g.createRadialGradient(48, 48, 0, 48, 48, 46); rg.addColorStop(0, 'rgba(224,255,150,.55)'); rg.addColorStop(.72, 'rgba(214,255,130,.7)'); rg.addColorStop(.9, 'rgba(236,255,170,.95)'); rg.addColorStop(1, 'rgba(214,255,130,0)'); g.fillStyle = rg; g.beginPath(); g.arc(48, 48, 46, 0, 7); g.fill(); });
+const BOKEH = () => sprite('bokeh', 96, 96, g => { const rg = g.createRadialGradient(48, 48, 0, 48, 48, 46); rg.addColorStop(0, 'rgba(255,226,140,.5)'); rg.addColorStop(.72, 'rgba(255,214,120,.66)'); rg.addColorStop(.9, 'rgba(255,236,170,.95)'); rg.addColorStop(1, 'rgba(255,214,120,0)'); g.fillStyle = rg; g.beginPath(); g.arc(48, 48, 46, 0, 7); g.fill(); });
 function drawFireflies(a, near) { // soft lights drifting on their own slow paths, each blinking on and off at its own rhythm; the near ones large and out of focus
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const halo = softBlob('186,255,104'), core = softBlob('250,255,206'), bok = BOKEH();
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const halo = softBlob('255,214,110'), core = softBlob('255,250,214'), bok = BOKEH();
   for (const f of FLY) { if (near ? f.z < .86 : f.z >= .86) continue; const dn = clamp01((a * 1.25 - (f.x * 7.31 + f.y * 3.17) % 1) / .25); if (dn <= 0) continue;
     const x = f.x * W + Math.sin(t * f.f1 + f.ph) * f.w + Math.sin(t * f.f1 * 2.3 + f.ph * 2) * f.w * .35, y = H * (.16 + .82 * Math.sqrt(f.y)) + Math.cos(t * f.f2 + f.ph * 1.3) * f.w * .7 + Math.sin(t * .07 + f.ph) * 10;
     const u = (t / f.per + f.off) % 1, pulse = u < .42 ? Math.sin(u / .42 * Math.PI) ** 2 : 0, gl = (.07 + .93 * pulse) * dn * a, s = near ? 2.2 + f.z * 1.8 : .85 + f.z * 1.5;
     if (near) { ctx.globalAlpha = gl * .16; ctx.drawImage(halo, x - 16 * s, y - 16 * s, 32 * s, 32 * s); ctx.globalAlpha = gl * .5; ctx.drawImage(bok, x - 6 * s, y - 6 * s, 12 * s, 12 * s); continue; } // out of focus: a soft disc with a brighter rim, like a lens sees it
     ctx.globalAlpha = gl * .55; ctx.drawImage(halo, x - 16 * s, y - 16 * s, 32 * s, 32 * s);
-    ctx.globalAlpha = gl * .95; ctx.drawImage(core, x - 3.2 * s, y - 3.2 * s, 6.4 * s, 6.4 * s); }
+    ctx.globalAlpha = gl * .95; ctx.drawImage(core, x - 3.2 * s, y - 3.2 * s, 6.4 * s, 6.4 * s);
+    if (y > H * .8) { ctx.globalAlpha = gl * .16; ctx.drawImage(halo, x - 40, y - 14, 80, 40); } } // low ones light the grass around them
   ctx.restore(); ctx.globalAlpha = 1; }
 const hillY = (x, i) => H * [.865, .925][i] + Math.sin(x * .011 + 1 + i * 2.1) * [16, 12][i] + Math.sin(x * .029 + 2 + i) * [16, 12][i] * .4;
 const GRASS = Array.from({ length: 150 }, (_, i) => ({ x: (i + Math.random() * .8) / 150, h: 9 + Math.random() ** 1.6 * 30, l: (Math.random() - .5) * .5, w: .9 + Math.random() * 1.1, ph: Math.random() * 7, i: Math.random() < .35 ? 0 : 1 }));
+const TREES = [[.08, 1.1], [.14, .8], [.63, 1.25], [.7, .9], [.76, 1.05], [.93, .75]];
 function duskHills(a) { // low hills in silhouette along the bottom, the nearer one darker; grass along their crests, swaying in the evening air
   [['74,56,112', .85], ['24,19,48', .97]].forEach(([c, al], i) => { const g = ctx.createLinearGradient(0, H * .84, 0, H); g.addColorStop(0, `rgba(${c},${al * a})`); g.addColorStop(1, `rgba(${i ? '14,11,30' : '40,30,70'},${al * a})`); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-10, H + 20);
     for (let x = -10; x <= W + 10; x += 6) ctx.lineTo(x, hillY(x, i)); ctx.lineTo(W + 10, H + 20); ctx.closePath(); ctx.fill();
+    if (!i) { ctx.fillStyle = `rgba(${c},${al * a})`; for (const [tx, ts] of TREES) { const X = tx * W, Y = hillY(X, 0) + 3, h = 34 * ts, sw = Math.sin(t * .5 + tx * 9) * .8; // a few trees on the far hill, their crowns softly rounded
+        ctx.fillRect(X - 1.3 * ts, Y - h * .45, 2.6 * ts, h * .45); [[0, -.62, .3], [-.22, -.5, .22], [.22, -.52, .23], [-.1, -.82, .2], [.12, -.8, .19]].forEach(([u, v, r]) => { ctx.beginPath(); ctx.arc(X + u * h + sw, Y + v * h, r * h, 0, 7); ctx.fill(); }); }
+      ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .28 * a; ctx.drawImage(softBlob('170,120,190'), -W * .3, H * .86, W * 1.6, H * .09); ctx.restore(); } // mist lying in the valley between the hills
     ctx.strokeStyle = `rgba(${c},${al * a})`; ctx.lineCap = 'round';
     for (const b of GRASS) { if (b.i !== i) continue; const x = b.x * W, y = hillY(x, i) + 2, sw = Math.sin(t * .9 + b.ph + x * .02) * 2.2 + Math.sin(t * .37 + x * .007) * 2, hh = b.h * (i ? 1 : .6);
       ctx.lineWidth = b.w * (i ? 1 : .7); ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + b.l * hh * .3, y - hh * .6, x + b.l * hh + sw, y - hh); ctx.stroke(); }
@@ -2341,6 +2349,11 @@ const BRANCH = (() => { const R = (a, b) => a + Math.random() * (b - a), segs = 
       if (f && k > 0) for (let j = 0; j < (k === n - 1 ? 3 : 2); j++) if (Math.random() < .8) fl.push([x + R(-.03, .03), y + R(-.035, .02), R(.85, 1.2), R(0, 6), Math.random() < .2]); } return pts; };
   const m = grow(-.05, 0, -.1, .64, 8, 7, true); grow(m[2][0], m[2][1], -.85, .2, 3.6, 4, true); grow(m[3][0], m[3][1], .45, .18, 3, 4, true); grow(m[5][0], m[5][1], -.6, .16, 2.4, 3, true); grow(m[4][0], m[4][1], .9, .1, 2, 3, true);
   return { segs, fl }; })();
+const FLOWERSOFT = () => sprite('flsoft', 40, 40, g => { const pt = PETAL(false); for (let k = 0; k < 5; k++) { g.save(); g.translate(20, 20); g.rotate(k * 1.2566 + .3); g.drawImage(pt, -6, -16, 12, 16); g.restore(); } const cg = g.createRadialGradient(20, 20, 0, 20, 20, 5); cg.addColorStop(0, 'rgba(214,90,130,.9)'); cg.addColorStop(1, 'rgba(240,150,180,0)'); g.fillStyle = cg; g.fillRect(0, 0, 40, 40); }); // drawn small and scaled up: a blossom far out of focus
+const FG = [[1.02, .9, 120, .2], [.88, 1.0, 96, 1.4], [1.06, .76, 80, 2.6], [.95, .06, 90, .8], [1.05, .15, 70, 2.1], [-.04, .97, 84, 3.3]];
+function drawFgBlossom(a) { // a few blossoms right in front of the lens, far out of focus, framing the corners
+  const sp = FLOWERSOFT(); for (const [x, y, sz, ph] of FG) { const X = x * W + Math.sin(t * .5 + ph) * 4, Y = y * H + Math.cos(t * .4 + ph) * 3; ctx.save(); ctx.translate(X, Y); ctx.rotate(ph + Math.sin(t * .3 + ph) * .05); ctx.globalAlpha = a * .62; ctx.drawImage(sp, -sz / 2, -sz / 2, sz, sz); ctx.restore(); }
+  ctx.globalAlpha = 1; }
 function drawBranch(a) { // a flowering cherry branch reaching in from the left, swaying a little in the breeze
   const sw = Math.sin(t * .55) * .014 + Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6) * .025, oy = H * .27;
   ctx.save(); ctx.globalAlpha = a; ctx.translate(-W * .05, oy); ctx.rotate(sw); ctx.translate(W * .05, -oy); ctx.lineCap = 'round';
@@ -2380,7 +2393,7 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
     const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
     return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
   firefly: () => ({ cvar: [1, .12, 5.3], cTop: '20,24,64', cMid: '78,60,124', cBot: '232,146,122', cd: '58,46,96', cl: '244,178,170', cov: [.92, .52, .55, .12], scl: 1.5, drift: [.015, 0], cloudA: .7, stars: .55, glow: [...toUV(W * .3, H * 1.02), .4], glowC: '255,160,110', moon: [...toUV(W * .76, H * .13), W * .055 * scale / cv.height, .85] }), // Apple's dusk: deep blue overhead, violet, then a warm glow where the sun has gone
-  blossom: () => ({ cvar: [-1, .2, 9.1], cTop: '84,140,214', cMid: '140,184,234', cBot: '246,214,226', cd: '214,200,228', cl: '255,252,255', cov: [-.05, .5, .45, .14], scl: 1.15, drift: [.035, 0], cloudA: .8, glow: [...toUV(W * .86, H * .05), .08], glowC: '255,246,236' }), // a soft spring sky: clear blue fading to blossom pink, white clouds drifting
+  blossom: () => ({ cvar: [-1, .2, 9.1], cTop: '84,140,214', cMid: '140,184,234', cBot: '246,214,226', cd: '222,196,222', cl: '255,253,255', cov: [-.06, .56, .6, .1], scl: 1.05, drift: [.03, 0], cloudA: .95, glow: [...toUV(W * .9, H * .03), .2], glowC: '255,246,236' }), // a soft spring sky: clear blue fading to blossom pink, white clouds drifting
   meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], mets: .8, scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
 let skyE = 0; // how much of the screen the GPU sky covers right now (the 2D backdrop fades out as it rises)
@@ -2568,7 +2581,7 @@ function drawFrontWeather() { // light and glass in front of the scene
     ctx.restore();
   }
   if (wx.kind === 'firefly' && wx.a > .01) drawFireflies(wx.a, true); // a few fireflies drift close past the lens
-  if (wx.kind === 'blossom' && wx.a > .01) drawPetals(wx.a, true);
+  if (wx.kind === 'blossom' && wx.a > .01) { drawPetals(wx.a, true); drawFgBlossom(wx.a); }
   if (wx.kind === 'halo' && wx.a > .01) drawGlints(wx.a);
   if (wx.kind === 'snow' && wx.a > .01) drawSnow(wx.a, true); // a few large flakes drift past close to the lens
   if ((wx.kind === 'hail' || wx.kind === 'snow') && wx.a > .01) { // cold frost gathering in the corners of the glass
