@@ -2984,9 +2984,7 @@ function draw() {
     ctx.fillStyle = `rgba(43,45,66,${k * .1})`; ctx.fillRect(-20, -20, W + 40, H + 40);
   }
   if (state === 'dead' && won) drawWinLight();
-  if (state === 'dead' && crash.hole >= 0) { const hx = W * .8, hy = H * .31, v = clamp01(crash.hole / 1.2) * .38, vg = ctx.createRadialGradient(hx, hy, W * .25, hx, hy, H * 1.1); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(0,0,6,${v})`); ctx.fillStyle = vg; ctx.fillRect(-20, -20, W + 40, H + 40); } // the scene leans in towards the hole
   if (crash.shards.length || crash.waves.length) drawCrash();
-  if (state === 'dead' && crash.hole > .5 && crash.hole < 1.6) { const q = (crash.hole - .5) / 1.1, hx = W * .8, hy = H * .31, R = W * .16; ctx.save(); ctx.globalCompositeOperation = 'screen'; const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, R); g.addColorStop(0, `rgba(255,220,170,${.4 * Math.sin(q * Math.PI)})`); g.addColorStop(1, 'rgba(255,190,130,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, R, 0, 7); ctx.fill(); ctx.restore(); } // the pieces light the horizon as they cross it
 
   if (state === 'play' || state === 'paused') { ctx.save(); ctx.translate(0, hudDY);
     if (score !== shownScore) { if (score > shownScore) fx.score = 1; shownScore = score; }
