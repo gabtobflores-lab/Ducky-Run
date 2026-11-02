@@ -882,15 +882,38 @@ function piano(f, vol, at) { // a soft felt piano: a warm fundamental, a gentle 
     lp.connect(out); out.connect(A.mus); s.gain.value = .55; out.connect(s); s.connect(A.rev); } catch (e) {} }
 // melodies written as phrases over the four chords: a motif is stated, answered with a small variation, then the music rests and breathes
 const MOTIFS = [[[0, 0], [2, .9], [4, 1.8], [3, 3.2]], [[4, 0], [3, .8], [2, 1.6], [0, 3]], [[2, 0], [4, .7], [5, 1.4], [4, 2.4], [2, 3.6]], [[5, 0], [4, 1.1], [2, 2.2]], [[0, 0], [4, 1.2], [3, 2.], [2, 2.8], [1, 4.]]];
-function musChord(fr, t0, len) { const A = AB, lp = filt('lowpass', 950, .3), g = ac.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(1, t0 + 3.2); g.gain.setValueAtTime(1, t0 + len); g.gain.linearRampToValueAtTime(0, t0 + len + 4.2);
-  lp.frequency.setValueAtTime(700, t0); lp.frequency.linearRampToValueAtTime(1150, t0 + len * .6); lp.frequency.linearRampToValueAtTime(800, t0 + len + 4); // each chord opens and closes slowly, like breathing
+function musChord(fr, t0, len, cut = 950) { const A = AB, lp = filt('lowpass', cut, .3), g = ac.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(1, t0 + 3.2); g.gain.setValueAtTime(1, t0 + len); g.gain.linearRampToValueAtTime(0, t0 + len + 4.2);
+  lp.frequency.setValueAtTime(cut * .74, t0); lp.frequency.linearRampToValueAtTime(cut * 1.2, t0 + len * .6); lp.frequency.linearRampToValueAtTime(cut * .84, t0 + len + 4); // each chord opens and closes slowly, like breathing
   fr.forEach((f, i) => { [['sine', 0, .022], ['triangle', 6, .009]].forEach(([ty, dc, v]) => { const o = ac.createOscillator(), og = ac.createGain(); o.type = ty; o.frequency.value = f; o.detune.value = dc * (i % 2 ? 1 : -1); og.gain.value = v / (1 + i * .15); o.connect(og); og.connect(lp); o.start(t0); o.stop(t0 + len + 4.4); }); });
   const bo = ac.createOscillator(), bg = ac.createGain(); bo.frequency.value = fr[0] / 2; bg.gain.value = .018; bo.connect(bg); bg.connect(lp); bo.start(t0); bo.stop(t0 + len + 4.4); // a soft root underneath
   const s = ac.createGain(); s.gain.value = .5; lp.connect(g); g.connect(A.mus); g.connect(s); s.connect(A.rev); }
+// during play, each event brings its own quiet score on the music bus (so the Music switch silences it): slow chords that carry its mood and a few soft piano notes.
+// Calm for the gentle skies, darker and lower for the storm and the black hole, never loud: it sits beneath the game. The alien invasion keeps its own piece (alienMus)
+const EVMUS = {
+  storm: { ch: [[73.42, 110, 146.83, 174.61, 220], [58.27, 116.54, 146.83, 174.61, 220], [65.41, 98, 130.81, 155.56, 196], [55, 110, 146.83, 164.81, 220]], mel: [293.66, 349.23, 392, 440, 523.25], cut: 700, gap: 5 }, // D minor, low and rolling
+  rain: { ch: [[110, 164.81, 220, 261.63, 329.63], [87.31, 130.81, 174.61, 220, 261.63], [65.41, 130.81, 164.81, 196, 246.94], [98, 146.83, 196, 246.94, 293.66]], mel: [440, 523.25, 587.33, 659.26, 783.99], cut: 900, gap: 4 }, // A minor, wistful
+  snow: { ch: [[65.41, 130.81, 164.81, 196, 246.94], [110, 164.81, 220, 261.63, 329.63], [87.31, 174.61, 220, 261.63, 329.63], [98, 146.83, 196, 246.94, 329.63]], mel: [1046.5, 1174.66, 1318.5, 1567.98, 1760], cut: 1100, gap: 3.5 }, // C major, music-box high notes
+  fog: { ch: [[82.41, 123.47, 185, 246.94], [73.42, 110, 164.81, 220], [82.41, 123.47, 185, 246.94], [65.41, 98, 146.83, 196]], mel: [329.63, 369.99, 493.88, 587.33], cut: 600, gap: 6 }, // E, hazy open fifths
+  hail: { ch: [[73.42, 110, 146.83, 220], [65.41, 98, 130.81, 196], [58.27, 87.31, 116.54, 174.61], [65.41, 98, 130.81, 196]], mel: [587.33, 698.46, 783.99, 880], cut: 800, gap: 4 },
+  wind: { ch: [[98, 146.83, 196, 246.94, 293.66], [87.31, 130.81, 174.61, 220, 261.63], [110, 164.81, 220, 261.63, 329.63], [98, 146.83, 196, 246.94, 293.66]], mel: [587.33, 659.26, 783.99, 880, 987.77], cut: 1000, gap: 4.5 },
+  meteor: { ch: [[123.47, 185, 246.94, 293.66, 369.99], [98, 146.83, 196, 246.94, 293.66], [110, 164.81, 220, 277.18, 329.63], [92.5, 138.59, 185, 220, 277.18]], mel: [739.99, 880, 987.77, 1108.73, 1318.51], cut: 1000, gap: 3.5 }, // B minor, starry
+  aurora: { ch: [[73.42, 146.83, 220, 277.18, 329.63], [61.74, 123.47, 185, 233.08, 293.66], [82.41, 123.47, 185, 246.94, 329.63], [69.3, 138.59, 207.65, 277.18, 329.63]], mel: [880, 987.77, 1108.73, 1318.51, 1479.98], cut: 1200, gap: 3.2 }, // D Lydian, luminous
+  heat: { ch: [[87.31, 130.81, 174.61, 220, 261.63], [98, 146.83, 196, 233.08, 293.66], [87.31, 130.81, 174.61, 220, 261.63], [73.42, 110, 146.83, 174.61, 220]], mel: [523.25, 587.33, 698.46, 783.99], cut: 900, gap: 5 },
+  sun: { ch: [[130.81, 196, 261.63, 329.63, 392], [110, 164.81, 220, 277.18, 329.63], [87.31, 130.81, 174.61, 220, 261.63], [98, 146.83, 196, 246.94, 293.66]], mel: [1046.5, 1174.66, 1318.5, 1567.98], cut: 1300, gap: 3 },
+  bhole: { ch: [[41.2, 61.74, 82.41, 98, 123.47], [43.65, 65.41, 87.31, 103.83, 130.81], [41.2, 61.74, 82.41, 98, 123.47], [36.71, 55, 73.42, 87.31, 110]], mel: [164.81, 174.61, 196, 246.94], cut: 420, gap: 7 }, // a vast, slow E minor, a semitone of unease
+};
+const EVM = { k: '', next: 0, note: 0, ch: 0 };
+function evMusic(now) { // the event's score, while playing
+  const k = state === 'play' && wx.kind && EVMUS[wx.kind] && wx.phase !== 'warn' && sndOn('music') ? wx.kind : '', a = k ? wx.a : 0, D = EVMUS[k];
+  if (k !== EVM.k) { EVM.k = k; if (k) { EVM.next = now + .1; EVM.note = now + 2.5; EVM.ch = 0; } }
+  if (!k) return 0;
+  while (EVM.next < now + .5) { musChord(D.ch[EVM.ch], EVM.next, 9, D.cut); EVM.next += 9; EVM.ch = (EVM.ch + 1) % D.ch.length; }
+  while (EVM.note < now + .5) { const f = D.mel[Math.random() * D.mel.length | 0]; piano(f, .022, EVM.note - now); if (Math.random() < .4) piano(D.mel[Math.random() * D.mel.length | 0], .014, EVM.note - now + .45); EVM.note += D.gap + Math.random() * D.gap; }
+  return a; }
 function musTick() {
-  const want = (state === 'menu' || state === 'dead') && sndOn('music'), now = ac.currentTime;
-  AB.mus.gain.setTargetAtTime(want ? .9 : 0, now, want ? 1.4 : .6);
-  if (!want) { if (MUS.on && AB.mus.gain.value < .01) MUS.on = false; if (!MUS.on) return; } // fades out, then stops scheduling
+  const lobby = (state === 'menu' || state === 'dead') && sndOn('music'), now = ac.currentTime, ev = lobby ? 0 : evMusic(now), want = lobby;
+  AB.mus.gain.setTargetAtTime(lobby ? .9 : ev * .5, now, lobby || ev ? 1.4 : .6); // in play, the event score sits well beneath the game
+  if (!want) { MUS.on = false; return; } // the lobby piece stops scheduling; what is already sounding fades with the bus
   if (!MUS.on && want) { MUS.on = true; MUS.next = now + .1; MUS.note = now + 2.5; }
   while (MUS.next < now + .5) { musChord(MUSP[MUS.ch], MUS.next, 9); MUS.next += 9; MUS.ch = (MUS.ch + 1) % MUSP.length; }
   while (MUS.note < now + .5) { // one phrase at a time: the motif, then its answer (shifted, last note changed), then a rest
@@ -900,9 +923,9 @@ function musTick() {
       if (i === 0) piano(MUSN[k] / 2, .016, MUS.note - now + at * tempo + .02); }); // a soft low octave under the first note
     MUS.note += (MUS.motif[MUS.motif.length - 1][1] * tempo) + (MUS.rep ? 5 + Math.random() * 4 : 2.2); MUS.rep++; }
 }
-// the invasion's own music: an original piece in E Lydian, the mode of wonder. A soft pulsing arpeggio over a wide pad, and a theremin-like voice gliding between notes
+// the invasion's own music: an original piece in E Phrygian, uneasy and watchful. A soft pulsing arpeggio over a wide pad, and a theremin-like voice gliding between notes
 const ALM = { on: false, next: 0, step: 0, bar: 0, g: null, thr: null };
-const ALCH = [[82.41, 123.47, 207.65, 233.08, 311.13], [92.5, 138.59, 233.08, 277.18, 349.23], [73.42, 110, 185, 220, 277.18], [82.41, 123.47, 207.65, 233.08, 311.13]], ALMEL = [659.26, 739.99, 830.61, 932.33, 987.77, 1108.73, 1244.51];
+const ALCH = [[82.41, 123.47, 196, 233.08, 293.66], [87.31, 130.81, 207.65, 261.63, 311.13], [73.42, 110, 174.61, 233.08, 293.66], [82.41, 123.47, 196, 246.94, 293.66]], ALMEL = [659.26, 698.46, 783.99, 880, 987.77, 1046.5, 1174.66]; // E Phrygian: uneasy, not frightening
 function alienMus(lv) {
   if (!AB) return; const now = ac.currentTime;
   if (lv > .01 && !ALM.on) { ALM.on = true; ALM.g = ac.createGain(); ALM.g.gain.value = 0; ALM.g.connect(AB.amb); const s = ac.createGain(); s.gain.value = .55; ALM.g.connect(s); s.connect(AB.rev); ALM.next = now + .1; ALM.step = 0; ALM.bar = 0;
