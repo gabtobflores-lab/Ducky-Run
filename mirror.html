@@ -856,6 +856,9 @@ function sndTick(dt) {
     L.idle = tg > .001 ? 0 : L.idle + dt; if (L.idle > 6) { L.srcs.forEach(o => { try { o.stop(); } catch (e) {} }); L.out.disconnect(); delete AMBL[n]; } }
   if (a > .05) { const r = (n, rate) => (sndAcc[n] = (sndAcc[n] || 0) + dt * rate) >= 1 ? (sndAcc[n] -= 1 + Math.random() * .8, true) : false; // little events, at a gentle random rhythm
     if ((k === 'rain' || k === 'storm') && r('drop', (k === 'storm' ? 9 : 6) * a)) hush(2200 + Math.random() * 3500, 7, .035, .018 * a, 0, Math.random() * .1, .15); // single drops close by
+    if ((k === 'wind' || k === 'storm') && r('rustle', (k === 'wind' ? 1.4 : .7) * a)) { const f = 2600 + Math.random() * 2600, n = 3 + (Math.random() * 4 | 0); for (let j = 0; j < n; j++) hush(f * (.85 + Math.random() * .3), 1.4, .07 + Math.random() * .08, .006 * a, 0, j * (.03 + Math.random() * .05), .1); } // leaves rustling somewhere close
+    if (k === 'wind' && r('whistle', .12 * a)) hush(900 + Math.random() * 500, 14, 1.8, .006 * a, 1300 + Math.random() * 400, 0, .4); // the wind finding a gap, a soft whistle
+    if ((k === 'rain' || k === 'storm') && r('plink', .9 * a)) bell(380 + Math.random() * 260, .0045 * a, .35, 'fx', .25); // a drip landing in a puddle
     if (k === 'hail' && r('hail', 9 * a)) { bell(3200 + Math.random() * 2800, .006 * a, .09, 'fx', .1); hush(5000, 4, .025, .012 * a); } // ice ticking on the ground
     if (k === 'snow' && r('snow', .32 * a)) bell([1760, 1975.5, 2217.5, 2637][Math.random() * 4 | 0], .006 * a, 3, 'fx', .9); // a rare glint of ice crystals
     if (k === 'bhole' && r('bh', .12 * a)) bell([164.81, 246.94, 329.63][Math.random() * 3 | 0], .02 * a, 7, 'fx', 1); // now and then a deep, slow tone, like light bending
@@ -904,15 +907,16 @@ const EVMUS = {
 };
 const EVM = { k: '', next: 0, note: 0, ch: 0 };
 function evMusic(now) { // the event's score, while playing
-  const k = state === 'play' && wx.kind && EVMUS[wx.kind] && wx.phase !== 'warn' && sndOn('music') ? wx.kind : '', a = k ? wx.a : 0, D = EVMUS[k];
+  const k = state === 'play' && wx.kind && EVMUS[wx.kind] && !WXNORM[wx.kind] && wx.phase !== 'warn' && sndOn('music') ? wx.kind : '', a = k ? wx.a : 0, D = EVMUS[k];
   if (k !== EVM.k) { EVM.k = k; if (k) { EVM.next = now + .1; EVM.note = now + 2.5; EVM.ch = 0; } }
   if (!k) return 0;
   while (EVM.next < now + .5) { musChord(D.ch[EVM.ch], EVM.next, 9, D.cut); EVM.next += 9; EVM.ch = (EVM.ch + 1) % D.ch.length; }
   while (EVM.note < now + .5) { const f = D.mel[Math.random() * D.mel.length | 0]; piano(f, .022, EVM.note - now); if (Math.random() < .4) piano(D.mel[Math.random() * D.mel.length | 0], .014, EVM.note - now + .45); EVM.note += D.gap + Math.random() * D.gap; }
   return a; }
+const WXNORM = { storm: 1, rain: 1, wind: 1, hail: 1, fog: 1, heat: 1, sun: 1 }; // weather events play the game's normal music, quietly, under their own real sounds
 function musTick() {
-  const lobby = (state === 'menu' || state === 'dead') && sndOn('music'), now = ac.currentTime, ev = lobby ? 0 : evMusic(now), want = lobby;
-  AB.mus.gain.setTargetAtTime(lobby ? .9 : ev * .5, now, lobby || ev ? 1.4 : .6); // in play, the event score sits well beneath the game
+  const lobby = (state === 'menu' || state === 'dead') && sndOn('music'), now = ac.currentTime, wxm = !lobby && state === 'play' && WXNORM[wx.kind] && wx.phase !== 'warn' && sndOn('music') ? wx.a : 0, ev = lobby || wxm ? 0 : evMusic(now), want = lobby || wxm > .02;
+  AB.mus.gain.setTargetAtTime(lobby ? .9 : wxm ? wxm * .45 : ev * .5, now, lobby || ev || wxm ? 1.4 : .6); // in play, the music sits well beneath the game
   if (!want) { MUS.on = false; return; } // the lobby piece stops scheduling; what is already sounding fades with the bus
   if (!MUS.on && want) { MUS.on = true; MUS.next = now + .1; MUS.note = now + 2.5; }
   while (MUS.next < now + .5) { musChord(MUSP[MUS.ch], MUS.next, 9); MUS.next += 9; MUS.ch = (MUS.ch + 1) % MUSP.length; }
@@ -2536,7 +2540,8 @@ function lightning() { // a strike from the cloud base: threads between the bloc
   if (!bolt) { cloudGlow(); wx.nextBolt = .6 + Math.random() * .6; return; } // nowhere clear to land: it stays in the cloud this time, and tries again shortly
   const pz = bolt.o ? pre2 : pre; Object.assign(bolt, { br: forks(bolt.pts, 2 + ((Math.random() * 2) | 0)).filter(b => !blocked(b.pts, bolt.o, pz + lead)), t: 0, pre: pz, lead, st, dur: pz + lead + st[st.length - 1].t + .55 });
   wx.bolt = bolt; wx.flash = 1;
-  const at = bolt.pre + lead; if (bolt.o) { setTimeout(() => { beep(1500, .12, 'square', .03, -1100); haptic('heavy'); }, at * 1000); thunder(at + .05, .1, 2.4); } else thunder(at + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
+  const at = bolt.pre + lead; hush(5200, .7, .18, .045, 1800, at, .15); hush(9000, 2, .5, .012, 3000, at + .04, .2); // the crack of the strike, a brief sizzle in the air
+  if (bolt.o) { setTimeout(() => { beep(1500, .12, 'square', .03, -1100); haptic('heavy'); }, at * 1000); thunder(at + .05, .1, 2.4); } else thunder(at + .15 + Math.random() * .3, .08 + Math.random() * .03, 2.6);
 }
 function flashK(b) { // brightness after the leader: each stroke flares and decays fast
   const s0 = b ? (b.pre || 0) + b.lead : 0; if (!b || b.t < s0) return 0; const tt = b.t - s0; let k = 0;
