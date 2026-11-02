@@ -2849,14 +2849,13 @@ function draw() {
   { const n = state !== 'menu' && uiNight() > .5; if (n !== nightOn) { nightOn = n; document.body.classList.toggle('night', n); themeMeta && themeMeta.setAttribute('content', n ? '#0b1020' : '#f6f1ea'); } } // glass and Safari's bars tint to the sky
   ctx = mainCtx;
   const skyOn = drawSky();
-  ctx.setTransform(1, 0, 0, 1, 0, 0); const bgA = skyOn ? (skyE > .995 ? 0 : 1) : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height); if (bgA > .004) { ctx.globalAlpha = bgA; ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
+  ctx.setTransform(1, 0, 0, 1, 0, 0); const NT = { aurora: [[150, 162, 222], [8, 14, 38]], bhole: [[196, 150, 118], [5, 5, 9]], alien: [[158, 128, 108], [12, 12, 18]], meteor: [[196, 168, 222], [24, 20, 60]] }[wx.kind], night = NT && NT[1], dimK = night && skyOn ? smooth(clamp01(skyE / .55)) : 0, bgA = skyOn ? (night ? 1 - smooth(clamp01((skyE - .35) / .65)) : 1 - skyE) : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height);
+  if (bgA > .004) { ctx.globalAlpha = bgA; if (dimK > 0) { const tone = k => { k = clamp01(k); const [a, b] = k < .5 ? [[246, 241, 234], NT[0]] : [NT[0], NT[1]], q = smooth(k < .5 ? k * 2 : (k - .5) * 2); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * q)).join(',')})`; };
+    const g = ctx.createLinearGradient(0, 0, 0, cv.height); g.addColorStop(0, tone(dimK * 1.25)); g.addColorStop(1, tone(dimK * .85)); ctx.fillStyle = g; } else ctx.fillStyle = '#f6f1ea'; ctx.fillRect(0, 0, cv.width, cv.height); } // twilight: the room passes through the event's own dusk colour, darkest at the top, then its sky emerges // a night event first dims the room to its own dark tone, then its sky emerges through it: never a milky grey mix ctx.globalAlpha = 1; // the 2D backdrop only where the sky has not covered it
   const sk = RM ? 0 : shake; ctx.setTransform(scale, 0, 0, scale, offX + (Math.random() - .5) * sk * scale, offY + (Math.random() - .5) * sk * scale);
   ctx.save(); ctx.beginPath(); ctx.rect(-20, -20, W + 40, H + 40); ctx.clip();
   const playing = state !== 'menu';
-  if (bgA > .004) { ctx.globalAlpha = bgA; drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
-  if (skyOn && bgA > .004 && skyE > .002) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'destination-out'; // the event sky is revealed like dusk falling: it sweeps down from the top behind a soft edge, never a milky half-transparent wash
-    const Hc = cv.height, f = (skyE * 1.5 - .25) * Hc, band = Hc * .28, g = ctx.createLinearGradient(0, f - band, 0, f + band * .35); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(.55, 'rgba(0,0,0,.75)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, Math.min(Hc, f + band * .35 + 2)); ctx.restore(); }
+  if (bgA > .004) { ctx.globalAlpha = bgA * (1 - dimK); drawBackground(fxA * fxA); } ctx.globalAlpha = 1;
   ctx.globalAlpha = 1 - skyE * .85; drawDivider(Math.max(pulse * .5, fxA, state === "menu" ? 0 : 0)); ctx.globalAlpha = 1; /* the divider melts into an event sky */
   if (!playing) { ctx.restore(); return; } // the home screen shows only the calm backdrop; the balls live in its preview
 
