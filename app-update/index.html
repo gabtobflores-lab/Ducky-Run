@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="6bb547c">
+<meta name="build" content="fed737a">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, hail, aurora and meteor showers.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1432,39 +1432,48 @@ function updateBeam(dt) {
 function abduct() { // taken by the beam: both balls rise into the ship, stretching and dimming, and vanish in a flash at its aperture
   state = 'dead'; shake = 0; fx.freeze = 0; fx.dead = 0; crash.shards = []; crash.waves = []; crash.tmpl = null; wxHide(); crash.first = 0;
   crash.shown = false; crash.ball = [0, 1].map(i => ({ at: 99, burst: false, elec: false, abd: true, y0: BY - ABD.lift, x0: bx[i] }));
+  ABD.k = 1; // the beam stays at full brightness while it takes them
   hush(2600, 1.6, .5, .4, 300, 0, .3); beep(140, 1.5, 'sine', .07, 700); haptic('error');
   if (score > bestNow() || (bestBanked && score >= bestNow())) { bests[bkey()] = score; newBest = true; saveBests(); }
   lastRank = recordRun(score); }
-function drawAbducted(i, c, r, P) { // the ball rising up the beam into the ship
-  const [ax, ay] = apPos(), k = clamp01(fx.dead / 1.25), e = k * k * (3 - 2 * k), x = c.x0 + (ax - c.x0) * e + Math.sin(fx.dead * 9 + i * 3) * 6 * (1 - e), y = c.y0 + (ay - c.y0) * e;
-  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2); g.addColorStop(0, `rgba(255,190,110,${.5 * (1 - k * .5)})`); g.addColorStop(1, 'rgba(255,160,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, 7); ctx.fill();
-  if (k < 1) drawBall(x, y, r * (1 - .72 * e), P, i ? 1 : -1, 1 - .3 * e, 1 + .6 * e, .9, .5 * e, 1 - .5 * e);
+function drawAbducted(i, c, r, P) { // the ball rising up the beam into the ship: it lifts, spins slowly, burns brighter and smaller, and is gone in a flash of light at the aperture
+  const [ax, ay] = apPos(), k = clamp01(fx.dead / 1.25), e = k * k * (3 - 2 * k), x = c.x0 + (ax - c.x0) * e + Math.sin(fx.dead * 9 + i * 3) * 6 * (1 - e), y = c.y0 + (ay - c.y0) * e, rr = r * (1 - .72 * e);
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.4); g.addColorStop(0, `rgba(255,${200 + 40 * e | 0},${130 + 80 * e | 0},${.55 * (1 - k * .4)})`); g.addColorStop(1, 'rgba(255,160,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3.4, 0, 7); ctx.fill();
+  if (k < 1) { ctx.save(); ctx.translate(x, y); ctx.rotate(fx.dead * 2.2 * (i ? 1 : -1)); drawBall(0, 0, rr, P, i ? 1 : -1, 1 - .3 * e, 1 + .6 * e, .9, .7 * e, 1 - .35 * e); ctx.restore(); // spinning slowly as it rises
+    const wg = ctx.createRadialGradient(x, y, 0, x, y, rr * 1.4); wg.addColorStop(0, `rgba(255,248,235,${.75 * e})`); wg.addColorStop(1, 'rgba(255,230,190,0)'); ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(x, y, rr * 1.4, 0, 7); ctx.fill(); // burning white as it nears the ship
+    const ph = (fx.dead * 1.6 + i * .5) % 1; ctx.strokeStyle = `rgba(255,220,170,${.4 * (1 - ph) * (1 - k)})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(x, y + rr * .6, rr * (1.2 + ph * 1.6), rr * (.35 + ph * .45), 0, 0, 7); ctx.stroke(); } // rings of the beam's light passing up around it
   if (Math.random() < .6) parts.push({ x: x + (Math.random() - .5) * r, y, vx: (Math.random() - .5) * 30, vy: -60 - Math.random() * 80, g: 0, life: .6, max: .6, r: 1.5 + Math.random() * 1.5, col: 'rgba(255,215,160,.9)' });
   if (k >= 1 && !c.gone) { c.gone = true; for (let q = 0; q < 24; q++) { const an = Math.random() * 7, v = 60 + Math.random() * 140; parts.push({ x: ax, y: ay, vx: Math.cos(an) * v, vy: Math.sin(an) * v * .5, g: 40, life: .8, max: .8, r: 1.5 + Math.random() * 2, col: 'rgba(255,220,170,.95)' }); }
-    if (i === 0) { bell(1318.5, .02, 1.6, 'fx', .5); bell(987.77, .018, 1.8, 'fx', .5, .06); } }
-  if (k >= 1 && fx.dead < 1.6) { const f = 1 - (fx.dead - 1.25) / .35, fg = ctx.createRadialGradient(ax, ay, 0, ax, ay, 90); fg.addColorStop(0, `rgba(255,236,200,${.8 * f})`); fg.addColorStop(1, 'rgba(255,190,110,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(ax, ay, 90, 0, 7); ctx.fill(); } }
-function drawAlienDeath(i, c, r, P) { // hit by an alien ship: the ball flickers like a hologram losing its signal, then comes apart into little tiles of iridescent glass that drift up and fade
+    if (i === 0) { bell(1318.5, .02, 1.6, 'fx', .5); bell(987.77, .018, 1.8, 'fx', .5, .06); haptic('heavy'); } }
+  if (k >= 1 && fx.dead < 1.7 && i === 0) { const f = 1 - (fx.dead - 1.25) / .45, R = 110 * (1 + (1 - f) * .4); ctx.save(); ctx.globalCompositeOperation = 'screen';
+    const fg = ctx.createRadialGradient(ax, ay, 0, ax, ay, R); fg.addColorStop(0, `rgba(255,240,210,${.85 * f})`); fg.addColorStop(.35, `rgba(255,200,130,${.3 * f})`); fg.addColorStop(1, 'rgba(255,190,110,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(ax, ay, R, 0, 7); ctx.fill();
+    for (let q = 0; q < 8; q++) { const an = q / 8 * 6.283 + .2, L = R * 1.5; ctx.save(); ctx.translate(ax, ay); ctx.rotate(an); const rg = ctx.createLinearGradient(0, 0, L, 0); rg.addColorStop(0, `rgba(255,236,200,${.35 * f})`); rg.addColorStop(1, 'rgba(255,220,170,0)'); ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(L, 0); ctx.lineTo(0, 3); ctx.fill(); ctx.restore(); } // soft rays of light
+    ctx.restore(); } }
+function drawAlienDeath(i, c, r, P) { // hit by an alien ship: the ball flickers like a hologram losing its signal, then comes apart, top first, into little tiles of tinted glass that drift up, turning through the iridescence, and fade
   const k = (fx.dead - c.d), x = c.x0, y = c.y0; if (k < 0) { drawBall(x, y, r, P, i ? 1 : -1); return; }
-  if (k < .28) { const q = k / .28; // the flicker: offset slices, colour fringing, a ring opening
-    ctx.save(); ctx.globalCompositeOperation = 'screen'; for (const [dx, col] of [[-3 * q, '160,120,255'], [3 * q, '120,255,220']]) { ctx.globalAlpha = .5; const g = ctx.createRadialGradient(x + dx, y, 0, x + dx, y, r); g.addColorStop(0, `rgba(${col},.8)`); g.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + dx, y, r, 0, 7); ctx.fill(); } ctx.restore();
-    for (let s = 0; s < 5; s++) { const sy = y - r + s * r * .4, off = (Math.random() - .5) * 10 * q; ctx.save(); ctx.beginPath(); ctx.rect(x - r * 2, sy, r * 4, r * .4); ctx.clip(); drawBall(x + off, y, r, P, i ? 1 : -1, 1, 1, .9, .3 * q, 1 - .3 * q); ctx.restore(); } }
+  if (k < .32) { const q = k / .32; // the flicker: offset slices, colour fringing
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; for (const [dx, col] of [[-3.5 * q, '160,120,255'], [3.5 * q, '120,255,220']]) { ctx.globalAlpha = .5; const g = ctx.createRadialGradient(x + dx, y, 0, x + dx, y, r * 1.1); g.addColorStop(0, `rgba(${col},.8)`); g.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + dx, y, r * 1.1, 0, 7); ctx.fill(); } ctx.restore();
+    for (let s = 0; s < 6; s++) { const sy = y - r + s * r / 3, off = Math.sin(k * 90 + s * 2.3) * 8 * q; if (k > .2 + s * .02) continue; ctx.save(); ctx.beginPath(); ctx.rect(x - r * 2, sy, r * 4, r / 3 + .5); ctx.clip(); drawBall(x + off, y, r, P, i ? 1 : -1, 1, 1, .9, .3 * q, 1 - .3 * q); ctx.restore(); } } // the slices give way from the top
   if (!c.tiles) { c.tiles = []; for (let gx = -2; gx <= 2; gx++) for (let gy = -2; gy <= 2; gy++) { const px = gx * r * .38, py = gy * r * .38; if (px * px + py * py > r * r * .95) continue; const an = Math.atan2(py, px) + (Math.random() - .5) * .6, v = 40 + Math.random() * 70;
-    c.tiles.push({ x: x + px, y: y + py, vx: Math.cos(an) * v * .7, vy: Math.sin(an) * v * .5 - 50 - Math.random() * 40, rot: Math.random() * 6, vr: (Math.random() - .5) * 5, s: r * (.36 + Math.random() * .12), h: Math.random() }); } }
-  if (k >= .2) { const q = clamp01((k - .2) / .9), dt2 = 1 / 60; // the tiles drift up and fade, turning through the iridescence
-    for (const tl of c.tiles) { const tt = k - .2, px = tl.x + tl.vx * tt, py = tl.y + tl.vy * tt + 20 * tt * tt, sz = tl.s * (1 - .55 * q), hue = (tl.h + q * .6) % 1;
-      const cols = [[170, 140, 255], [120, 210, 255], [140, 255, 220], [210, 160, 255]], ci = hue * 4, c0 = cols[ci | 0], c1 = cols[(ci + 1 | 0) % 4], f = ci % 1, col = c0.map((v, j) => v + (c1[j] - v) * f | 0).join(',');
-      ctx.save(); ctx.translate(px, py); ctx.rotate(tl.rot + tl.vr * tt); ctx.globalAlpha = (1 - q) * .95; ctx.shadowColor = `rgba(${col},.9)`; ctx.shadowBlur = 8; ctx.fillStyle = `rgba(${col},.8)`; ctx.beginPath(); ctx.roundRect(-sz / 2, -sz / 2, sz, sz, sz * .28); ctx.fill(); ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore(); } ctx.globalAlpha = 1;
-    const rr = r * (1 + q * 3); ctx.strokeStyle = `rgba(190,240,255,${.6 * (1 - q)})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x - rr, y - rr * .7, rr * 2, rr * 1.4, rr * .45); ctx.stroke(); } } // a ring the shape of a block, opening out
-function drawHoleDeath(i, c, r, P) { // during the black hole: the ball is drawn in. It accelerates towards the hole, stretching along its path, its light reddening and dimming, and is gone with a glint on the ring of light
+    c.tiles.push({ x: x + px, y: y + py, vx: Math.cos(an) * v * .7, vy: Math.sin(an) * v * .5 - 50 - Math.random() * 40, rot: Math.random() * 6, vr: (Math.random() - .5) * 4, s: r * (.36 + Math.random() * .12), h: Math.random(), dl: .14 + (py + r) / (2 * r) * .14 }); } }
+  if (k < .55) { const q = clamp01(k / .55); ctx.save(); ctx.globalCompositeOperation = 'screen'; const bg = ctx.createRadialGradient(x, y, 0, x, y, r * 3); bg.addColorStop(0, `rgba(170,200,255,${.35 * Math.sin(q * Math.PI)})`); bg.addColorStop(1, 'rgba(170,140,255,0)'); ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(x, y, r * 3, 0, 7); ctx.fill(); ctx.restore(); } // a soft bloom of its light
+  const cols = [[170, 140, 255], [120, 210, 255], [140, 255, 220], [210, 160, 255]];
+  for (const tl of c.tiles) { const tt = k - tl.dl; if (tt < 0) continue; const q = clamp01(tt / .95), ez = 1 - (1 - q) ** 2, px = tl.x + tl.vx * tt, py = tl.y + tl.vy * tt + 20 * tt * tt, sz = tl.s * (1 - .55 * ez), hue = (tl.h + q * .6) % 1;
+    const ci = hue * 4, c0 = cols[ci | 0], c1 = cols[(ci + 1 | 0) % 4], f = ci % 1, col = c0.map((v, j) => v + (c1[j] - v) * f | 0).join(',');
+    ctx.save(); ctx.translate(px, py); ctx.rotate(tl.rot + tl.vr * tt); ctx.globalAlpha = (1 - q) ** 1.3 * .95; ctx.shadowColor = `rgba(${col},.9)`; ctx.shadowBlur = 8; ctx.fillStyle = `rgba(${col},.62)`; ctx.beginPath(); ctx.roundRect(-sz / 2, -sz / 2, sz, sz, sz * .3); ctx.fill(); ctx.shadowBlur = 0;
+    const eg = ctx.createLinearGradient(-sz / 2, -sz / 2, sz / 2, sz / 2); eg.addColorStop(0, 'rgba(255,255,255,.95)'); eg.addColorStop(.45, 'rgba(255,255,255,.1)'); eg.addColorStop(1, 'rgba(255,255,255,.45)'); ctx.strokeStyle = eg; ctx.lineWidth = 1; ctx.stroke(); ctx.restore(); } // each tile is a little piece of Liquid Glass: bright edge at the top left, a soft return at the bottom right
+  ctx.globalAlpha = 1;
+  if (k >= .14) { const q = clamp01((k - .14) / .8), rr = r * (1 + (1 - (1 - q) ** 3) * 3); ctx.strokeStyle = `rgba(190,240,255,${.55 * (1 - q)})`; ctx.lineWidth = 1.5 * (1 - q) + .5; ctx.beginPath(); ctx.roundRect(x - rr, y - rr * .7, rr * 2, rr * 1.4, rr * .45); ctx.stroke(); } } // a ring the shape of a block, opening out
+function drawHoleDeath(i, c, r, P) { // during the black hole: the ball is drawn in. Space darkens towards the hole; the ball accelerates along a curving path, stretching, its light reddening, a faint ring of bent light around it, and is gone with a soft pulse at the horizon
   const hx = W * .8, hy = H * .31, k0 = clamp01((fx.dead - c.d) / 1.5), k = k0 * k0 * (2.2 - 1.2 * k0), dx = hx - c.x0, dy = hy - c.y0, side = i ? 1 : -1;
+  if (i === 0) { const v = clamp01(fx.dead / 1.2) * .4, vg = ctx.createRadialGradient(hx, hy, W * .25, hx, hy, H * 1.1); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(0,0,6,${v})`); ctx.fillStyle = vg; ctx.fillRect(-20, -20, W + 40, H + 40); } // the scene darkens towards the edges, everything leaning in
   const curve = Math.sin(k * Math.PI) * 70 * side, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L, x = c.x0 + dx * k + nx * curve, y = c.y0 + dy * k + ny * curve;
-  c.tr = c.tr || []; c.tr.push([x, y]); if (c.tr.length > 14) c.tr.shift();
-  if (k0 < 1) { ctx.save(); ctx.globalCompositeOperation = 'screen'; for (let j = 1; j < c.tr.length; j++) { const a2 = j / c.tr.length; ctx.strokeStyle = `rgba(255,${200 - 80 * k | 0},${150 - 110 * k | 0},${.35 * a2 * (1 - k0)})`; ctx.lineWidth = r * 1.2 * a2 * (1 - .7 * k); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(c.tr[j - 1][0], c.tr[j - 1][1]); ctx.lineTo(c.tr[j][0], c.tr[j][1]); ctx.stroke(); } ctx.restore(); // a streak of its light along the path
-    const ang = Math.atan2(c.tr.length > 1 ? y - c.tr[c.tr.length - 2][1] : dy, c.tr.length > 1 ? x - c.tr[c.tr.length - 2][0] : dx);
-    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); drawBall(0, 0, r * (1 - .75 * k), P, side, 1 + 2.4 * k * k, 1 - .55 * k, .8, .2, 1 - k0 ** 3); // stretched along the pull
-    ctx.globalCompositeOperation = 'source-atop'; ctx.restore();
-    const wg = ctx.createRadialGradient(x, y, 0, x, y, r * 2); wg.addColorStop(0, `rgba(255,160,90,${.45 * k})`); wg.addColorStop(1, 'rgba(255,120,60,0)'); ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, 7); ctx.fill(); } // its light reddens
+  c.tr = c.tr || []; c.tr.push([x, y]); if (c.tr.length > 18) c.tr.shift();
+  if (k0 < 1) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; for (let j = 1; j < c.tr.length; j++) { const a2 = j / c.tr.length; ctx.strokeStyle = `rgba(255,${200 - 80 * k | 0},${150 - 110 * k | 0},${.32 * a2 * a2 * (1 - k0)})`; ctx.lineWidth = r * 1.3 * a2 * (1 - .7 * k); ctx.beginPath(); ctx.moveTo(c.tr[j - 1][0], c.tr[j - 1][1]); ctx.lineTo(c.tr[j][0], c.tr[j][1]); ctx.stroke(); } ctx.restore(); // a tapering streak of its light along the path
+    const ang = Math.atan2(c.tr.length > 1 ? y - c.tr[c.tr.length - 2][1] : dy, c.tr.length > 1 ? x - c.tr[c.tr.length - 2][0] : dx), rr = r * (1 - .75 * k);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); drawBall(0, 0, rr, P, side, 1 + 2.4 * k * k, 1 - .55 * k, .8, .2, 1 - k0 ** 3); ctx.restore(); // stretched along the pull
+    const wg = ctx.createRadialGradient(x, y, 0, x, y, r * 2); wg.addColorStop(0, `rgba(255,160,90,${.45 * k})`); wg.addColorStop(1, 'rgba(255,120,60,0)'); ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, 7); ctx.fill(); // its light reddens
+    const lr = r * (1.5 + .8 * k), lg = ctx.createRadialGradient(x, y, lr * .7, x, y, lr); lg.addColorStop(0, 'rgba(255,220,180,0)'); lg.addColorStop(.75, `rgba(255,220,180,${.22 * k * (1 - k0)})`); lg.addColorStop(1, 'rgba(255,220,180,0)'); ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(x, y, lr, 0, 7); ctx.fill(); } // a faint ring of light bent around it
   else if (fx.dead - c.d < 2.1) { const q = (fx.dead - c.d - 1.5) / .6, R = W * .16; ctx.save(); ctx.globalCompositeOperation = 'screen'; const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, R); g.addColorStop(0, `rgba(255,230,190,${.35 * (1 - q) * q * 4})`); g.addColorStop(1, 'rgba(255,200,140,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, R, 0, 7); ctx.fill(); ctx.restore(); } } // a last soft pulse of light as it crosses the horizon
 function drawPull(x, y, r) { // while the beam pulls: amber light wraps the ball and motes rise off it toward the ship
   const k = ABD.k; if (k <= 0) return; const g = ctx.createRadialGradient(x, y, r * .6, x, y, r * (2.2 + 1.4 * k)); g.addColorStop(0, `rgba(255,185,105,${.55 * k + .12})`); g.addColorStop(1, 'rgba(255,160,80,0)');
