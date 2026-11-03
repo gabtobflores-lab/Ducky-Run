@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="49c88a6">
+<meta name="build" content="b76ba0c">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2144,7 +2144,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y),C=vec2
   /* thin cloud drifting in front of it, lit from below */
   float wisp=smoothstep(.5,.85,fbm(vec2(P.x*2.2-t*.03,P.y*6.+1.3)))*exp(-pow((P.y-C.y-RX*.04)/(RX*.2),2.))*exp(-pow((P.x-C.x)/(RX*1.5),2.));
   c=mix(c,vec3(.12,.1,.1)+vec3(1.,.55,.22)*.12*br,wisp*.55*sk);
-  { vec4 k=skyCloud(P,1.3,.35,7.1,.52,.18);float band=smoothstep(.0,.12,P.y)*(1.-smoothstep(.62,.82,P.y));vec3 lc=vec3(.15,.13,.14)+vec3(1.,.6,.3)*.55*exp(-length(P-C)*1.8)*(.5+br);c=mix(c,mix(vec3(.03,.03,.04),lc,k.x),k.y*band*.85*sk); } /* heavy night cloud round the ship, its edges lit amber by its glow */
+  { vec4 k=skyCloud(P,1.3,.35,7.1,.52,.18);float band=smoothstep(.0,.12,P.y)*(1.-smoothstep(.62,.82,P.y));float pul=pow(max(0.,sin(t*.71)*.6+sin(t*1.37+1.)*.4),10.);vec3 lc=vec3(.15,.13,.14)+vec3(1.,.6,.3)*(.55+1.1*pul)*exp(-length(P-C)*1.8)*(.5+br)+vec3(.55,1.,.85)*.25*pul*exp(-length(P-C)*3.); /* the clouds pulse with the ship's light */c=mix(c,mix(vec3(.03,.03,.04),lc,k.x),k.y*band*.85*sk); } /* heavy night cloud round the ship, its edges lit amber by its glow */
   c*=1.-.45*smoothstep(.4,1.05,length((uv-vec2(.5,.45))*vec2(1.,.8)));                              /* a heavy vignette */
   c*=.82;c=1.-exp(-c*1.5);gl_FragColor=vec4(c+dith(),1.);}`, /* the whole event sits a little darker */
     bholemap: `/* the black hole, rendered live from its traced light paths: each pixel knows where its light crossed the disk (first crossing in front,
@@ -2221,6 +2221,7 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
       {vec4 k=skyCloud(vec2(qx*1.4,uv.y*3.),3.+fi*.8,.3,fi*3.1,.6,.3);cc*=.86+.28*k.x;} /* billows lit and shaded within each bank, like the storm's clouds */cc=mix(cc,ch,(1.-fi/4.)*.4*exp(-dd*20.));c=mix(c,cc,qm);}
   }
   c+=vec3(1.,.7,.4)*exp(-r*1.6)*.035*warm*above; /* a soft veil of light over everything near the sun */
+  { vec2 C0=vec2(.5*asp,.5);for(int i=0;i<4;i++){float fi=float(i);vec2 G=S+(C0-S)*(.7+fi*.45);float gr=.02+fi*.012,gd=length(P-G);c+=mix(vec3(1.,.7,.45),vec3(.6,.75,1.),fi/3.)*(smoothstep(gr,gr*.7,gd)*.05+exp(-pow((gd-gr)/.003,2.))*.03)*warm*above;} } /* faint lens ghosts, as a camera sees a low sun */
   gl_FragColor=vec4(grade(c)+dith(),1.);}`,
     sakura: `/* spring at its most beautiful: a soft pastel sky warmed by the sun, light rays through the haze, a snow-capped mountain far off,
    a belt of trees in full blossom along a still lake that mirrors it all, and soft discs of out-of-focus light drifting in front */
@@ -2413,6 +2414,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   { float hi=smoothstep(.06,.22,L),spot=smoothstep(.36,.7,vn(vec2(uv.x*asp*2.2+t*.015,uv.y*1.3-t*.01)+7.)); /* only in a few bright places, drifting slowly */
     float x=uv.x*asp*38.+sin(uv.y*4.+t*.35)*1.2;float rib=pow(smoothstep(.45,.95,vn(vec2(x,uv.y*1.8-t*.1))),1.5)*(.55+.45*vn(vec2(x*.35,uv.y*.7+t*.05))); /* fine ribbons running up the light */
     col+=(acc*2.4+vec3(.24,.42,.47))*rib*hi*spot*1.05; } /* crisp ribbons of light in certain spots; the soft glow everywhere else is untouched */col+=vec3(.05,.12,.35)*smoothstep(.05,.6,dot(acc,vec3(.33)))*.5; /* a blue glow in the air round the brightest light, as in Apple's */ /* squared: the bright folds stand out, the haze between them falls away */{ float dk=1.-smoothstep(.02,.3,dot(acc,vec3(.4)));col+=starfield(vec2(uv.x*asp,uv.y),1.)*dk*1.3+starfield(vec2(uv.x*asp*1.7+3.1,uv.y*1.7),.8)*dk*.55; } /* stars in the dark sky: bright ones and a finer, fainter field */
+  col+=meteorsGL(vec2(uv.x*asp,uv.y),asp,.4)*(1.-smoothstep(.02,.15,dot(acc,vec3(.33)))); /* now and then a shooting star, where the sky is dark */
   { vec4 k=skyCloud(vec2(uv.x*asp,uv.y),1.6,.4,3.3,.42,.16);float band=smoothstep(.6,.8,uv.y);vec3 cc=mix(vec3(.012,.018,.04),vec3(.05,.16,.15)+acc*2.2,k.x*k.x);col=mix(col,cc,k.y*band*.9); } /* low cloud along the bottom of the sky, its tops lit green by the aurora above */
   col=1.-exp(-col*1.25);gl_FragColor=vec4(col+dith(),1.);}
 `
@@ -2590,6 +2592,14 @@ function drawBranch(a, right) { // a flowering cherry branch reaching in from th
     if (bud) { ctx.fillStyle = 'rgb(236,124,164)'; ctx.beginPath(); ctx.ellipse(X, Y, 3.6 * z, 5 * z, r0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,220,232,.7)'; ctx.beginPath(); ctx.ellipse(X - 1 * z, Y - 1.5 * z, 1.4 * z, 2.2 * z, r0, 0, 7); ctx.fill(); continue; }
     ctx.save(); ctx.translate(X, Y); ctx.rotate(r0); const fs = 40 * z; ctx.drawImage(fl, -fs / 2, -fs / 2, fs, fs); ctx.restore(); } // each blossom drawn whole, in detail
   ctx.restore(); ctx.globalAlpha = 1; }
+const GPET = Array.from({ length: 6 }, (_, i) => ({ t0: -i * 1.7, x: 0, y: 0, r: 0, s: 1, dur: 4 }));
+function glassPetals(a) { // now and then a petal lands on the glass, rests a moment, then slides down and away
+  for (const g of GPET) { let k = (t - g.t0) / g.dur; if (k >= 1 || k < 0) { g.t0 = t + Math.random() * 3; g.dur = 3.5 + Math.random() * 3; g.x = W * (.08 + Math.random() * .84); g.y = H * (.08 + Math.random() * .6); g.r = Math.random() * 6; g.s = .9 + Math.random() * .7; continue; }
+    const land = smooth(clamp01(k / .08)), out = smooth(clamp01((k - .7) / .3)), y = g.y + (k > .45 ? (k - .45) * (k - .45) * H * .35 : 0);
+    ctx.save(); ctx.translate(g.x, y); ctx.rotate(g.r + (k > .45 ? (k - .45) * .6 : 0)); const sc = g.s * (1.25 - .25 * land);
+    ctx.globalAlpha = a * land * (1 - out) * .22; ctx.drawImage(softBlob('120,60,90'), -16 * sc, -10 * sc, 34 * sc, 26 * sc); // its soft shadow on the glass
+    ctx.globalAlpha = a * land * (1 - out) * .92; ctx.drawImage(PETAL(false), -13 * sc, -15 * sc, 26 * sc, 30 * sc); ctx.restore(); }
+  ctx.globalAlpha = 1; }
 function drawPetals(a, near) { // petals tumbling down on the breeze, turning as they fall; now and then a gust carries them sideways
   if (!near) { const dt = Math.min(.05, Math.max(0, t - petT)); petT = t; petG += dt * (16 + 110 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
   for (const p of PET) { if (near ? p.z < .86 : p.z >= .86) continue; const dn = clamp01((a * 1.2 - (p.x * 7.31 + p.y * 3.17) % 1) / .2); if (dn <= 0) continue;
@@ -2625,7 +2635,7 @@ const SKYCFG = { // Apple Weather palettes for each event, as sky gradient, clou
   sun: () => { const q = wx.phase === 'out' ? 1 : clamp01(wx.t / WX.sun.dur), e = q * q * (3 - 2 * q), env = smooth(clamp01(q / .3)) * smooth(clamp01((1 - q) / .35)); // (once it has finished its sweep it stays gone: fading out never restarts it at the left edge) // Apple-style: the glare slides in from the edge, peaks, then dissolves
     const sx = W * (-.08 + e * 1.16), sy = H * (.16 + .05 * Math.sin(q * Math.PI)); const [gx, gy] = toUV(sx, sy);
     return { cTop: '46,92,166', cMid: '74,124,194', cBot: '112,156,214', cov: [0, 1, 0, .1], glow: [gx, gy, .3 * env], glowC: '255,250,238', sun: [gx, gy, env, 0], flare: [q, env] }; },
-  firefly: () => ({ cvar: [1, .12, 5.3], cTop: '20,24,64', cMid: '78,60,124', cBot: '232,146,122', cd: '58,46,96', cl: '250,184,170', cov: [.08, .98, .5, .15], band: [.62, .08, .45, 0], scl: 1.7, drift: [.02, 0], cloudA: .85, stars: 1, mw: .6, glow: [...toUV(W * .3, H * 1.02), .4], glowC: '255,160,110', moon: [...toUV(W * .76, H * .13), W * .055 * scale / cv.height, .85] }), // Apple's dusk: deep blue overhead, violet, then a warm glow where the sun has gone
+  firefly: () => ({ cvar: [1, .12, 5.3], cTop: '20,24,64', cMid: '78,60,124', cBot: '232,146,122', cd: '58,46,96', cl: '250,184,170', cov: [.08, .98, .5, .15], band: [.62, .08, .45, 0], scl: 1.7, drift: [.02, 0], cloudA: .85, stars: 1, mw: .6, mets: .35, glow: [...toUV(W * .3, H * 1.02), .4], glowC: '255,160,110', moon: [...toUV(W * .76, H * .13), W * .055 * scale / cv.height, .85] }), // Apple's dusk: deep blue overhead, violet, then a warm glow where the sun has gone
   blossom: () => ({ cvar: [-1, .2, 9.1], cTop: '84,140,214', cMid: '140,184,234', cBot: '246,214,226', cd: '222,196,222', cl: '255,253,255', cov: [-.06, .56, .6, .1], scl: 1.05, drift: [.03, 0], cloudA: .95, glow: [...toUV(W * .9, H * .03), .2], glowC: '255,246,236' }), // a soft spring sky: clear blue fading to blossom pink, white clouds drifting
   meteor: () => { const [mx, my] = toUV(W * .27, H * .26); return { cTop: '12,10,38', cMid: '62,42,112', cBot: '172,110,164', cd: '50,34,94', cl: '214,170,226', cov: [.05, 1.05, .42, .16], band: [my + .05, .045, .16, 0], mets: .8, scl: 1.8, drift: [.03, 0], cloudA: .85, stars: 1, mw: 1, moon: [mx, my, W * .1 * scale / cv.height, 1], glow: [mx, my, .3], glowC: '150,120,210' }; },
 };
@@ -2817,11 +2827,11 @@ function drawFrontWeather() { // light and glass in front of the scene
     ctx.restore();
   }
   if (wx.kind === 'firefly' && wx.a > .01) drawFireflies(wx.a, true); // a few fireflies drift close past the lens
-  if (wx.kind === 'blossom' && wx.a > .01) { ctx.save(); ctx.translate(-scPar * 16, 0); drawPetals(wx.a, true); drawFgBlossom(wx.a); ctx.restore(); }
+  if (wx.kind === 'blossom' && wx.a > .01) { ctx.save(); ctx.translate(-scPar * 16, 0); drawPetals(wx.a, true); drawFgBlossom(wx.a); ctx.restore(); glassPetals(wx.a); }
   if (wx.kind === 'halo' && wx.a > .01) drawGlints(wx.a);
   if (wx.kind === 'snow' && wx.a > .01) drawSnow(wx.a, true); // a few large flakes drift past close to the lens
-  if ((wx.kind === 'hail' || wx.kind === 'snow') && wx.a > .01) { // cold frost gathering in the corners of the glass
-    const f = frost(); ctx.globalAlpha = (wx.kind === 'snow' ? .4 : .3) * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
+  if ((wx.kind === 'hail' || wx.kind === 'snow' || wx.kind === 'halo' || wx.kind === 'aurora') && wx.a > .01) { // cold frost gathering in the corners of the glass
+    const f = frost(); ctx.globalAlpha = ({ snow: .4, hail: .3, halo: .3, aurora: .16 }[wx.kind]) * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
   }
   drawGlass();
 }
