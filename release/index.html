@@ -2223,7 +2223,7 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
     float lit=clamp((f2-f)*5.+.5,0.,1.),under=smoothstep(.35,.0,length(P-S)*.5); /* lit on the side facing the sun, brightest close to it */
     vec3 shc=k3(vec3(.56,.58,.72),vec3(.42,.28,.46),vec3(.08,.08,.18),p),lic=k3(vec3(1.,.9,.72),vec3(1.,.6,.48),vec3(.75,.38,.42),p)*(1.+under*.6);
     c=mix(c,mix(shc,lic,lit),dd*(fi<.5?.85:.7));}
-  { /* above a sea of clouds, in the Duo style: soft peaks rising from rows of rolling cloud banks; the tops lit by the low sun, the hollows
+  if(bk<.5){ /* above a sea of clouds, in the Duo style: soft peaks rising from rows of rolling cloud banks; the tops lit by the low sun, the hollows
        in soft violet shade, haze toward the horizon; the light warms through sunset and cools into blue hour as the event goes on */
     vec3 cl=k3(vec3(1.,.92,.78),vec3(1.,.68,.52),vec3(.6,.42,.58),p),cs=k3(vec3(.7,.68,.86),vec3(.54,.38,.58),vec3(.13,.12,.28),p),ch=mix(low,vec3(1.),.15);
     for(int i=0;i<2;i++){float fi=float(i);float qx=P.x+cam.x*(.004+fi*.005)+fi*.83;
@@ -2538,6 +2538,42 @@ function bakeLayer(k, a, par, top = .7) { // one layer across the full width of 
   const im = BK[k]; if (!im || !im.complete || !im.naturalWidth || a <= .004) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   const h = cv.height * (1 - top) * 1.03, w = Math.max(cv.width * 1.05, h * im.naturalWidth / im.naturalHeight), x = (cv.width - w) / 2 - par * cv.width * .025; ctx.globalAlpha = a; ctx.drawImage(im, x, cv.height - h, w, h); ctx.restore(); ctx.globalAlpha = 1; }
 const SFS = { // the scenery shaders
+  gold: `/* above a sea of clouds at golden hour. variant 0: golden light, 1: sunset, 2: blue hour. The peaks rise through rows of billowing cloud;
+   everything is lit from the low sun (sunp.xy) and its colours follow the light */
+const float HZ=.79;
+vec3 k3g(vec3 a,vec3 b,vec3 c){return variant<.5?a:variant<1.5?b:c;}
+float bump(float u){float v=max(0.,1.-u*u);return v*(1.5-.5*v);} /* a rounded billow whose sides meet the base smoothly */
+float bankH(float x,float fi,float dep){float s1=mix(.05,.16,dep),s2=s1*.38;float big=0.,sm=0.; /* the silhouette of one bank: round swells joined in soft creases, smaller round billows riding on them */
+  for(int k=-2;k<=2;k++){float id=floor(x/s1)+float(k);float cx=(id+.5+(hs(vec2(id,fi))-.5)*.5)*s1,r=s1*(.75+.5*hs(vec2(id,fi+3.)));big+=exp(14.*bump((x-cx)/r)*(.6+.4*hs(vec2(id,fi+5.))));}
+  for(int k=-2;k<=2;k++){float id=floor(x/s2)+float(k);float cx=(id+.5+(hs(vec2(id,fi+7.))-.5)*.6)*s2,r=s2*(.7+.5*hs(vec2(id,fi+9.)));sm+=exp(16.*bump((x-cx)/r)*(.5+.5*hs(vec2(id,fi+2.))));}
+  float s3=s2*.42,tn=0.;for(int k=-2;k<=2;k++){float id=floor(x/s3)+float(k);float cx=(id+.5+(hs(vec2(id,fi+13.))-.5)*.6)*s3,r=s3*(.7+.5*hs(vec2(id,fi+15.)));tn+=exp(18.*bump((x-cx)/r)*(.4+.6*hs(vec2(id,fi+17.))));} /* fine cauliflower billows */
+  float B=log(big)/14.,Sm=log(sm)/16.,Tn=log(tn)/18.;return B*.72+.3*Sm*(.4+.6*B)+.1*Tn*(.3+.7*B);}
+float pkH(float x,float fi){float pk=0.;for(int j=0;j<2;j++){float fj=float(j),f=2.6+fj*1.1+fi*.9,o2=fj*.43+fi*.71;float cc=fract(x*f+o2)*2.-1.;float pres=step(fi<.5?.3:.15,hs(vec2(floor(x*f+o2),fj+fi*5.)));pk=max(pk,pow(max(0.,1.-abs(cc)),1.5)*(.6+.4*hs(vec2(floor(x*f+o2),fj+fi*9.)))*pres);}
+  return pk*.6+.42*ridge(vec2(x*6.,fi*3.),6)*pow(pk,.45)+.06*ridge(vec2(x*24.,fi),4)*pk;}
+vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);vec4 o=vec4(0.);
+  vec3 lit=k3g(vec3(1.,.9,.74),vec3(1.,.66,.48),vec3(.62,.44,.6)),shade=k3g(vec3(.62,.6,.8),vec3(.48,.34,.56),vec3(.12,.11,.26)),haze=k3g(vec3(1.,.86,.66),vec3(1.,.6,.44),vec3(.74,.42,.5)),rimC=k3g(vec3(1.,.97,.88),vec3(1.,.82,.62),vec3(.9,.62,.66));
+  float warm=variant<1.5?1.:.25;float sg=exp(-abs(P.x-S.x)*1.4); /* the light is strongest under the sun */
+  for(int i=0;i<2;i++){float fi=float(i);float x=P.x*(1.-fi*.18)+fi*2.3;float A=fi<.5?.16:.12,b=HZ+.03+fi*.02;float h=pkH(x,fi);if(h<.02)continue;float top=b-A*h;float m=smoothstep(top-px,top+px,uv.y);if(m<=0.)continue;
+    float dd=uv.y-top;float xs=x+dd*(1.4*(ridge(vec2(x*7.,uv.y*9.+fi),4)-.5));float e=.003,sl=(pkH(xs+e,fi)-pkH(xs-e,fi))/(2.*e);float side=smoothstep(-.06,.06,S.x-P.x);float l=mix(smoothstep(-.3,.3,sl),smoothstep(-.3,.3,-sl),side); /* the faces turned toward the sun are lit */
+    float gul=smoothstep(.6,.88,ridge(vec2(x*44.+sl*dd*30.,dd*10.+fi),3))*smoothstep(.0,.012,dd);
+    float snowl=top+.03+.025*ridge(vec2(x*18.,fi+4.),4)+.02*gul;float snow=1.-smoothstep(snowl-.002,snowl+.002,uv.y); /* snow on the high slopes, streaking down the gullies */
+    vec3 rock=mix(shade*.62,mix(shade,lit,.55)*.85,l);vec3 sn=mix(shade*1.06,lit*1.04,l);vec3 c=mix(rock,sn,snow);c=mix(c,c*.85,gul*.4);
+    c+=rimC*exp(-dd/.0018)*.45*l*warm*(.5+.5*sg); /* the ridge line glows */
+    c=mix(c,haze,smoothstep(.0,.1,dd)*.55+(1.-fi)*.18); /* haze settles toward the clouds */
+    o=over(o,vec4(c,m));}
+  for(int i=0;i<7;i++){float fi=float(i);float dep=fi/6.;float x=P.x+fi*.37+.0*dep; /* rows of cloud banks, far to near; each silhouette built from big swells with smaller billows riding on them */
+    float base=HZ+.016+pow(dep,1.45)*.2+.006*sin(P.x*(2.6-dep)+fi*1.7);float A=mix(.02,.09,dep);
+    float hh=bankH(x,fi,dep);float top=base-A*hh;float m=smoothstep(top-px,top+px,uv.y);if(m<=0.)continue;float dd=uv.y-top;
+    float e=mix(.05,.16,dep)*.22,bsl=(bankH(x+e,fi,dep)-bankH(x-e,fi,dep))/(2.*e)*mix(.05,.16,dep);float facing=clamp(.5+.6*bsl*sign(P.x-S.x)*-1.,0.,1.); /* the side of each swell turned toward the sun */
+    float ll=exp(-dd/(A*.9+.004))*(.55+.45*facing);float tex=fbm(vec2(x,uv.y)/(mix(.05,.16,dep)*.3)*vec2(1.,1.5)+fi*3.);ll=clamp(ll+(tex-.5)*.42*exp(-dd/(A*1.6+.01)),0.,1.); /* sunlit tops falling into soft shade, with billowy texture */
+    float t2=base-A*.2-A*.55*bankH(x*1.07+.37,fi+.5,dep),d2=uv.y-t2;if(d2>0.){float f2=exp(-d2/(A*.7+.003));ll=mix(ll*.82,max(ll,.55+.4*facing),f2*.75);} /* a second line of billows folded inside the bank */
+    vec3 col=mix(shade,lit,ll);col+=rimC*exp(-dd/.0022)*(.35+.45*facing)*warm*(.5+.5*sg); /* a bright rim along every top */
+    if(d2>0.)col+=rimC*exp(-d2/.0018)*.18*warm*(.4+.6*sg)*(1.-dep*.4);
+    col+=lit*sg*exp(-dd*25.)*.18*warm*(1.-dep*.5); /* the glow under the sun */
+    col=mix(col,haze,mix(.55,.0,dep)*(.6+.4*exp(-dd*30.))); /* far rows paler in the haze */
+    o=over(o,vec4(col,m));}
+  return o;}
+`,
   dusk: `/* a summer meadow at dusk. variant 0: the far layer (dusky hills in layers, distant treelines, mist in the valleys);
    variant 1: the near layer (a dark hill with oaks and cypresses, the meadow of grass and wildflowers). sunp.xy: where the sun has set */
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
@@ -2732,8 +2768,9 @@ const SCENES = { // which events have scenery rendered once, in which layers
   halo: [{ name: 'halo', v: 0, top: .56 }, { name: 'halo', v: 1, top: .7 }],
   blossom: [{ name: 'sakura', v: 0, top: .56 }, { name: 'sakura', v: 1, top: .7 }],
   firefly: [{ name: 'dusk', v: 0, top: .62 }, { name: 'dusk', v: 1, top: .66 }],
+  golden: [{ name: 'gold', v: 0, top: .6 }, { name: 'gold', v: 1, top: .6 }, { name: 'gold', v: 2, top: .6 }],
 };
-const sceneSun = k => k === 'halo' ? [...toUV(W * .5, H * .25), 0, 0] : k === 'blossom' ? [.8, .09, 0, 0] : k === 'firefly' ? [...toUV(W * .3, H * 1.02), 0, 0] : [.5, .2, 0, 0];
+const sceneSun = k => k === 'halo' ? [...toUV(W * .5, H * .25), 0, 0] : k === 'blossom' ? [.8, .09, 0, 0] : k === 'firefly' ? [...toUV(W * .3, H * 1.02), 0, 0] : k === 'golden' ? [.62, .72, 0, 0] : [.5, .2, 0, 0];
 function sceneTick() { const k = wx.kind; if (!k || state === 'menu' || !SCENES[k]) { if (!k) SCENE.keepOnly('~'); return; } SCENE.keepOnly(k);
   SCENES[k].forEach((L, i) => SCENE.want(k + i, L.name, L.v, L.top, sceneSun(k))); SCENE.tick(); }
 const sceneOn = k => SCENES[k] && SCENE.ok(); // the live shader leaves its own landscape out while the rendered one is used
@@ -2893,7 +2930,7 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U; if (wx.kind !== drawSky0.k) { drawSky0.k = wx.kind; skyQ = skyQs = 1; } // each event starts at full sharpness
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (k === 'golden') U = { gp: [goldP(), wx.a], cam: camU(), bk: 0 }; else if (k === 'blossom') U = { sk: [wx.a, 0], cam: camU(), bk: sceneOn('blossom') ? 1 : 0 }; else if (k === 'eclipse') U = eclU(); else if (k === 'halo') { const [hx, hy] = toUV(W * .5 + Math.sin(t * .05) * W * .015, H * .25), R = W * .36 * scale / cv.height; U = { sp: [hx, hy], hr: [R, wx.a], cam: camU(), bk: sceneOn('halo') ? 1 : 0 }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0], dusk: 0 }, cfg()); if (k === 'firefly' && sceneOn('firefly')) U.dusk = 0; /* the meadow is rendered once */ if (k === 'firefly' || k === 'blossom') U.glow = [U.glow[0], U.glow[1], U.glow[2], 0]; else delete U.glow; delete U.bolt; /* the shader's glow takes four values; the older skies were designed without it, so they keep their look and stop sending a mismatched value every frame */
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (k === 'golden') U = { gp: [goldP(), wx.a], cam: camU(), bk: sceneOn('golden') ? 1 : 0 }; else if (k === 'blossom') U = { sk: [wx.a, 0], cam: camU(), bk: sceneOn('blossom') ? 1 : 0 }; else if (k === 'eclipse') U = eclU(); else if (k === 'halo') { const [hx, hy] = toUV(W * .5 + Math.sin(t * .05) * W * .015, H * .25), R = W * .36 * scale / cv.height; U = { sp: [hx, hy], hr: [R, wx.a], cam: camU(), bk: sceneOn('halo') ? 1 : 0 }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0], dusk: 0 }, cfg()); if (k === 'firefly' && sceneOn('firefly')) U.dusk = 0; /* the meadow is rendered once */ if (k === 'firefly' || k === 'blossom') U.glow = [U.glow[0], U.glow[1], U.glow[2], 0]; else delete U.glow; delete U.bolt; /* the shader's glow takes four values; the older skies were designed without it, so they keep their look and stop sending a mismatched value every frame */
     /* (the storm's bolt glow is drawn by the 2D layer; the cloud shader's bolt light was never wired to a matching value, so nothing is sent) */
   } else return false;
   if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' || k === 'eclipse' || k === 'halo' || k === 'golden' ? k : k === 'blossom' ? 'sakura' : 'clouds', U))) return false;
@@ -2930,6 +2967,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     ctx.save(); ctx.translate(X, 0); ctx.transform(1, 0, windDir * .25, 1, 0, 0); ctx.globalAlpha = .06 * a * (.7 + .3 * nz(t * .3 + k, k)); ctx.drawImage(softBlob('255,255,255'), -W * .2, -H * .1, W * .4, H * 1.2); ctx.restore(); } });
   if (wx.kind === 'firefly' && G) { drawScene('firefly0', a, scPar * .4); drawScene('firefly1', a, scPar * 1.1); }
   if (wx.kind === 'firefly') { if (G) camU(); else { ctx.save(); ctx.translate(-scPar * 6, 0); duskHills(a, false); ctx.restore(); } /* the GPU sky draws the meadow; the 2D hills are the fallback */ drawFireflies(a, false); }
+  if (wx.kind === 'golden' && G) { const p = goldP(), q1 = smooth(clamp01((p - .15) / .4)), q2 = smooth(clamp01((p - .55) / .35)); drawScene('golden0', a, scPar); drawScene('golden1', a * q1, scPar); drawScene('golden2', a * q2, scPar); } // the peaks and the sea of clouds, rendered once in three lights that follow the sunset
   if (wx.kind === 'golden') { const p = goldP(); drawBirds(a * (1 - .7 * smooth(clamp01((p - .7) / .3))), p < .5 ? '70,48,72' : '40,26,52'); drawMotes(a * (1 - smooth(clamp01((p - .55) / .3))), '255,214,150'); }
   if (wx.kind === 'eclipse') drawMotes(a * (1 - ECL.dk) * .7, '255,236,214');
   if (wx.kind === 'blossom' && G) { drawScene('blossom0', a, scPar * .35); drawScene('blossom1', a, scPar * 1.1); lakeRings(a); } // Fuji, the blossoming shore and the lake, rendered once; rings on the lake live
