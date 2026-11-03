@@ -2801,7 +2801,7 @@ const sceneOn = k => SCENES[k] && SCENE.ok(); // the live shader leaves its own 
 function drawScene(key, a, par) { // a finished scenery layer across the screen, shifted for depth, following the sky's slow push-in
   const L = SCENE.get(key); if (!L || a <= .004) return false; const fin = Math.min(1, (performance.now() - L.t0) / 450); // it fades in when it is ready, never pops
   const z = 1 + .04 * camZ(), cx = cv.width * .5, cy = cv.height * .62;
-  ctx.save(); ctx.setTransform(z, 0, 0, z, cx * (1 - z), cy * (1 - z)); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = a * fin;
+  ctx.save(); ctx.setTransform(z, 0, 0, z, cx * (1 - z), cy * (1 - z)); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = a * fin * clamp01(skyE * 1.15); // the land arrives with its sky, never ahead of it
   const w = L.c.width, x = (cv.width - w) / 2 - par * cv.width * .03; ctx.drawImage(L.c, x, cv.height * L.top, w, L.c.height); ctx.restore(); ctx.globalAlpha = 1; return true; }
 const sceneReady = (...ks) => ks.every(k => SCENE.get(k));
 
