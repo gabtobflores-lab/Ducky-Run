@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="3156a1d">
+<meta name="build" content="3f8f61c">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -614,7 +614,7 @@ const QDPR = [3, 2, 1.5]; let qLevel = 0; // always the top quality, the same as
 let skyQ = 1, skyQs = 1; // the event skies' own resolution, adapting smoothly to the phone without ever lowering the rest of the game
 if (window.__mdSim) qLevel = 0; // Xcode's simulator draws on the Mac's CPU and GPU: 2x opens and runs much faster there (real iPhones keep 3x)
 let qEma = 16.7, qSlow = 0, qFast = 0, qRaised = false, qBase = 16.7, qN = 0, qJank = 0;
-const heavySky = () => skyE > .2 && (wx.kind === 'aurora' || wx.kind === 'bhole' || wx.kind === 'alien');
+const heavySky = () => skyE > .2 && ['aurora', 'bhole', 'alien', 'eclipse', 'halo', 'golden', 'blossom', 'firefly'].includes(wx.kind);
 function qTune(ms) { if (state !== 'play' || document.hidden || ms > 250) return; if (!heavySky()) return; // the game itself stays at top quality; only the three heavy skies may trim their resolution a little, never below the screenshot quality
   if (heavySky()) { if (wx.phase !== 'on' || wx.a > .85) return; /* the sky settles its sharpness while it is still fading in, then holds it: no visible resolution pops mid-event */ const slow = ms > qBase * 1.3; skyQ = Math.max(.8, Math.min(1, skyQ + (slow ? -.02 : 0))); const st = Math.round(skyQ * 20) / 20; if (Math.abs(st - skyQs) >= .05) skyQs = st; return; } // during the heavy skies only the sky adapts
   qEma += (ms - qEma) * .05;
@@ -2254,7 +2254,7 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
   vec2 Q=P,qv=uv;float refl=0.;if(uv.y>lk){qv.y=2.*lk-uv.y+.004*sin(P.x*60.+t*1.3)*smoothstep(lk,1.,uv.y)+.003*sin(P.x*23.-t*.9);Q=vec2(P.x,qv.y);refl=1.;} /* below the shore, the lake mirrors the scene, rippling a little */
   vec3 c=skyAt(Q,qv,S,asp);
   float an=atan(Q.y-S.y,Q.x-S.x),r=length(Q-S);c+=vec3(1.,.9,.8)*smoothstep(.42,.9,fbm3(vec2(an*6.,t*.02)))*exp(-r*1.3)*.12; /* light rays through the haze */
-  { /* Mt Fuji in the Duo style: a clean, gently concave cone with its flat summit, the snow cap reaching down the gullies in fingers,
+  if(bk<.5){ /* Mt Fuji in the Duo style: a clean, gently concave cone with its flat summit, the snow cap reaching down the gullies in fingers,
        the sunward face bright and the far face in soft blue shade, the lower slopes melting into the spring haze */
     float mx=Q.x+cam.x*.005-.38*asp,ax=abs(mx);float my=.585+.215*pow(clamp(ax/.46,0.,1.),.78)+.004*sin(mx*31.);my=max(my,.588); /* the flat crater rim */
     float m=smoothstep(my-px,my+px,qv.y);float side=smoothstep(-.03,.03,mx); /* the sun is to the right */
@@ -2262,7 +2262,7 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
     vec3 rock=mix(mix(vec3(.5,.52,.74),vec3(.66,.64,.84),side),vec3(.9,.84,.92),smoothstep(my,.8,qv.y)*.8);
     vec3 sn=mix(vec3(.78,.84,.96),vec3(1.,.99,.98),side);sn=mix(sn,sn*.93,pow(abs(sin(mx*46.+1.3)),8.)*(1.-side*.5)); /* fine shading down the gullies */
     vec3 mc=mix(rock,sn,snow);mc+=vec3(1.)*exp(-max(qv.y-my,0.)/.002)*.2*side;c=mix(c,mc,m); }
-  { /* the shore: three rows of cherry trees in full bloom; each crown a rounded, uneven mass of blossom lit from the sun's side and deeper pink
+  if(bk<.5){ /* the shore: three rows of cherry trees in full bloom; each crown a rounded, uneven mass of blossom lit from the sun's side and deeper pink
        in its own shade, the crowns overlapping into a soft canopy, dark trunks beneath; the far rows paler in the spring haze; petals carpet the shore */
     { float sh=smoothstep(.856-px,.856+px,qv.y)*(1.-smoothstep(lk-.001,lk+.001,qv.y));vec3 g=mix(vec3(.74,.8,.64),vec3(.99,.85,.91),.5+.35*vn(vec2(Q.x*90.,qv.y*420.)));c=mix(c,g,sh); }
     for(int i=0;i<3;i++){float fi=float(i);float base=.818+fi*.021,A=.026+fi*.016,f=22.-fi*6.;vec3 hzC=vec3(.96,.88,.93);float hz=(2.-fi)/2.;
@@ -2276,7 +2276,7 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
         vec3 trc=vec3(.3,.18,.24);tc=mix(tc,hzC,hz*.5);trc=mix(trc,vec3(.9,.82,.88),hz*.65);c=mix(c,trc,tk*(1.-cm));c=mix(c,tc,cm);}}
   }
   if(refl>0.&&bk<.5){c=mix(c,vec3(.62,.72,.9),.18+.25*smoothstep(lk,1.,uv.y));c+=vec3(1.)*.08*smoothstep(.6,1.,vn(vec2(P.x*40.,uv.y*300.-t*.4)))*smoothstep(lk,1.,uv.y);c=mix(c,vec3(.98,.92,.95),exp(-(uv.y-lk)*90.)*.5);} /* the water: a little bluer, glints, a bright line at the shore */
-  if(uv.y>lk){for(int i=0;i<6;i++){float fi=float(i);float per=2.6+fi*.6,ph=fract(t/per+fi*.37),cy=floor(t/per+fi*.37);vec2 o=vec2(hs(vec2(fi,cy))*asp,lk+.015+.11*hs(vec2(cy,fi+2.)));
+  if(uv.y>lk&&bk<.5){for(int i=0;i<6;i++){float fi=float(i);float per=2.6+fi*.6,ph=fract(t/per+fi*.37),cy=floor(t/per+fi*.37);vec2 o=vec2(hs(vec2(fi,cy))*asp,lk+.015+.11*hs(vec2(cy,fi+2.)));
     vec2 dv=(P-o)*vec2(1.,3.4);float rr=ph*.07;c+=vec3(1.,.95,.97)*(exp(-pow((length(dv)-rr)/.0028,2.))+.6*exp(-pow((length(dv)-rr*.62)/.0024,2.)))*(1.-ph)*.4;}} /* rings spreading on the lake where petals land */
   vec3 L=vec3(0.);for(int i=0;i<16;i++){float fi=float(i);vec2 o=vec2(hs(vec2(fi,1.))*asp,hs(vec2(fi,2.)));o+=vec2(sin(t*.07+fi)*.03,cos(t*.05+fi*1.3)*.02);float rr=.025+.05*hs(vec2(fi,3.));float d=length(P-o);
     float disc=smoothstep(rr,rr*.86,d)*(.7+.3*smoothstep(rr*.6,rr*.95,d));float edge=smoothstep(.25,.0,abs(uv.y-.5))*.0;L+=mix(vec3(1.,.72,.84),vec3(1.,.9,.7),hs(vec2(fi,4.)))*disc*.05*(.5+.5*smoothstep(.2,.0,min(uv.y,1.-uv.y))+.5*smoothstep(.15,0.,min(uv.x,1.-uv.x)));} /* out-of-focus light floating close to the lens, mostly near the edges */
@@ -2377,7 +2377,7 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
   { vec2 g=P*64.+vec2(t*.5,t*1.1);vec2 id=floor(g);float h=hs(id);if(h>.94){vec2 f=fract(g)-.5-vec2(hs(id+1.)-.5,hs(id+2.)-.5)*.5;float tw=pow(max(0.,sin(t*(1.4+h*3.)+h*40.)),16.);
     L+=mix(vec3(.82,.92,1.),vec3(1.,.92,.82),fract(h*13.))*(exp(-dot(f,f)*500.)+(exp(-abs(f.x)*70.)*exp(-f.y*f.y*1800.)+exp(-abs(f.y)*70.)*exp(-f.x*f.x*1800.))*.5)*tw*(.5+.8*exp(-r/(R*1.3))); } }
   vec3 c=1.-(1.-sky)*exp(-L);
-  { /* a frozen valley in the Duo style: rolling snow hills in layers, rows of spruces standing on them, crisp against cold blue haze;
+  if(bk<.5){ /* a frozen valley in the Duo style: rolling snow hills in layers, rows of spruces standing on them, crisp against cold blue haze;
        snow lit warm on the sunward slopes and blue in the shade, every row a little paler with distance */
     vec3 hz=vec3(.8,.87,.97);float px=1.2/res.y;
     for(int i=0;i<3;i++){float fi=float(i);float qx=P.x+cam.x*(.006+fi*.01)+fi*1.7;
@@ -2507,7 +2507,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); VA.get(); },
     aurora, bhole, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : name === 'eclipse' || name === 'halo' ? 1.2 : name === 'golden' || name === 'sakura' ? 1.05 : qLevel ? .55 : .8) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : name === 'eclipse' || name === 'halo' || name === 'golden' || name === 'sakura' ? .88 * skyQs : qLevel ? .55 : .8) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
@@ -2527,6 +2527,7 @@ function pGlass(on, fy, fade, edge) { // the frosted layer is cut to the sheet's
 document.body.classList.toggle('evsky', false);
 setInterval(() => document.body.classList.toggle('evsky', !!(wx.kind && wx.a > .3)), 200); // the pause veil switches to frosted glass over event skies
 const toUV = (x, y) => [(offX + x * scale) / cv.width, (offY + y * scale) / cv.height]; // game coordinates to screen fractions, for the sky shaders
+const camZ = () => { const d = WX[wx.kind] && WX[wx.kind].dur, z = wx.phase === 'on' && d ? clamp01(wx.t / d) : wx.phase === 'out' ? 1 : 0; return z * z * (3 - 2 * z); };
 let scPar = 0; const camU = () => { const tgt = state === 'play' && bx ? clamp((bx[0] - (LX[0] + LX[per - 1]) / 2) / (W * .2), -1, 1) : 0; scPar += (tgt - scPar) * .035; const d = WX[wx.kind] && WX[wx.kind].dur, z = wx.phase === 'on' && d ? clamp01(wx.t / d) : wx.phase === 'out' ? 1 : 0; return [scPar, z * z * (3 - 2 * z)]; }; // the camera drifts gently with the balls (parallax) and pushes in slowly across an event
 /*BAKE*/const BAKED = {};/*BAKE END*/
 const BK = {}; for (const k in BAKED) { const im = new Image(); im.decoding = 'async'; im.src = BAKED[k]; BK[k] = im; } // the events' scenery, rendered offline at full quality and shipped as image layers
@@ -2534,6 +2535,177 @@ const bkReady = (...ks) => ks.every(k => BK[k] && BK[k].complete && BK[k].natura
 function bakeLayer(k, a, par, top = .7) { // one layer across the full width of the screen, anchored to the bottom; par shifts it for depth
   const im = BK[k]; if (!im || !im.complete || !im.naturalWidth || a <= .004) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   const h = cv.height * (1 - top) * 1.03, w = Math.max(cv.width * 1.05, h * im.naturalWidth / im.naturalHeight), x = (cv.width - w) / 2 - par * cv.width * .025; ctx.globalAlpha = a; ctx.drawImage(im, x, cv.height - h, w, h); ctx.restore(); ctx.globalAlpha = 1; }
+const SFS = { // the scenery shaders
+  sakura: `/* spring at Mt Fuji. variant 0: the far layer (the mountain, a band of cloud at its waist, far hills); variant 1: the near layer
+   (rows of cherry trees in full bloom along the shore, and the still lake mirroring it all). sunp.xy: the sun */
+const float LK=.875;
+vec3 skyS(vec2 uv,vec2 P,vec2 S){float r=length(P-S);vec3 c=mix(vec3(.3,.52,.9),vec3(.72,.8,.96),smoothstep(0.,.6,uv.y));c=mix(c,vec3(1.,.88,.9),smoothstep(.45,.8,uv.y)*.6);c+=vec3(1.,.93,.82)*(exp(-r*3.2)*.16+exp(-r*9.)*.22);return c;}
+vec3 hazeS(vec2 uv){return mix(vec3(.9,.85,.95),vec3(.99,.88,.92),smoothstep(.6,.88,uv.y));}
+float fujiTop(float x){float ax=abs(x);return .585+.215*pow(clamp(ax/.46,0.,1.),.78)+.004*sin(x*31.)+.003*vn(vec2(x*60.,1.));}
+vec4 fuji(vec2 uv,vec2 P){float mx=P.x-.38*asp;float top=max(fujiTop(mx),.588);float m=smoothstep(top-px,top+px,uv.y);if(m<=0.)return vec4(0.);
+  float dd=uv.y-top;vec2 v=vec2(mx,uv.y-.586);float ang=atan(v.x,v.y*1.6);
+  float rl=mx+dd*(.25*(ridge(vec2(mx*5.,uv.y*6.),4)-.5));float lit=smoothstep(-.03,.05,rl); /* the sunward face, on the right */
+  float g=ridge(vec2(ang*9.,length(v)*5.),5);float streak=smoothstep(.55,.85,g); /* the radial gullies that score Fuji's flanks */
+  float fg=pow(abs(sin(ang*13.+1.+.8*vn(vec2(ang*3.,1.)))),5.)*(.4+.6*vn(vec2(ang*6.,2.)))+.5*pow(abs(sin(ang*31.+2.)),9.)*vn(vec2(ang*11.,4.));
+  float sl=.655+.075*fg+.02*abs(mx); /* the snow line reaches down the gullies in many thin fingers */
+  float snow=1.-smoothstep(sl-.0015,sl+.0015,uv.y);
+  vec3 rock=mix(mix(vec3(.44,.42,.66),vec3(.62,.56,.76),lit),vec3(.86,.78,.88),smoothstep(.66,.84,uv.y)*.75);rock*=1.-.08*streak;
+  vec3 sn=mix(vec3(.74,.77,.93),vec3(.98,.96,.98),lit);sn=mix(sn,sn*.9,streak*(.6-.35*lit));sn+=vec3(1.,.95,.95)*exp(-dd/.0018)*.25*lit;
+  vec3 c=mix(rock,sn,snow);c=mix(c,hazeS(uv),smoothstep(.72,.86,uv.y)*.75);
+  return vec4(c,m);}
+vec4 cherryTree(vec2 q,float h,float sd,float far){ /* q from the foot of the trunk, y up; returns colour and cover */
+  float cw=h*.62;if(abs(q.x)>cw*1.25||q.y>h*1.15||q.y<-.002)return vec4(0.);
+  vec2 cc=vec2(0.,h*.66);vec2 e=(q-cc)/vec2(cw,h*.42);float env=length(e)+.18*(fbm3(q/h*4.+sd)-.5); /* the crown's rounded envelope */
+  vec4 o=vec4(0.);
+  float trunk=step(abs(q.x+sin(q.y/h*5.+sd)*h*.03),h*.045*(1.2-q.y/h))*step(q.y,h*.62);
+  float br=0.;for(int k=0;k<3;k++){float fk=float(k),a=(fk-1.)*.9+(hs(vec2(sd,fk))-.5)*.4;vec2 d=vec2(sin(a),cos(a));vec2 b0=vec2(0.,h*.38);float tt=clamp(dot(q-b0,d)/(h*.36),0.,1.);br=max(br,step(length(q-b0-d*tt*h*.36),h*.022*(1.-tt*.7)));} /* boughs */
+  if(trunk+br>0.)o=vec4(vec3(.28,.17,.22),1.);
+  if(env<.9){vec2 ce0=(q-cc)/vec2(cw,h*.42);float gl0=clamp(dot(normalize(vec3(ce0.x,ce0.y,.6)),normalize(vec3(.6,.6,.5)))*.5+.5,0.,1.);o=vec4(mix(vec3(.62,.27,.45),vec3(.8,.4,.58),gl0)*(.9+.1*fbm3(q/h*9.+sd)),1.);} /* the crown's shadowed heart, seen between the clusters */
+  if(env<1.15){float cs=h*.11;vec2 g=q/cs;vec2 id0=floor(g);float best=-1.;vec3 bc=vec3(0.);
+    for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec2 id=id0+vec2(float(i),float(j));vec2 c=(id+.5+(vec2(hs(id+sd),hs(id+sd+7.))-.5)*.7)*cs;vec2 ce=(c-cc)/vec2(cw,h*.42);
+      if(length(ce)+.15*(fbm3(c/h*5.+sd)-.5)>.95)continue;float r=cs*(.6+.35*hs(id+sd*3.));vec2 dv=q-c;float d=length(dv)/r;if(d>1.)continue;float z=c.y+hs(id+1.)*.01; /* a cluster of blossom */
+      if(z>best){best=z;vec3 n=normalize(vec3(dv/r,sqrt(max(0.,1.-d*d))));float l=dot(n,normalize(vec3(.55,.6,.6)))*.5+.5;float glob=clamp(dot(normalize(vec3(ce.x,ce.y,.6)),normalize(vec3(.6,.6,.5)))*.5+.5,0.,1.); /* each cluster soft, and the crown as a whole lit from the sun's side */
+        float spk=vn(q/cs*9.+id*3.),pet=step(.78,hs(floor(q/cs*14.)+id));float L2=l*.25+glob*.75;bc=mix(vec3(.84,.42,.6),vec3(.98,.74,.85),smoothstep(.25,.75,L2));bc=mix(bc,vec3(1.,.94,.96),smoothstep(.7,.95,L2)*(.5+.5*spk));bc*=.93+.09*spk;bc=mix(bc,vec3(1.,.97,.98),pet*.35*L2);bc*=1.+.06*(hs(id+sd*5.)-.5);}} /* each cluster round and lit from the sun's side */
+    if(best>-.5)o=vec4(bc,1.);}
+  return o;}
+vec4 shore(vec2 uv,vec2 P){vec4 o=vec4(0.);
+  { float y=.856+.003*sin(P.x*9.);float m=smoothstep(y-px,y+px,uv.y)*(1.-step(LK,uv.y));vec3 g=mix(vec3(.74,.8,.64),vec3(.99,.85,.91),.55+.3*vn(vec2(P.x*90.,uv.y*420.)));o=over(o,vec4(g,m)); } /* a bank carpeted with fallen petals */
+  for(int i=0;i<3;i++){float fi=float(i);float base=.838+fi*.016,h=(.045+fi*.028),cw=h*(.95-fi*.12);float x=P.x+fi*.71;
+    for(int k=-1;k<=1;k++){float id=floor(x/cw)+float(k);if(hs(vec2(id,fi+2.))<(fi>1.5?.3:.15))continue;float bx=(id+.5+(hs(vec2(id,fi+5.))-.5)*.4)*cw;float hh=h*(.82+.36*hs(vec2(id,fi+11.)));
+      vec4 tc=cherryTree(vec2(x-bx,base-uv.y),hh,id*3.7+fi*11.,fi);if(tc.a<=0.)continue;tc.rgb=mix(tc.rgb,hazeS(uv),(2.-fi)/2.*.5);o=over(o,tc);}}
+  return o;}
+vec4 farLayer(vec2 uv,vec2 P,vec2 S){vec4 o=fuji(uv,P);
+  { float band=exp(-pow((uv.y-.71)/.022,2.));float w=smoothstep(.42,.75,fbm(vec2(P.x*2.6,uv.y*14.)))*band*smoothstep(.1,.3,abs(P.x-.38*asp)+.15); /* a soft band of cloud across the mountain's waist */
+    vec3 cc=mix(vec3(.93,.86,.94),vec3(1.,.97,.97),smoothstep(.3,.8,fbm3(vec2(P.x*5.,uv.y*20.))));o=over(o,vec4(cc,w*.85)); }
+  for(int i=0;i<2;i++){float fi=float(i);float x=P.x+fi*2.9;float y=.8+fi*.022-(.016+fi*.008)*(.5+.5*sin(x*(3.1-fi*.7)+fi))-.004*sin(x*11.+fi);float m=smoothstep(y-px,y+px,uv.y);
+    vec3 c=mix(vec3(.72,.68,.86),vec3(.66,.66,.76),fi);float dd=max(uv.y-y,0.);c=mix(c,vec3(.94,.8,.9),smoothstep(.55,.85,vn(vec2(x*70.,dd*60.+fi*4.)))*.55*smoothstep(.0,.01,dd)); /* far hillsides misted pink with blossom */
+    c=mix(c,hazeS(uv),(1.-fi)*.45+.25);o=over(o,vec4(c,m));}
+  return o;}
+vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);
+  if(variant<.5)return uv.y<LK?farLayer(uv,P,S):vec4(0.);
+  if(uv.y<LK)return shore(uv,P);
+  /* the lake: a mirror of the sky, the mountain and the trees, a little bluer and calmer, with faint ripples and a bright line at the shore */
+  float k=uv.y-LK;vec2 ru=vec2(uv.x+(.0016*sin(uv.y*900.+P.x*3.)+.003*(vn(vec2(P.x*3.,k*300.))-.5))*smoothstep(0.,.04,k),LK-k*1.02);vec2 rP=vec2(ru.x*asp,ru.y);
+  vec3 c=skyS(ru,rP,S);vec4 f=farLayer(ru,rP,S);c=mix(c,f.rgb,f.a);vec4 n=shore(ru,rP);c=mix(c,n.rgb,n.a);
+  c=mix(c,vec3(.5,.6,.86),.32+.3*smoothstep(0.,.12,k));c+=vec3(1.)*.06*smoothstep(.55,.9,vn(vec2(P.x*30.,k*700.)))*smoothstep(.01,.08,k);c=mix(c,vec3(1.,.94,.96),exp(-k/.0025)*.6);
+  return vec4(c,1.);}
+`,
+  halo: `/* the ice halo's frozen valley. variant 0: the far layer (two ranges of snowy peaks, a valley with a distant treeline);
+   variant 1: the near layer (rolling snowfields, rows of spruces, the foreground drift). sunp.xy: the sun (screen fraction) */
+vec3 hazeC(vec2 uv){return mix(vec3(.74,.83,.96),vec3(.9,.93,.99),smoothstep(.55,.9,uv.y));}
+float mtn(float x,float fi){float pk=0.;for(int j=0;j<3;j++){float fj=float(j),f=.9+fj*.37,o2=fj*.31+fi*.5;float cc=fract(x*f+o2)*2.-1.;pk=max(pk,pow(max(0.,1.-abs(cc)),1.6)*(.55+.45*hs(vec2(floor(x*f+o2),fj+fi*7.))));}
+  return pk*.72+.3*ridge(vec2(x*3.,fi*5.),6)*pow(pk,.6)+.05*ridge(vec2(x*11.,fi),4);}
+vec3 spruce(vec2 q,float h,float w,float sd){ /* q: from the foot of the trunk, y up. x: covered, y: snow, z: shade */
+  if(q.y<-.003||q.y>h*1.05||abs(q.x)>w*1.25)return vec3(0.,0.,1.);
+  float n=5.+floor(hs(vec2(sd,1.))*3.),yy=q.y/h;vec3 r=vec3(0.,0.,1.);
+  for(int k=0;k<8;k++){float fk=float(k);if(fk>=n)break;
+    float t0=fk/n*.9,tt=t0+1.3/n,Wk=w*pow(1.-t0,1.)*(.86+.24*hs(vec2(sd,fk+3.)));float ax=abs(q.x)/max(Wk,1e-4);
+    float tb=t0-.6/n*ax*ax;float tl=(yy-tb)/(tt-tb);if(tl<0.||tl>1.)continue; /* each tier droops toward its tips */
+    float hw=mix(1.,.3,pow(tl,.8));hw*=1.+.16*(vn(vec2(yy*70.+sd*7.,fk*3.))-.5)+.07*(vn(vec2(yy*190.,q.x*400.))-.5); /* ragged, needled edges */
+    float e=hw-ax;if(e<0.)continue;
+    float th=.16+.12*vn(vec2(q.x/w*9.+sd,yy*20.+fk));float clump=step(.32,vn(vec2(q.x/w*6.+sd*3.,fk*5.+yy*6.)));
+    r=vec3(1.,smoothstep(th*1.15,th*.45,e)*smoothstep(.12,.35,tl)*clump,1.-.45*smoothstep(.42,.78,tl));} /* snow along the top of each tier; shadow under the tier above */
+  float cap=smoothstep(.93,.99,yy)*step(abs(q.x),w*.08);r.y=max(r.y,cap*r.x);
+  if(r.x<.5&&abs(q.x)<w*.05&&q.y<h*.09)r=vec3(1.,0.,.55); /* the trunk */
+  return r;}
+vec3 treeCol(vec3 tr,float side,float far){vec3 nd=mix(vec3(.09,.2,.22),vec3(.2,.35,.36),side)*tr.z;vec3 sn=mix(vec3(.7,.78,.93),vec3(.97,.98,1.),side)*(.82+.18*tr.z);vec3 c=mix(nd,sn,tr.y);return c;}
+vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);vec4 o=vec4(0.);
+  if(variant<.5){
+    for(int i=0;i<2;i++){float fi=float(i);float x=P.x*(1.6-fi*.25)+fi*3.7;float b=.72+fi*.035,A=.15-fi*.055; /* two ranges of peaks, the far one taller and paler */
+      float hgt=mtn(x,fi);float top=b-A*hgt;float m=smoothstep(top-px,top+px,uv.y);if(m<=0.)continue;
+      float dd=uv.y-top;float xs=x+dd*(1.2*(ridge(vec2(x*6.,uv.y*8.+fi),4)-.5)); /* light follows the slope above, along a ragged line: the ridge runs down from each summit */
+      float e=.003,sl=(mtn(xs+e,fi)-mtn(xs-e,fi))/(2.*e);float lit=smoothstep(-.35,.35,-sl);lit=mix(lit,.5,smoothstep(.0,.08,dd)*.3);
+      float gul=smoothstep(.6,.88,ridge(vec2(x*22.+sl*dd*30.,dd*7.+fi),3))*smoothstep(.0,.015,dd)*exp(-dd*12.); /* gullies running down each face */
+      vec3 c=mix(vec3(.62,.7,.9),vec3(.98,.98,1.),lit);c=mix(c,c*.86,gul*.55);
+      float rock=smoothstep(.64,.82,ridge(vec2(x*16.,dd*26.+fi*3.),4))*(1.-lit)*smoothstep(.0,.015,dd)*exp(-dd*14.);c=mix(c,mix(vec3(.42,.47,.64),vec3(.6,.64,.8),lit),rock*.7); /* dark rock showing through on the shaded faces */
+      c+=vec3(1.,.98,.95)*exp(-dd/.0016)*.3*lit; /* the sunlit ridge line */
+      c=mix(c,hazeC(uv),(1.-fi)*.42+.55*smoothstep(0.,.09,dd)); /* the far range paler; haze gathers toward each foot */
+      o=over(o,vec4(c,m));}
+    { float y=.765+.006*sin(P.x*4.);float m=smoothstep(y-px,y+px,uv.y);vec3 c=mix(vec3(.86,.9,.98),vec3(.8,.86,.96),smoothstep(y,y+.05,uv.y));o=over(o,vec4(c,m)); /* the valley floor */
+      float tx=P.x*95.,id=floor(tx);vec2 q=vec2((fract(tx)-.5)/95.,y+.002-uv.y);float h=.012+.012*hs(vec2(id,2.));vec3 tr=spruce(q,h,h*.36,id);
+      o=over(o,vec4(mix(treeCol(tr,.5,1.),hazeC(uv),.55),tr.x*step(.2,hs(vec2(id,5.))))); } /* a far treeline in the haze */
+    { float mist=exp(-pow((uv.y-.78)/.016,2.));o=over(o,vec4(hazeC(uv),mist*.55)); }
+    return o;}
+  for(int i=0;i<3;i++){float fi=float(i);float x=P.x+fi*2.3;float y=.8+fi*.06-(.022+fi*.012)*(.5+.5*sin(x*(2.6-fi*.5)+fi*2.))-.006*sin(x*7.+fi);
+    float m=smoothstep(y-px,y+px,uv.y);float dd=max(uv.y-y,0.);float sl=(.022+fi*.012)*(2.6-fi*.5)*cos(x*(2.6-fi*.5)+fi*2.);float lit=clamp(.6+sl*9.,0.,1.); /* one light, from the right */
+    vec3 c=mix(vec3(.72,.8,.95),vec3(1.,.99,.98),lit);c=mix(c,vec3(.8,.86,.97),smoothstep(0.,.08,dd)*.5);c+=vec3(1.)*exp(-dd/.002)*.3*lit; /* the snowfield, warm where lit, blue in the hollows */
+    c*=1.-.035*smoothstep(.5,.85,fbm3(vec2(x*14.,dd*90.+fi)))*smoothstep(.0,.01,dd); /* soft, wind-sculpted drifts */
+    c=mix(c,hazeC(uv),(2.-fi)/2.*.35);o=over(o,vec4(c,m));
+    float cw=(.028+fi*.02),tx=x/cw;for(int k=-1;k<=1;k++){float id=floor(tx)+float(k);if(hs(vec2(id,fi+2.))<(fi>1.5?.55:.3))continue;
+      float bx=(id+.5+(hs(vec2(id,fi+9.))-.5)*.5)*cw;float h=(.045+.04*hs(vec2(id,fi)))*(.8+fi*.55);float w=h*(.3+.06*hs(vec2(id,fi+4.)));
+      float by=.8+fi*.06-(.022+fi*.012)*(.5+.5*sin(bx*(2.6-fi*.5)+fi*2.))-.006*sin(bx*7.+fi)+.003;
+      vec2 q=vec2(x-bx,by-uv.y);
+      if(q.y<0.&&q.y>-.05){float sh=exp(q.y/(.008+fi*.004))*smoothstep(w*1.2,0.,abs(q.x+q.y*.8));o=over(o,vec4(mix(vec3(.55,.65,.88),hazeC(uv),(2.-fi)/2.*.4),sh*.4*m));} /* its soft blue shadow on the snow */
+      vec3 tr=spruce(q,h,w,id+fi*31.);if(tr.x<=0.)continue;float side=smoothstep(-w*.4,w*.5,q.x)*.75+.12;
+      vec3 tc=treeCol(tr,side,0.);tc=mix(tc,hazeC(uv),(2.-fi)/2.*.42);o=over(o,vec4(tc,tr.x));}}
+  return o;}
+`,
+};
+// ---------- event scenery, rendered once on the phone ----------
+// The landscapes of the scenic events barely move, so instead of redrawing them every frame they are rendered once, at full resolution and
+// supersampled, by their own shaders: a few tiles per frame while the event is being announced. The result is drawn as one image, with depth
+// (a far and a near layer that shift by different amounts as the balls move). Everything that moves stays live. Nothing is shipped: it is all drawn here.
+const SCENE = (() => {
+  let cvs = null, gl = null, buf = null, failed = false; const P = {}, done = {}; let job = null, sizeKey = '';
+  const SC = `precision highp float;uniform vec2 res,reg,cw;uniform float variant;uniform vec4 sunp;
+float hs(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1,0)),f.x),mix(hs(i+vec2(0,1)),hs(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int k=0;k<6;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
+float fbm3(vec2 p){float v=0.,a=.5;for(int k=0;k<3;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v/.875;}
+float ridge(vec2 p,int o){float v=0.,a=.5;for(int k=0;k<7;k++){if(k>=o)break;v+=a*(1.-abs(vn(p)*2.-1.));p=p*2.07+vec2(3.1,1.3);a*=.48;}return v;}
+float px;float asp;
+vec4 scene(vec2 uv,vec2 P);
+vec4 over(vec4 b,vec4 f){return vec4(f.rgb*f.a+b.rgb*(1.-f.a),f.a+b.a*(1.-f.a));} /* straight colour over */
+void main(){asp=res.x/res.y;px=1.25/res.y;vec4 acc=vec4(0.);
+  for(int j=0;j<2;j++)for(int i=0;i<2;i++){vec2 fc=gl_FragCoord.xy-.5+(vec2(float(i),float(j))+.5)*.5;
+    vec2 uv=vec2((fc.x/cw.x-.5)*reg.y+.5,reg.x+(1.-fc.y/cw.y)*(1.-reg.x));vec4 c=scene(uv,vec2(uv.x*asp,uv.y));acc+=vec4(c.rgb*c.a,c.a);}
+  acc/=4.;gl_FragColor=acc;}`; /* premultiplied */
+  const init = () => { if (gl) return true; if (failed) return false; try { cvs = document.createElement('canvas'); gl = cvs.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true }); } catch (e) { gl = null; }
+    if (!gl) { failed = true; return false; } buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    cvs.addEventListener('webglcontextlost', e => { e.preventDefault(); failed = true; gl = null; job = null; }); return true; };
+  const prog = name => { if (P[name] !== undefined) return P[name]; const sh = (ty, src) => { const o = gl.createShader(ty); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { console.warn('scene', name, gl.getShaderInfoLog(o)); return null; } return o; };
+    const v = sh(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}'), f = sh(gl.FRAGMENT_SHADER, SC + SFS[name]); if (!v || !f) return P[name] = null;
+    const pr = gl.createProgram(); gl.attachShader(pr, v); gl.attachShader(pr, f); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return P[name] = null; return P[name] = pr; };
+  const TILE = 160;
+  return {
+    ok: () => !failed,
+    // the finished layer for this event and variant, or null while it is still being drawn
+    get(key) { return done[key] || null; },
+    // ask for a layer: name of the scene shader, a variant number, the top of the band it covers (screen fraction), and the sun's position
+    want(key, name, variant, top, sun) { const sk = cv.width + 'x' + cv.height; if (sk !== sizeKey) { sizeKey = sk; for (const k in done) delete done[k]; job = null; }
+      if (done[key] || (job && job.key === key) || failed) return; if (job) { (this.q = this.q || []).some(q => q.key === key) || this.q.push({ key, name, variant, top, sun }); return; }
+      if (!init()) return; const pr = prog(name); if (!pr) { failed = true; return; }
+      const ov = 1.08, w = Math.round(cv.width * ov), h = Math.round(cv.height * (1 - top)); cvs.width = w; cvs.height = h;
+      job = { key, pr, w, h, top, ov, variant, sun: sun || [.5, .2, 0, 0], tiles: [] }; for (let y = 0; y < h; y += TILE) for (let x = 0; x < w; x += TILE) job.tiles.push([x, y]);
+      gl.viewport(0, 0, w, h); gl.disable(gl.SCISSOR_TEST); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); },
+    // draw a few more tiles of the current layer (called once a frame)
+    tick(n = 6) { if (!job || !gl) { if (!job && this.q && this.q.length) { const q = this.q.shift(); this.want(q.key, q.name, q.variant, q.top, q.sun); } return; }
+      const { pr, w, h } = job; gl.useProgram(pr); gl.bindBuffer(gl.ARRAY_BUFFER, buf); const a = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+      const L = nm => gl.getUniformLocation(pr, nm); gl.uniform2f(L('res'), cv.width, cv.height); gl.uniform2f(L('reg'), job.top, job.ov); gl.uniform2f(L('cw'), w, h); gl.uniform1f(L('variant'), job.variant); gl.uniform4fv(L('sunp'), job.sun);
+      gl.viewport(0, 0, w, h); gl.enable(gl.SCISSOR_TEST);
+      for (let i = 0; i < n && job.tiles.length; i++) { const [x, y] = job.tiles.shift(); gl.scissor(x, y, TILE, TILE); gl.drawArrays(gl.TRIANGLES, 0, 3); }
+      gl.disable(gl.SCISSOR_TEST);
+      if (!job.tiles.length) { const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(cvs, 0, 0); done[job.key] = { c, top: job.top, ov: job.ov, t0: performance.now() }; job = null; } },
+    // forget the layers of other events, so only the current one is kept in memory
+    keepOnly(prefix) { for (const k in done) if (!k.startsWith(prefix)) delete done[k]; if (job && !job.key.startsWith(prefix)) job = null; if (this.q) this.q = this.q.filter(q => q.key.startsWith(prefix)); },
+    busy: () => !!job,
+  };
+})();
+const SCENES = { // which events have scenery rendered once, in which layers
+  halo: [{ name: 'halo', v: 0, top: .56 }, { name: 'halo', v: 1, top: .7 }],
+  blossom: [{ name: 'sakura', v: 0, top: .56 }, { name: 'sakura', v: 1, top: .7 }],
+};
+const sceneSun = k => k === 'halo' ? [...toUV(W * .5, H * .25), 0, 0] : k === 'blossom' ? [.8, .09, 0, 0] : [.5, .2, 0, 0];
+function sceneTick() { const k = wx.kind; if (!k || state === 'menu' || !SCENES[k]) { if (!k) SCENE.keepOnly('~'); return; } SCENE.keepOnly(k);
+  SCENES[k].forEach((L, i) => SCENE.want(k + i, L.name, L.v, L.top, sceneSun(k))); SCENE.tick(); }
+const sceneOn = k => SCENES[k] && SCENE.ok(); // the live shader leaves its own landscape out while the rendered one is used
+function drawScene(key, a, par) { // a finished scenery layer across the screen, shifted for depth, following the sky's slow push-in
+  const L = SCENE.get(key); if (!L || a <= .004) return false; const fin = Math.min(1, (performance.now() - L.t0) / 450); // it fades in when it is ready, never pops
+  const z = 1 + .04 * camZ(), cx = cv.width * .5, cy = cv.height * .62;
+  ctx.save(); ctx.setTransform(z, 0, 0, z, cx * (1 - z), cy * (1 - z)); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = a * fin;
+  const w = L.c.width, x = (cv.width - w) / 2 - par * cv.width * .03; ctx.drawImage(L.c, x, cv.height * L.top, w, L.c.height); ctx.restore(); ctx.globalAlpha = 1; return true; }
+const sceneReady = (...ks) => ks.every(k => SCENE.get(k));
+
 const goldP = () => wx.kind !== 'golden' ? 0 : wx.phase === 'on' ? clamp01(wx.t / WX.golden.dur) : wx.phase === 'out' ? 1 : 0;
 const ECL = { dk: 0, tot: 0, dr: 0, vis: 1, d: -4.6 };
 function eclTick() { // where the moon is: it slides across slowly, lingers over the sun for totality, then moves on
@@ -2634,6 +2806,11 @@ function glassPetals(a) { // now and then a petal lands on the glass, rests a mo
     ctx.globalAlpha = a * land * (1 - out) * .22; ctx.drawImage(softBlob('120,60,90'), -16 * sc, -10 * sc, 34 * sc, 26 * sc); // its soft shadow on the glass
     ctx.globalAlpha = a * land * (1 - out) * .92; ctx.drawImage(PETAL(false), -13 * sc, -15 * sc, 26 * sc, 30 * sc); ctx.restore(); }
   ctx.globalAlpha = 1; }
+function lakeRings(a) { // rings spreading on the lake where petals land
+  const lk = H * .875 + (offY ? 0 : 0); ctx.save(); ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) { const per = 2.6 + i * .6, u = t / per + i * .37, ph = u % 1, cy = Math.floor(u), x = W * hash(cy * 7.1 + i), y = H * (.89 + .1 * hash(cy * 3.3 + i * 2)), r = ph * 28;
+    ctx.strokeStyle = `rgba(255,246,250,${(1 - ph) * .45 * a})`; ctx.beginPath(); ctx.ellipse(x, y, r, r * .28, 0, 0, 7); ctx.stroke(); ctx.strokeStyle = `rgba(255,246,250,${(1 - ph) * .25 * a})`; ctx.beginPath(); ctx.ellipse(x, y, r * .6, r * .17, 0, 0, 7); ctx.stroke(); }
+  ctx.restore(); }
 function drawPetals(a, near) { // petals tumbling down on the breeze, turning as they fall; now and then a gust carries them sideways
   if (!near) { const dt = Math.min(.05, Math.max(0, t - petT)); petT = t; petG += dt * (16 + 110 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
   for (const p of PET) { if (near ? p.z < .86 : p.z >= .86) continue; const dn = clamp01((a * 1.2 - (p.x * 7.31 + p.y * 3.17) % 1) / .2); if (dn <= 0) continue;
@@ -2678,7 +2855,7 @@ const skyCv = document.getElementById('sky'); let skyVis = false;
 function drawSky() { const r = drawSky0(); if (r !== skyVis) { skyVis = r; skyCv.style.visibility = r ? 'visible' : 'hidden'; } return r; }
 function drawSky0() { skyE = 0; if (state === 'menu' || !wx.kind || wx.a < .005 || !SKYGL.ok()) return false;
   const k = wx.kind, cfg = SKYCFG[k]; let U; if (wx.kind !== drawSky0.k) { drawSky0.k = wx.kind; skyQ = skyQs = 1; } // each event starts at full sharpness
-  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (k === 'golden') U = { gp: [goldP(), wx.a], cam: camU(), bk: 0 }; else if (k === 'blossom') U = { sk: [wx.a, 0], cam: camU(), bk: 0 }; else if (k === 'eclipse') U = eclU(); else if (k === 'halo') { const [hx, hy] = toUV(W * .5 + Math.sin(t * .05) * W * .015, H * .25), R = W * .36 * scale / cv.height; U = { sp: [hx, hy], hr: [R, wx.a], cam: camU(), bk: 0 }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0], dusk: 0 }, cfg()); if (k === 'firefly' || k === 'blossom') U.glow = [U.glow[0], U.glow[1], U.glow[2], 0]; else delete U.glow; delete U.bolt; /* the shader's glow takes four values; the older skies were designed without it, so they keep their look and stop sending a mismatched value every frame */
+  if (k === 'fog') U = {}; else if (k === 'aurora') U = {}; else if (k === 'alien') { const ea = wx.a * wx.a * (3 - 2 * wx.a), [cx, cy] = toUV(W * .5 + Math.sin(t * .05) * W * .04 + Math.sin(t * .37) * W * .012, H * (.23 - .34 * (1 - ea)) + Math.sin(t * .83) * 3.5 + Math.sin(t * 1.9) * 1.2); /* it descends into view as the event begins, and rises away at the end */ U = { sc: [cx, cy], sk: wx.a, ba: Math.sin(t * .23) * .07 + Math.sin(t * .61) * .025, pk: ABD.k }; } else if (k === 'bhole') { const [cx, cy] = toUV(W * .72, H * .24); U = { bc: [cx, cy], br: W * .2 * scale / cv.height, bk: wx.a }; } else if (k === 'golden') U = { gp: [goldP(), wx.a], cam: camU(), bk: 0 }; else if (k === 'blossom') U = { sk: [wx.a, 0], cam: camU(), bk: sceneOn('blossom') ? 1 : 0 }; else if (k === 'eclipse') U = eclU(); else if (k === 'halo') { const [hx, hy] = toUV(W * .5 + Math.sin(t * .05) * W * .015, H * .25), R = W * .36 * scale / cv.height; U = { sp: [hx, hy], hr: [R, wx.a], cam: camU(), bk: sceneOn('halo') ? 1 : 0 }; } else if (cfg) { U = Object.assign({ cTop: '0,0,0', cMid: '0,0,0', cBot: '0,0,0', cd: '0,0,0', cl: '0,0,0', glowC: '0,0,0', hazeC: '0,0,0', cov: [0, 1, 0, .1], moon: [0, 0, 1, 0], glow: [0, 0, 0], bolt: [0, 0, 0], drift: [0, 0], scl: 2, stars: 0, mw: 0, cloudA: 0, hazeK: 0, shim: 0, rain: 0, sun: [0, 0, 0, 0], flare: [0, 0], band: [0, 1, 0, 0], mets: 0, cvar: [1, 0, 0], dusk: 0 }, cfg()); if (k === 'firefly' || k === 'blossom') U.glow = [U.glow[0], U.glow[1], U.glow[2], 0]; else delete U.glow; delete U.bolt; /* the shader's glow takes four values; the older skies were designed without it, so they keep their look and stop sending a mismatched value every frame */
     /* (the storm's bolt glow is drawn by the 2D layer; the cloud shader's bolt light was never wired to a matching value, so nothing is sent) */
   } else return false;
   if (!(k === 'aurora' ? SKYGL.aurora() : k === 'bhole' && SKYGL.bhole() ? true : SKYGL.draw(k === 'fog' || k === 'bhole' || k === 'alien' || k === 'eclipse' || k === 'halo' || k === 'golden' ? k : k === 'blossom' ? 'sakura' : 'clouds', U))) return false;
@@ -2716,8 +2893,10 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'firefly') { if (G) camU(); else { ctx.save(); ctx.translate(-scPar * 6, 0); duskHills(a, false); ctx.restore(); } /* the GPU sky draws the meadow; the 2D hills are the fallback */ drawFireflies(a, false); }
   if (wx.kind === 'golden') { const p = goldP(); drawBirds(a * (1 - .7 * smooth(clamp01((p - .7) / .3))), p < .5 ? '70,48,72' : '40,26,52'); drawMotes(a * (1 - smooth(clamp01((p - .55) / .3))), '255,214,150'); }
   if (wx.kind === 'eclipse') drawMotes(a * (1 - ECL.dk) * .7, '255,236,214');
+  if (wx.kind === 'blossom' && G) { drawScene('blossom0', a, scPar * .35); drawScene('blossom1', a, scPar * 1.1); lakeRings(a); } // Fuji, the blossoming shore and the lake, rendered once; rings on the lake live
   if (wx.kind === 'blossom') { if (!G) blossomHills(a); drawPetals(a, false); ctx.save(); ctx.translate(-scPar * 10, 0); drawBranch(a, false); drawBranch(a, true); ctx.restore(); } // two flowering branches frame the top of the scene
   if (wx.kind === 'halo' && !G) snowForest(a);
+  if (wx.kind === 'halo' && G) { drawScene('halo0', a, scPar * .4); drawScene('halo1', a, scPar * 1.1); } // the frozen valley, rendered once
   if (wx.kind === 'eclipse' && !G) eclTick();
   if (wx.kind === 'alien' && !G) drawUFO(a); // without the GPU sky, the hand-drawn ship; with it, the sky renders the ship in 3D // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
@@ -3296,7 +3475,7 @@ function bannerUI(al, y, k) { // the speed-up banner as a real liquid-glass card
   const cy = (offY + y * scale) / dpr, sc2 = scale / dpr; bannerEl.style.opacity = al; bannerEl.style.transform = `translate(-50%,${cy - 46 * sc2}px) scale(${sc2 * (.94 + .06 * k)})`; bannerOn = true; }
 function draw() {
   { const n = state !== 'menu' && uiNight() > .5; if (n !== nightOn) { nightOn = n; document.body.classList.toggle('night', n); themeMeta && themeMeta.setAttribute('content', n ? '#0b1020' : '#f6f1ea'); } } // glass and Safari's bars tint to the sky
-  ctx = mainCtx;
+  ctx = mainCtx; sceneTick();
   const skyOn = drawSky();
   ctx.setTransform(1, 0, 0, 1, 0, 0); const NT = { aurora: [[150, 162, 222], [8, 14, 38]], bhole: [[196, 150, 118], [5, 5, 9]], alien: [[158, 128, 108], [12, 12, 18]], meteor: [[196, 168, 222], [24, 20, 60]] }[wx.kind], night = NT && NT[1], dimK = night && skyOn ? smooth(clamp01(skyE / .55)) : 0, bgA = skyOn ? (night ? 1 - smooth(clamp01((skyE - .35) / .65)) : 1 - skyE) : 1; if (skyOn) ctx.clearRect(0, 0, cv.width, cv.height);
   if (bgA > .004) { ctx.globalAlpha = bgA; if (dimK > 0) { const tone = k => { k = clamp01(k); const [a, b] = k < .5 ? [[246, 241, 234], NT[0]] : [NT[0], NT[1]], q = smooth(k < .5 ? k * 2 : (k - .5) * 2); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * q)).join(',')})`; };
