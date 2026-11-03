@@ -658,8 +658,8 @@ const params = () => ({ start: 270 + 230 * diff, step: 18 + 36 * diff, max: 600 
 // Speed-ups shrink as you get faster: the first jumps are big, later ones smaller, approaching the top speed.
 const LEVEL_TIME = 10;
 const targetSpeed = n => { const p = params(), k = 1 - Math.min(.55, 2.4 * (2 + .8 * diff) * p.step / (p.max - p.start)); return p.start + (p.max - p.start) * (1 - Math.pow(k, n)); };
-const rowGap = () => { const p = params(), k = wx.kind === 'rain' && wx.rv === 'dense' && wx.phase !== 'warn' && mode !== 'zen' ? wx.a : 0; return Math.max((p.gap - level * p.shrink) * (1 - .22 * k), speed * p.minTime * (1 - .1 * k)); }; // rain can bring the rows closer together, never closer than the fair minimum
-const wxSK = () => mode === 'zen' ? 1 : wx.kind === 'snow' ? 1 - .24 * wx.a : wx.kind === 'rain' && wx.rv === 'fast' ? 1 + .12 * wx.a : 1; // snow slows the blocks in the cold; a fast rain speeds them up a little
+const rowGap = () => { const p = params(), k = wx.kind === 'rain' && wx.rv === 'dense' && wx.phase !== 'warn' && mode !== 'zen' ? wx.a : 0; return Math.max((p.gap - level * p.shrink) * (1 - .32 * k), speed * p.minTime * (1 - .1 * k)); }; // rain can bring the rows closer together, never closer than the fair minimum
+const wxSK = () => mode === 'zen' ? 1 : wx.kind === 'snow' ? 1 - .24 * wx.a : wx.kind === 'rain' && wx.rv === 'fast' ? 1 + .22 * wx.a : 1; // snow slows the blocks in the cold; a fast rain speeds them up a little
 // ---------- unlocks: what each pack opens (0 free, 1 Plus, 2 Pro, 3 Max, 4 Supporter) ----------
 const TIERS = ['free', 'plus', 'pro', 'max', 'supporter'], TIER_NAMES = ['Free', 'Plus', 'Pro', 'Max', 'Supporter'];
 let ent = 0; try { ent = Math.min(4, Math.max(0, +localStorage.mirrorEnt | 0)); } catch (e) {}
@@ -993,10 +993,10 @@ const WX = {
   rain: { dur: 20, p: 1 / 120, warn: 2.2, note: ['Rain incoming', 'Wet lanes ahead'] }, // a gentler storm: soft glows in the cloud, no strikes and no thunder; each shower either brings more blocks or a slight speed-up
   snow: { dur: 22, p: 1 / 150, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
   eclipse: { dur: 38, p: 1 / 900, warn: 1.6, note: ['Solar eclipse', 'Blocks vanish in the dark'] }, // rare and purely to look at: the day darkens to a ring of fire
-  halo: { dur: 20, p: 1 / 260, warn: 1.2, note: ['Ice halo', 'The balls slide on the ice'] }, // a frozen, crystal-clear sky: a ring of light round the sun
-  firefly: { dur: 22, p: 1 / 200, warn: 1.2, note: ['Fireflies', 'Gems drift like fireflies'] }, // a violet dusk full of soft blinking lights
-  blossom: { dur: 20, p: 1 / 170, warn: 1.2, note: ['Cherry blossom', 'Petals on the breeze'] }, // a spring sky with petals drifting down
-  golden: { dur: 36, p: 1 / 240, warn: 1.2, note: ['Golden hour', 'Gems are worth double'] }, // the sky passes from golden light through sunset to blue hour
+  halo: { dur: 20, p: 1 / 260, warn: 1.2, note: ['Ice halo', 'Slippery: the balls overshoot'] }, // a frozen, crystal-clear sky: a ring of light round the sun
+  firefly: { dur: 22, p: 1 / 200, warn: 1.2, note: ['Fireflies', 'Gems roam and are worth double'] }, // a violet dusk full of soft blinking lights
+  blossom: { dur: 20, p: 1 / 170, warn: 1.2, note: ['Cherry blossom', 'Combo up to ×12, never lost'] }, // a spring sky with petals drifting down
+  golden: { dur: 36, p: 1 / 240, warn: 1.2, note: ['Golden hour', 'Every gem is worth triple'] }, // the sky passes from golden light through sunset to blue hour
   alien: { dur: 22, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
 };
 const CHIPS = []; let chipT = 0;
@@ -1042,7 +1042,7 @@ function addRow() {
   Array.from({ length: per }, (_, i) => i).filter(q => q !== sp).forEach(q => {
     (R() < .3 ? [q, N - 1 - q] : [R() < .5 ? q : N - 1 - q]).forEach(l => things.push({ k: 'b', l, y: nextY, row }));
   });
-  if (R() < (wxOn('golden') ? .8 : .55)) things.push({ k: 'g', l: R() < .5 ? sp : N - 1 - sp, y: nextY - R() * 40, ph: R() * 6, row, ff: wxOn('firefly') }); // golden hour brings more gems; at dusk they are fireflies
+  if (R() < (wxOn('golden') ? 1 : .55)) things.push({ k: 'g', l: R() < .5 ? sp : N - 1 - sp, y: nextY - R() * 40, ph: R() * 6, row, ff: wxOn('firefly') }); // golden hour brings more gems; at dusk they are fireflies
   nextY -= rowGap() * (per === 3 ? 1.12 : 1) * (1 + .6 * Math.max(0, cost - 1));
 }
 reset();
@@ -1234,7 +1234,7 @@ function update(dt) {
   for (let i = 0; i < 2; i++) {
     // critically damped spring, integrated in small steps so every frame shows real in-between motion
     const ox = bx[i];
-    const ice = wxOn('halo') ? wx.a : 0, K = SPRING * (1 - .25 * ice), D = 2 * K * (1 - .45 * ice); // on the ice the balls glide, and slide a little past the column before settling
+    const ice = wxOn('halo') ? wx.a : 0, K = SPRING * (1 - .3 * ice), D = 2 * K * (1 - .68 * ice); // on the ice the balls glide, and slide a little past the column before settling
     for (let h = dt; h > 0; h -= .004) { const s = Math.min(.004, h); bv[i] += (K * K * (tx[i] - bx[i]) - D * bv[i]) * s; bx[i] += bv[i] * s; }
     if (Math.abs(tx[i] - bx[i]) < .3 && Math.abs(bv[i]) < 6 && !ice) { bx[i] = tx[i]; bv[i] = 0; }
     // faint trail while sliding between columns
@@ -1263,7 +1263,7 @@ function update(dt) {
   const lane = W / N;
   const sk = wxSK();
   for (const o of things) {
-    o.y += speed * sk * dt; if (o.ff) o.ex = LX[o.l] + Math.sin(t * 1.5 + o.ph) * lane * .42; // a firefly gem wanders across its lane
+    o.y += speed * sk * dt; if (o.ff) { const lo = o.l < per ? LX[0] : LX[per], hi = o.l < per ? LX[per - 1] : LX[N - 1]; o.ex = clamp(LX[o.l] + Math.sin(t * 1.3 + o.ph) * lane * 1.05, lo, hi); } // a firefly gem roams between columns on its own side
     if (o.k === 'b' && o.y > BY + 40 && !scored.has(o.row)) { scored.add(o.row); if (!(mode === 'normal' && score >= GOAL) && ++score % 10 === 0) { float(W / 2, 300, score + '!', '#e9a23b'); beep(760, .2, 'triangle', .07, 300); } }
     const x = bxOf(o);
     // near miss (visual only): a block slides past right beside a ball that just dodged
@@ -1277,13 +1277,13 @@ function update(dt) {
       if (Math.abs(bx[bi] - x) < (o.k === 'b' ? 30 : 34)) {
         if (o.k === 'b') { if (mode !== 'zen') return die(x, o.y, bi, o); if (!o.zen) { o.zen = true; combo = 1; fx.near = 1; burst(bx[bi], BY, 6, '#ffffff', 140, .4, 0, .8); haptic('soft'); } continue; } // Zen: nothing breaks, the combo just resets
         if (!o.got) {
-          o.got = true; const gv = combo * (wxOn('golden') ? 2 : 1); score = mode === 'normal' ? Math.min(GOAL, score + gv) : score + gv; if (gv > combo) float(x, o.y - 44, '×2', '#f2a93b'); // golden hour: every gem counts double combo = Math.min(8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
+          o.got = true; const gv = combo * (wxOn('golden') ? 3 : o.ff ? 2 : 1); score = mode === 'normal' ? Math.min(GOAL, score + gv) : score + gv; if (gv > combo) float(x, o.y - 44, '×' + gv / combo, '#f2a93b'); // golden hour: every gem counts double combo = Math.min(wxOn('blossom') ? 12 : 8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
           fx.gem = 1; fx.combo = 1; fx.maxCombo = Math.max(fx.maxCombo, combo); // visual feedback only
           burst(x, o.y, 7, '#ffc867', 160, .4, 60, .9); burst(x, o.y, 3, '#ffffff', 120, .3, 0, .8); float(x, o.y - 24, '+' + (combo - 1 || 1), '#e9a23b');
         }
       }
     }
-    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; if (combo > 2) beep(440, .3, 'sine', .028, -120); combo = 1; } // a gentle falling note when a combo is lost
+    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; if (!wxOn('blossom')) { if (combo > 2) beep(440, .3, 'sine', .028, -120); combo = 1; } } // during cherry blossom a missed gem keeps the combo // a gentle falling note when a combo is lost
   }
   things = things.filter(o => o.y < H + 80 && !(o.got && o.k === 'g'));
   if (mode === 'normal' && !gate && score >= GOAL) { gate = { y: Math.min(nextY + 40, -80), t: 0 }; banner = 'FINAL STRETCH'; fxA = 1; beep(520, .5, 'sine', .06, 260); haptic('medium'); } // no new rows: the finish line comes down behind the last one
@@ -1559,7 +1559,7 @@ function updateAliens(dt) {
 }
 function windOffset() { // a soft sideways nudge that rises and falls smoothly during the gust
   if (wx.kind !== 'wind' || wx.phase !== 'on') return 0;
-  const q = clamp01(wx.t / WX.wind.dur); return windDir * 22 * Math.sin(q * Math.PI) * Math.min(1, wx.a * 1.2);
+  const q = clamp01(wx.t / WX.wind.dur); return windDir * 40 * Math.sin(q * Math.PI) * Math.min(1, wx.a * 1.2);
 }
 const cloudH = () => H * .26;
 // smooth pseudo-noise from incommensurate sines: gives drifting, uneven variation instead of perfect repetition
@@ -3236,7 +3236,7 @@ function draw() {
       ctx.save(); ctx.translate(x + Math.sin(k * 75) * 3.2 * dmp, o.y - 3 * sq); ctx.scale(1 + .07 * sq, 1 - .13 * sq);
       if (o.al) drawAlien(o, 0, 0, bw(), 44); else drawBlock(0, 0, bw(), 44, 0, o.elec); ctx.restore();
     } else { { const bk = wx.kind === 'storm' ? boltK() : 0; if (bk > .08 && wx.bolt) { const sx2 = Math.sign(x - wx.bolt.pts[0][0]) || 1; ctx.fillStyle = `rgba(10,14,28,${.4 * bk})`; ctx.beginPath(); ctx.roundRect(x - bw() / 2 + sx2 * 14 * bk, o.y - 22 + 16 * bk, bw(), 44, 12); ctx.fill(); } } // lightning casts a shadow
-      if (o.al) { drawAlien(o, x, o.y, bw(), 44); continue; } const dkv = wxOn('eclipse') ? ECL.tot * (1 - smooth(clamp01((o.y - H * .22) / (H * .3)))) : 0; if (dkv > .01) ctx.globalAlpha = 1 - .86 * dkv; /* in totality the blocks are lost in the dark until they come close */ drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec); ctx.globalAlpha = 1; if (wetA > .02) wetBlock(o, x, o.y, bw(), 44, wetA); if (snowA > .02 || o.sn) snowBlock(o, x, o.y, bw(), 44, snowA); if (wx.kind === 'bhole' && wx.a > .02) holeBlock(x, o.y, bw(), 44, wx.a); }
+      if (o.al) { drawAlien(o, x, o.y, bw(), 44); continue; } const dkv = wxOn('eclipse') ? Math.max(ECL.tot, ECL.dk) * (1 - smooth(clamp01((o.y - H * .38) / (H * .2)))) : 0; if (dkv > .01) ctx.globalAlpha = 1 - .95 * dkv; /* in totality the blocks are lost in the dark until they come close */ drawBlock(x, o.y, bw(), 44, state === 'dead' ? 0 : motion, o.elec); ctx.globalAlpha = 1; if (wetA > .02) wetBlock(o, x, o.y, bw(), 44, wetA); if (snowA > .02 || o.sn) snowBlock(o, x, o.y, bw(), 44, snowA); if (wx.kind === 'bhole' && wx.a > .02) holeBlock(x, o.y, bw(), 44, wx.a); }
   }
   drawHaze();
 
@@ -3425,8 +3425,8 @@ function guideHTML() {
     + `<div class="gbody"><div>${items.map(([c, d, t, x]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${d}</svg></span><span class="gtx"><b>${t}</b><small>${x}</small></span></div>`).join('')}</div></div></div></div>`; }
 const EVINFO = [ // the events, from the most common to the rarest; p = changes how the game plays
   ['fog', 'e-grey', 'Fog', 'Mist rolls in and the blocks are harder to see.', 0],
-  ['wind', 'e-sky', 'Wind', 'A gust pushes both balls a little to one side.', 1],
-  ['rain', 'e-storm', 'Rain', 'Either the blocks speed up slightly, or more blocks come at you.', 1],
+  ['wind', 'e-sky', 'Wind', 'A strong gust pushes both balls well off their columns. Lean against it.', 1],
+  ['rain', 'e-storm', 'Rain', 'Either the blocks speed up by a fifth, or a third more blocks come at you.', 1],
   ['hail', 'e-storm', 'Hail', 'A short, heavy shower of ice.', 0],
   ['storm', 'e-storm', 'Storm', 'Lightning can charge a block and slide it to the other side.', 1],
   ['snow', 'e-snow', 'Snow', 'The cold slows the blocks down.', 1],
@@ -3434,11 +3434,11 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
   ['sun', 'e-warm', 'Sun flash', 'A brief burst of glare.', 0],
   ['meteor', 'e-night', 'Meteor shower', 'Shooting stars cross a clear night sky.', 0],
   ['aurora', 'e-aur', 'Aurora', 'The northern lights fill the sky.', 0],
-  ['blossom', 'e-bloom', 'Cherry blossom', 'Petals drift down through a soft spring sky.', 0],
-  ['firefly', 'e-fly', 'Fireflies', 'Dusk falls and fireflies glow all around. The gems drift across their lanes like fireflies.', 1],
-  ['halo', 'e-halo', 'Ice halo', 'A ring of light circles the sun. On the ice the balls glide, and slide a little past each column.', 1],
-  ['golden', 'e-gold', 'Golden hour', 'The sun sets over a sea of clouds. Gems are worth double, and more of them appear.', 1],
-  ['eclipse', 'e-ecl', 'Solar eclipse', 'Rare. The moon slides across the sun; in the darkness of totality the blocks are hard to see until they come close.', 1],
+  ['blossom', 'e-bloom', 'Cherry blossom', 'Petals drift down through a soft spring sky. Your combo can climb to ×12, and missing a gem does not break it.', 1],
+  ['firefly', 'e-fly', 'Fireflies', 'Dusk falls and fireflies glow all around. The gems roam between columns like fireflies and are worth double.', 1],
+  ['halo', 'e-halo', 'Ice halo', 'A ring of light circles the sun. On the ice the balls slide well past each column and swing back before they settle.', 1],
+  ['golden', 'e-gold', 'Golden hour', 'The sun sets over a sea of clouds. A gem in every row, each worth triple.', 1],
+  ['eclipse', 'e-ecl', 'Solar eclipse', 'Rare. As the moon covers the sun the blocks fade into the dark; at totality you only see them in the last stretch before the balls.', 1],
   ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side, and the beam slowly pulls up anything that stays in the middle. Move out of the middle to break free.', 1],
 ];
 function eventsHTML() {
