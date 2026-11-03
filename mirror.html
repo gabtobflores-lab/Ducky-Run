@@ -2693,8 +2693,13 @@ vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);
   halo: `/* the ice halo's frozen valley. variant 0: the far layer (two ranges of snowy peaks, a valley with a distant treeline);
    variant 1: the near layer (rolling snowfields, rows of spruces, the foreground drift). sunp.xy: the sun (screen fraction) */
 vec3 hazeC(vec2 uv){return mix(vec3(.74,.83,.96),vec3(.9,.93,.99),smoothstep(.55,.9,uv.y));}
+float horn(float x);
 float mtn(float x,float fi){float pk=0.;for(int j=0;j<3;j++){float fj=float(j),f=.9+fj*.37,o2=fj*.31+fi*.5;float cc=fract(x*f+o2)*2.-1.;pk=max(pk,pow(max(0.,1.-abs(cc)),1.6)*(.55+.45*hs(vec2(floor(x*f+o2),fj+fi*7.))));}
-  return pk*.72+.3*ridge(vec2(x*3.,fi*5.),6)*pow(pk,.6)+.05*ridge(vec2(x*11.,fi),4);}
+  float h=pk*.72+.3*ridge(vec2(x*3.,fi*5.),6)*pow(pk,.6)+.05*ridge(vec2(x*11.,fi),4);
+  if(fi<.5){float hm=horn(x);h=max(h*(1.-.75*smoothstep(.0,.3,hm)),hm);} /* the Matterhorn stands on its own above the range */
+  return h;}
+float horn(float x){float u=x-.52;float w=u<0.?.15:.2;float a=max(0.,1.-abs(u)/w); /* the Matterhorn: a steep, slightly hooked pyramid, its summit leaning east */
+  float h=1.45*pow(a,1.25)+.06*(ridge(vec2(x*30.,7.),4)-.5)*a-.05*exp(-pow((u+.03)/.012,2.))*a; /* concave flanks rising to a sharp summit, a notch on its shoulder */return max(h,0.);}
 vec3 spruce(vec2 q,float h,float w,float sd){ /* q: from the foot of the trunk, y up. x: covered, y: snow, z: shade */
   if(q.y<-.003||q.y>h*1.05||abs(q.x)>w*1.25)return vec3(0.,0.,1.);
   float n=5.+floor(hs(vec2(sd,1.))*3.),yy=q.y/h;vec3 r=vec3(0.,0.,1.);
@@ -2717,9 +2722,12 @@ vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);vec4 o=vec4(0.);
       float e=.003,sl=(mtn(xs+e,fi)-mtn(xs-e,fi))/(2.*e);float lit=smoothstep(-.35,.35,-sl);lit=mix(lit,.5,smoothstep(.0,.08,dd)*.3);
       float gul=smoothstep(.6,.88,ridge(vec2(x*22.+sl*dd*30.,dd*7.+fi),3))*smoothstep(.0,.015,dd)*exp(-dd*12.); /* gullies running down each face */
       vec3 c=mix(vec3(.62,.7,.9),vec3(.98,.98,1.),lit);c=mix(c,c*.86,gul*.55);
+      float hm=fi<.5?smoothstep(.2,.6,horn(x))*smoothstep(.0,.004,dd):0.;if(hm>0.){float lf=step(.52,x+dd*.25); /* the horn's two faces split by the Hörnli ridge */
+        float band=smoothstep(.36,.62,fbm(vec2(x*26.,uv.y*80.+x*50.)))*(1.-lf*.35)*smoothstep(.0,.015,dd);vec3 hc=mix(mix(vec3(.74,.79,.93),vec3(.99,.98,.97),lf),mix(vec3(.34,.36,.5),vec3(.58,.56,.66),lf),band); /* dark rock banded with ledges of snow */
+        hc=mix(hc,hc*.85,smoothstep(.6,.9,ridge(vec2(x*55.,uv.y*30.),3))*.6);hc*=mix(.84,1.,lf);c=mix(c,hc,hm);} /* steep rock faces banded with snow, the sunlit east face bright */
       float rock=smoothstep(.64,.82,ridge(vec2(x*16.,dd*26.+fi*3.),4))*(1.-lit)*smoothstep(.0,.015,dd)*exp(-dd*14.);c=mix(c,mix(vec3(.42,.47,.64),vec3(.6,.64,.8),lit),rock*.7); /* dark rock showing through on the shaded faces */
       c+=vec3(1.,.98,.95)*exp(-dd/.0016)*.3*lit; /* the sunlit ridge line */
-      c=mix(c,hazeC(uv),(1.-fi)*.42+.55*smoothstep(0.,.09,dd)); /* the far range paler; haze gathers toward each foot */
+      c=mix(c,hazeC(uv),((1.-fi)*.42+.55*smoothstep(0.,.09,dd))*(1.-.65*hm*(1.-smoothstep(.06,.2,dd)))); /* the far range paler; haze gathers toward each foot; the Matterhorn stands clear of it */
       o=over(o,vec4(c,m));}
     { float y=.765+.006*sin(P.x*4.);float m=smoothstep(y-px,y+px,uv.y);vec3 c=mix(vec3(.86,.9,.98),vec3(.8,.86,.96),smoothstep(y,y+.05,uv.y));o=over(o,vec4(c,m)); /* the valley floor */
       float pr=conifer(P.x,120.,3.);float tt=y+.001-.012*pr*smoothstep(.2,.5,vn(vec2(P.x*6.,2.)));float tm=smoothstep(tt-px,tt+px,uv.y)*(1.-m);o=over(o,vec4(mix(vec3(.3,.42,.5),hazeC(uv),.62),tm)); } /* a far forest in the valley haze */
@@ -2801,7 +2809,7 @@ void main(){asp=res.x/res.y;px=1.25/res.y;vec4 acc=vec4(0.);
   };
 })();
 const SCENES = { // which events have scenery rendered once, in which layers
-  halo: [{ name: 'halo', v: 0, top: .56 }, { name: 'halo', v: 1, top: .7 }],
+  halo: [{ name: 'halo', v: 0, top: .44 }, { name: 'halo', v: 1, top: .7 }],
   blossom: [{ name: 'sakura', v: 0, top: .56 }, { name: 'sakura', v: 1, top: .7 }],
   firefly: [{ name: 'dusk', v: 0, top: .62 }, { name: 'dusk', v: 1, top: .66 }],
   golden: [{ name: 'gold', v: 0, top: .6 }, { name: 'gold', v: 1, top: .6 }, { name: 'gold', v: 2, top: .6 }],
