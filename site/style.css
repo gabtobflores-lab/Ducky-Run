@@ -1,0 +1,18 @@
+:root{--ink:#2b2d42;--ink2:rgba(43,45,66,.66);--ink3:rgba(43,45,66,.42);--pink:#ff6b81;--teal:#2ec4d6;--paper:#f6f1ea}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(90deg,#fbe9ea,var(--paper) 50%,#e4f2f1);color:var(--ink);font:17px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:680px;margin:0 auto;padding:72px 20px 56px}
+.logo{margin:0;font-weight:900;font-size:clamp(44px,11vw,72px);line-height:.95;letter-spacing:.01em}
+.logo .p{color:var(--pink)} .logo .c{color:var(--teal)}
+.tag{margin:10px 0 0;font-weight:600;letter-spacing:.06em;color:var(--ink3)}
+.balls{display:flex;gap:28px;margin:36px 0 8px}
+.balls i{width:56px;height:56px;border-radius:50%;display:block;box-shadow:0 10px 24px rgba(43,45,66,.14)}
+.balls i:first-child{background:radial-gradient(circle at 36% 32%,#ffb3bf,#ff6b81 45%,#d93f5c)}
+.balls i:last-child{background:radial-gradient(circle at 64% 32%,#a6eef5,#2ec4d6 45%,#1595a8)}
+h2{font-size:22px;letter-spacing:-.01em;margin:40px 0 8px}
+p,li{color:var(--ink2)}
+.card{background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.9);border-radius:22px;padding:22px 24px;margin-top:28px;box-shadow:0 8px 24px rgba(43,45,66,.07)}
+.card h2{margin-top:0}
+a{color:#1aa9bc;text-decoration:none} a:hover{text-decoration:underline}
+footer{margin-top:48px;font-size:14px;color:var(--ink3)}
+footer a{margin-right:16px}
