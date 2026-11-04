@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="a2ba94f">
+<meta name="build" content="90dff6c">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2663,8 +2663,10 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   float gul=pow(1.-abs(fract(g2)-.5)*2.,6.)*smoothstep(.0,.03,dd); /* faint gullies scoring the flanks */
   vec3 rk=mix(mix(vec3(.24,.28,.52),vec3(.4,.42,.66),smoothstep(0.,.24,dd)),mix(vec3(.48,.46,.7),vec3(.64,.6,.8),smoothstep(0.,.24,dd)),l); /* the lower flanks: smooth deep blue-violet, paler toward the foot */
   vec3 sn=mix(mix(vec3(.6,.68,.92),vec3(.72,.79,.96),smoothstep(0.,.06,dd)),mix(vec3(1.,.99,.99),vec3(.95,.95,.99),smoothstep(0.,.06,dd)),l);sn*=1.-.06*gul*(1.-l);
+  float rs=smoothstep(.42,.58,fract(g1))*(1.-abs(fract(g1)-.5)*1.4);sn*=mix(.86,1.04,mix(rs,1.,l*.5)); /* each snowy ridge lit on its right side, blue in the hollows beside it */
+  float fr=pow(1.-abs(fract(g1+.5)-.5)*2.,8.)*smoothstep(.0,.04,dd)*(1.-smoothstep(.15,.22,dd));rk=mix(rk,rk*1.06+.01,fr*.25); /* faint ridges running down the flanks */
   vec3 c=mix(rk,sn,snow);c+=vec3(1.)*exp(-dd/.0018)*.28*l;
-  c=mix(c,hazeS(uv),.04+.5*smoothstep(.7,.81,uv.y)); /* its foot lost in the spring haze */
+  c=mix(c,hazeS(uv),.04+.5*smoothstep(.7,.81,uv.y));c=mix(c,vec3(.94,.92,.98),exp(-pow((uv.y-.792)/.012,2.))*.45*(.6+.4*fbm3(vec2(P.x*12.,3.)))); /* a soft mist lying at its foot, along the water */ /* its foot lost in the spring haze */
   return vec4(c,m);}
 vec4 farLayer(vec2 uv,vec2 P,vec2 S){vec4 o=fuji(uv,P,S);
   { float y=LK-.0025-.0025*fbm3(vec2(P.x*40.,1.))-.002*vn(vec2(P.x*5.,2.));float m=smoothstep(y-px,y+px,uv.y)*step(uv.y,LK+.001); /* the far shore: a low line of woods */
@@ -2721,13 +2723,13 @@ float bankH(float x,float fi,float dep){float s1=mix(.05,.16,dep),s2=s1*.38;floa
   float B=log(big)/14.,Sm=log(sm)/16.,Tn=log(tn)/18.;return B*.72+.3*Sm*(.4+.6*B)+.1*Tn*(.3+.7*B);}
 float pkH(float x,float fi){float pk=0.;for(int j=0;j<2;j++){float fj=float(j),f=2.6+fj*1.1+fi*.9,o2=fj*.43+fi*.71;float cc=fract(x*f+o2)*2.-1.;float pres=step(fi<.5?.3:.15,hs(vec2(floor(x*f+o2),fj+fi*5.)));pk=max(pk,pow(max(0.,1.-abs(cc)),1.5)*(.6+.4*hs(vec2(floor(x*f+o2),fj+fi*9.)))*pres);}
   return pk*.42+(.62*ridge(vec2(x*5.,fi*3.),7)*pow(pk,.4)+.1*ridge(vec2(x*19.,fi),5)*pow(pk,.7))*smoothstep(0.,.35,pk);} /* the crags fade out toward each foot, so no peak ends in a sheer wall */ /* rugged summits: shoulders, notches and secondary peaks */
-const float MX=.6,MY=.535,MB=.79,MW=.95; /* the Matterhorn: summit (screen x, y), its foot, and its width against its height */
+const float MX=.6,MY=.505,MB=.79,MW=.92; /* the Matterhorn: summit (screen x, y), its foot, and its width against its height */
 float pl(float v,vec2 a,vec2 b){return mix(a.y,b.y,clamp((v-a.x)/(b.x-a.x),0.,1.));}
 float hornH(float v){ /* its skyline as seen from Zermatt, traced from the real mountain (v across, h up, both in units of its height):
    on the left the long Hörnli side with its shoulder, the summit hooked a little to the left, on the right a steep drop to the Zmutt shoulder, then a long gentle ridge */
   float h=0.;
-  if(v<0.){h=v<-1.25?0.:v<-.84?pl(v,vec2(-1.25,0.),vec2(-.84,.145)):v<-.665?pl(v,vec2(-.84,.145),vec2(-.665,.23)):v<-.38?pl(v,vec2(-.665,.23),vec2(-.38,.405)):v<-.2?pl(v,vec2(-.38,.405),vec2(-.2,.64)):v<-.12?pl(v,vec2(-.2,.64),vec2(-.12,.95)):pl(v,vec2(-.12,.95),vec2(0.,1.));}
-  else{h=v<.03?pl(v,vec2(0.,1.),vec2(.03,.99)):v<.26?pl(v,vec2(.03,.99),vec2(.26,.78)):v<.32?pl(v,vec2(.26,.78),vec2(.32,.56)):v<.52?pl(v,vec2(.32,.56),vec2(.52,.43)):v<.72?pl(v,vec2(.52,.43),vec2(.72,.32)):v<.87?pl(v,vec2(.72,.32),vec2(.87,.26)):v<1.2?pl(v,vec2(.87,.26),vec2(1.2,.1)):pl(v,vec2(1.2,.1),vec2(1.55,0.));}
+  if(v<0.){h=v<-1.25?0.:v<-.84?pl(v,vec2(-1.25,0.),vec2(-.84,.145)):v<-.665?pl(v,vec2(-.84,.145),vec2(-.665,.23)):v<-.38?pl(v,vec2(-.665,.23),vec2(-.38,.405)):v<-.2?pl(v,vec2(-.38,.405),vec2(-.2,.64)):v<-.06?pl(v,vec2(-.2,.64),vec2(-.06,.93)):pl(v,vec2(-.06,.93),vec2(0.,1.));}
+  else{h=v<.07?pl(v,vec2(0.,1.),vec2(.07,.93)):v<.26?pl(v,vec2(.07,.93),vec2(.26,.78)):v<.32?pl(v,vec2(.26,.78),vec2(.32,.56)):v<.52?pl(v,vec2(.32,.56),vec2(.52,.43)):v<.72?pl(v,vec2(.52,.43),vec2(.72,.32)):v<.87?pl(v,vec2(.72,.32),vec2(.87,.26)):v<1.2?pl(v,vec2(.87,.26),vec2(1.2,.1)):pl(v,vec2(1.2,.1),vec2(1.55,0.));}
   return h+.008*(ridge(vec2(v*30.,3.),4)-.5)+.004*(vn(vec2(v*90.,1.))-.5);}
 float rfb(vec2 p){float v=0.,a=.5;mat2 m=mat2(.8,-.6,.6,.8);for(int k=0;k<5;k++){v+=a*vn(p);p=m*p*2.1+vec2(1.7,9.2);a*=.5;}return v/.97;} /* rotated octaves: no boxy shapes */
 vec4 horn(vec2 uv,vec2 P){float Hh=MB-MY;float v=(P.x-MX*asp)/(Hh*MW),h=(MB-uv.y)/Hh;float sk=hornH(v);float m=smoothstep(-px/Hh,px/Hh,sk-h);if(m<=0.||h<-.02)return vec4(0.);
@@ -2737,16 +2739,21 @@ vec4 horn(vec2 uv,vec2 P){float Hh=MB-MY;float v=(P.x-MX*asp)/(Hh*MW),h=(MB-uv.y
   /* the east face, in the sun: snow over rock, ribs running down it, each rib a sharp lit plane and a shaded one */
   float ce=dv+(1.-h)*.35;float rb=rfb(vec2(ce*12.,h*1.6))-rfb(vec2(ce*12.+.12,h*1.6));float ribE=smoothstep(-aa*.5,aa*.5,rb);
   vec2 qe=vec2(ce*16.,h*2.4);qe+=vec2(rfb(qe*.7+3.),0.)*.8;float rkE=smoothstep(.66-aa,.66+aa,rfb(qe)+.1*smoothstep(.55,.95,h)-.12*smoothstep(.45,.1,h))*smoothstep(.0,.02,dsk); /* thin ribs of rock breaking through the snow */
-  vec3 eSn=mix(vec3(.84,.88,.97),vec3(1.,.99,.97),.45+.55*ribE),eRk=mix(vec3(.36,.36,.44),vec3(.58,.56,.6),ribE);vec3 east=mix(eSn,eRk,rkE);
+  float cap=smoothstep(.8-aa,.8+aa,h+.06*(rfb(vec2(v*14.,h*6.))-.5)); /* the summit pyramid: bare dark rock, too steep to hold much snow */
+  float bnd=smoothstep(.8-aa,.8+aa,sin(h*24.+ce*5.+2.2*rfb(vec2(ce*4.,h*3.)))*.5+.5)*smoothstep(.5-aa,.5+aa,rfb(vec2(ce*14.,h*9.)+3.))*smoothstep(.12,.25,h); /* bands of rock crossing the face, snow lying between them */
+  rkE=max(rkE,max(bnd*.9,cap*smoothstep(.5-aa,.5+aa,rfb(vec2(ce*20.,h*9.)+8.)+.25)));
+  vec3 eSn=mix(vec3(.84,.88,.97),vec3(1.,.99,.97),.45+.55*ribE),eRk=mix(vec3(.38,.37,.44),vec3(.66,.62,.62),ribE);vec3 east=mix(eSn,eRk,rkE);
   /* the north face, in shadow: dark rock in sharp facets, snow streaked down the fall line and lying on the ledges */
   float cn=dv-(1.-h)*.85;float rbN=rfb(vec2(cn*10.,h*2.))-rfb(vec2(cn*10.+.12,h*2.));float fac=smoothstep(-aa*.5,aa*.5,rbN);
-  vec2 qn=vec2(cn*18.,h*4.2);qn+=vec2(rfb(qn*.6+7.),rfb(qn*.6+2.)*.3)*.9;float sn=rfb(qn);
+  vec2 qn=vec2(cn*24.,h*4.);qn+=vec2(rfb(qn*.6+7.),rfb(qn*.6+2.)*.3)*.9;float sn=rfb(qn);
   float ledge=smoothstep(.62,.68,sin(h*34.-dv*10.+2.5*rfb(vec2(cn*5.,h*3.)))*.5+.5)*smoothstep(.45,.6,rfb(vec2(cn*12.,h*8.)+5.));
-  float snN=smoothstep(.6-aa,.6+aa,sn+.22*smoothstep(.35,.05,h)+.05*smoothstep(.4,1.,dv)-.2*smoothstep(.75,.95,h)+.0*ledge);
-  vec3 nRk=mix(vec3(.16,.19,.28),vec3(.3,.33,.44),fac),nSn=mix(vec3(.56,.63,.84),vec3(.74,.8,.94),fac*.6+.4*smoothstep(.3,.9,dv));vec3 nrth=mix(nRk,nSn,snN);
+  float snN=smoothstep(.6-aa,.6+aa,sn+.22*smoothstep(.35,.05,h)+.05*smoothstep(.4,1.,dv)-.2*smoothstep(.75,.95,h)+.0*ledge-.25*cap);
+  vec3 nRk=mix(vec3(.16,.19,.28),vec3(.3,.33,.44),fac),nSn=mix(vec3(.62,.69,.88),vec3(.8,.85,.97),fac*.6+.4*smoothstep(.3,.9,dv));vec3 nrth=mix(nRk,nSn,snN);
   nrth*=1.-.12*exp(-dv/.05);
   vec3 c=mix(east,nrth,north);
-  c=mix(c,mix(vec3(.98,.99,1.),vec3(.8,.85,.96),north),smoothstep(.14,.03,h)); /* the snowfields round its foot */
+  { float ge=.12+.12*rfb(vec2(v*4.,1.))+.05*sin(v*7.+1.);float gl=smoothstep(ge+.01,ge-.01,h); /* the glaciers round its foot: smooth snow with crisp blue folds and a few crevasses */
+    float fold=smoothstep(.45,.5,rfb(vec2(v*10.,h*16.)+4.));vec3 gc=mix(mix(vec3(.74,.8,.95),vec3(.99,.99,1.),fold*(1.-north*.5)),vec3(.62,.7,.9),north*.6);
+    c=mix(c,gc,gl); }
   c+=vec3(1.,.98,.95)*exp(-dsk/.004)*.3*(1.-north)+vec3(1.,.99,.97)*exp(-abs(dv)/.003)*.35*smoothstep(0.,.1,h); /* the sunlit skyline and the ridge between the faces */
   c=mix(c,hazeC(uv),.04+.42*smoothstep(.33,.0,h));return vec4(c,m);}
 vec4 banner(vec2 uv,vec2 P){float Hh=MB-MY;vec2 q=vec2((P.x-MX*asp)/Hh,(MY-uv.y)/Hh); /* the banner cloud streaming from the summit */
