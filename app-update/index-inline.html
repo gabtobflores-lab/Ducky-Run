@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="7faf585">
+<meta name="build" content="f6c661a">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2693,6 +2693,18 @@ vec4 hill(vec2 uv,vec2 P,float side){float sx=uv.x;float base=hillTop(sx,side);f
   c+=vec3(1.,.97,.98)*exp(-dd/.0012)*.22; /* the rim of the treetops catching the light */
   c=mix(c,hazeS(uv),.06+.3*(1.-smoothstep(.0,.25,abs(sx-.5)-.08))); /* paler where the hills reach far out toward the mountain */
   return vec4(c,m);}
+vec4 shrubs(vec2 uv,vec2 P){vec4 o=vec4(0.); /* cherry shrubs in full bloom on the near shore, framing the corners: clusters of blossom, each lit like a soft dome with a scalloped rim */
+  float sx=uv.x;if(sx>.36&&sx<.64)return o;if(uv.y<.86)return o;
+  for(int k=0;k<16;k++){float fk=float(k);float side=fk<7.5?0.:1.;float j=mod(fk,8.);
+    vec2 c=vec2(mix(-.02+j*.045,1.02-j*.045,side)*asp,1.02-.03*j*(1.-j/9.)-.025*hs(vec2(fk,2.)));float r=(.05-.0035*j)*(.8+.4*hs(vec2(fk,3.)));
+    vec2 d=(P-c)/r;float an=atan(d.y,d.x);float sc=.05*pow(abs(sin(an*6.+fk)),.5)+.03*pow(abs(sin(an*13.+fk*2.)),.5);float q=1.-length(d)-sc;
+    float a=smoothstep(-px/r*1.5,px/r*1.5,q);if(a<=0.)continue;
+    vec3 n=normalize(vec3(d.x,-d.y,sqrt(max(0.,1.-dot(d,d)))+.3));float L=clamp(dot(n,normalize(vec3(.5,.62,.6))),0.,1.);
+    vec3 col=mix(vec3(.76,.4,.58),vec3(.97,.7,.82),smoothstep(.15,.6,L));col=mix(col,vec3(1.,.92,.95),smoothstep(.62,.95,L));
+    vec2 fp=P/r*3.+fk;vec2 fi=floor(fp*4.),ff=fract(fp*4.)-.5;col=mix(col,vec3(1.,.95,.97),smoothstep(.28,.12,length(ff))*step(.6,hs(fi))*.4*L); /* single blossoms */
+    col=mix(col,vec3(1.,.95,.97),smoothstep(.08,0.,q)*smoothstep(-.2,.6,-d.y)*.5); /* light along the upper rim */
+    o=over(o,vec4(col,a));}
+  return o;}
 vec4 reeds(vec2 uv,vec2 P){vec4 o=vec4(0.); /* reeds and grasses at the near shore, in the corners */
   float sx=uv.x;float w=max(1.-smoothstep(.0,.32,sx),smoothstep(.7,1.,sx));if(w<.01)return o;
   for(int k=0;k<24;k++){float fk=float(k);float bx=(hs(vec2(fk,3.))*.3+(fk>11.5?.7:0.))*asp;float bh=(.03+.05*hs(vec2(fk,4.)))*(.6+.4*w);float lean=(hs(vec2(fk,5.))-.5)*.08;
@@ -2712,6 +2724,12 @@ vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);
   c=mix(c,c*1.05+.02,smoothstep(.8,.97,rp)*smoothstep(.0,.06,k)*.35); /* bands of brighter ripples */
   c=mix(c,vec3(.96,.95,1.),smoothstep(.985,1.,sin(k*900.+P.x*2.))*.08*smoothstep(.02,.1,k)*smoothstep(.3,.7,vn(vec2(P.x*3.,k*30.))));
   c=mix(c,vec3(.92,.92,1.),exp(-k/.0015)*.35); /* a line of light along the far shore */
+  { vec2 G=vec2(.66*asp,LK);float gx=(P.x-G.x)/(.02+k*.5);float gl=exp(-gx*gx)*smoothstep(.0,.02,k)*(1.-smoothstep(.1,.2,k)); /* a path of sparkles on the water below the sun */
+    float sp=smoothstep(.8,.95,vn(vec2(P.x*300.,k*1600.)))*smoothstep(.4,.7,vn(vec2(P.x*40.,k*200.)));c+=vec3(1.,.97,.92)*gl*(.08+.6*sp); }
+  { vec2 w=vec2((P.x-.5*asp)/max(k,.001)*1.4,1./max(k,.001)*.35);vec2 id=floor(w),f=fract(w)-.5; /* petals floating on the still water, in perspective: smaller and closer together toward the far shore */
+    if(k>.006&&hs(id)>.55){vec2 o2=(vec2(hs(id+3.),hs(id+5.))-.5)*.6;float ang=hs(id+7.)*6.28;vec2 dq=mat2(cos(ang),-sin(ang),sin(ang),cos(ang))*(f-o2);
+      float pe=smoothstep(.09,.06,length(dq*vec2(1.,1.7))-.015*cos(atan(dq.y,dq.x)*2.));float sh=smoothstep(.1,.06,length((dq-vec2(.01,-.012))*vec2(1.,1.7)));
+      c=mix(c,c*.82,sh*.4*(1.-pe));c=mix(c,mix(vec3(.96,.7,.82),vec3(1.,.9,.94),hs(id+9.)),pe*.92*smoothstep(.006,.03,k));} }
   o=vec4(c,1.);o=over(o,reeds(uv,P));return o;}
 `,
   halo: `/* the ice halo's alpine valley, drawn like the golden hour: sculpted peaks of rock and snow, the Matterhorn among them, a sea of cold mist filling the valley,
@@ -2741,17 +2759,21 @@ vec4 horn(vec2 uv,vec2 P){float Hh=MB-MY;float v=(P.x-MX*asp)/(Hh*MW),h=(MB-uv.y
   float rl=-.4*pow(clamp(1.-h,0.,1.),1.3)+.008*sin(h*30.),dv=v-rl,north=smoothstep(-.004,.006,dv),dsk=sk-h;
   /* the east face, in the sun: snow over rock, ribs running down it, each rib a sharp lit plane and a shaded one */
   float ce=dv+(1.-h)*.35;float rb=rfb(vec2(ce*12.,h*1.6))-rfb(vec2(ce*12.+.12,h*1.6));float ribE=smoothstep(-aa*.5,aa*.5,rb);
-  vec2 qe=vec2(ce*16.,h*2.4);qe+=vec2(rfb(qe*.7+3.),0.)*.8;float rkE=smoothstep(.66-aa,.66+aa,rfb(qe)+.1*smoothstep(.55,.95,h)-.12*smoothstep(.45,.1,h))*smoothstep(.0,.02,dsk); /* thin ribs of rock breaking through the snow */
+  vec2 qe=vec2(ce*16.,h*2.4);qe+=vec2(rfb(qe*.7+3.),0.)*.8;float rcE=ce*8.+rfb(vec2(ce*3.,h*1.8)+9.)*2.2,frE=fract(rcE);float ribC=pow(1.-abs(frE-.5)*2.,mix(.5,2.,hs(vec2(floor(rcE),5.))));ribE=smoothstep(.46,.54,frE)*.6+.4*ribC; /* ribs down the sunlit face */
+  float rkE=smoothstep(.8-aa,.8+aa,ribC+.6*(rfb(qe)-.5)+.12*smoothstep(.5,.95,h))*smoothstep(.0,.02,dsk)*smoothstep(.3,.45,h); /* rock showing along the rib crests */
   float cap=smoothstep(.8-aa,.8+aa,h+.06*(rfb(vec2(v*14.,h*6.))-.5)); /* the summit pyramid: bare dark rock, too steep to hold much snow */
   float bnd=smoothstep(.8-aa,.8+aa,sin(h*24.+ce*5.+2.2*rfb(vec2(ce*4.,h*3.)))*.5+.5)*smoothstep(.5-aa,.5+aa,rfb(vec2(ce*14.,h*9.)+3.))*smoothstep(.3,.42,h); /* bands of rock crossing the face, snow lying between them */
   rkE=max(rkE,max(bnd*.9,cap*smoothstep(.5-aa,.5+aa,rfb(vec2(ce*20.,h*9.)+8.)+.25)));
   vec3 eSn=mix(vec3(.84,.88,.97),vec3(1.,.99,.97),.45+.55*ribE),eRk=mix(vec3(.38,.37,.44),vec3(.66,.62,.62),ribE);vec3 east=mix(eSn,eRk,rkE);
-  /* the north face, in shadow: dark rock in sharp facets, snow streaked down the fall line and lying on the ledges */
-  float cn=dv-(1.-h)*.85;float rbN=rfb(vec2(cn*10.,h*2.))-rfb(vec2(cn*10.+.12,h*2.));float fac=smoothstep(-aa*.5,aa*.5,rbN);
-  vec2 qn=vec2(cn*24.,h*4.);qn+=vec2(rfb(qn*.6+7.),rfb(qn*.6+2.)*.3)*.9;float sn=rfb(qn);
-  float ledge=smoothstep(.62,.68,sin(h*34.-dv*10.+2.5*rfb(vec2(cn*5.,h*3.)))*.5+.5)*smoothstep(.45,.6,rfb(vec2(cn*12.,h*8.)+5.));
-  float snN=smoothstep(.6-aa,.6+aa,sn+.22*smoothstep(.35,.05,h)+.05*smoothstep(.4,1.,dv)-.2*smoothstep(.75,.95,h)+.0*ledge-.25*cap);
-  vec3 nRk=mix(vec3(.16,.19,.28),vec3(.3,.33,.44),fac),nSn=mix(vec3(.62,.69,.88),vec3(.8,.85,.97),fac*.6+.4*smoothstep(.3,.9,dv));vec3 nrth=mix(nRk,nSn,snN);
+  /* the north face, in shadow: dark rock broken into lit and shaded planes, laced with thin branching streaks of snow down every gully, heavier snow on the lower slopes */
+  float cn=dv-(1.-h)*.85;vec2 q=vec2(cn*13.,h*2.);q.x+=rfb(q*.45+3.)*1.6;
+  float r1=1.-abs(rfb(q)*2.-1.),r2=1.-abs(rfb(q*vec2(2.1,1.9)+5.)*2.-1.); /* ridged noise: thin wandering lines down the fall line */
+  float streak=max(smoothstep(.87-aa*.5,.87+aa*.5,r1),smoothstep(.91-aa*.5,.91+aa*.5,r2)*.95)*(1.-cap*.55);
+  float cover=smoothstep(.66-aa,.66+aa,rfb(vec2(cn*11.,h*4.)+7.)+.4*smoothstep(.45,.06,h)-.3*cap-.1*smoothstep(.5,.8,h)); /* patches of deeper snow */
+  float snN=max(streak,cover);
+  float pl=smoothstep(.47,.53,rfb(vec2(cn*6.,h*3.)+11.)); /* planes of rock, some turned more toward the light */
+  vec3 nRk=mix(vec3(.15,.18,.27),vec3(.3,.33,.45),pl*.8+.2*smoothstep(.3,.9,dv));nRk*=.92+.12*rfb(vec2(cn*40.,h*16.));
+  vec3 nSn=mix(vec3(.6,.68,.88),vec3(.8,.85,.97),pl*.5+.5*smoothstep(.3,.9,dv));vec3 nrth=mix(nRk,nSn,snN);
   nrth*=1.-.12*exp(-dv/.05);
   vec3 c=mix(east,nrth,north);
   { float ge=.2+.14*rfb(vec2(v*4.,1.))+.06*sin(v*7.+1.);float gl=smoothstep(ge+.01,ge-.01,h); /* the glaciers round its foot: smooth snow with crisp blue folds and a few crevasses */
