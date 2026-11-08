@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="5f2e0d6">
+<meta name="build" content="7eed51c">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2748,21 +2748,37 @@ vec4 shrubs(vec2 uv,vec2 P){vec4 o=vec4(0.); /* cherry shrubs in full bloom on t
     col=mix(col,vec3(1.,.95,.97),smoothstep(.08,0.,q)*smoothstep(-.2,.6,-d.y)*.5); /* light along the upper rim */
     o=over(o,vec4(col,a));}
   return o;}
-vec4 reeds(vec2 uv,vec2 P){vec4 o=vec4(0.); /* reeds and grasses at the near shore, in the corners */
-  float sx=uv.x;float w=max(1.-smoothstep(.0,.32,sx),smoothstep(.7,1.,sx));if(w<.01)return o;
-  for(int k=0;k<24;k++){float fk=float(k);float bx=(hs(vec2(fk,3.))*.3+(fk>11.5?.7:0.))*asp;float bh=(.03+.05*hs(vec2(fk,4.)))*(.6+.4*w);float lean=(hs(vec2(fk,5.))-.5)*.08;
-    float t=clamp((1.-uv.y)/bh,0.,1.);float cx=bx+lean*t*t*asp;float bw=.0016*(1.-t)+.0004;float b=smoothstep(bw+px,bw-px,abs(P.x-cx))*step(1.-bh,uv.y);
-    o=over(o,vec4(mix(vec3(.16,.26,.2),vec3(.34,.48,.32),t),b));}
-  { float gy=1.-.018*w-.006*vn(vec2(P.x*80.,1.));float gm=smoothstep(gy-px,gy+px,uv.y)*w;o=over(o,vec4(vec3(.2,.3,.22),gm)); }
+float woodsTop(float sx,float side){float t=side<0.?(sx+.05)/.5:(1.05-sx)/.47;t=clamp(t,0.,1.); /* wooded hills framing the lake on either side, as in the classic view across the water */
+  float H=side<0.?.072:.062;return LK+.001-H*pow(1.-t,1.6)*(1.-.25*t)-.012*(1.-t)*vn(vec2(sx*7.,side+3.));}
+vec4 woods(vec2 uv,vec2 P,float side){float sx=uv.x;if(side<0.&&sx>.48||side>0.&&sx<.52)return vec4(0.);
+  float base=woodsTop(sx,side);float x=P.x*1.+side*1.7;float u,id;
+  float cl=crownLine(x,90.,side+11.,u,id),cl2=crownLine(x,38.,side+5.,u,id);float top=base-.006*cl-.008*cl2; /* a soft canopy of treetops along the crest */
+  float m=smoothstep(top-px,top+px,uv.y)*step(uv.y,LK+.0008);if(m<=0.)return vec4(0.);float dd=uv.y-top;
+  float sl=(woodsTop(sx+.01,side)-woodsTop(sx-.01,side))/.02;float lit=clamp(.45-sl*1.8*side*-1.,0.,1.); /* the slopes turned toward the light are a little brighter */
+  float tx=fbm(vec2(P.x*70.,uv.y*90.)),tx2=fbm(vec2(P.x*70.+.02,uv.y*90.+.03));float bump=clamp((tx-tx2)*6.+.5,0.,1.); /* the texture of the canopy, crown on crown */
+  vec3 gD=vec3(.08,.16,.15),gL=vec3(.22,.36,.28);vec3 c=mix(gD,gL,clamp(lit*.45+bump*.35+.4*exp(-dd/.005),0.,1.));
+  /* cherry trees in bloom scattered through the woods, thickest along the shore */
+  float bl=smoothstep(.64,.74,fbm(vec2(P.x*30.,uv.y*40.)+side*3.)+.1*smoothstep(base-.03,LK,uv.y));
+  vec3 pk=mix(vec3(.82,.5,.66),vec3(1.,.86,.92),clamp(bump*.6+lit*.4+.3*exp(-dd/.006),0.,1.));c=mix(c,pk,bl*.92);
+  c+=vec3(1.,.95,.97)*exp(-dd/.0012)*.18; /* light along the treetops */
+  c=mix(c,hazeS(uv),.08+.25*smoothstep(.2,.0,abs(sx-.5)-.15)); /* paler where the woods reach toward the far shore */
+  return vec4(c,m);}
+vec4 reeds(vec2 uv,vec2 P){vec4 o=vec4(0.); /* a grassy bank at the near shore in each corner, tall reeds and grasses arching up from it */
+  float sx=uv.x;float w=max(1.-smoothstep(.0,.42,sx),smoothstep(.58,1.,sx));if(w<.01)return o;
+  { float gy=1.-.03*w*w-.008*vn(vec2(P.x*60.,1.));float gm=smoothstep(gy-px,gy+px,uv.y);o=over(o,vec4(mix(vec3(.18,.28,.2),vec3(.1,.17,.12),smoothstep(gy,1.,uv.y)),gm)); }
+  for(int k=0;k<40;k++){float fk=float(k);float side=fk<19.5?0.:1.;float r=hs(vec2(fk,3.));float bx=(side<.5?r*.4:1.-r*.4)*asp;float wk=max(1.-smoothstep(.0,.42,bx/asp),smoothstep(.58,1.,bx/asp));
+    float bh=(.04+.09*hs(vec2(fk,4.)))*(.4+.6*wk);float lean=(hs(vec2(fk,5.))-.5)*.5+(side<.5?.12:-.12); /* each blade arching over */float gy=1.-.03*wk*wk;
+    float t=clamp((gy-uv.y)/bh,0.,1.);float cx=bx+lean*t*t*bh*asp*1.6;float bw=.0024*pow(1.-t,.7)+.0002;float b=smoothstep(bw+px,bw-px,abs(P.x-cx))*step(gy-bh,uv.y)*step(uv.y,gy+.002);
+    o=over(o,vec4(mix(vec3(.12,.2,.14),vec3(.36,.5,.3),t*.8+.2*hs(vec2(fk,6.))),b));}
   return o;}
 vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);
   if(variant<.5)return uv.y<LK+.001?farLayer(uv,P,S):vec4(0.);
   vec4 o=vec4(0.);
-  if(uv.y<LK+.001)return o;
+  if(uv.y<LK+.001){o=over(o,woods(uv,P,-1.));o=over(o,woods(uv,P,1.));return o;}
   /* the lake: a mirror of the sky, the mountain and the hills, darkened a little and broken by slow ripples */
   float k=uv.y-LK;float rp=sin(k*520.+3.*sin(P.x*3.))*.5+.5;float rip=(.002+.02*k)*(sin(k*300.+P.x*3.+3.*vn(vec2(P.x*3.,k*60.)))+.6*(vn(vec2(P.x*14.,k*500.))-.5)); /* the reflection broken into slow horizontal ripples */
   vec2 ru=vec2(uv.x+rip,LK-k*1.);vec2 rP=vec2(ru.x*asp,ru.y);
-  vec3 c=skyS(ru,rP,S);vec4 f=farLayer(ru,rP,S);c=mix(c,f.rgb,f.a);
+  vec3 c=skyS(ru,rP,S);vec4 f=farLayer(ru,rP,S);c=mix(c,f.rgb,f.a);vec4 wl=woods(ru,rP,-1.);c=mix(c,wl.rgb*.85,wl.a);wl=woods(ru,rP,1.);c=mix(c,wl.rgb*.85,wl.a); /* the woods mirrored too */
   c=mix(c*vec3(.8,.86,1.),mix(vec3(.3,.4,.72),vec3(.13,.19,.44),smoothstep(0.,.2,k)),.3+.36*smoothstep(0.,.2,k)); /* the lake: a darker, deeper mirror */ /* the lake: a deeper, richer mirror */ /* the water deepening toward us */
   c=mix(c,c*1.05+.02,smoothstep(.8,.97,rp)*smoothstep(.0,.06,k)*.35); /* bands of brighter ripples */
   c=mix(c,vec3(.96,.95,1.),smoothstep(.985,1.,sin(k*900.+P.x*2.))*.08*smoothstep(.02,.1,k)*smoothstep(.3,.7,vn(vec2(P.x*3.,k*30.))));
