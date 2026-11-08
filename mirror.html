@@ -2725,14 +2725,14 @@ float taper(vec2 q,vec2 b,float len,float w){ /* one finger of snow: from the sn
   vec2 d=normalize(vec2(b.x,-(1.-b.y)*.75));vec2 e=q-b;float t=clamp(dot(e,d)/len,-.3,1.);float dist=length(e-d*max(t,0.)*len);return smoothstep(w*(1.-max(t,0.))+.004,w*(1.-max(t,0.))-.004,dist)*step(-.3,t);}
 float gapl(vec2 q,float v0,float w,float tm,float bend){ /* a narrow gully running from the snow line up toward the summit, each its own length and gently curved, fading out well before the top */
   vec2 b=vec2(v0,snowH(v0)),s=vec2(-.04+v0*.25,1.);vec2 d=s-b;float t=clamp(dot(q-b,d)/dot(d,d),0.,1.);vec2 nrm=normalize(vec2(-d.y,d.x));
-  float dist=length(q-b-d*t-nrm*bend*sin(t*3.1416));float ww=w*(1.-t/tm);return smoothstep(ww+.003,ww-.003,dist)*step(t,tm)*smoothstep(-.02,.04,t);}
+  float dist=length(q-b-d*t-nrm*bend*sin(t*3.1416));float ww=w*1.8*(1.-t/tm);return smoothstep(ww+.012,ww-.004,dist)*step(t,tm)*smoothstep(-.02,.04,t);}
 float fujiTop(float x){float v=x/FH;float h=fujiR(v)+.003*(ridge(vec2(x*60.,2.),3)-.5)*smoothstep(.15,.4,abs(v));return FB-FH*h;}
 vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float m=smoothstep(top-px*1.2,top+px*1.2,uv.y);if(m<=0.)return vec4(0.);
   float dd=uv.y-top;float hgt=(FB-uv.y)/FH; /* 1 at the summit, 0 at the foot */
   float v=mx/FH,u=-v;float r=length(vec2(v,(1.-hgt))); /* lit from the upper left, as in the reference */
   float ang=atan(v,(1.-hgt)*.42+.01); /* the fall lines, fanning out from the summit and lying close along the slopes, as the snow streaks do in the reference */ /* the fall lines, fanning out from the summit */
   float tl=v-.45*(1.-hgt)-.005; /* the line between the sunlit and shaded faces runs down and a little to the right from the tip, as in the reference */ /* the line between the sunlit face and the shaded face runs almost straight down from the tip */
-  float side=1.-smoothstep(-.006,.006,tl+.01*(rfb(vec2(hgt*20.,3.))-.5));
+  float side=1.-smoothstep(-.03,.03,tl);
   /* the snowcap, drawn like the reference from placed shapes: the cap down to the measured snow line, a set of tapering fingers running on down the slopes,
      narrow blue gullies between them on the sunlit west, darker gullies and pale ribs on the shaded east */
   vec2 Q=vec2(v,hgt);float sh=snowH(v);float dep=clamp((1.-hgt)/max(1.-sh,.05),0.,1.4);
@@ -2774,15 +2774,15 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   rb=max(rb,gapl(Q,0.370,0.0058,0.3,-0.001));
   rb=max(rb,gapl(Q,0.470,0.0084,0.48,0.013));
   rb=max(rb,gapl(Q,0.560,0.0089,0.56,-0.009));
-  float edge=sh+.01*(rfb(vec2(v*30.,hgt*8.))-.5);float snow=max(smoothstep(edge-.004,edge+.004,hgt),fg)*step(hgt,1.02);
+  float edge=(snowH(v-.04)+snowH(v)*2.+snowH(v+.04))*.25+.012*(rfb(vec2(v*30.,hgt*8.))-.5); /* the measured line, smoothed */float snow=max(smoothstep(edge-.004,edge+.004,hgt),fg)*step(hgt,1.02);
   float gap=gp*side;float lower=smoothstep(.1,.5,dep);
-  vec3 lit=mix(vec3(.98,.99,1.),vec3(.9,.94,1.),smoothstep(.3,1.,dep));lit=mix(lit,mix(vec3(.7,.79,.96),vec3(.52,.63,.88),dep),gp*.9);
-  vec3 shd=mix(vec3(.55,.65,.9),vec3(.45,.55,.84),smoothstep(.2,1.,dep));shd=mix(shd,vec3(.3,.39,.7),gu*.9);shd=mix(shd,vec3(.74,.82,.98),rb*.85);
-  shd=mix(shd,vec3(.82,.88,.99),smoothstep(.006,0.,abs(tl-.004))*smoothstep(.55,.85,hgt)*.6); /* the ridge between the faces catches the light */
+  vec3 lit=mix(vec3(.99,.995,1.),vec3(.88,.92,.99),smoothstep(.2,1.1,dep));lit=mix(lit,lit*vec3(.86,.9,.98),gp*.35); /* clean sunlit snow, the gullies only faint soft hollows */
+  vec3 shd=mix(vec3(.66,.74,.94),vec3(.52,.61,.88),smoothstep(.1,1.,dep));shd=mix(shd,shd*vec3(.86,.9,.97),gu*.35); /* soft blue shade, smooth */
+   /* the ridge between the faces catches the light */
   vec3 sc=mix(shd,lit,side);sc=mix(sc,vec3(1.),smoothstep(.01,0.,dd)*side*.45);
   float wedge=smoothstep(.02,.0,abs(v-.03-(1.-hgt)*.3)-(1.-hgt)*.2)*smoothstep(.96,.9,hgt)*smoothstep(.6,.75,hgt); /* a dark wedge of rock under the summit nub */
-  sc=mix(sc,mix(vec3(.24,.32,.62),vec3(.38,.48,.8),side),wedge*.9);
-  float nub=smoothstep(.02,.0,length((Q-vec2(-.004,.995))*vec2(1.,2.)))*.6;sc=mix(sc,vec3(1.),nub); /* the summit nub catching the sun */
+  sc=mix(sc,mix(vec3(.42,.5,.8),vec3(.6,.68,.9),side),wedge*.35);
+   /* the summit nub catching the sun */
   gap=gu;
   float gulS=gap;
   float gul=gulS;
