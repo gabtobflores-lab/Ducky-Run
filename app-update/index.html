@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="32bb0ab">
+<meta name="build" content="dd4011e">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2679,10 +2679,11 @@ float fujiR(float v){ /* Mt Fuji's skyline as seen across the lake, measured fro
   else if(v<-0.455)h=pl(v,vec2(-0.735,0.705),vec2(-0.455,0.871));
   else if(v<-0.250)h=pl(v,vec2(-0.455,0.871),vec2(-0.250,0.950));
   else if(v<-0.167)h=pl(v,vec2(-0.250,0.950),vec2(-0.167,0.977));
-  else if(v<-0.080)h=pl(v,vec2(-0.167,0.977),vec2(-0.080,0.992));
-  else if(v<-0.010)h=pl(v,vec2(-0.080,0.992),vec2(-0.010,1.000));
-  else if(v<0.020)h=pl(v,vec2(-0.010,1.000),vec2(0.020,0.994));
-  else if(v<0.136)h=pl(v,vec2(0.020,0.994),vec2(0.136,0.947));
+  else if(v<-0.1)h=pl(v,vec2(-0.167,0.977),vec2(-0.1,0.988));
+  else if(v<-0.02)h=pl(v,vec2(-0.1,0.988),vec2(-0.02,0.993));
+  else if(v<0.0)h=pl(v,vec2(-0.02,0.993),vec2(0.0,1.006)); /* the summit plateau, ending in a sharp nub */
+  else if(v<0.018)h=pl(v,vec2(0.0,1.006),vec2(0.018,0.982));
+  else if(v<0.136)h=pl(v,vec2(0.018,0.982),vec2(0.136,0.945));
   else if(v<0.400)h=pl(v,vec2(0.136,0.947),vec2(0.400,0.833));
   else if(v<0.780)h=pl(v,vec2(0.400,0.833),vec2(0.780,0.680));
   else if(v<1.200)h=pl(v,vec2(0.780,0.680),vec2(1.200,0.530));
@@ -2729,16 +2730,18 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   /* the snowcap, after the reference: solid near the summit, streaks only further down, its lower edge broken into a few long irregular fingers */
   float sh=snowH(v);float dep=clamp((1.-hgt)/max(1.-sh,.05),0.,1.4); /* 0 at the summit, 1 at the snow line */
   float wq=ang*9.+1.6*rfb(vec2(ang*2.5,hgt*1.5)+2.);float fid=floor(wq),ff=fract(wq);float on=step(.45,hs(vec2(fid,6.))); /* only some gullies carry a finger */
-  float flen=on*(.05+.12*hs(vec2(fid,4.)))*(1.+.4*side)*(.35+.65*smoothstep(.04,.3,abs(v)))*(1.+1.3*smoothstep(-.25,-.75,v)); /* the longest fingers stream down the sunlit western slope */float fw=.42*(1.-smoothstep(sh-flen,sh+.02,hgt)*0.)*smoothstep(sh-flen-.01,sh+.03,hgt); /* each finger narrows to a point */
+  float flen=on*(.05+.12*hs(vec2(fid,4.)))*(1.+.4*side)*smoothstep(.1,.32,abs(v))*(1.+1.3*smoothstep(-.25,-.75,v)); /* the longest fingers stream down the sunlit western slope */float fw=.42*(1.-smoothstep(sh-flen,sh+.02,hgt)*0.)*smoothstep(sh-flen-.01,sh+.03,hgt); /* each finger narrows to a point */
   float finger=smoothstep(fw+.08,fw-.08,abs(ff-.5))*step(sh-flen,hgt);
   float snow=max(smoothstep(sh-.004,sh+.006,hgt+.012*(rfb(vec2(ang*24.,hgt*6.))-.5)),finger)*step(hgt,1.01);
   vec2 sq=vec2(ang*13.+1.3*rfb(vec2(ang*3.,hgt*2.)+7.),hgt*1.6);float rn=1.-abs(rfb(sq)*2.-1.),rn2=1.-abs(rfb(sq*vec2(1.7,1.4)+3.)*2.-1.);
   float lower=smoothstep(.2,.55,dep); /* streaks only below the summit */
   float gap=max(smoothstep(.9,.94,rn),smoothstep(.92,.95,rn2)*.8)*lower; /* thin blue streaks down the fall lines */
   vec3 lit=mix(vec3(.97,.98,1.),vec3(.9,.93,.99),smoothstep(.3,1.,dep));lit=mix(lit,mix(vec3(.66,.76,.94),vec3(.5,.62,.88),dep),gap*.9);
-  vec3 shd=mix(vec3(.56,.66,.9),vec3(.48,.58,.86),smoothstep(.2,1.,dep));shd=mix(shd,vec3(.32,.41,.72),gap*.85);shd=mix(shd,vec3(.68,.77,.95),smoothstep(.9,.95,rn2)*lower*.6);
+  vec3 shd=mix(vec3(.47,.57,.86),vec3(.38,.48,.8),smoothstep(.2,1.,dep)); /* the shaded face a deeper blue, as in the reference */shd=mix(shd,vec3(.32,.41,.72),gap*.85);shd=mix(shd,vec3(.68,.77,.95),smoothstep(.9,.95,rn2)*lower*.6);
   float tl2=abs(tl-.004);shd=mix(shd,vec3(.8,.87,.98),smoothstep(.007,0.,tl2)*(1.-lower*.6)*.6); /* the ridge between the faces catches the light */
   vec3 sc=mix(shd,lit,side);sc=mix(sc,vec3(1.),smoothstep(.01,0.,dd)*side*.4);
+  float wedge=smoothstep(.02,.0,abs(v-.03-(1.-hgt)*.3)-(1.-hgt)*.2)*smoothstep(.96,.9,hgt)*smoothstep(.6,.75,hgt); /* a dark wedge of rock under the summit nub */
+  sc=mix(sc,mix(vec3(.24,.32,.62),vec3(.38,.48,.8),side),wedge*.9);
   float gulS=gap;
   float gul=gulS;
   vec3 bodyS=mix(vec3(.07,.12,.3),vec3(.14,.21,.42),smoothstep(.0,.8,1.-hgt)),bodyL=mix(vec3(.15,.22,.45),vec3(.22,.3,.53),smoothstep(.0,.8,1.-hgt)); /* the deep navy body, smooth */ /* the deep blue body, smooth */
