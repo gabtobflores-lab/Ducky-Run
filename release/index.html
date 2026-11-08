@@ -1518,12 +1518,15 @@ function drawSpDeath(i, c, r, P) { // each weather takes the ball in its own sho
     const fo = 1 - smooth(clamp01((k - .36) / .12)); if (k < .48) { drawBall(x, y, r, P, side, 1, 1, .4, 0, (1 - fq * .7) * fo); ctx.save(); ctx.beginPath(); ctx.arc(x, y - r * .9, r * 2.2 * ease(fq), 0, 7); ctx.clip(); drawBall(x, y, r * (1 + .03 * fq), ICEP, side, 1, 1, .7, .25 * fq, (.25 + .75 * fq) * fo); ctx.restore(); // the frost front sweeping down from the top
       ctx.strokeStyle = `rgba(255,255,255,${.85 * fq * fo})`; ctx.lineWidth = .9; ctx.lineCap = 'round'; for (const pts of c.fr) { const n = Math.floor(pts.length * clamp01((k - .12) / .3)); if (n < 2) continue; ctx.beginPath(); ctx.moveTo(x + pts[0][0], y + pts[0][1]); for (let q = 1; q < n; q++) ctx.lineTo(x + pts[q][0], y + pts[q][1]); ctx.stroke(); } // cracks racing outward
       if (k > .3) { const fl = clamp01((k - .3) / .16); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = fl * .7; ctx.drawImage(softBlob('225,242,255'), x - r * 2.4, y - r * 2.4, r * 4.8, r * 4.8); ctx.globalCompositeOperation = 'source-over'; } } // the moment it breaks
-    if (k > .38) { const tt = k - .38, q = clamp01(tt / 1.2), dr = (1 - Math.exp(-tt * 2.6)) / 2.6; // the shards burst out fast, then drift and settle ctx.globalCompositeOperation = 'lighter'; if (tt < .4) { ctx.globalAlpha = Math.sin(clamp01(tt / .4) * Math.PI) * .55; ctx.drawImage(softBlob('220,240,255'), x - r * 3, y - r * 3, r * 6, r * 6); }
+    if (k > .38) { const tt = k - .38, q = clamp01(tt / 1.2), dr = (1 - Math.exp(-tt * 2.6)) / 2.6; /* the shards burst out fast, then drift and settle */ ctx.globalCompositeOperation = 'lighter'; if (tt < .4) { ctx.globalAlpha = Math.sin(clamp01(tt / .4) * Math.PI) * .55; ctx.drawImage(softBlob('220,240,255'), x - r * 3, y - r * 3, r * 6, r * 6); }
       ctx.strokeStyle = `rgba(210,236,255,${.6 * (1 - q)})`; ctx.lineWidth = 1.6 * (1 - q) + .4; ctx.beginPath(); ctx.arc(x, y, r * (1 + 3.2 * ease(q)), 0, 7); ctx.stroke(); ctx.globalCompositeOperation = 'source-over'; // a frosty ring opening out
-      for (const p of c.ps) { const px = p.x + p.vx * dr, py = p.y + p.vy * dr + 120 * tt * tt, sz = r * .5 * p.s * (1 - .35 * q); ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * dr); ctx.globalAlpha = (1 - smooth(q)) * smooth(clamp01(tt / .06));
+      for (const p of c.ps) { const px = p.x + p.vx * dr, py = p.y + p.vy * dr + 120 * tt * tt, sz = r * .5 * p.s * (1 - .35 * q); ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * dr); ctx.scale(.25 + .75 * Math.abs(Math.cos(tt * (3 + p.per * 6) + p.ph)), 1); ctx.globalAlpha = (1 - smooth(q)) * smooth(clamp01(tt / .06)); /* each shard tumbles, flashing edge-on */
         const g = ctx.createLinearGradient(-sz, -sz, sz, sz); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.45, 'rgba(206,232,255,.88)'); g.addColorStop(1, 'rgba(110,160,232,.95)'); ctx.fillStyle = g; ctx.shadowColor = 'rgba(160,210,255,.8)'; ctx.shadowBlur = 6;
         ctx.beginPath(); ctx.moveTo(0, -sz); ctx.lineTo(sz * .72, sz * .38); ctx.lineTo(-sz * .5, sz * .82); ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = .7; ctx.stroke(); ctx.restore();
-        star4(px, py, 3 + 3 * Math.max(0, Math.sin(tt * 18 + p.ph)), (1 - q) * Math.max(0, Math.sin(tt * 9 + p.ph)) * .9); } } } // each shard glints as it turns
+        star4(px, py, 3 + 3 * Math.max(0, Math.sin(tt * 18 + p.ph)), (1 - q) * Math.max(0, Math.sin(tt * 9 + p.ph)) * .9); }
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#eaf6ff'; for (let j = 0; j < 40; j++) { const an = j * 2.39996 + c.x0 * .01, v = 40 + (j * 37 % 90), dd = (1 - Math.exp(-tt * 2)) / 2; /* a fine cloud of ice dust hanging where it broke */
+        const px = x + Math.cos(an) * v * dd, py = y + Math.sin(an) * v * dd + 30 * tt * tt; ctx.globalAlpha = (1 - q) * .55 * Math.max(0, Math.sin(tt * (6 + j % 5) + j)); ctx.fillRect(px, py, 1.4, 1.4); }
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; } } // each shard glints as it turns
   else if (sp === 'ember') { // the ball heats to white gold, its edge burns away into embers that drift up and flicker out
     const q = clamp01(k / .75); if (q < 1) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.sin(q * Math.PI) * .45; ctx.drawImage(softBlob('255,170,70'), x - r * 3.2, y - r * 3.2, r * 6.4, r * 6.4); ctx.globalCompositeOperation = 'source-over';
       ctx.save(); ctx.beginPath(); for (let j = 0; j <= 40; j++) { const an = j / 40 * 6.283, rr = r * (1 - q) * (1 + .12 * Math.sin(an * 7 + k * 9) + .08 * Math.sin(an * 13 - k * 7)); j ? ctx.lineTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr) : ctx.moveTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr); } ctx.closePath(); ctx.clip(); // the edge burning inward
@@ -2661,64 +2664,70 @@ float pkH(float x,float fi){float pk=0.;for(int j=0;j<2;j++){float fj=float(j),f
   return pk*.42+(.62*ridge(vec2(x*5.,fi*3.),7)*pow(pk,.4)+.1*ridge(vec2(x*19.,fi),5)*pow(pk,.7))*smoothstep(0.,.35,pk);} /* the crags fade out toward each foot, so no peak ends in a sheer wall */ /* rugged summits: shoulders, notches and secondary peaks */
 const float FX=.5;
 float rfb(vec2 p){float v=0.,a=.5;mat2 m=mat2(.8,-.6,.6,.8);for(int k=0;k<5;k++){v+=a*vn(p);p=m*p*2.1+vec2(1.7,9.2);a*=.5;}return v/.97;}
-const float FH=.118,FB=.8;
+const float FH=.13,FB=.8;
 float pl(float v,vec2 a,vec2 b){return mix(a.y,b.y,clamp((v-a.x)/(b.x-a.x),0.,1.));}
-float fujiR(float v){ /* Mt Fuji's skyline as seen across the lake, measured from the reference view: the summit ridge climbs gently to a sharp tip at its eastern end, drops steeply, then the long slopes (v across, h up, in units of its height) */
+float fujiR(float v){ /* Mt Fuji's skyline, measured on a grid from the reference view across the lake: straight, steep upper slopes from a small crater top, easing into the long base (v across, h up, in units of its height above the far shore) */
   float h=0.;
-  if(v<-3.600)h=pl(v,vec2(-4.200,0.000),vec2(-3.600,0.060));
-  else if(v<-2.800)h=pl(v,vec2(-3.600,0.060),vec2(-2.800,0.180));
-  else if(v<-1.920)h=pl(v,vec2(-2.800,0.180),vec2(-1.920,0.350));
-  else if(v<-1.280)h=pl(v,vec2(-1.920,0.350),vec2(-1.280,0.470));
-  else if(v<-0.735)h=pl(v,vec2(-1.280,0.470),vec2(-0.735,0.705));
-  else if(v<-0.455)h=pl(v,vec2(-0.735,0.705),vec2(-0.455,0.871));
-  else if(v<-0.250)h=pl(v,vec2(-0.455,0.871),vec2(-0.250,0.950));
-  else if(v<-0.167)h=pl(v,vec2(-0.250,0.950),vec2(-0.167,0.977));
-  else if(v<-0.1)h=pl(v,vec2(-0.167,0.979),vec2(-0.1,0.99));
-  else if(v<0.03)h=pl(v,vec2(-0.1,0.99),vec2(0.03,1.)); /* the broad crater rim, nearly level */
-  else if(v<0.07)h=pl(v,vec2(0.03,1.),vec2(0.07,0.985));
-  else if(v<0.136)h=pl(v,vec2(0.07,0.985),vec2(0.136,0.955));
-  else if(v<0.400)h=pl(v,vec2(0.136,0.947),vec2(0.400,0.833));
-  else if(v<0.780)h=pl(v,vec2(0.400,0.833),vec2(0.780,0.680));
-  else if(v<1.200)h=pl(v,vec2(0.780,0.680),vec2(1.200,0.530));
-  else if(v<1.800)h=pl(v,vec2(1.200,0.530),vec2(1.800,0.370));
-  else if(v<2.600)h=pl(v,vec2(1.800,0.370),vec2(2.600,0.200));
-  else if(v<3.400)h=pl(v,vec2(2.600,0.200),vec2(3.400,0.070));
-  else if(v<4.200)h=pl(v,vec2(3.400,0.070),vec2(4.200,0.000));
+  if(v<-3.200)h=pl(v,vec2(-4.200,0.000),vec2(-3.200,0.100));
+  else if(v<-2.320)h=pl(v,vec2(-3.200,0.100),vec2(-2.320,0.210));
+  else if(v<-1.970)h=pl(v,vec2(-2.320,0.210),vec2(-1.970,0.270));
+  else if(v<-1.630)h=pl(v,vec2(-1.970,0.270),vec2(-1.630,0.340));
+  else if(v<-1.290)h=pl(v,vec2(-1.630,0.340),vec2(-1.290,0.430));
+  else if(v<-0.940)h=pl(v,vec2(-1.290,0.430),vec2(-0.940,0.530));
+  else if(v<-0.770)h=pl(v,vec2(-0.940,0.530),vec2(-0.770,0.640));
+  else if(v<-0.600)h=pl(v,vec2(-0.770,0.640),vec2(-0.600,0.770));
+  else if(v<-0.430)h=pl(v,vec2(-0.600,0.770),vec2(-0.430,0.880));
+  else if(v<-0.170)h=pl(v,vec2(-0.430,0.880),vec2(-0.170,0.970));
+  else if(v<-0.060)h=pl(v,vec2(-0.170,0.970),vec2(-0.060,0.992));
+  else if(v<0.000)h=pl(v,vec2(-0.060,0.992),vec2(0.000,1.000));
+  else if(v<0.040)h=pl(v,vec2(0.000,1.000),vec2(0.040,0.990));
+  else if(v<0.086)h=pl(v,vec2(0.040,0.990),vec2(0.086,0.970));
+  else if(v<0.260)h=pl(v,vec2(0.086,0.970),vec2(0.260,0.880));
+  else if(v<0.430)h=pl(v,vec2(0.260,0.880),vec2(0.430,0.770));
+  else if(v<0.600)h=pl(v,vec2(0.430,0.770),vec2(0.600,0.670));
+  else if(v<0.770)h=pl(v,vec2(0.600,0.670),vec2(0.770,0.570));
+  else if(v<0.940)h=pl(v,vec2(0.770,0.570),vec2(0.940,0.490));
+  else if(v<1.290)h=pl(v,vec2(0.940,0.490),vec2(1.290,0.410));
+  else if(v<1.630)h=pl(v,vec2(1.290,0.410),vec2(1.630,0.340));
+  else if(v<1.970)h=pl(v,vec2(1.630,0.340),vec2(1.970,0.290));
+  else if(v<2.320)h=pl(v,vec2(1.970,0.290),vec2(2.320,0.240));
+  else if(v<3.200)h=pl(v,vec2(2.320,0.240),vec2(3.200,0.110));
+  else if(v<4.200)h=pl(v,vec2(3.200,0.110),vec2(4.200,0.000));
   return h;}
-float snowH(float v){ /* where the snowcap ends, measured column by column from the reference view (v across, h up, in units of Fuji's height) */
+float snowH(float v){ /* where the snowcap ends, measured column by column from the reference view */
   float h=1.;
-  if(v<-0.924)h=pl(v,vec2(-1.100,0.900),vec2(-0.924,0.561));
-  else if(v<-0.848)h=pl(v,vec2(-0.924,0.561),vec2(-0.848,0.515));
-  else if(v<-0.735)h=pl(v,vec2(-0.848,0.515),vec2(-0.735,0.545));
-  else if(v<-0.697)h=pl(v,vec2(-0.735,0.545),vec2(-0.697,0.508));
-  else if(v<-0.583)h=pl(v,vec2(-0.697,0.508),vec2(-0.583,0.530));
-  else if(v<-0.470)h=pl(v,vec2(-0.583,0.530),vec2(-0.470,0.568));
-  else if(v<-0.356)h=pl(v,vec2(-0.470,0.568),vec2(-0.356,0.583));
-  else if(v<-0.318)h=pl(v,vec2(-0.356,0.583),vec2(-0.318,0.500));
-  else if(v<-0.242)h=pl(v,vec2(-0.318,0.500),vec2(-0.242,0.545));
-  else if(v<-0.205)h=pl(v,vec2(-0.242,0.545),vec2(-0.205,0.508));
-  else if(v<-0.091)h=pl(v,vec2(-0.205,0.508),vec2(-0.091,0.545));
-  else if(v<-0.015)h=pl(v,vec2(-0.091,0.545),vec2(-0.015,0.561));
-  else if(v<0.061)h=pl(v,vec2(-0.015,0.561),vec2(0.061,0.598));
-  else if(v<0.136)h=pl(v,vec2(0.061,0.598),vec2(0.136,0.606));
-  else if(v<0.212)h=pl(v,vec2(0.136,0.606),vec2(0.212,0.621));
-  else if(v<0.250)h=pl(v,vec2(0.212,0.621),vec2(0.250,0.712));
-  else if(v<0.326)h=pl(v,vec2(0.250,0.712),vec2(0.326,0.682));
-  else if(v<0.364)h=pl(v,vec2(0.326,0.682),vec2(0.364,0.735));
-  else if(v<0.439)h=pl(v,vec2(0.364,0.735),vec2(0.439,0.697));
-  else if(v<0.515)h=pl(v,vec2(0.439,0.697),vec2(0.515,0.659));
-  else if(v<0.591)h=pl(v,vec2(0.515,0.659),vec2(0.591,0.636));
-  else if(v<0.667)h=pl(v,vec2(0.591,0.636),vec2(0.667,0.652));
-  else if(v<0.742)h=pl(v,vec2(0.667,0.652),vec2(0.742,0.614));
-  else if(v<0.820)h=pl(v,vec2(0.742,0.614),vec2(0.820,0.680));
-  else if(v<0.950)h=pl(v,vec2(0.820,0.680),vec2(0.950,0.950));
+  if(v<-1.047)h=pl(v,vec2(-1.246,0.887),vec2(-1.047,0.503));
+  else if(v<-0.961)h=pl(v,vec2(-1.047,0.503),vec2(-0.961,0.450));
+  else if(v<-0.833)h=pl(v,vec2(-0.961,0.450),vec2(-0.833,0.484));
+  else if(v<-0.790)h=pl(v,vec2(-0.833,0.484),vec2(-0.790,0.443));
+  else if(v<-0.661)h=pl(v,vec2(-0.790,0.443),vec2(-0.661,0.467));
+  else if(v<-0.533)h=pl(v,vec2(-0.661,0.467),vec2(-0.533,0.511));
+  else if(v<-0.403)h=pl(v,vec2(-0.533,0.511),vec2(-0.403,0.528));
+  else if(v<-0.360)h=pl(v,vec2(-0.403,0.528),vec2(-0.360,0.433));
+  else if(v<-0.274)h=pl(v,vec2(-0.360,0.433),vec2(-0.274,0.484));
+  else if(v<-0.232)h=pl(v,vec2(-0.274,0.484),vec2(-0.232,0.443));
+  else if(v<-0.103)h=pl(v,vec2(-0.232,0.443),vec2(-0.103,0.484));
+  else if(v<-0.017)h=pl(v,vec2(-0.103,0.484),vec2(-0.017,0.503));
+  else if(v<0.069)h=pl(v,vec2(-0.017,0.503),vec2(0.069,0.545));
+  else if(v<0.154)h=pl(v,vec2(0.069,0.545),vec2(0.154,0.554));
+  else if(v<0.240)h=pl(v,vec2(0.154,0.554),vec2(0.240,0.571));
+  else if(v<0.283)h=pl(v,vec2(0.240,0.571),vec2(0.283,0.674));
+  else if(v<0.369)h=pl(v,vec2(0.283,0.674),vec2(0.369,0.640));
+  else if(v<0.412)h=pl(v,vec2(0.369,0.640),vec2(0.412,0.700));
+  else if(v<0.497)h=pl(v,vec2(0.412,0.700),vec2(0.497,0.657));
+  else if(v<0.584)h=pl(v,vec2(0.497,0.657),vec2(0.584,0.614));
+  else if(v<0.670)h=pl(v,vec2(0.584,0.614),vec2(0.670,0.588));
+  else if(v<0.756)h=pl(v,vec2(0.670,0.588),vec2(0.756,0.606));
+  else if(v<0.841)h=pl(v,vec2(0.756,0.606),vec2(0.841,0.563));
+  else if(v<0.929)h=pl(v,vec2(0.841,0.563),vec2(0.929,0.637));
+  else if(v<1.076)h=pl(v,vec2(0.929,0.637),vec2(1.076,0.943));
   return h;}
 float taper(vec2 q,vec2 b,float len,float w){ /* one finger of snow: from the snow line it runs on down the slope, narrowing to a point */
   vec2 d=normalize(vec2(b.x,-(1.-b.y)*.75));vec2 e=q-b;float t=clamp(dot(e,d)/len,-.3,1.);float dist=length(e-d*max(t,0.)*len);return smoothstep(w*(1.-max(t,0.))+.004,w*(1.-max(t,0.))-.004,dist)*step(-.3,t);}
 float gapl(vec2 q,float v0,float w,float tm,float bend){ /* a narrow gully running from the snow line up toward the summit, each its own length and gently curved, fading out well before the top */
   vec2 b=vec2(v0,snowH(v0)),s=vec2(-.04+v0*.25,1.);vec2 d=s-b;float t=clamp(dot(q-b,d)/dot(d,d),0.,1.);vec2 nrm=normalize(vec2(-d.y,d.x));
   float dist=length(q-b-d*t-nrm*bend*sin(t*3.1416));float ww=w*1.8*(1.-t/tm);return smoothstep(ww+.012,ww-.004,dist)*step(t,tm)*smoothstep(-.02,.04,t);}
-float fujiTop(float x){float v=x/FH;float h=fujiR(v)+.0035*(vn(vec2(v*38.,1.))-.5)*smoothstep(.2,.0,abs(v+.03))+.002*(ridge(vec2(x*60.,2.),3)-.5)*smoothstep(.15,.4,abs(v));return FB-FH*h;} /* small bumps along the rim: the peaks of the crater */
+float fujiTop(float x){float v=x/FH;float h=fujiR(v)+.004*(vn(vec2(v*38.,1.))-.5)*smoothstep(.15,.0,abs(v))+.002*(ridge(vec2(x*60.,2.),3)-.5)*smoothstep(.15,.4,abs(v));return FB-FH*h;} /* small bumps along the rim: the peaks of the crater */
 vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float m=smoothstep(top-px*1.2,top+px*1.2,uv.y);if(m<=0.)return vec4(0.);
   float dd=uv.y-top;float hgt=(FB-uv.y)/FH; /* 1 at the summit, 0 at the foot */
   float v=mx/FH,u=-v;float r=length(vec2(v,(1.-hgt))); /* lit from the upper left, as in the reference */
@@ -2783,7 +2792,7 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   float gulS=gap;
   float gul=gulS;
   vec3 bodyS=mix(vec3(.07,.12,.3),vec3(.14,.21,.42),smoothstep(.0,.8,1.-hgt)),bodyL=mix(vec3(.15,.22,.45),vec3(.22,.3,.53),smoothstep(.0,.8,1.-hgt)); /* the deep navy body, smooth */ /* the deep blue body, smooth */
-  vec3 bc=mix(bodyS,bodyL,side*.7);bc*=.94+.1*smoothstep(.4,.7,rfb(vec2(ang*12.,hgt*2.)+9.))*smoothstep(.0,.5,hgt); /* faint ridges down the lower flanks */bc=mix(bc,bc*.85,gul*smoothstep(.35,.6,hgt)*.6);
+  vec3 bc=mix(bodyS,bodyL,side*.7);float rdg=1.-abs(rfb(vec2(ang*26.+.6*rfb(vec2(ang*4.,hgt*2.)),hgt*2.2)+9.)*2.-1.);bc*=.9+.14*smoothstep(.55,.85,rdg)*smoothstep(.0,.35,hgt)+.05*(rfb(vec2(ang*90.,hgt*30.))-.5); /* ridges and gullies scoring the flanks, a rocky grain */bc=mix(bc,bc*.85,gul*smoothstep(.35,.6,hgt)*.6);
   float streak=0.;
   vec3 c=mix(bc,sc,snow);
   c=mix(c,hazeS(uv),.03+.18*smoothstep(.2,.0,hgt)); /* the foot softened by the air over the lake */
@@ -3240,6 +3249,20 @@ function snowForest(a) { // a frozen forest along the bottom: pines heavy with s
     const g = ctx.createLinearGradient(0, gy - 4, 0, H); g.addColorStop(0, `rgba(${l ? '236,244,252' : '214,228,244'},${a})`); g.addColorStop(1, `rgba(${l ? '206,222,242' : '200,216,238'},${a})`); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-10, H + 10); for (let x = -10; x <= W + 10; x += 8) ctx.lineTo(x, gy - 2 + Math.sin(x * .013 + l * 2) * 4); ctx.lineTo(W + 10, H + 10); ctx.closePath(); ctx.fill();
     if (!l) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .35 * a; ctx.drawImage(softBlob('230,238,250'), -W * .3, H * .84, W * 1.6, H * .07); ctx.restore(); } }); // a band of frozen haze between the rows
   ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let k = 0; k < 40; k++) { const x = hash(k * 3.7) * W, y = H * (.94 + hash(k * 9.1) * .06), u = (t * (.3 + hash(k) * .5) + hash(k * 2.3)) % 1, f = u < .15 ? Math.sin(u / .15 * Math.PI) : 0; if (f <= 0) continue; ctx.globalAlpha = f * a; ctx.fillStyle = '#fff'; ctx.fillRect(x - 1.6, y - .3, 3.2, .6); ctx.fillRect(x - .3, y - 1.6, .6, 3.2); } ctx.restore(); ctx.globalAlpha = 1; } // the snow on the ground sparkling
+const DUST = Array.from({ length: 220 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random(), ph: Math.random() * 7, f: .8 + Math.random() * 2.4 }));
+function drawDiamondDust(a) { // diamond dust: countless tiny ice crystals hanging in the frozen air, drifting down and twinkling as they turn, brightest toward the sun and its halo
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; const sx = W * .5, sy = H * .25, R = W * .36;
+  for (const d of DUST) { const x = (d.x * W + Math.sin(t * .2 + d.ph) * 14 + t * (2 + 4 * d.z)) % (W + 10) - 5, y = ((d.y * (H * .82) + t * (4 + 10 * d.z)) % (H * .82));
+    const r = Math.hypot(x - sx, y - sy), near = Math.exp(-Math.pow((r - R) / (W * .1), 2)) * .8 + Math.exp(-r / (W * .35)) * .7; // crystals near the halo ring and the sun catch the most light
+    const tw = Math.pow(Math.max(0, Math.sin(t * d.f + d.ph * 3)), 6); const al = a * (.08 + .5 * tw) * (.35 + near) * (.4 + .6 * d.z); if (al < .01) continue;
+    const s = .6 + 1.4 * d.z + tw * 1.2; ctx.globalAlpha = Math.min(1, al); ctx.fillStyle = '#fff'; ctx.fillRect(x - s * .5, y - s * .5, s, s);
+    if (tw > .7 && d.z > .55) { ctx.globalAlpha = al * .6; ctx.fillRect(x - s * 2.2, y - .4, s * 4.4, .8); ctx.fillRect(x - .4, y - s * 2.2, .8, s * 4.4); } } // the brightest flash into tiny stars
+  ctx.restore(); ctx.globalAlpha = 1; }
+function drawValleyMist(a) { // soft veils of mist drifting slowly across the valley in front of the mountain
+  ctx.save(); const b = softBlob('235,242,255');
+  for (let i = 0; i < 9; i++) { const sp = 6 + i * 1.7, x = ((i * 157 + t * sp) % (W + 260)) - 130, y = H * (.74 + .035 * Math.sin(i * 2.1) + .01 * Math.sin(t * .2 + i)), w = W * (.55 + .25 * Math.sin(i * 1.3)), h = H * (.05 + .02 * Math.sin(i));
+    ctx.globalAlpha = a * (.22 + .1 * Math.sin(t * .15 + i * 1.7)) * clamp01(skyE * 1.15); ctx.drawImage(b, x - w / 2, y - h / 2, w, h); }
+  ctx.restore(); ctx.globalAlpha = 1; }
 function drawGlints(a) { // diamond dust close to the lens: crystals drifting down, each flashing as it turns to the sun
   ctx.save(); ctx.globalCompositeOperation = 'lighter'; const sp = glintS();
   for (const g of GLINT) { const u = (t / g.per + g.off) % 1, k = u < .2 ? Math.sin(u / .2 * Math.PI) : 0; if (k <= 0) continue; const y = ((g.y * (H + 40) + t * (5 + 9 * g.z)) % (H + 40)) - 20, x = g.x * W + Math.sin(t * .3 + g.off * 9) * 12, s = 7 + g.z * 12;
@@ -3308,7 +3331,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'blossom' && G) { drawScene('blossom0', a, scPar * .35); drawScene('blossom1', a, scPar * 1.1); } // Fuji, the blossoming shore and the lake, rendered once; rings on the lake live
   if (wx.kind === 'blossom') { if (!G) blossomHills(a); drawPetals(a, false); ctx.save(); ctx.translate(-scPar * 10, 0); drawBranch(a, false); drawBranch(a, true); ctx.restore(); } // two flowering branches frame the top of the scene
   if (wx.kind === 'halo' && !G) snowForest(a);
-  if (wx.kind === 'halo' && G) { drawScene('halo0', a, scPar * .4); drawBanner(a, scPar * .4); } // the frozen valley, rendered once
+  if (wx.kind === 'halo' && G) { drawScene('halo0', a, scPar * .4); drawBanner(a, scPar * .4); drawValleyMist(a); } // the frozen valley, rendered once
   if (wx.kind === 'eclipse' && !G) eclTick();
   if (wx.kind === 'alien' && !G) drawUFO(a); // without the GPU sky, the hand-drawn ship; with it, the sky renders the ship in 3D // the ship, drawn in the game's own style; the GPU sky paints the beam and the night round it
   if (wx.kind === 'snow') { if (!G) lowres(() => { ctx.globalAlpha = .4 * a; ctx.drawImage(softBlob('236,240,250'), -W * .4, H * .8, W * 1.8, H * .35); ctx.globalAlpha = 1; }); drawSnow(a, false); } // soft light off the snow below, then the falling flakes
@@ -3452,7 +3475,7 @@ function drawFrontWeather() { // light and glass in front of the scene
   }
   if (wx.kind === 'firefly' && wx.a > .01) drawFireflies(wx.a, true); // a few fireflies drift close past the lens
   if (wx.kind === 'blossom' && wx.a > .01) { ctx.save(); ctx.translate(-scPar * 16, 0); drawPetals(wx.a, true); ctx.restore(); glassPetals(wx.a); }
-  if (wx.kind === 'halo' && wx.a > .01) drawGlints(wx.a);
+  if (wx.kind === 'halo' && wx.a > .01) { drawDiamondDust(wx.a); drawGlints(wx.a); }
   if (wx.kind === 'snow' && wx.a > .01) drawSnow(wx.a, true); // a few large flakes drift past close to the lens
   if ((wx.kind === 'hail' || wx.kind === 'snow' || wx.kind === 'halo' || wx.kind === 'aurora') && wx.a > .01) { // cold frost gathering in the corners of the glass
     const f = frost(); ctx.globalAlpha = ({ snow: .4, hail: .3, halo: .3, aurora: .16 }[wx.kind]) * wx.a * wx.a; ctx.drawImage(f, -10, -10, W + 20, H + 20); ctx.globalAlpha = 1;
