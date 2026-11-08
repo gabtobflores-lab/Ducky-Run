@@ -2723,8 +2723,9 @@ vec4 farLayer(vec2 uv,vec2 P,vec2 S){vec4 o=vec4(0.);
   { float band=smoothstep(.5,.56,uv.y)*smoothstep(.72,.62,uv.y);vec2 q=vec2(P.x*2.2,uv.y*14.);float f=fbm(q+vec2(fbm3(q*.6)*1.4,0.)); /* long wisps of cloud drifting behind the mountain */
     float a=smoothstep(.55,.75,f)*band*.55;o=over(o,vec4(mix(vec3(.9,.88,.98),vec3(1.,.97,.98),smoothstep(.6,.85,f)),a)); }
   o=over(o,fuji(uv,P,S));
-  { float y=LK-.004-.004*fbm3(vec2(P.x*50.,1.))-.003*vn(vec2(P.x*6.,2.));float m=smoothstep(y-px,y+px,uv.y)*step(uv.y,LK+.001); /* the far shore: a low line of woods */
-    vec3 c=mix(vec3(.2,.26,.34),vec3(.62,.44,.58),.35*smoothstep(.55,.8,vn(vec2(P.x*60.,3.))));o=over(o,vec4(mix(c,hazeS(uv),.3),m)); } /* a dark line of trees on the far shore, flecked with blossom */
+  { float mist=exp(-pow((uv.y-(LK-.012))/.012,2.));o=over(o,vec4(mix(hazeS(uv),vec3(.86,.9,.98),.5),mist*.55)); } /* a band of mist lying at the mountain's foot */
+  { float y=LK-.005-.003*fbm3(vec2(P.x*70.,1.))-.002*vn(vec2(P.x*9.,2.));float m=smoothstep(y-px,y+px,uv.y)*step(uv.y,LK+.001); /* the far shore: one continuous low line of dark woods */
+    vec3 c=mix(vec3(.16,.24,.3),vec3(.24,.32,.38),smoothstep(y,LK,uv.y));o=over(o,vec4(mix(c,hazeS(uv),.28),m)); }
   return o;}
 float crownLine(float x,float f,float sd,out float u,out float id0){float h=0.;u=0.;id0=0.;float ws=0.;
   for(int k=-1;k<=1;k++){float id=floor(x*f)+float(k);float cx=(id+.5+(hs(vec2(id,sd))-.5)*.45)/f,r=(.62+.3*hs(vec2(id,sd+1.)))/f;float uu=(x-cx)/r;float b=sqrt(max(0.,1.-uu*uu))*(.7+.3*hs(vec2(id,sd+2.)));
@@ -2759,25 +2760,25 @@ vec4 shrubs(vec2 uv,vec2 P){vec4 o=vec4(0.); /* cherry shrubs in full bloom on t
 float woodsTop(float sx,float side){float t=side<0.?sx/.42:(1.-sx)/.4;t=clamp(t,0.,1.); /* a long, nearly level wooded ridge, then a short slope down to the water */ /* wooded hills framing the lake on either side, as in the classic view across the water */
   float H=side<0.?.058:.048;return LK+.001-H*(1.-smoothstep(.55,1.,t))*(1.-.12*t)-.012*(1.-t)*vn(vec2(sx*7.,side+3.));}
 vec4 woods(vec2 uv,vec2 P,float side){float sx=uv.x;if(side<0.&&sx>.48||side>0.&&sx<.52)return vec4(0.);
-  float base=woodsTop(sx,side);float x=P.x*1.+side*1.7;float u,id;
-  float cl=crownLine(x,90.,side+11.,u,id),cl2=crownLine(x,38.,side+5.,u,id);float top=base-.006*cl-.008*cl2; /* a soft canopy of treetops along the crest */
+  float base=woodsTop(sx,side);float x=P.x+side*1.7;float u,id;
+  float cl=crownLine(x,110.,side+11.,u,id),cl2=crownLine(x,40.,side+5.,u,id);float top=base-.004*cl-.007*cl2; /* a soft, bumpy line of treetops along the crest */
   float m=smoothstep(top-px,top+px,uv.y)*step(uv.y,LK+.0008);if(m<=0.)return vec4(0.);float dd=uv.y-top;
-  float sl=(woodsTop(sx+.01,side)-woodsTop(sx-.01,side))/.02;float lit=clamp(.45-sl*1.8*side*-1.,0.,1.); /* the slopes turned toward the light are a little brighter */
-  float tx=fbm(vec2(P.x*70.,uv.y*90.)),tx2=fbm(vec2(P.x*70.+.02,uv.y*90.+.03));float bump=clamp((tx-tx2)*6.+.5,0.,1.); /* the texture of the canopy, crown on crown */
-  vec3 gD=vec3(.08,.16,.15),gL=vec3(.22,.36,.28);vec3 c=mix(gD,gL,clamp(lit*.45+bump*.35+.4*exp(-dd/.005),0.,1.));
-  /* cherry trees in bloom scattered through the woods, thickest along the shore */
-  float bl=smoothstep(.64,.74,fbm(vec2(P.x*30.,uv.y*40.)+side*3.)+.1*smoothstep(base-.03,LK,uv.y));
-  vec3 pk=mix(vec3(.82,.5,.66),vec3(1.,.86,.92),clamp(bump*.6+lit*.4+.3*exp(-dd/.006),0.,1.));c=mix(c,pk,bl*.92);
-  c+=vec3(1.,.95,.97)*exp(-dd/.0012)*.18; /* light along the treetops */
-  c=mix(c,hazeS(uv),.08+.25*smoothstep(.2,.0,abs(sx-.5)-.15)); /* paler where the woods reach toward the far shore */
+  /* the hills as calm, dark masses of forest against the bright water and sky, as in the classic view: a deep green, just lighter along the crest where the light falls */
+  vec3 c=mix(vec3(.2,.32,.27),vec3(.1,.18,.17),smoothstep(0.,.02,dd));c=mix(c,c*1.15,smoothstep(.45,.75,fbm3(vec2(P.x*40.,uv.y*60.)))*.4);
+  c+=vec3(.9,.95,.85)*exp(-dd/.0015)*.12;
+  float bl=smoothstep(.72,.8,fbm(vec2(P.x*40.,uv.y*50.)+side*3.))*smoothstep(LK-.02,LK,uv.y); /* a few cherry trees in bloom along the water's edge */
+  c=mix(c,mix(vec3(.88,.6,.74),vec3(1.,.86,.92),smoothstep(LK-.015,LK-.005,uv.y)),bl*.85);
+  c=mix(c,hazeS(uv),.06+.22*smoothstep(.2,.0,abs(sx-.5)-.12)); /* paler where they reach far out toward the mountain */
   return vec4(c,m);}
-vec4 reeds(vec2 uv,vec2 P){vec4 o=vec4(0.); /* a grassy bank at the near shore in each corner, tall reeds and grasses arching up from it */
-  float sx=uv.x;float w=max(1.-smoothstep(.0,.42,sx),smoothstep(.58,1.,sx));if(w<.01)return o;
-  { float gy=1.-.03*w*w-.008*vn(vec2(P.x*60.,1.));float gm=smoothstep(gy-px,gy+px,uv.y);o=over(o,vec4(mix(vec3(.18,.28,.2),vec3(.1,.17,.12),smoothstep(gy,1.,uv.y)),gm)); }
-  for(int k=0;k<40;k++){float fk=float(k);float side=fk<19.5?0.:1.;float r=hs(vec2(fk,3.));float bx=(side<.5?r*.4:1.-r*.4)*asp;float wk=max(1.-smoothstep(.0,.42,bx/asp),smoothstep(.58,1.,bx/asp));
-    float bh=(.04+.09*hs(vec2(fk,4.)))*(.4+.6*wk);float lean=(hs(vec2(fk,5.))-.5)*.5+(side<.5?.12:-.12); /* each blade arching over */float gy=1.-.03*wk*wk;
-    float t=clamp((gy-uv.y)/bh,0.,1.);float cx=bx+lean*t*t*bh*asp*1.6;float bw=.0024*pow(1.-t,.7)+.0002;float b=smoothstep(bw+px,bw-px,abs(P.x-cx))*step(gy-bh,uv.y)*step(uv.y,gy+.002);
-    o=over(o,vec4(mix(vec3(.12,.2,.14),vec3(.36,.5,.3),t*.8+.2*hs(vec2(fk,6.))),b));}
+vec4 reeds(vec2 uv,vec2 P){vec4 o=vec4(0.); /* the near shore in each corner: a dark grassy bank, reeds and long grass leaves curving up from it in silhouette against the water */
+  float sx=uv.x;float w=max(1.-smoothstep(.0,.45,sx),smoothstep(.55,1.,sx));if(w<.01)return o;
+  vec3 dk=vec3(.07,.12,.1);
+  { float gy=1.-.035*w*w-.006*vn(vec2(P.x*80.,1.));o=over(o,vec4(dk,smoothstep(gy-px,gy+px,uv.y))); }
+  for(int k=0;k<44;k++){float fk=float(k);float side=fk<21.5?0.:1.;float r=hs(vec2(fk,3.));float bx=(side<.5?r*.42:1.-r*.42)*asp;float wk=max(1.-smoothstep(.0,.45,bx/asp),smoothstep(.55,1.,bx/asp));
+    float gy=1.-.035*wk*wk;float bh=(.035+.1*pow(hs(vec2(fk,4.)),1.4))*(.35+.65*wk);float bend=(hs(vec2(fk,5.))-.5)*1.1+(side<.5?.25:-.25);
+    float t=clamp((gy-uv.y)/bh,0.,1.);float cx=bx+bend*bh*asp*.9*t*t;float bw=(.0035*pow(1.-t,.6)+.0003)*(.6+.8*hs(vec2(fk,7.))); /* each leaf curving over toward its tip */
+    float b=smoothstep(bw+px,bw-px,abs(P.x-cx))*step(gy-bh,uv.y)*step(uv.y,gy+.003);if(hs(vec2(fk,8.))>.8){float sd=smoothstep(.006,.0,length(vec2((P.x-cx)/asp*1.,(uv.y-(gy-bh))*.6)));b=max(b,sd);} /* a few seed heads */
+    o=over(o,vec4(mix(dk,vec3(.16,.24,.18),t*.6),b));}
   return o;}
 vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);
   if(variant<.5)return uv.y<LK+.001?farLayer(uv,P,S):vec4(0.);
@@ -2786,15 +2787,15 @@ vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);
   /* the lake: a mirror of the sky, the mountain and the hills, darkened a little and broken by slow ripples */
   float k=uv.y-LK;float rp=sin(k*520.+3.*sin(P.x*3.))*.5+.5;float rip=(.002+.02*k)*(sin(k*300.+P.x*3.+3.*vn(vec2(P.x*3.,k*60.)))+.6*(vn(vec2(P.x*14.,k*500.))-.5)); /* the reflection broken into slow horizontal ripples */
   vec2 ru=vec2(uv.x+rip,LK-k*1.);vec2 rP=vec2(ru.x*asp,ru.y);
-  vec3 c=skyS(ru,rP,S);vec4 f=farLayer(ru,rP,S);c=mix(c,f.rgb,f.a);vec4 wl=woods(ru,rP,-1.);c=mix(c,wl.rgb*.85,wl.a);wl=woods(ru,rP,1.);c=mix(c,wl.rgb*.85,wl.a); /* the woods mirrored too */
-  c=mix(c*vec3(.8,.86,1.),mix(vec3(.3,.4,.72),vec3(.13,.19,.44),smoothstep(0.,.2,k)),.3+.36*smoothstep(0.,.2,k)); /* the lake: a darker, deeper mirror */ /* the lake: a deeper, richer mirror */ /* the water deepening toward us */
-  c=mix(c,c*1.05+.02,smoothstep(.8,.97,rp)*smoothstep(.0,.06,k)*.35); /* bands of brighter ripples */
+  vec3 c=skyS(ru,rP,S);vec4 f=farLayer(ru,rP,S);c=mix(c,f.rgb,f.a);vec4 wl=woods(ru,rP,-1.);c=mix(c,wl.rgb*.6,wl.a);wl=woods(ru,rP,1.);c=mix(c,wl.rgb*.6,wl.a); /* the woods mirrored too */
+  c=mix(c*vec3(.8,.86,1.),mix(vec3(.3,.4,.72),vec3(.13,.19,.44),smoothstep(0.,.2,k)),.36+.4*smoothstep(0.,.16,k)); /* the reflection fading into deep water toward us */ /* the lake: a darker, deeper mirror */ /* the lake: a deeper, richer mirror */ /* the water deepening toward us */
+  c=mix(c,c*1.06+.02,smoothstep(.9,.99,rp)*smoothstep(.0,.06,k)*.25); /* soft bands of brighter ripples */
   c=mix(c,vec3(.96,.95,1.),smoothstep(.985,1.,sin(k*900.+P.x*2.))*.08*smoothstep(.02,.1,k)*smoothstep(.3,.7,vn(vec2(P.x*3.,k*30.))));
   c=mix(c,vec3(.92,.92,1.),exp(-k/.0015)*.35); /* a line of light along the far shore */
   { vec2 G=vec2(S.x,LK);float gx=(P.x-G.x)/(.02+k*.5);float gl=exp(-gx*gx)*smoothstep(.0,.02,k)*(1.-smoothstep(.1,.2,k)); /* a path of sparkles on the water below the sun */
-    float sp=smoothstep(.8,.95,vn(vec2(P.x*300.,k*1600.)))*smoothstep(.4,.7,vn(vec2(P.x*40.,k*200.)));c+=vec3(1.,.97,.92)*gl*(.08+.6*sp); }
+    float sp=smoothstep(.75,.95,vn(vec2(P.x*60.,k*900.)));c+=vec3(1.,.97,.92)*gl*(.18+.5*sp); } /* the sun's reflection, broken into short streaks, where the reference has the moon's */
   { vec2 w=vec2((P.x-.5*asp)/max(k,.001)*1.4,1./max(k,.001)*.35);vec2 id=floor(w),f=fract(w)-.5; /* petals floating on the still water, in perspective: smaller and closer together toward the far shore */
-    if(k>.006&&hs(id)>.55){vec2 o2=(vec2(hs(id+3.),hs(id+5.))-.5)*.6;float ang=hs(id+7.)*6.28;vec2 dq=mat2(cos(ang),-sin(ang),sin(ang),cos(ang))*(f-o2);
+    if(k>.006&&hs(id)>.88){vec2 o2=(vec2(hs(id+3.),hs(id+5.))-.5)*.6;float ang=hs(id+7.)*6.28;vec2 dq=mat2(cos(ang),-sin(ang),sin(ang),cos(ang))*(f-o2);
       float pe=smoothstep(.09,.06,length(dq*vec2(1.,1.7))-.015*cos(atan(dq.y,dq.x)*2.));float sh=smoothstep(.1,.06,length((dq-vec2(.01,-.012))*vec2(1.,1.7)));
       c=mix(c,c*.82,sh*.4*(1.-pe));c=mix(c,mix(vec3(.96,.7,.82),vec3(1.,.9,.94),hs(id+9.)),pe*.92*smoothstep(.006,.03,k));} }
   o=vec4(c,1.);o=over(o,reeds(uv,P));return o;}
@@ -3223,7 +3224,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'golden' && G) { const p = goldP(), q1 = smooth(clamp01((p - .15) / .4)), q2 = smooth(clamp01((p - .55) / .35)); drawScene('golden0', a, scPar); drawScene('golden1', a * q1, scPar); drawScene('golden2', a * q2, scPar); } // the peaks and the sea of clouds, rendered once in three lights that follow the sunset
   if (wx.kind === 'golden') { const p = goldP(); drawBirds(a * (1 - .7 * smooth(clamp01((p - .7) / .3))), p < .5 ? '70,48,72' : '40,26,52'); drawMotes(a * (1 - smooth(clamp01((p - .55) / .3))), '255,214,150'); }
   if (wx.kind === 'eclipse') drawMotes(a * (1 - ECL.dk) * .7, '255,236,214');
-  if (wx.kind === 'blossom' && G) { drawScene('blossom0', a, scPar * .35); drawScene('blossom1', a, scPar * 1.1); lakeRings(a); } // Fuji, the blossoming shore and the lake, rendered once; rings on the lake live
+  if (wx.kind === 'blossom' && G) { drawScene('blossom0', a, scPar * .35); drawScene('blossom1', a, scPar * 1.1); } // Fuji, the blossoming shore and the lake, rendered once; rings on the lake live
   if (wx.kind === 'blossom') { if (!G) blossomHills(a); drawPetals(a, false); ctx.save(); ctx.translate(-scPar * 10, 0); drawBranch(a, false); drawBranch(a, true); ctx.restore(); } // two flowering branches frame the top of the scene
   if (wx.kind === 'halo' && !G) snowForest(a);
   if (wx.kind === 'halo' && G) { drawScene('halo0', a, scPar * .4); drawScene('halo1', a, scPar * 1.1); } // the frozen valley, rendered once
