@@ -2725,21 +2725,22 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   float dd=uv.y-top;float hgt=(FB-uv.y)/FH; /* 1 at the summit, 0 at the foot */
   float v=mx/FH,u=-v;float r=length(vec2(v,(1.-hgt))); /* lit from the upper left, as in the reference */
   float ang=atan(v,(1.-hgt)*.42+.01); /* the fall lines, fanning out from the summit and lying close along the slopes, as the snow streaks do in the reference */ /* the fall lines, fanning out from the summit */
-  float tl=v+.12*(1.-hgt)-.01; /* the line between the sunlit face and the shaded face runs almost straight down from the tip */
+  float tl=v-.45*(1.-hgt)-.005; /* the line between the sunlit and shaded faces runs down and a little to the right from the tip, as in the reference */ /* the line between the sunlit face and the shaded face runs almost straight down from the tip */
   float side=1.-smoothstep(-.006,.006,tl+.01*(rfb(vec2(hgt*20.,3.))-.5));
-  /* the snowcap: long strokes of snow following the fall lines, tapering to points at their lower ends; its lower edge measured from the reference */
-  float sh=snowH(v);float st=ang*30.+1.2*rfb(vec2(ang*4.,1.)),sid=floor(st),sf=fract(st);float len=(.25+.75*pow(hs(vec2(sid,4.)),.7))*(.24+.12*side); /* each stroke its own length */
-  float tip=sh-len*.35+.06;float wdt=.5*smoothstep(tip-.02,tip+len*.6,hgt); /* a stroke narrows toward its lower end */
-  float stroke=smoothstep(wdt+.06,wdt-.06,abs(sf-.5));
-  float snow=max(smoothstep(sh+.035,sh+.06,hgt),stroke*step(tip,hgt))*step(hgt,1.01);
-  snow=max(snow,smoothstep(sh-.004,sh+.004,hgt)*smoothstep(.35,.6,rfb(vec2(ang*30.,hgt*4.)))); /* the jagged lower edge */
-  /* inside the snow: on the sunlit side bright white with fine blue gaps along the fall lines; on the shaded side mid blue cut by darker gullies, a bright line along the ridge */
-  float g=1.-abs(rfb(vec2(ang*22.,hgt*2.)+5.)*2.-1.);float gap=smoothstep(.74,.86,g)*smoothstep(.985,.88,hgt); /* blue gaps between the bands of snow */
-  float g2=1.-abs(rfb(vec2(ang*9.,hgt*1.3)+11.)*2.-1.);float gulS=smoothstep(.8,.9,g2)*smoothstep(.97,.8,hgt);
-  vec3 lit=mix(vec3(.97,.98,1.),vec3(.88,.92,.99),smoothstep(.8,.5,hgt));lit=mix(lit,mix(vec3(.6,.72,.93),vec3(.42,.54,.84),smoothstep(.85,.6,hgt)),gap*.9);
-  vec3 shd=mix(vec3(.54,.64,.9),vec3(.44,.55,.84),smoothstep(.9,.55,hgt));shd=mix(shd,vec3(.27,.36,.68),gulS*.85);
-  shd=mix(shd,vec3(.78,.85,.98),smoothstep(.008,0.,abs(tl-.004))*smoothstep(.5,.8,hgt)*.7); /* the ridge between the faces catches the light */
-  vec3 sc=mix(shd,lit,side);sc=mix(sc,vec3(1.),smoothstep(.012,0.,dd)*side*.5);
+  /* the snowcap, after the reference: solid near the summit, streaks only further down, its lower edge broken into a few long irregular fingers */
+  float sh=snowH(v);float dep=clamp((1.-hgt)/max(1.-sh,.05),0.,1.4); /* 0 at the summit, 1 at the snow line */
+  float wq=ang*9.+1.6*rfb(vec2(ang*2.5,hgt*1.5)+2.);float fid=floor(wq),ff=fract(wq);float on=step(.45,hs(vec2(fid,6.))); /* only some gullies carry a finger */
+  float flen=on*(.05+.12*hs(vec2(fid,4.)))*(1.+.4*side)*(.35+.65*smoothstep(.04,.3,abs(v)))*(1.+1.3*smoothstep(-.25,-.75,v)); /* the longest fingers stream down the sunlit western slope */float fw=.42*(1.-smoothstep(sh-flen,sh+.02,hgt)*0.)*smoothstep(sh-flen-.01,sh+.03,hgt); /* each finger narrows to a point */
+  float finger=smoothstep(fw+.08,fw-.08,abs(ff-.5))*step(sh-flen,hgt);
+  float snow=max(smoothstep(sh-.004,sh+.006,hgt+.012*(rfb(vec2(ang*24.,hgt*6.))-.5)),finger)*step(hgt,1.01);
+  vec2 sq=vec2(ang*13.+1.3*rfb(vec2(ang*3.,hgt*2.)+7.),hgt*1.6);float rn=1.-abs(rfb(sq)*2.-1.),rn2=1.-abs(rfb(sq*vec2(1.7,1.4)+3.)*2.-1.);
+  float lower=smoothstep(.2,.55,dep); /* streaks only below the summit */
+  float gap=max(smoothstep(.9,.94,rn),smoothstep(.92,.95,rn2)*.8)*lower; /* thin blue streaks down the fall lines */
+  vec3 lit=mix(vec3(.97,.98,1.),vec3(.9,.93,.99),smoothstep(.3,1.,dep));lit=mix(lit,mix(vec3(.66,.76,.94),vec3(.5,.62,.88),dep),gap*.9);
+  vec3 shd=mix(vec3(.56,.66,.9),vec3(.48,.58,.86),smoothstep(.2,1.,dep));shd=mix(shd,vec3(.32,.41,.72),gap*.85);shd=mix(shd,vec3(.68,.77,.95),smoothstep(.9,.95,rn2)*lower*.6);
+  float tl2=abs(tl-.004);shd=mix(shd,vec3(.8,.87,.98),smoothstep(.007,0.,tl2)*(1.-lower*.6)*.6); /* the ridge between the faces catches the light */
+  vec3 sc=mix(shd,lit,side);sc=mix(sc,vec3(1.),smoothstep(.01,0.,dd)*side*.4);
+  float gulS=gap;
   float gul=gulS;
   vec3 bodyS=mix(vec3(.07,.12,.3),vec3(.14,.21,.42),smoothstep(.0,.8,1.-hgt)),bodyL=mix(vec3(.15,.22,.45),vec3(.22,.3,.53),smoothstep(.0,.8,1.-hgt)); /* the deep navy body, smooth */ /* the deep blue body, smooth */
   vec3 bc=mix(bodyS,bodyL,side*.7);bc=mix(bc,bc*.85,gul*smoothstep(.35,.6,hgt)*.6);
