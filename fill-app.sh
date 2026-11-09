@@ -21,8 +21,8 @@ EMAIL=$(ask email "Email App Review can write to, then press Return:")
 W=$(mktemp -d)
 curl -fsSL "$BASE/tools/fix_iap_screenshots.swift" -o "$W/asc.swift" || { echo "Download failed."; exit 1; }
 SHOTS=""
-for n in 01-menu 02-aurora 03-wind 04-fog 05-offline 06-meteor 07-storm 08-sun; do
-  curl -fsSL "$BASE/appstore/screenshots-2026/$n.png" -o "$W/$n.png" && SHOTS="$SHOTS${SHOTS:+|}$W/$n.png"
+for n in 01-aurora 02-blossom 03-eclipse 04-golden 05-halo 06-storm 07-meteor 08-firefly 09-alien 10-menu; do
+  curl -fsSL "$BASE/appstore/screenshots-v3/$n.png" -o "$W/$n.png" && SHOTS="$SHOTS${SHOTS:+|}$W/$n.png"
 done
 echo "Filling in Mirror Drop's 1.0 page…"
 MODE=fill SITE="$SITE" OWNER="$OWNER" PHONE="$PHONE" EMAIL="$EMAIL" BUNDLE=com.claudineaguilera.mirrordrop \

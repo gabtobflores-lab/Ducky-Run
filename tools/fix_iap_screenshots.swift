@@ -148,19 +148,19 @@ Two balls. One tap.
 
 Mirror Drop is a calm-looking, fast-playing arcade game. Every tap moves both balls at once, mirrored across the screen. At the edge, they turn around. Thread them through the falling blocks, grab gems to build your combo, and every ten seconds the world speeds up.
 
-A SKY THAT'S ALIVE
-The weather changes while you play, and each event looks and feels different: shimmering northern lights, storms with lightning that charges the blocks, meteor showers under a real moon, rolling fog, hail, wind gusts that push you off course, heat haze and blinding sun.
+SIXTEEN LIVING SKIES
+The weather changes while you play, and every event looks and plays differently. Fly over a sea of clouds as golden hour fades to blue. Watch the moon slide across the sun until the diamond ring flashes at totality. Drift past Mt Fuji under falling cherry blossom, dodge lightning that charges the blocks, slide on the ice under a ring of light around the sun, and play beneath the northern lights, meteor showers and a violet dusk full of fireflies. The rarest events take weeks to find. And watch the skies for an alien invasion.
 
 YOUR PACE
 • Six difficulties, from Chill to Impossible
 • Normal races to 1,000, Infinite never ends, and Zen is a calm run you can't lose
-• A Daily Challenge: one run a day, the same for everyone, with its own leaderboard
+• A new Daily Challenge every day, with its own leaderboard, a calendar and streaks
 • Two or three columns per side
 • Game Center leaderboards for every difficulty
 • Share your best with a beautiful score card
 
-FREE TO PLAY, FAIR TO PAY
-Easy and Normal are free forever. Unlock more with a one-time pack: no subscription, no ads, nothing to grind. Supporters get the Golden Run: beat your best and the balls turn to liquid gold.
+FAIR TO PLAY
+Easy and Normal are free forever. Unlock more with a one-time pack, with no ads. Catch gems to earn Mirror Shards and spend them on continues. Supporters get the Golden Run: beat your best and the balls turn to liquid gold. Mirror Drop VIP, an optional subscription, adds free weekly continues, advanced tips and a weekly preview of a rare event.
 
 PLAYS ANYWHERE
 No Wi-Fi needed, no account, no tracking. Smooth on every iPhone, respects Reduce Motion, and pauses itself the moment you leave.
@@ -196,7 +196,7 @@ One tap to learn. One more run, every time.
             _ = try await call("PATCH", "/v1/appStoreVersionLocalizations/\(lid)", ["data": ["type": "appStoreVersionLocalizations", "id": lid, "attributes": [
                 "description": desc, "keywords": "offline,arcade,reflex,dodge,one tap,casual,weather,aurora,storm,mirror,endless,daily,zen,balls",
                 "supportUrl": supportURL, "marketingUrl": supportURL,
-                "promotionalText": "Two balls, one tap, eight living skies. Dodge falling blocks through storms, fog and the northern lights. No ads, no tracking, plays fully offline."]]])
+                "promotionalText": "Two balls, one tap, sixteen living skies: an eclipse, Mt Fuji in blossom, golden hour over the clouds, the northern lights. No ads, no tracking, plays fully offline."]]])
         }
         await step("copyright") {
             _ = try await call("PATCH", "/v1/appStoreVersions/\(verID)", ["data": ["type": "appStoreVersions", "id": verID, "attributes": ["copyright": "2026 " + (env["OWNER"] ?? "")]]])
@@ -228,14 +228,14 @@ One tap to learn. One more run, every time.
             }
             if !bad.isEmpty { throw AppleError(description: "couldn't answer: " + bad.joined(separator: ", ")) }
         }
-        await step("8 App Store screenshots (iPhone 6.9\")") {
+        await step("\(shots.count) App Store screenshots (iPhone 6.9\")") {
             guard !verLocID.isEmpty else { throw AppleError(description: "no version language") }
             let sets = (try await call("GET", "/v1/appStoreVersionLocalizations/\(verLocID)/appScreenshotSets"))["data"] as? [[String: Any]] ?? []
             var setID = sets.first(where: { (attrs($0)["screenshotDisplayType"] as? String) == "APP_IPHONE_67" })?["id"] as? String
             if let sid = setID {
                 let have = (try await call("GET", "/v1/appScreenshotSets/\(sid)/appScreenshots"))["data"] as? [[String: Any]] ?? []
                 let mine = try shots.map { f in Insecure.MD5.hash(data: try Data(contentsOf: URL(fileURLWithPath: f))).map { String(format: "%02x", $0) }.joined() }
-                if have.map({ attrs($0)["sourceFileChecksum"] as? String ?? "" }) == mine { print("   already up to date"); return } // exactly these 8, in this order
+                if have.map({ attrs($0)["sourceFileChecksum"] as? String ?? "" }) == mine { print("   already up to date"); return } // exactly these, in this order
                 for h in have { _ = try? await call("DELETE", "/v1/appScreenshots/\(h["id"] as! String)") }                                 // anything else is replaced
             } else {
                 setID = dataOf(try await call("POST", "/v1/appScreenshotSets", ["data": ["type": "appScreenshotSets", "attributes": ["screenshotDisplayType": "APP_IPHONE_67"],
