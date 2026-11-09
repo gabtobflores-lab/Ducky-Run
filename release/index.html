@@ -213,7 +213,8 @@
   .vbtn:active{transform:scale(.96)}
   .fsh.vip{background:radial-gradient(1.5px 1.5px at 12% 18%,rgba(255,255,255,.7),transparent),radial-gradient(1px 1px at 78% 12%,rgba(255,255,255,.6),transparent),radial-gradient(1.5px 1.5px at 64% 30%,rgba(191,238,255,.7),transparent),radial-gradient(1px 1px at 30% 8%,rgba(255,255,255,.5),transparent),radial-gradient(1px 1px at 90% 40%,rgba(255,255,255,.5),transparent),radial-gradient(60% 40% at 50% 14%,rgba(111,91,255,.55),transparent 70%),linear-gradient(180deg,#0f0b33 0%,#1f1668 50%,#33279e 100%);color:#fff}
   .vpmark{animation:vpglow 3.6s ease-in-out infinite}@keyframes vpglow{50%{box-shadow:0 14px 46px rgba(143,227,255,.55),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(-3px)}}
-  .vpcta{display:flex;flex-direction:column;align-items:center;gap:1px;width:100%}.vpcta b{font-size:17px;font-weight:900;letter-spacing:.04em}.vpcta small{font-size:13px;font-weight:700;letter-spacing:.01em;opacity:.7}
+  .vpcta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;margin-top:6px;padding:15px 16px;box-shadow:0 8px 22px rgba(0,0,0,.22),inset 0 -1px 0 rgba(59,43,184,.12)}.vpcta b{letter-spacing:.08em}
+  #vpbody{display:flex;flex-direction:column;gap:14px}.vpcta b{font-size:17px;font-weight:900;letter-spacing:.04em}.vpcta small{font-size:13px;font-weight:700;letter-spacing:.01em;opacity:.7}
   .vpcan{margin-top:-6px;text-align:center;font-size:12.5px;font-weight:700;opacity:.7}
   .spin{display:inline-block;width:20px;height:20px;border-radius:50%;border:2.5px solid rgba(42,31,143,.25);border-top-color:#2a1f8f;animation:spin .8s linear infinite;margin:6px}@keyframes spin{to{transform:rotate(360deg)}}
   .fsh.vip .fx{background:rgba(255,255,255,.12)} .fsh.vip .fx svg{stroke:#fff}
@@ -230,6 +231,7 @@
   .vpcta:active{transform:scale(.97)} .vpcta:disabled{opacity:.6}
   .vpfine{font-size:11.5px;line-height:1.5;opacity:.65;text-align:center;padding:0 8px}.vpfine button{border:0;background:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:0 2px}
   .vprow{display:flex;justify-content:center;gap:18px}.vprow button{border:0;background:none;color:#cfc8ff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:6px}
+  .vpmsg:empty{display:none}
   .vpmsg{min-height:18px;font-size:13px;font-weight:600;text-align:center;color:#ffd9a6}
   .vpstat{text-align:center;padding:12px;border-radius:18px;background:rgba(143,227,255,.12);font-size:14px;font-weight:700}
   #pvdone{position:fixed;z-index:25;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:10px;border:0;border-radius:999px;padding:7px 8px 7px 14px;font:inherit;font-size:11px;font-weight:800;letter-spacing:.14em;color:#fff;background:rgba(40,28,120,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);cursor:pointer}
@@ -4643,7 +4645,7 @@ function renderVip() {
     + `<div class="vplist">${VIPFEATS.map(([d, b, x]) => `<div class="vpit"><span class="ic"><svg viewBox="0 0 24 24">${d}</svg></span><span><b>${b}</b><small>${x}</small></span></div>`).join('')}</div>`;
   if (vip) h += `<div class="vpstat">You're a VIP${vipUntil ? ` · ${vipRenews ? 'renews' : 'ends'} ${new Date(vipUntil).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}</div>`
     + `<button class="vpcta" type="button" data-vp="manage">Manage Subscription</button>`;
-  else h += `<button class="vpcta" type="button" data-vp="buy"${vpBusy ? ' disabled' : ''}>${vpBusy ? '<span class="spin"></span>' : `<b>Get VIP</b><small>${pr}</small>`}</button><div class="vpcan">Cancel any time</div>`;
+  else h += `<button class="vpcta" type="button" data-vp="buy"${vpBusy ? ' disabled' : ''}>${vpBusy ? '<span class="spin"></span>' : `<b>GET VIP</b><small>${pr}</small>`}</button><div class="vpcan">Cancel any time</div>`;
   h += `<div class="vpmsg" role="status">${esc(vpMsg)}</div><div class="vprow"><button type="button" data-vp="restore">Restore Purchases</button></div>`
     + `<div class="vpfine">${vipPrice()}, auto-renews every ${vipP().period || 'period'} until cancelled. Payment is charged to your Apple Account; it renews unless cancelled at least 24 hours before the end of the period. Manage or cancel any time in Settings → your name → Subscriptions. VIP is separate from Supporter and the packs, which stay yours forever.<br><button type="button" data-vp="terms">Terms of Use</button> · <button type="button" data-vp="privacy">Privacy Policy</button></div>`;
   vpbody.innerHTML = h; }
