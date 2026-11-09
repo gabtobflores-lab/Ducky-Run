@@ -168,13 +168,37 @@
     font-weight:900;font-size:17px;color:#fff;cursor:pointer;background:var(--pc,#2ec4d6);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 12px rgba(43,45,66,.16);transition:transform .4s var(--ios),background .3s}
   #pfp:active{transform:translateY(-50%) scale(.9)}
   #pfp svg{position:absolute;right:-4px;bottom:-4px;width:19px;height:19px;padding:3px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(43,45,66,.22);fill:#e9a23b}
-  #sheet{position:fixed;inset:0;z-index:30;display:none}
-  #sheet.on{display:block}
-  #sheet .bd{position:absolute;inset:0;background:rgba(20,22,34,.3);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .4s var(--ios)}
-  #sheet.open .bd{opacity:1}
-  #sheet .pn{position:absolute;left:0;right:0;bottom:0;margin:0 auto;width:min(480px,100%);max-height:84vh;max-height:84dvh;display:flex;flex-direction:column;gap:12px;
+  #sheet,.xsh{position:fixed;inset:0;z-index:30;display:none}
+  #sheet.on,.xsh.on{display:block}
+  .xsh .bd,#sheet .bd{position:absolute;inset:0;background:rgba(20,22,34,.3);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .4s var(--ios)}
+  #sheet.open .bd,.xsh.open .bd{opacity:1}
+  #sheet .pn,.xsh .pn{position:absolute;left:0;right:0;bottom:0;margin:0 auto;width:min(480px,100%);max-height:84vh;max-height:84dvh;display:flex;flex-direction:column;gap:12px;
     padding:8px 16px calc(16px + env(safe-area-inset-bottom));background:rgba(250,247,242,.97);border-radius:28px 28px 0 0;box-shadow:0 -12px 40px rgba(20,22,34,.2);transform:translateY(100%);transition:transform .5s var(--ios)}
-  #sheet.open .pn{transform:none}
+  #sheet.open .pn,.xsh.open .pn{transform:none}
+  /* the Daily Challenge calendar */
+  .dtoday{border-radius:22px;padding:16px;background:linear-gradient(160deg,#3d78d6,#2a4fa8);color:#fff;box-shadow:0 10px 26px rgba(42,79,168,.28);display:flex;flex-direction:column;gap:10px;flex:none}
+  .dtoday .dn{display:flex;align-items:baseline;justify-content:space-between}.dtoday .dn b{font-size:26px;font-weight:900;letter-spacing:-.01em}.dtoday .dn small{font-size:13px;font-weight:700;opacity:.8}
+  .dchips{display:flex;flex-wrap:wrap;gap:6px}.dchip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 5px;border-radius:999px;background:rgba(255,255,255,.16);font-size:13px;font-weight:700}
+  .dchip .gi{width:22px;height:22px;border-radius:7px}.dchip .gi svg{width:14px;height:14px}.dchip.pl{padding-left:10px}
+  .dtoday .dst{font-size:13px;font-weight:600;opacity:.9}
+  .dplay{border:0;border-radius:999px;padding:13px;font:inherit;font-weight:900;font-size:15px;letter-spacing:.12em;color:#2a4fa8;background:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12);transition:transform .3s var(--ios)}
+  .dplay:active{transform:scale(.97);transition-duration:.06s}
+  .dcalw{border-radius:20px;background:#fff;box-shadow:var(--sh-card);padding:12px;flex:none}
+  .dmh{display:flex;align-items:center;justify-content:space-between;padding:0 2px 8px}.dmh b{font-size:16px;font-weight:800}
+  .dmh button{width:34px;height:34px;border-radius:50%;border:0;background:rgba(43,45,66,.06);font:inherit;font-size:20px;font-weight:800;color:var(--ink-2);cursor:pointer}.dmh button:disabled{opacity:.3}
+  .dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+  .dgrid .wd{font-size:11px;font-weight:800;color:var(--ink-3);padding-bottom:2px}
+  .dgrid button{aspect-ratio:1;border:0;border-radius:50%;background:none;font:inherit;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;position:relative;transition:transform .25s var(--ios),background .2s}
+  .dgrid button:active{transform:scale(.9)}
+  .dgrid button.fut{color:var(--ink-3);opacity:.45;cursor:default}
+  .dgrid button.did{background:rgba(61,120,214,.14);color:#2a4fa8}
+  .dgrid button.did::after{content:'';position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#3d78d6}
+  .dgrid button.tod{box-shadow:inset 0 0 0 2px #3d78d6}
+  .dgrid button.sel{background:#3d78d6;color:#fff}.dgrid button.sel::after{background:#fff}
+  .dpick{border-radius:18px;background:#fff;box-shadow:var(--sh-card);padding:12px 14px;display:flex;align-items:center;gap:12px;flex:none}
+  .dpick .tx{flex:1;display:flex;flex-direction:column;gap:2px}.dpick b{font-size:15px;font-weight:800}.dpick small{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+  .dpick button{border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:#3d78d6;cursor:pointer}
+
   .grab{width:38px;height:5px;border-radius:3px;background:rgba(43,45,66,.18);margin:0 auto}
   .shd{display:flex;align-items:center;justify-content:space-between;padding:0 4px}
   .shd b{font-size:21px;font-weight:800;letter-spacing:-.01em}
@@ -213,6 +237,7 @@
   .e-snow{background:linear-gradient(160deg,#b8cff0,#7c9cd6)} .e-hole{background:linear-gradient(160deg,#4a3f2a,#120f0a)}.e-gold{background:linear-gradient(160deg,#ffd27a,#e0607e)}.e-ecl{background:linear-gradient(160deg,#e0a35a,#1d1a3a)}.e-halo{background:linear-gradient(160deg,#cfe6ff,#6fa6e8)}.e-fly{background:linear-gradient(160deg,#e79a8c,#3a2f74)}.e-bloom{background:linear-gradient(160deg,#ffc7d9,#f08cb0)} .e-alien{background:linear-gradient(160deg,#9b8cff,#3fc9b0)}
   .etag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;vertical-align:1px}
   .etag.v{background:rgba(43,45,66,.07);color:var(--ink-3)} .etag.p{background:rgba(232,67,95,.12);color:#c8304c}
+  .gtx small.erar{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)} .gtx small.erar.r2{color:#3d78d6} .gtx small.erar.r3{color:#7a4fd0} .gtx small.erar.r4{color:#c98a1a}
   .gintro{padding:10px 14px 2px;font-size:13px;font-weight:500;line-height:1.4;color:var(--ink-2);opacity:0;transition:opacity .3s var(--ease)} .guide.open .gintro{opacity:1}
   .g1{background:linear-gradient(160deg,#5fd6e3,#1aa9bc)} .g2{background:linear-gradient(160deg,#ff8fa1,#e8435f)}
   .g3{background:linear-gradient(160deg,#9ec5ff,#4a7dff)} .g4{background:linear-gradient(160deg,#c4b5ff,#7b5cf0)}
@@ -568,6 +593,9 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
     <div class="ufine"><span>One-time purchase · Family Sharing</span><button type="button" id="urestore">Restore Purchases</button></div>
     <div class="umsg" id="umsg" role="status"></div></div>
 </div></div>
+<div id="dsheet" class="xsh" aria-hidden="true"><div class="bd"></div><div class="pn" role="dialog" aria-modal="true" aria-labelledby="dtitle"><div class="grab"></div>
+  <div class="shd"><b id="dtitle">Daily Challenge</b><button class="done" id="ddone">Done</button></div>
+  <div class="rows" id="drows"></div></div></div>
 <div id="sheet" aria-hidden="true"><div class="bd"></div><div class="pn" role="dialog" aria-modal="true" aria-labelledby="stitle"><div class="grab"></div>
   <div class="shd"><b id="stitle">Profile</b><button class="done" id="sdone">Done</button></div>
   <div class="tabs" id="stabs" data-t="p"><span class="pill"></span><button data-t="p" class="on">Profile</button><button data-t="l">Leaderboard</button></div>
@@ -675,9 +703,19 @@ const needFor = () => !modeOpen(mode) ? MODE_NEED[mode] : SECT_NEED[bucket()];
 let freeHardRun = false;
 // the Daily Challenge: one seeded run per day, the same rows for everyone, at Hard
 const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t2 = Math.imul(a ^ a >>> 15, 1 | a); t2 = t2 + Math.imul(t2 ^ t2 >>> 7, 61 | t2) ^ t2; return ((t2 ^ t2 >>> 14) >>> 0) / 4294967296; };
-const daySeed = () => { let h = 2166136261; for (const ch of 'mirrordrop-' + dayKey()) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return h >>> 0; };
+const hashStr = str => { let h = 2166136261; for (const ch of str) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return h >>> 0; };
+let dailyFor = null; // a past day being replayed, or null for today
+const dkey = () => dailyFor || dayKey();
+const daySeed = () => hashStr('mirrordrop-' + dkey());
+// every day has its own challenge, worked out from its date, so the days never run out: its number, how many columns, and one event it is sure to bring
+const keyDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const dateKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const DAY0 = new Date(2026, 0, 1), DFEAT = ['wind', 'rain', 'storm', 'snow', 'fog', 'hail', 'heat', 'meteor', 'halo', 'blossom', 'firefly', 'golden', 'aurora'];
+const dayNum = k => Math.round((keyDate(k) - DAY0) / 864e5) + 1;
+function dayInfo(k) { const r = mulberry(hashStr('mirrordrop-day-' + k)); r(); return { n: dayNum(k), per: r() < .45 ? 2 : 3, feat: DFEAT[r() * DFEAT.length | 0] }; }
+function dailyStreak() { const d = new Date(); if (!bests['daily_' + dateKey(d)]) d.setDate(d.getDate() - 1); let n = 0; while (bests['daily_' + dateKey(d)] && n < 3650) { n++; d.setDate(d.getDate() - 1); } return n; }
 let rowRng = null; const R = () => rowRng ? rowRng() : Math.random();
-const bkey = () => mode === 'daily' ? 'daily_' + dayKey() : per + '_' + bucket() + (mode === 'infinite' ? '_inf' : mode === 'zen' ? '_zen' : ''); // infinite runs keep their own bests
+const bkey = () => mode === 'daily' ? 'daily_' + dkey() : per + '_' + bucket() + (mode === 'infinite' ? '_inf' : mode === 'zen' ? '_zen' : ''); // infinite runs keep their own bests
 const bestNow = () => bests[bkey()] || 0;
 // ---------- profile: one per phone. In the App Store app it is signed in with Game Center (Apple's player accounts, worldwide leaderboards);
 // everything is also kept on the device, so it works offline and survives without an account ----------
@@ -719,7 +757,7 @@ function recordRun(sc) { // this phone's top ten runs for each setting, plus Gam
   prof.runs++; prof.combo = Math.max(prof.combo, fx.maxCombo | 0); saveBests();
   if (!(sc > 0)) return 0; const k = bkey(), L = board[k] = Array.isArray(board[k]) ? board[k] : [], e = { s: sc, d: Date.now() };
   L.push(e); L.sort((a, b) => b.s - a.s || a.d - b.d); L.length = Math.min(L.length, 10); saveKey('mirrorBoard', JSON.stringify(board));
-  if (IS_NATIVE) { pendingGc.push({ leaderboardId: lbId(), score: sc }); pendingGc = pendingGc.slice(-50); try { localStorage.mirrorPending = JSON.stringify(pendingGc); } catch (e) {} flushGc(); }
+  if (IS_NATIVE && !(mode === 'daily' && dailyFor) && !runCont) { pendingGc.push({ leaderboardId: lbId(), score: sc }); pendingGc = pendingGc.slice(-50); try { localStorage.mirrorPending = JSON.stringify(pendingGc); } catch (e) {} flushGc(); }
   return L.indexOf(e) + 1; }
 // soft slide-in whenever a label's text actually changes
 function bump(el) { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); }
@@ -986,22 +1024,23 @@ let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, l
 // visual-only feedback timers (they never affect the rules)
 const fx = { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 };
 const crash = { ball: [null, null], shards: [], waves: [], tmpl: null, hole: -1 };
+let dailyT = 0, dailyFeat = false, runCont = 0; // the Daily's own event; continues used in this run
 // weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
 // per-second chances once the cooldown has passed; warn = seconds of notice before it starts (longer for events that affect play)
 const WX = {
-  fog: { dur: 18, p: 1 / 55, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 22, p: 1 / 140, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
+  fog: { dur: 18, p: 1 / 55, warn: 2.2, note: ['Fog rolling in', 'Visibility will drop'] }, storm: { dur: 22, p: 1 / 170, warn: 2.2, note: ['Storm incoming', 'Lightning can charge blocks'] },
   hail: { dur: 14, p: 1 / 90, warn: 1.6, note: ['Hail incoming', 'Short and heavy'] }, wind: { dur: 11, p: 1 / 110, warn: 2.2, note: ['Wind gust', 'Both balls will drift'] },
-  heat: { dur: 16, p: 1 / 140, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.8, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
-  aurora: { dur: 26, p: 1 / 220, warn: .8, note: ['Aurora', 'Northern lights overhead'] },
-  meteor: { dur: 22, p: 1 / 150, warn: 1.2, note: ['Meteor shower', 'Look up'] },
+  heat: { dur: 16, p: 1 / 170, warn: .8, note: ['Heat wave', 'The air will shimmer'] }, sun: { dur: 3.8, p: 1 / 200, warn: .5, note: ['Sun flash', 'Brief glare'] },
+  aurora: { dur: 26, p: 1 / 520, warn: .8, note: ['Aurora', 'Northern lights overhead'] },
+  meteor: { dur: 22, p: 1 / 240, warn: 1.2, note: ['Meteor shower', 'Look up'] },
   rain: { dur: 20, p: 1 / 120, warn: 2.2, note: ['Rain incoming', 'Wet lanes ahead'] }, // a gentler storm: soft glows in the cloud, no strikes and no thunder; each shower either brings more blocks or a slight speed-up
-  snow: { dur: 22, p: 1 / 150, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
-  eclipse: { dur: 38, p: 1 / 900, warn: 1.6, note: ['Solar eclipse', 'Blocks vanish in the dark'] }, // rare and purely to look at: the day darkens to a ring of fire
-  halo: { dur: 20, p: 1 / 260, warn: 1.2, note: ['Ice halo', 'Slippery: the balls overshoot'] }, // a frozen, crystal-clear sky: a ring of light round the sun
-  firefly: { dur: 22, p: 1 / 200, warn: 1.2, note: ['Fireflies', 'Gems roam and are worth double'] }, // a violet dusk full of soft blinking lights
-  blossom: { dur: 20, p: 1 / 170, warn: 1.2, note: ['Cherry blossom', 'Combo up to ×12, never lost'] }, // a spring sky with petals drifting down
-  golden: { dur: 36, p: 1 / 240, warn: 1.2, note: ['Golden hour', 'Every gem is worth triple'] }, // the sky passes from golden light through sunset to blue hour
-  alien: { dur: 22, p: 1 / 2600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
+  snow: { dur: 22, p: 1 / 190, warn: 2.2, note: ['Snow incoming', 'Cold air slows the blocks'] }, // the blocks slow in the cold
+  eclipse: { dur: 38, p: 1 / 1700, warn: 1.6, note: ['Solar eclipse', 'Blocks vanish in the dark'] }, // rare and purely to look at: the day darkens to a ring of fire
+  halo: { dur: 20, p: 1 / 750, warn: 1.2, note: ['Ice halo', 'Slippery: the balls overshoot'] }, // a frozen, crystal-clear sky: a ring of light round the sun
+  firefly: { dur: 22, p: 1 / 480, warn: 1.2, note: ['Fireflies', 'Gems roam and are worth double'] }, // a violet dusk full of soft blinking lights
+  blossom: { dur: 20, p: 1 / 420, warn: 1.2, note: ['Cherry blossom', 'Combo up to ×12, never lost'] }, // a spring sky with petals drifting down
+  golden: { dur: 36, p: 1 / 850, warn: 1.2, note: ['Golden hour', 'Every gem is worth triple'] }, // the sky passes from golden light through sunset to blue hour
+  alien: { dur: 22, p: 1 / 3600, warn: 2.8, note: ['Alien invasion', 'Stay out of the beam'] }, // the rarest of all: some blocks are alien ships that warp to the mirror column
 };
 const CHIPS = []; let chipT = 0;
 const HAIL = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1.8 + Math.random() * Math.random() * 3.6, s: .75 + Math.random() * .6 })), hailHits = [];
@@ -1016,7 +1055,7 @@ const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks sli
 function reset() {
   const p = params();
   ABD.k = ABD.lift = 0; pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
-  fog = 0; resumeT = 0; fogT = 0;
+  fog = 0; resumeT = 0; fogT = 0; dailyT = 0; dailyFeat = false;
   bestBanked = false; lastRank = 0; score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false; gate = null;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
   Object.assign(wx, { kind: '', phase: '', t: 0, p: 0, hits: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 }); if (typeof wxHide === 'function') wxHide();
@@ -1072,8 +1111,8 @@ let beforeDaily = null;
 function startDaily() { // Hard, 3 per side, the day's seed; the player's own settings come back afterwards
   if (ent < 3) { openUnlock(3, { what: 'the Daily Challenge', title: 'The Daily Challenge.', sub: 'A new run every day, the same for everyone, with its own leaderboard. Included with Max.' }); return; }
   if (!beforeDaily) beforeDaily = { sliderV, per, mode };
-  sliderV = 70; diff = SECT_DIFF[3]; mode = 'daily'; if (per !== 3) { per = 3; layout(); } startGame(); }
-function endDaily() { if (!beforeDaily) return; ({ sliderV, mode } = beforeDaily); diff = SECT_DIFF[section()]; if (per !== beforeDaily.per) { per = beforeDaily.per; layout(); } beforeDaily = null; }
+  const info = dayInfo(dkey()); sliderV = 70; diff = SECT_DIFF[3]; mode = 'daily'; if (per !== info.per) { per = info.per; layout(); } startGame(); }
+function endDaily() { dailyFor = null; if (!beforeDaily) return; ({ sliderV, mode } = beforeDaily); diff = SECT_DIFF[section()]; if (per !== beforeDaily.per) { per = beforeDaily.per; layout(); } beforeDaily = null; }
 let freePause = false;
 function pauseGame(away) {
   if (state !== 'play' || resumeT > 0) return;
@@ -1102,7 +1141,7 @@ function showOver() {
   (function tick(now) { const p = clamp01((now - t0) / 450), e = 1 - Math.pow(1 - p, 3); el.textContent = Math.round(target * e); if (p < 1 && state === 'dead') requestAnimationFrame(tick); else el.textContent = target; })(t0);
 }
 document.querySelectorAll('#mode button').forEach(b => b.onclick = () => { mode = b.dataset.mode; saveKey('mirrorMode', mode); syncDiffUI(); });
-$('#daily').onclick = () => { if (!fresh()) startDaily(); };
+$('#daily').onclick = () => { if (fresh()) return; if (ent < 3) startDaily(); else openDaily(); };
 $('#oshare').onclick = () => shareScore(score);
 $('#dcal').onclick = e => { e.stopPropagation(); haptic('selection'); $('#daily').click(); };
 document.querySelectorAll('.seg button[data-per]').forEach(b => b.onclick = () => { per = +b.dataset.per; saveKey('mirrorPer', per); layout(); reset(); syncDiffUI(); });
@@ -1440,6 +1479,7 @@ function wxNote(kind) {
 setInterval(() => { const n = $('#wxnote'); if (!wxNote.dk || !n.classList.contains('show')) return; n.classList.toggle('dark', skyE > .45 || (wx.a > .45 && wx.phase !== 'warn')); }, 120); // switches to dark glass as the night sky arrives
 function wxHide() { $('#wxnote').classList.remove('show'); clearTimeout(wxNote.h); }
 function updateWeather(dt) {
+  if (mode === 'daily' && state === 'play') { dailyT += dt; if (!dailyFeat && !wx.kind && dailyT > 16) { const k = dayInfo(dkey()).feat; dailyFeat = true; wx.kind = k; wx.phase = 'warn'; wx.t = 0; if (k === 'wind') windDir = Math.random() < .5 ? -1 : 1; if (k === 'rain') wx.rv = Math.random() < .5 ? 'fast' : 'dense'; wxNote(k); } } // the day's own event, once in every run
   if (!wx.kind) {
     wx.cool -= dt;
     if (wx.cool <= 0 && (wx.roll += dt) >= 1) { // one luck roll per second; storms are far rarer than fog
@@ -3229,13 +3269,22 @@ function drawBranch(a, right) { // a flowering cherry branch reaching in from th
   for (const [x0, y0, x1, y1, w] of BRANCH.segs) if (w > 2) { ctx.strokeStyle = 'rgba(40,26,34,.35)'; ctx.lineWidth = .6; for (let k = 1; k < 4; k++) { const u = k / 4; ctx.beginPath(); ctx.moveTo((x0 + (x1 - x0) * u) * W - w * .3, oy + (y0 + (y1 - y0) * u) * W - w * .3); ctx.lineTo((x0 + (x1 - x0) * u) * W + w * .3, oy + (y0 + (y1 - y0) * u) * W + w * .3); ctx.stroke(); } } // the cherry's horizontal bark rings
   for (const [x, y, sc, vi, rot] of BRANCH.cl) { const sz = 66 * sc * (1 + .02 * Math.sin(t * 1.1 + rot * 9)); ctx.save(); ctx.translate(x * W, oy + y * W); ctx.rotate(rot * .3); ctx.drawImage(BLCL(vi), -sz / 2, -sz / 2, sz, sz); ctx.restore(); } // painted clusters of blossom at every node
   ctx.restore(); ctx.globalAlpha = 1; }
-const GPET = Array.from({ length: 6 }, (_, i) => ({ t0: -i * 1.7, x: 0, y: 0, r: 0, s: 1, dur: 4 }));
-function glassPetals(a) { // now and then a petal lands on the glass, rests a moment, then slides down and away
-  for (const g of GPET) { let k = (t - g.t0) / g.dur; if (k >= 1 || k < 0) { g.t0 = t + Math.random() * 3; g.dur = 3.5 + Math.random() * 3; g.x = W * (.08 + Math.random() * .84); g.y = H * (.08 + Math.random() * .6); g.r = Math.random() * 6; g.s = .9 + Math.random() * .7; continue; }
-    const land = smooth(clamp01(k / .08)), out = smooth(clamp01((k - .7) / .3)), y = g.y + (k > .45 ? (k - .45) * (k - .45) * H * .35 : 0);
-    ctx.save(); ctx.translate(g.x, y); ctx.rotate(g.r + (k > .45 ? (k - .45) * .6 : 0)); const sc = g.s * (1.25 - .25 * land);
-    ctx.globalAlpha = a * land * (1 - out) * .22; ctx.drawImage(softBlob('120,60,90'), -16 * sc, -10 * sc, 34 * sc, 26 * sc); // its soft shadow on the glass
-    ctx.globalAlpha = a * land * (1 - out) * .92; ctx.drawImage(PETAL(false), -13 * sc, -15 * sc, 26 * sc, 30 * sc); ctx.restore(); }
+const GPET = Array.from({ length: 5 }, (_, i) => ({ t0: 1 + i * 2.6, x: 0, y: 0, r: 0, s: 1, dur: 5, fall: 2.4, sx: 0, sy: 0, ph: 0, set: false }));
+function glassPetals(a) { // now and then a petal drifts toward us out of the scene, turning over as it comes, settles on the glass, rests a moment, then slides down and away
+  for (const g of GPET) { const k0 = t - g.t0;
+    if (!g.set || k0 >= g.fall + g.dur) { g.set = true; g.t0 = t + .5 + Math.random() * 3.5; g.fall = 2.2 + Math.random() * .8; g.dur = 3.2 + Math.random() * 2.4; g.x = W * (.12 + Math.random() * .76); g.y = H * (.12 + Math.random() * .56);
+      g.r = Math.random() * 6; g.s = .95 + Math.random() * .5; g.sx = (Math.random() - .5) * W * .5; g.sy = -H * (.12 + Math.random() * .1); g.ph = Math.random() * 7; continue; }
+    if (k0 < 0) continue;
+    if (k0 < g.fall) { // the approach: it starts small and far off, sways and tumbles as it drifts in, and comes to rest face-on as it reaches the glass
+      const q = k0 / g.fall, z = 1 + 3.2 * (1 - q) * (1 - q), e = 1 - (z - 1) / 3.2; // perspective: it grows faster the closer it comes
+      const sway = Math.sin(q * 6.5 + g.ph) * (1 - e) * 26, x = g.x + g.sx * (1 - e) + sway, y = g.y + g.sy * (1 - e) - Math.abs(Math.sin(q * 3.3 + g.ph)) * 10 * (1 - e);
+      const tumble = (1 - e) * (1 - e), tb = Math.cos(k0 * 4.2 + g.ph) * tumble + (1 - tumble), sc = g.s * 1.25 / z;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(g.r + Math.sin(k0 * 2.1 + g.ph) * 1.4 * tumble); ctx.scale(sc * (.2 + .8 * Math.abs(tb)), sc);
+      ctx.globalAlpha = a * (.35 + .6 * e) * smooth(clamp01(q / .12)); ctx.drawImage(PETAL(tb < 0), -13, -15, 26, 30); ctx.restore(); continue; }
+    const k = (k0 - g.fall) / g.dur, out = smooth(clamp01((k - .72) / .28)), y = g.y + (k > .45 ? (k - .45) * (k - .45) * H * .35 : 0), touch = clamp01((k0 - g.fall) / .18);
+    ctx.save(); ctx.translate(g.x, y); ctx.rotate(g.r + (k > .45 ? (k - .45) * .6 : 0)); const sc = g.s * 1.25 * (1 + .05 * Math.sin(touch * Math.PI)); // a soft press as it touches the glass
+    ctx.globalAlpha = a * smooth(touch) * (1 - out) * .22; ctx.drawImage(softBlob('120,60,90'), -16 * sc, -10 * sc, 34 * sc, 26 * sc); // its soft shadow on the glass
+    ctx.globalAlpha = a * (1 - out) * .95; ctx.drawImage(PETAL(false), -13 * sc, -15 * sc, 26 * sc, 30 * sc); ctx.restore(); }
   ctx.globalAlpha = 1; }
 function lakeRings(a) { // rings spreading on the lake where petals land
   const lk = H * .875 + (offY ? 0 : 0); ctx.save(); ctx.lineWidth = 1;
@@ -4199,10 +4248,11 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
   ['eclipse', 'e-ecl', 'Solar eclipse', 'Rare. As the moon covers the sun the blocks fade into the dark; at totality you only see them in the last stretch before the balls.', 1],
   ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side, and the beam slowly pulls up anything that stays in the middle. Move out of the middle to break free.', 1],
 ];
+const RARITY = { fog: 0, wind: 0, rain: 0, hail: 0, sun: 0, storm: 1, heat: 1, snow: 1, meteor: 1, blossom: 2, firefly: 2, aurora: 2, halo: 3, golden: 3, eclipse: 4, alien: 4 }, RARN = ['Common', 'Uncommon', 'Rare', 'Very rare', 'Legendary']; // how often each event comes round
 function eventsHTML() {
   return `<div class="sgrp guide${evOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="events" aria-expanded="${evOpen}"><span class="gi e-aur"><svg viewBox="0 0 24 24">${WXICON.aurora}</svg></span><b>Events</b><span class="gchev" aria-hidden="true">›</span></button>`
     + `<div class="gbody"><div><div class="gintro">There are ${EVINFO.length} events in Mirror Drop. They arrive at random during a run, with a note just before they start. Some only change the sky; others change how the game plays. In Zen, every event is only to look at.</div>`
-    + EVINFO.map(([k, c, n, x, p]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${WXICON[k]}</svg></span><span class="gtx"><b>${n}<span class="etag ${p ? 'p' : 'v'}">${p ? 'AFFECTS PLAY' : 'VISUAL'}</span></b><small>${x}</small></span></div>`).join('') + `</div></div></div></div>`; }
+    + EVINFO.map(([k, c, n, x, p]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${WXICON[k]}</svg></span><span class="gtx"><b>${n}<span class="etag ${p ? 'p' : 'v'}">${p ? 'AFFECTS PLAY' : 'VISUAL'}</span></b><small class="erar r${RARITY[k]}">${RARN[RARITY[k]]}</small><small>${x}</small></span></div>`).join('') + `</div></div></div></div>`; }
 const BAD = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'cock', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'fag', 'retard', 'rape', 'nazi', 'hitler', 'porn', 'penis', 'vagina', 'boob', 'jizz', 'wank', 'twat', 'kike', 'spic', 'chink', 'dildo', 'anus', 'tits', 'piss', 'damn', 'hell'];
 function nameProblem(n) { // nicknames stay friendly: letters, numbers and a few marks, nothing rude even when spelled with numbers
   if (n.length < 2) return 'At least 2 characters.';
@@ -4420,7 +4470,37 @@ function openUnlock(tier, ctx) { // ctx: { what } when a locked item was tapped,
   if (IS_NATIVE) loadPrices(); }
 function closeUnlock() { if (!unl.classList.contains('on')) return; unl.classList.remove('open'); unl.setAttribute('aria-hidden', 'true');
   setTimeout(() => { if (!unl.classList.contains('open')) { unl.classList.remove('on'); cancelAnimationFrame(unlRaf); } }, 420); }
-sheetDrag(pSheet, pSheet.querySelector('.pn'), '.grab,.shd,.tabs', closeSheet); sheetDrag(unl, unl.querySelector('.upn'), '.uhero', closeUnlock);
+// the Daily Challenge: today's run up top, then a calendar of every day; past days can be played again any time
+const dSheet = $('#dsheet'), drows = $('#drows'); let dMonth = null, dSel = null;
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const evMeta = k => EVINFO.find(e => e[0] === k) || [k, 'e-sky', k];
+const evChip = k => { const m = evMeta(k); return `<span class="dchip"><span class="gi ${m[1]}"><svg viewBox="0 0 24 24">${WXICON[k] || ''}</svg></span>${m[2]}</span>`; };
+function renderDaily() {
+  const today = dayKey(), ti = dayInfo(today), tb = bests['daily_' + today], st = dailyStreak(), now = new Date();
+  if (!dMonth) dMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  let h = `<div class="dtoday"><div class="dn"><b>Day ${ti.n}</b><small>${now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</small></div>
+    <div class="dchips">${evChip(ti.feat)}<span class="dchip pl">${ti.per} per side</span><span class="dchip pl">Hard</span></div>
+    <div class="dst">${tb ? `Today's best: <b>${tb}</b>` : 'Today\'s run is ready.'}${st > 1 ? ` · ${st}-day streak` : ''}</div>
+    <button class="dplay" data-dact="play" data-k="${today}">${tb ? 'PLAY AGAIN' : 'PLAY TODAY'}</button></div>`;
+  const y = dMonth.getFullYear(), m = dMonth.getMonth(), first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), lead = (first.getDay() + 6) % 7;
+  const canPrev = new Date(y, m, 1) > DAY0, canNext = y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth());
+  h += `<div class="dcalw"><div class="dmh"><button data-dact="prev" aria-label="Previous month"${canPrev ? '' : ' disabled'}>‹</button><b>${MONTHS[m]} ${y}</b><button data-dact="next" aria-label="Next month"${canNext ? '' : ' disabled'}>›</button></div><div class="dgrid">`
+    + ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => `<span class="wd">${d}</span>`).join('') + '<span></span>'.repeat(lead);
+  for (let d = 1; d <= days; d++) { const k = dateKey(new Date(y, m, d)), fut = k > today, did = !!bests['daily_' + k];
+    h += `<button data-dact="day" data-k="${k}" class="${fut ? 'fut' : ''}${did ? ' did' : ''}${k === today ? ' tod' : ''}${k === dSel ? ' sel' : ''}"${fut ? ' disabled' : ''} aria-label="${k}${did ? ', played' : ''}">${d}</button>`; }
+  h += `</div></div>`;
+  if (dSel && dSel !== today) { const i = dayInfo(dSel), b = bests['daily_' + dSel];
+    h += `<div class="dpick"><span class="tx"><b>Day ${i.n} · ${keyDate(dSel).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</b><small>${evMeta(i.feat)[2]} · ${i.per} per side${b ? ` · Best ${b}` : ''}</small></span><button data-dact="play" data-k="${dSel}">${b ? 'Replay' : 'Play'}</button></div>`; }
+  h += `<div class="foot">A new challenge every day, the same for everyone: its own columns and an event it is sure to bring. Past days can be played any time; only today's run goes to the world leaderboard.</div>`;
+  drows.innerHTML = h; }
+function openDaily() { if (state !== 'menu' && state !== 'dead') return; dMonth = null; dSel = null; renderDaily(); dSheet.classList.add('on'); dSheet.setAttribute('aria-hidden', 'false'); requestAnimationFrame(() => requestAnimationFrame(() => dSheet.classList.add('open'))); beep(520, .07, 'sine', .035, 160); }
+function closeDaily() { if (!dSheet.classList.contains('on')) return; dSheet.classList.remove('open'); dSheet.setAttribute('aria-hidden', 'true'); beep(680, .07, 'sine', .03, -160); setTimeout(() => { if (!dSheet.classList.contains('open')) dSheet.classList.remove('on'); }, 380); }
+$('#ddone').onclick = closeDaily; dSheet.querySelector('.bd').onclick = closeDaily;
+drows.addEventListener('click', e => { const b = e.target.closest('[data-dact]'); if (!b || b.disabled) return; const a = b.dataset.dact; haptic('selection');
+  if (a === 'prev' || a === 'next') { dMonth = new Date(dMonth.getFullYear(), dMonth.getMonth() + (a === 'next' ? 1 : -1), 1); renderDaily(); }
+  else if (a === 'day') { dSel = b.dataset.k === dayKey() ? null : b.dataset.k; renderDaily(); }
+  else if (a === 'play') { const k = b.dataset.k; closeDaily(); setTimeout(() => { if (state === 'dead') { show('#over', false); endDaily(); state = 'menu'; } dailyFor = k === dayKey() ? null : k; startDaily(); }, 200); } });
+sheetDrag(pSheet, pSheet.querySelector('.pn'), '.grab,.shd,.tabs', closeSheet); sheetDrag(dSheet, dSheet.querySelector('.pn'), '.grab,.shd', closeDaily); sheetDrag(unl, unl.querySelector('.upn'), '.uhero', closeUnlock);
 $('#uclose').onclick = closeUnlock; $('#unot').onclick = closeUnlock; unl.querySelector('.bd').onclick = closeUnlock;
 $('#uplans').addEventListener('click', e => { const b = e.target.closest('.uplan'); if (!b || +b.dataset.t <= ent) return; unlSel = +b.dataset.t; unlT0 = performance.now(); unlGold = 0; unlBurst = -1; unlDust = []; haptic('selection'); renderUnlock(); });
 $('#ucta').onclick = () => { if (unlBusy || ent >= 4 || !IS_NATIVE) return; const pr = planPrice(PLANS[unlSel - 1]); unlBusy = true; $('#umsg').textContent = ''; renderUnlock();
