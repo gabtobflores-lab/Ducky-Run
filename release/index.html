@@ -857,7 +857,7 @@ let sndPrev = '', sndAcc = {};
 function sndTick(dt) {
   if (!AB || ac.state !== 'running') return;
   const now = ac.currentTime, play = state === 'play', fxOn = sndOn('fx'), k = wx.kind, a = play && fxOn ? wx.a : 0, T = {};
-  if (k === 'storm') { T.rainHi = a; T.rainLo = a * .9; T.wind = a * .3; } else if (k === 'rain') { T.rainHi = a * .72; T.rainLo = a * .55; } else if (k === 'hail') { T.rainHi = a * .45; T.rainLo = a * .55; T.wind = a * .25; }
+  if (k === 'storm') { T.rainHi = a * .62; T.rainLo = a * .7; T.wind = a * (.75 + .5 * Math.pow(Math.max(0, Math.sin(t * .37 + 2)), 4)); } /* a storm, not just rain: less hiss, gusting wind under it; no louder overall */ else if (k === 'rain') { T.rainHi = a * .72; T.rainLo = a * .55; } else if (k === 'hail') { T.rainHi = a * .45; T.rainLo = a * .55; T.wind = a * .25; }
   if (k === 'wind') T.wind = a * (.35 + .65 * Math.abs(windOffset()) / 22); if (k === 'snow') { T.snowAir = a; T.wind = a * .18; }
   if (k === 'aurora') T.aurora = a; if (k === 'meteor') T.night = a; if (k === 'fog') T.fog = a; if (k === 'heat') T.heat = a; if (k === 'sun') T.heat = a * .4; if (k === 'bhole') { T.bhole = a; T.bholeAir = a * (.6 + .4 * Math.sin(t * .17)); } if (k === 'alien') T.ufo = a;
   if (k === 'golden') { T.golden = a; T.wind = a * .07; } if (k === 'eclipse') T.eclipse = a * (.3 + .7 * ECL.dk); if (k === 'halo') T.halo = a; if (k === 'firefly') T.dusk = a; if (k === 'blossom') { T.spring = a; T.wind = a * (.1 + .12 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
@@ -871,6 +871,7 @@ function sndTick(dt) {
     if ((k === 'rain' || k === 'storm') && r('drop', (k === 'storm' ? 9 : 6) * a)) hush(2200 + Math.random() * 3500, 7, .035, .007 * a, 0, Math.random() * .1, .15); // single drops close by
     if ((k === 'wind' || k === 'storm') && r('rustle', (k === 'wind' ? 1.4 : .7) * a)) { const f = 2600 + Math.random() * 2600, n = 3 + (Math.random() * 4 | 0); for (let j = 0; j < n; j++) hush(f * (.85 + Math.random() * .3), 1.4, .07 + Math.random() * .08, .0024 * a, 0, j * (.03 + Math.random() * .05), .1); } // leaves rustling somewhere close
     if (k === 'wind' && r('whistle', .12 * a)) hush(900 + Math.random() * 500, 14, 1.8, .0024 * a, 1300 + Math.random() * 400, 0, .4); // the wind finding a gap, a soft whistle
+    if (k === 'storm' && r('rumble', .14 * a)) thunder(0, .022 + Math.random() * .016, 3.2 + Math.random() * 1.5); // thunder rolling somewhere far off between the strikes
     if ((k === 'rain' || k === 'storm') && r('plink', .9 * a)) bell(380 + Math.random() * 260, .0018 * a, .35, 'fx', .25); // a drip landing in a puddle
     if (k === 'hail' && r('hail', 9 * a)) { bell(3200 + Math.random() * 2800, .0024 * a, .09, 'fx', .1); hush(5000, 4, .025, .005 * a); } // ice ticking on the ground
     if (k === 'snow' && r('snow', .32 * a)) bell([1760, 1975.5, 2217.5, 2637][Math.random() * 4 | 0], .006 * a, 3, 'fx', .9); // a rare glint of ice crystals
@@ -1542,10 +1543,10 @@ function drawSpDeath(i, c, r, P) { // each weather takes the ball in its own sho
         const bl = .3 + .7 * Math.max(0, Math.sin(tt / p.per * 3.14 + p.ph)), sz = 2.2 + p.s * 2; ctx.globalAlpha = life * bl * .55; ctx.drawImage(softBlob('255,206,100'), px - sz * 4, py - sz * 4, sz * 8, sz * 8); ctx.globalAlpha = life * bl; ctx.drawImage(softBlob('255,252,220'), px - sz, py - sz, sz * 2, sz * 2); } } }
   else if (sp === 'petal') { // the ball opens into a blossom like those on the branches, turns a little, then its petals let go and flutter away
     const q = clamp01(k / .32), op = ease(q); if (k < .5) { const fade = 1 - clamp01((k - .3) / .2); if (q < 1) drawBall(x, y, r * (1 - .6 * op), P, side, 1, 1, .8, .5 * q, (1 - op) * fade + .001);
-      const fs = r * (1 + 1.7 * op) * (1 + .05 * Math.sin(k * 20) * (1 - q)); ctx.save(); ctx.translate(x, y); ctx.rotate(op * .5); ctx.globalAlpha = op * fade; ctx.drawImage(AFLOWER(), -fs, -fs, fs * 2, fs * 2); ctx.restore();
+      const fs = r * (1 + 1.7 * op) * (1 + .05 * Math.sin(k * 20) * (1 - q)); ctx.save(); ctx.translate(x, y); ctx.rotate(op * .5); ctx.globalAlpha = op * fade; ctx.drawImage(AFLOWER(P), -fs, -fs, fs * 2, fs * 2); ctx.restore();
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = op * fade * .35; ctx.drawImage(softBlob('255,226,236'), x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); ctx.globalCompositeOperation = 'source-over'; } // a soft glow as it opens
     if (k > .3) { const tt = k - .3; for (const [j, p] of c.ps.entries()) { const dmp = 1 - Math.exp(-tt * 3), px = p.x + p.vx * dmp / 3 + Math.sin(tt * 2.2 + p.ph) * 18 * tt, py = p.y + p.vy * dmp / 3 + 38 * tt * tt, life = smooth(clamp01(1 - (tt - .8) / .75)) * smooth(clamp01(tt / .1)), tb = Math.cos(tt * 5 * p.s + p.ph), sz = 1.2 + p.s * .9;
-        ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * tt * .5 + Math.sin(tt * 3 + p.ph) * .6); ctx.scale(sz * (.18 + .82 * Math.abs(tb)), sz); ctx.globalAlpha = life; ctx.drawImage(PETAL(tb < 0), -6, -7, 12, 14); ctx.restore(); } } }
+        ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * tt * .5 + Math.sin(tt * 3 + p.ph) * .6); ctx.scale(sz * (.18 + .82 * Math.abs(tb)), sz); ctx.globalAlpha = life; ctx.drawImage(j % 3 === 2 ? PETAL(tb < 0) : BPETAL(P), -6, -7, 12, 14); /* mostly the ball's own colour, with a few pink cherry petals among them */ ctx.restore(); } } }
   else if (sp === 'dark') { // a dark disc slides across the ball like the moon across the sun; a diamond ring flashes at the last moment, then a corona opens out and fades
     const q = clamp01(k / .55), mx = x - r * 2.1 * (1 - ease(q)), my = y - r * 1.2 * (1 - ease(q));
     const dfo = 1 - smooth(clamp01((k - .5) / .25)); if (k < .76) { ctx.globalAlpha = 1; drawBall(x, y, r, P, side, 1, 1, .5, 0, dfo); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .35 * q; ctx.strokeStyle = 'rgba(235,240,255,1)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, r * 1.08, 0, 7); ctx.stroke(); ctx.globalCompositeOperation = 'source-over';
@@ -3238,10 +3239,12 @@ function lakeRings(a) { // rings spreading on the lake where petals land
   for (let i = 0; i < 6; i++) { const per = 2.6 + i * .6, u = t / per + i * .37, ph = u % 1, cy = Math.floor(u), x = W * hash(cy * 7.1 + i), y = H * (.89 + .1 * hash(cy * 3.3 + i * 2)), r = ph * 28;
     ctx.strokeStyle = `rgba(255,246,250,${(1 - ph) * .45 * a})`; ctx.beginPath(); ctx.ellipse(x, y, r, r * .28, 0, 0, 7); ctx.stroke(); ctx.strokeStyle = `rgba(255,246,250,${(1 - ph) * .25 * a})`; ctx.beginPath(); ctx.ellipse(x, y, r * .6, r * .17, 0, 0, 7); ctx.stroke(); }
   ctx.restore(); }
-const AFLOWER = () => sprite('aflower', 192, 192, g => { const c = 96, r = 70; // one of the tree's blossoms, drawn exactly as on the branches: five oval petals, deep pink at the heart, pale at the tips, a small deep pink centre
-  const pg = g.createRadialGradient(c, c, r * .1, c, c, r * 1.05); pg.addColorStop(0, 'rgb(240,164,196)'); pg.addColorStop(.75, 'rgb(251,212,228)'); pg.addColorStop(1, 'rgb(251,212,228)'); g.fillStyle = pg; g.beginPath();
+const AFLOWER = (P) => sprite('aflower' + P.base, 192, 192, g => { const c = 96, r = 70; // the ball becomes one of the tree's blossoms, in the ball's own colours: five oval petals, deep at the heart, pale at the tips, with a soft pink centre
+  const pg = g.createRadialGradient(c, c, r * .1, c, c, r * 1.05); pg.addColorStop(0, P.deep); pg.addColorStop(.35, P.base); pg.addColorStop(.8, P.hi); pg.addColorStop(1, P.hi); g.fillStyle = pg; g.beginPath();
   for (let p = 0; p < 5; p++) { const a = -1.5708 + p * 1.2566, px = c + Math.cos(a) * r * .52, py = c + Math.sin(a) * r * .52; g.moveTo(px + r * .52, py); g.ellipse(px, py, r * .52, r * .4, a, 0, 7); } g.fill();
-  g.fillStyle = 'rgba(206,80,130,.85)'; g.beginPath(); g.arc(c, c, r * .16, 0, 7); g.fill(); });
+  const hg = g.createRadialGradient(c, c, 0, c, c, r * .3); hg.addColorStop(0, 'rgba(232,96,150,.9)'); hg.addColorStop(1, 'rgba(250,170,200,0)'); g.fillStyle = hg; g.beginPath(); g.arc(c, c, r * .3, 0, 7); g.fill(); });
+const BPETAL = (P) => sprite('bpet' + P.base, 48, 56, g => { const r = 26, cx = 24, cy = 28, fy = cy + r * .52; const pg = g.createRadialGradient(cx, fy, r * .1, cx, fy, r * 1.05); // a single petal of that blossom, in the ball's colours
+  pg.addColorStop(0, P.deep); pg.addColorStop(.35, P.base); pg.addColorStop(.8, P.hi); pg.addColorStop(1, P.hi); g.fillStyle = pg; g.beginPath(); g.ellipse(cx, cy, r * .4, r * .52, 0, 0, 7); g.fill(); });
 function drawPetals(a, near) { // petals tumbling down on the breeze, turning as they fall; now and then a gust carries them sideways
   if (!near) { const dt = Math.min(.05, Math.max(0, t - petT)); petT = t; petG += dt * (16 + 110 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
   for (const p of PET) { if (near ? p.z < .86 : p.z >= .86) continue; const dn = clamp01((a * 1.2 - (p.x * 7.31 + p.y * 3.17) % 1) / .2); if (dn <= 0) continue;
