@@ -154,8 +154,8 @@
   #ocont{display:none;flex-direction:column;align-items:center;gap:1px;background:linear-gradient(180deg,#e6f6ff,#c8e9fb);color:#1d6fa5;box-shadow:0 0 0 1.5px rgba(61,160,220,.28) inset,0 4px 14px rgba(61,160,220,.18)}#ocont.on{display:flex}#ocont small{font-size:11px;font-weight:700;letter-spacing:.04em;color:#4b93c2;text-transform:none}
   #ocont:active{box-shadow:0 0 0 1.5px rgba(61,160,220,.4) inset}
   .shd-i{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
-  #oearn{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:0}#oearn .earn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,173,51,.14);color:#b8650a;font-size:14px;font-weight:800}
-  #oearn small{font-size:12px;font-weight:700;color:var(--ink-3)}
+  #oearn{display:flex;flex-direction:column;align-items:center;gap:1px;min-height:0;margin-top:-8px}#oearn .earn{display:inline-flex;align-items:center;gap:4px;color:#c27a1c;font-size:12.5px;font-weight:700;opacity:.9}#oearn .earn .shd-i{width:13px;height:13px}
+  #oearn small{font-size:11px;font-weight:600;color:var(--ink-3)}
   .tag:not(:empty){padding:4px 12px;border-radius:99px;color:#fff;background:linear-gradient(180deg,var(--gold-hi),var(--gold));box-shadow:0 4px 12px rgba(233,162,59,.35);animation:tagpop .45s var(--spring) both}
   @keyframes tagpop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
   #ocombo{font-size:14px;font-weight:800;letter-spacing:.06em;color:var(--gold);min-height:18px;margin-top:-6px}
@@ -854,7 +854,7 @@ function bankRun() { // the shards caught this run go in the wallet; finishing t
   const cb = fx.maxCombo >= 3 && !runCont ? (fx.maxCombo - 1) * 10 : 0; if (cb) { add += cb; note.push(`Best combo ×${fx.maxCombo}: +${cb}`); } // a high combo pays out in shards
   if (mode === 'daily' && !dailyFor && score > 0 && !wal.dd[today]) { wal.dd[today] = 1; add += ECON.daily; note.push(`+${ECON.daily} Daily bonus`); }
   if (mode === 'daily' && !dailyFor && score > 0) { const st = dailyStreak(); if (st > 0 && st % ECON.streakDays === 0 && wal.sw !== today) { wal.sw = today; wal.cont++; note.push(`${st}-day streak: a free continue`); } }
-  wal.sh += add; runShards = 0; runNote = add > 0 || note.length ? `<span class="earn">${SHARD_SVG}+${add.toLocaleString()} Mirror Shards</span>${note.length ? `<small>${note.join(' · ')}</small>` : ''}` : ''; saveWallet(); }
+  wal.sh += add; runShards = 0; runNote = add > 0 || note.length ? `<span class="earn">${SHARD_SVG}+${add.toLocaleString()} Mirror Shards</span>` : ''; /* just the total, kept small */ saveWallet(); }
 function recordRun(sc) { // this phone's top ten runs for each setting, plus Game Center when signed in
   if (mode === 'zen') return 0;
   bankRun(); // Zen runs are for relaxing: nothing is ranked
@@ -1441,7 +1441,7 @@ function update(dt) {
         if (o.k === 'b') { if (mode !== 'zen') return die(x, o.y, bi, o); if (!o.zen) { o.zen = true; combo = 1; fx.near = 1; burst(bx[bi], BY, 6, '#ffffff', 140, .4, 0, .8); haptic('soft'); } continue; } // Zen: nothing breaks, the combo just resets
         if (!o.got) {
           o.got = true; const gv = combo * (wxOn('golden') ? 3 : o.ff ? 2 : 1); if (mode !== 'zen' && !previewEv) runShards += ECON.perGem * (wxOn('golden') ? 3 : o.ff ? 2 : 1); /* Mirror Shards: worth more in golden hour and among the fireflies */ score = mode === 'normal' ? Math.min(GOAL, score + gv) : score + gv; if (gv > combo) float(x, o.y - 44, '×' + gv / combo, '#f2a93b'); /* golden hour: every gem counts triple */ combo = Math.min(wxOn('blossom') ? 12 : 8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
-          if (combo === 2 && !prof.comboSeen) { prof.comboSeen = 1; saveBests(); float(W / 2, 196, 'Gems in a row multiply your points', '#e9a23b'); } else if (combo === 5 || combo === 8 || combo === 12) float(W / 2, 196, `COMBO ×${combo}!`, '#f08f1c'); // the combo explains itself the first time, and cheers its milestones
+          if (combo === 5 || combo === 8 || combo === 12) float(W / 2, 196, `COMBO ×${combo}!`, '#f08f1c'); // the combo explains itself the first time, and cheers its milestones
           fx.gem = 1; fx.combo = 1; fx.maxCombo = Math.max(fx.maxCombo, combo); // visual feedback only
           burst(x, o.y, 7, '#ffc867', 160, .4, 60, .9); burst(x, o.y, 3, '#ffffff', 120, .3, 0, .8); float(x, o.y - 24, '+' + (combo - 1 || 1), '#e9a23b');
         }
