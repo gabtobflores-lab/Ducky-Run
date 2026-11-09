@@ -2440,11 +2440,11 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
   }
   { vec2 g=P*vec2(90.,160.);vec2 id=floor(g);float h=hs(id+31.);if(h>.965&&uv.y>.9){vec2 f=fract(g)-.5;float tw=pow(max(0.,sin(t*(1.2+h*3.)+h*30.)),20.);c+=vec3(1.)*exp(-dot(f,f)*60.)*tw*.9;} } /* the snow glitters */
   { const float MX=.48,MY=.5,Hh=.3; /* spindrift: fine snow torn off the Matterhorn's summit by the wind, streaming away in silky streaks with glittering ice grains */
-    vec2 q=vec2((P.x-MX*asp)/Hh,(MY-uv.y)/Hh);float s0=q.x+.04;
-    if(bk>.5&&s0>-.02&&s0<1.5){float gust=.85+.15*sin(t*.45)+.07*sin(t*1.6);float yc=-.01+s0*.04+.02*sin(s0*3.5-t*.6)*smoothstep(0.,.4,s0); /* it streams off the tip almost level, lifting only slightly */ /* it lifts off the tip and rises a little as it goes */
-      float w=(.012+.09*s0)*(1.+.25*sin(s0*6.-t*1.3));float dy=(q.y-yc)/w;
+    vec2 q=vec2((P.x-MX*asp)/Hh,(MY-uv.y)/Hh);float s0=q.x+.062; /* measured from the summit's very tip */
+    if(bk>.5&&s0>-.03&&s0<1.6){float gust=.85+.15*sin(t*.45)+.07*sin(t*1.6);float yc=-.012+s0*.05+.02*sin(s0*3.5-t*.6)*smoothstep(.1,.5,s0); /* it peels off the tip, hugs the crest, then streams away on the wind */ /* it streams off the tip almost level, lifting only slightly */ /* it lifts off the tip and rises a little as it goes */
+      float w=(.016+.08*s0)*(1.+.25*sin(s0*6.-t*1.3)*smoothstep(.05,.3,s0));float dy=(q.y-yc)/w;
       float fib=fbm(vec2(s0*3.-t*.9,dy*2.2+.4*sin(s0*4.-t)))*.6+fbm(vec2(s0*9.-t*1.8,dy*4.))*.4; /* silky fibres racing along the wind */
-      float body=exp(-dy*dy*.9)*smoothstep(-.02,.04,s0)*exp(-s0*1.6/gust);
+      float body=exp(-dy*dy*.9)*smoothstep(-.015,.01,s0)*exp(-s0*1.5/gust)*(1.+.6*exp(-s0*12.)); /* densest right at the tip where it tears off */
       float a=body*smoothstep(.25,.6,fib+.15*exp(-s0*4.));float wisps=exp(-dy*dy*.25)*smoothstep(.62,.8,fib)*exp(-s0*1.)*smoothstep(.05,.3,s0)*.5; /* torn wisps trailing off its edges */
       vec2 gq=vec2((s0*90.-t*30.),q.y*90./max(w*6.,.3));vec2 gid=floor(gq);float gh=hs(gid+3.);float grain=step(.9,gh)*smoothstep(.45,.0,length(fract(gq)-.5))*pow(max(0.,sin(t*5.+gh*40.)),3.)*body*2.; /* ice grains glittering in the sun */
       c=mix(c,mix(vec3(.88,.93,1.),vec3(1.),smoothstep(.45,.8,fib)),clamp((a*.95+wisps)*.95,0.,.92));c+=vec3(1.)*grain;} }
@@ -3286,11 +3286,11 @@ const PUFF = () => sprite('puff', 360, 160, (g, w, h) => { // one billowing bank
   const R = Math.random, blobs = []; for (let i = 0; i < 14; i++) { const x = w * (.12 + .76 * i / 13) + (R() - .5) * 20, r = h * (.2 + .22 * Math.sin(i / 13 * Math.PI) + R() * .08); blobs.push([x, h * .72 - r * .55, r]); }
   for (const [x, y, r] of blobs) { const rg = g.createRadialGradient(x - r * .25, y - r * .35, r * .1, x, y, r); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(.6, 'rgba(242,247,255,.98)'); rg.addColorStop(1, 'rgba(214,226,248,0)'); g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
   const sh = g.createLinearGradient(0, h * .45, 0, h); sh.addColorStop(0, 'rgba(180,198,236,0)'); sh.addColorStop(1, 'rgba(176,196,236,.55)'); g.globalCompositeOperation = 'source-atop'; g.fillStyle = sh; g.fillRect(0, 0, w, h); g.globalCompositeOperation = 'source-over'; });
-const DRIFT = Array.from({ length: 8 }, (_, i) => ({ x: Math.random(), row: i % 4, sp: .004 + Math.random() * .008, ph: Math.random() * 7, s: .8 + Math.random() * .5 }));
+const DRIFT = Array.from({ length: 10 }, (_, i) => ({ x: Math.random(), row: i % 4, sp: .012 + Math.random() * .014, ph: Math.random() * 7, s: .8 + Math.random() * .5 }));
 function drawCloudDrift(a) { // banks of cloud drifting slowly across the sea of cloud below us, rising and settling, so the valley breathes
   ctx.save(); const pf = PUFF(), k = a * clamp01(skyE * 1.15);
   for (const d of DRIFT.slice().sort((p, q) => p.row - q.row)) { const dep = d.row / 3, wd = W * (.9 + .7 * dep) * d.s, hd = wd * .3, y = H * (.86 + .045 * d.row) + Math.sin(t * .35 + d.ph) * 4 * (1 + dep);
-    const x = ((d.x * (W + wd) + t * W * d.sp * (1 + dep)) % (W + wd)) - wd; ctx.globalAlpha = k * (.3 + .35 * dep); ctx.drawImage(pf, x, y - hd * .7, wd, hd); }
+    const x = ((d.x * (W + wd) + t * W * d.sp * (1 + dep)) % (W + wd)) - wd; ctx.globalAlpha = k * (.45 + .4 * dep); ctx.drawImage(pf, x, y - hd * .7, wd, hd); }
   ctx.restore(); ctx.globalAlpha = 1; }
 function drawValleyMist(a) { // soft veils of mist drifting slowly across the valley in front of the mountain
   ctx.save(); const b = softBlob('235,242,255');
