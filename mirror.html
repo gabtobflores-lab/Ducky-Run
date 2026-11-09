@@ -2441,13 +2441,12 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
   { vec2 g=P*vec2(90.,160.);vec2 id=floor(g);float h=hs(id+31.);if(h>.965&&uv.y>.9){vec2 f=fract(g)-.5;float tw=pow(max(0.,sin(t*(1.2+h*3.)+h*30.)),20.);c+=vec3(1.)*exp(-dot(f,f)*60.)*tw*.9;} } /* the snow glitters */
   { const float MX=.48,MY=.5,Hh=.3; /* spindrift: fine snow torn off the Matterhorn's summit by the wind, streaming away in silky streaks with glittering ice grains */
     vec2 q=vec2((P.x-MX*asp)/Hh,(MY-uv.y)/Hh);float s0=q.x+.062; /* measured from the summit's very tip */
-    if(bk>.5&&s0>-.03&&s0<1.6){float gust=.85+.15*sin(t*.45)+.07*sin(t*1.6);float yc=-.012+s0*.05+.02*sin(s0*3.5-t*.6)*smoothstep(.1,.5,s0); /* it peels off the tip, hugs the crest, then streams away on the wind */ /* it streams off the tip almost level, lifting only slightly */ /* it lifts off the tip and rises a little as it goes */
-      float w=(.016+.08*s0)*(1.+.25*sin(s0*6.-t*1.3)*smoothstep(.05,.3,s0));float dy=(q.y-yc)/w;
-      float fib=fbm(vec2(s0*3.-t*.9,dy*2.2+.4*sin(s0*4.-t)))*.6+fbm(vec2(s0*9.-t*1.8,dy*4.))*.4; /* silky fibres racing along the wind */
-      float body=exp(-dy*dy*.9)*smoothstep(-.015,.01,s0)*exp(-s0*1.5/gust)*(1.+.6*exp(-s0*12.)); /* densest right at the tip where it tears off */
-      float a=body*smoothstep(.25,.6,fib+.15*exp(-s0*4.));float wisps=exp(-dy*dy*.25)*smoothstep(.62,.8,fib)*exp(-s0*1.)*smoothstep(.05,.3,s0)*.5; /* torn wisps trailing off its edges */
-      vec2 gq=vec2((s0*90.-t*30.),q.y*90./max(w*6.,.3));vec2 gid=floor(gq);float gh=hs(gid+3.);float grain=step(.9,gh)*smoothstep(.45,.0,length(fract(gq)-.5))*pow(max(0.,sin(t*5.+gh*40.)),3.)*body*2.; /* ice grains glittering in the sun */
-      c=mix(c,mix(vec3(.88,.93,1.),vec3(1.),smoothstep(.45,.8,fib)),clamp((a*.95+wisps)*.95,0.,.92));c+=vec3(1.)*grain;} }
+    if(bk>.5&&s0>-.03&&s0<1.6){float gust=.85+.15*sin(t*.45)+.07*sin(t*1.6);float yc=-.008+s0*.1+.02*sin(s0*3.5-t*.6)*smoothstep(.1,.5,s0); /* it peels off the tip, hugs the crest, then streams away on the wind */ /* it streams off the tip almost level, lifting only slightly */ /* it lifts off the tip and rises a little as it goes */
+      float w=(.022+.12*s0)*(1.+.2*sin(s0*6.-t*1.3)*smoothstep(.05,.3,s0)); /* as broad as the original banner cloud */float dy=(q.y-yc)/w;
+      float f=fbm(vec2(s0*5.-t*.5,dy*.8+.15*sin(t*.3))+vec2(2.,7.)),f2=fbm(vec2(s0*9.-t*.8,dy*1.2)+vec2(5.,1.)); /* the soft, smooth wisp of the original banner cloud, its texture drifting along with the wind */
+      float body=exp(-dy*dy)*smoothstep(-.015,.02,s0)*exp(-s0*1.5/gust)*(1.+.5*exp(-s0*10.));
+      float a=body*smoothstep(.22,.62,f*.75+f2*.25+.15*exp(-s0*5.));
+      c=mix(c,mix(vec3(.86,.92,1.),vec3(1.),smoothstep(.35,.75,f)),clamp(a*1.1,0.,.95));} }
   gl_FragColor=vec4(grade(c)+dith(),1.);}`,
     fog: `/* Apple-style fog: a pale, milky, low-contrast sky; wide flat banks drifting slowly at three depths; a hidden sun glowing softly through; denser near the ground */
 float bandF(float y,float c,float w){float d=(y-c)/w;return exp(-d*d);}
@@ -2674,7 +2673,7 @@ const float FX=.5;
 float rfb(vec2 p){float v=0.,a=.5;mat2 m=mat2(.8,-.6,.6,.8);for(int k=0;k<5;k++){v+=a*vn(p);p=m*p*2.1+vec2(1.7,9.2);a*=.5;}return v/.97;}
 const float FH=.165,FB=.8;
 float pl(float v,vec2 a,vec2 b){return mix(a.y,b.y,clamp((v-a.x)/(b.x-a.x),0.,1.));}
-float fujiR(float v){ /* Mt Fuji's skyline, measured on a grid from the reference view across the lake: straight, steep upper slopes from a small crater top, easing into the long base (v across, h up, in units of its height above the far shore) */
+float fujiR(float v){ /* Mt Fuji's skyline, traced from the reference view: the long slopes and the broad, gently uneven summit plateau of the crater, highest near its eastern end (v across, h up, in units of its height above the far shore) */
   float h=0.;
   if(v<-3.200)h=pl(v,vec2(-4.200,0.000),vec2(-3.200,0.100));
   else if(v<-2.320)h=pl(v,vec2(-3.200,0.100),vec2(-2.320,0.210));
@@ -2682,19 +2681,23 @@ float fujiR(float v){ /* Mt Fuji's skyline, measured on a grid from the referenc
   else if(v<-1.630)h=pl(v,vec2(-1.970,0.270),vec2(-1.630,0.340));
   else if(v<-1.290)h=pl(v,vec2(-1.630,0.340),vec2(-1.290,0.430));
   else if(v<-0.940)h=pl(v,vec2(-1.290,0.430),vec2(-0.940,0.530));
-  else if(v<-0.770)h=pl(v,vec2(-0.940,0.530),vec2(-0.770,0.640));
-  else if(v<-0.600)h=pl(v,vec2(-0.770,0.640),vec2(-0.600,0.770));
-  else if(v<-0.430)h=pl(v,vec2(-0.600,0.770),vec2(-0.430,0.880));
-  else if(v<-0.170)h=pl(v,vec2(-0.430,0.880),vec2(-0.170,0.970));
-  else if(v<-0.060)h=pl(v,vec2(-0.170,0.970),vec2(-0.060,0.992));
-  else if(v<0.000)h=pl(v,vec2(-0.060,0.992),vec2(0.000,1.000));
-  else if(v<0.040)h=pl(v,vec2(0.000,1.000),vec2(0.040,0.990));
-  else if(v<0.086)h=pl(v,vec2(0.040,0.990),vec2(0.086,0.970));
-  else if(v<0.260)h=pl(v,vec2(0.086,0.970),vec2(0.260,0.880));
-  else if(v<0.430)h=pl(v,vec2(0.260,0.880),vec2(0.430,0.770));
-  else if(v<0.600)h=pl(v,vec2(0.430,0.770),vec2(0.600,0.670));
-  else if(v<0.770)h=pl(v,vec2(0.600,0.670),vec2(0.770,0.570));
-  else if(v<0.940)h=pl(v,vec2(0.770,0.570),vec2(0.940,0.490));
+  else if(v<-0.735)h=pl(v,vec2(-0.940,0.530),vec2(-0.735,0.640));
+  else if(v<-0.455)h=pl(v,vec2(-0.735,0.640),vec2(-0.455,0.830));
+  else if(v<-0.360)h=pl(v,vec2(-0.455,0.830),vec2(-0.360,0.910));
+  else if(v<-0.270)h=pl(v,vec2(-0.360,0.910),vec2(-0.270,0.965));
+  else if(v<-0.200)h=pl(v,vec2(-0.270,0.965),vec2(-0.200,0.980));
+  else if(v<-0.080)h=pl(v,vec2(-0.200,0.980),vec2(-0.080,0.984));
+  else if(v<-0.020)h=pl(v,vec2(-0.080,0.984),vec2(-0.020,1.000));
+  else if(v<0.010)h=pl(v,vec2(-0.020,1.000),vec2(0.010,0.992));
+  else if(v<0.050)h=pl(v,vec2(0.010,0.992),vec2(0.050,0.990));
+  else if(v<0.100)h=pl(v,vec2(0.050,0.990),vec2(0.100,0.972));
+  else if(v<0.145)h=pl(v,vec2(0.100,0.972),vec2(0.145,0.940));
+  else if(v<0.210)h=pl(v,vec2(0.145,0.940),vec2(0.210,0.900));
+  else if(v<0.320)h=pl(v,vec2(0.210,0.900),vec2(0.320,0.835));
+  else if(v<0.470)h=pl(v,vec2(0.320,0.835),vec2(0.470,0.760));
+  else if(v<0.600)h=pl(v,vec2(0.470,0.760),vec2(0.600,0.680));
+  else if(v<0.770)h=pl(v,vec2(0.600,0.680),vec2(0.770,0.580));
+  else if(v<0.940)h=pl(v,vec2(0.770,0.580),vec2(0.940,0.490));
   else if(v<1.290)h=pl(v,vec2(0.940,0.490),vec2(1.290,0.410));
   else if(v<1.630)h=pl(v,vec2(1.290,0.410),vec2(1.630,0.340));
   else if(v<1.970)h=pl(v,vec2(1.630,0.340),vec2(1.970,0.290));
@@ -2735,7 +2738,7 @@ float taper(vec2 q,vec2 b,float len,float w){ /* one finger of snow: from the sn
 float gapl(vec2 q,float v0,float w,float tm,float bend){ /* a narrow gully running from the snow line up toward the summit, each its own length and gently curved, fading out well before the top */
   vec2 b=vec2(v0,snowH(v0)),s=vec2(-.04+v0*.25,1.);vec2 d=s-b;float t=clamp(dot(q-b,d)/dot(d,d),0.,1.);vec2 nrm=normalize(vec2(-d.y,d.x));
   float dist=length(q-b-d*t-nrm*bend*sin(t*3.1416));float ww=w*1.8*(1.-t/tm);return smoothstep(ww+.012,ww-.004,dist)*step(t,tm)*smoothstep(-.02,.04,t);}
-float fujiTop(float x){float v=x/FH;float h=fujiR(v)+.004*(vn(vec2(v*38.,1.))-.5)*smoothstep(.15,.0,abs(v))+.002*(ridge(vec2(x*60.,2.),3)-.5)*smoothstep(.15,.4,abs(v));return FB-FH*h;} /* small bumps along the rim: the peaks of the crater */
+float fujiTop(float x){float v=x/FH;float h=fujiR(v)+.006*(vn(vec2(v*30.,1.))-.5)*smoothstep(.32,.15,abs(v+.06))+.002*(ridge(vec2(x*60.,2.),3)-.5)*smoothstep(.15,.4,abs(v));return FB-FH*h;} /* small bumps along the rim: the peaks of the crater */
 vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float m=smoothstep(top-px*1.2,top+px*1.2,uv.y);if(m<=0.)return vec4(0.);
   float dd=uv.y-top;float hgt=(FB-uv.y)/FH; /* 1 at the summit, 0 at the foot */
   float v=mx/FH,u=-v;float r=length(vec2(v,(1.-hgt))); /* lit from the upper left, as in the reference */
@@ -2783,21 +2786,32 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   rb=max(rb,gapl(Q,0.370,0.0058,0.3,-0.001));
   rb=max(rb,gapl(Q,0.470,0.0084,0.48,0.013));
   rb=max(rb,gapl(Q,0.560,0.0089,0.56,-0.009));
-  float edge=(snowH(v-.05)+snowH(v)*2.+snowH(v+.05))*.25; /* the measured snow line, smoothed */
-  float gl=pow(rfb(vec2(ang*16.,3.)),3.2)*1.6+pow(rfb(vec2(ang*44.,7.)),4.5)*.9; /* the gullies: snow lies longer in them, so the snow line runs down them in long, uneven fingers */
-  float sl2=edge+.05-.3*gl*(.5+.5*side)*(1.+.6*smoothstep(-.2,-.7,v))+.014*(rfb(vec2(ang*95.,hgt*18.))-.5);
-  float snow=smoothstep(sl2-.0035,sl2+.0035,hgt)*step(hgt,1.02);
-  float gap=gp*side;float lower=smoothstep(.1,.5,dep);
-  vec3 lit=mix(vec3(.93,.97,1.),vec3(.74,.84,.98),smoothstep(.15,1.1,dep)); /* sunlit snow with a cold blue cast, as in the reference */vec2 bq=vec2(ang*16.+1.1*rfb(vec2(ang*3.,hgt*1.5)),hgt*1.3);float rib=1.-abs(rfb(vec2(ang*10.+.9*rfb(vec2(ang*2.5,hgt*1.2)),hgt*1.1)+3.)*2.-1.);float bnd=smoothstep(.6,.76,rib)*smoothstep(.06,.35,dep); /* crisp ice-blue gaps between ribbons of snow running down the slope */ /* streaks lower down only, none converging on the summit */ /* soft painted streaks running down the sunlit snow */ /* soft wide bands down the sunlit snow */
-  lit=mix(lit,mix(vec3(.55,.68,.93),vec3(.38,.52,.86),dep),bnd*.85);lit=mix(lit,vec3(1.),smoothstep(.93,.98,rib)*.5*(1.-dep)); /* and bright highlights along the ribbons' crests */lit=mix(lit,lit*vec3(.82,.87,.97),gp*.4); /* clean sunlit snow, the gullies only faint soft hollows */
-  vec3 shd=mix(vec3(.45,.56,.86),vec3(.3,.4,.72),smoothstep(.05,.9,dep));shd=mix(shd,shd*vec3(.8,.85,.95),gu*.5);shd=mix(shd,shd*1.22,smoothstep(.52,.64,rfb(bq*vec2(1.,1.)+11.))*smoothstep(.1,.5,dep)*.8); /* paler streaks in the shaded snow */ /* in shadow the snow is only a little lighter than the mountain, as in the reference */ /* soft blue shade, smooth */
-   /* the ridge between the faces catches the light */
-  vec3 sc=mix(shd,lit,side);sc=mix(sc,vec3(1.),smoothstep(.01,0.,dd)*side*.45);
-  float wedge=smoothstep(.02,.0,abs(v-.03-(1.-hgt)*.3)-(1.-hgt)*.2)*smoothstep(.96,.9,hgt)*smoothstep(.6,.75,hgt); /* a dark wedge of rock under the summit nub */
-  sc=mix(sc,mix(vec3(.42,.5,.8),vec3(.6,.68,.9),side),wedge*.35);
+  /* the snowcap as an illustrator paints it: a pale blue cap down to the measured snow line, laid over with long brush strokes of bright snow running parallel to each slope;
+     the strokes that run past the snow line become the long fingers of snow down the gullies */
+  float edge=(snowH(v-.05)+snowH(v)*2.+snowH(v+.05))*.25;float sky=fujiR(v);float dsk=max(sky-hgt,0.);
+  float base=smoothstep(edge+.03,edge+.038,hgt+.03*(rfb(vec2(v*22.,hgt*6.))-.5)); /* a ragged lower edge */ /* the solid cap stops a little above the snow line: the strokes make the ragged edge */
+  float stL=0.,stR=0.;
+  for(int i=0;i<90;i++){float fi=float(i);float sdR=step(56.,fi); /* more strokes on the sunlit side, as in the reference */
+    float h1=hs(vec2(fi,1.)),h2=hs(vec2(fi,2.)),h3=hs(vec2(fi,3.)),h4=hs(vec2(fi,4.)),h5=hs(vec2(fi,5.));
+    vec2 dir=sdR<.5?normalize(vec2(-.72,-.43)):normalize(vec2(.66,-.5)); /* down each slope, parallel to the skyline */
+    float sv=sdR<.5?mix(-.32,.03,h1):mix(-.03,.14,h1);vec2 st=vec2(sv,fujiR(sv)-.006-.04*h2)+dir*(pow(h3,.8)*.5); /* strokes start at every depth down the cap */
+    float L=(.12+.45*h4)*(sdR<.5?1.:.7),wd=.006+.014*h5;vec2 e=Q-st;float al=dot(e,dir)/L;if(al<0.||al>1.)continue;
+    vec2 nrm=vec2(-dir.y,dir.x);float off=dot(e,nrm)-.01*sin(al*3.+fi*1.7)*L; /* each stroke gently bowed */
+    float tp=wd*pow(1.-al,.8)*smoothstep(0.,.12,al);float k=smoothstep(tp+.0025,tp-.0015,abs(off));
+    if(sdR<.5)stL=max(stL,k);else stR=max(stR,k);}
+  float stC=0.;for(int i=0;i<16;i++){float fi=float(i)+200.;float h1=hs(vec2(fi,1.)),h2=hs(vec2(fi,2.)),h4=hs(vec2(fi,4.)),h5=hs(vec2(fi,5.)); /* fingers down the steep middle of the cone, from the snow line */
+    float sv=mix(-.42,.3,h1);vec2 st=vec2(sv,edge+.035+.03*h2);vec2 dir=normalize(vec2(sv*1.8+(h2-.5)*.6,-1.)); /* fanning out down the cone, never straight down */ /* each runs down its own gully, fanning out a little */
+    float L=.05+.22*h4*h4,wd=.006+.012*h5;vec2 e=Q-st;float al=dot(e,dir)/L;if(al<0.||al>1.)continue;float off=dot(e,vec2(-dir.y,dir.x));float tp=wd*pow(1.-al,.9);
+    stC=max(stC,smoothstep(tp+.0025,tp-.0015,abs(off)));}
+  stL=max(stL,stC*side);stR=max(stR,stC*(1.-side));
+  float strokes=max(stL,stR)*step(hgt,sky);
+  float snow=max(base,strokes)*step(hgt,1.02);
+  float topW=smoothstep(.06,.0,dsk); /* right under the summit the snow is solid */
+  vec3 lit=mix(vec3(.74,.84,.98),vec3(.6,.73,.95),smoothstep(.2,1.,dep));lit=mix(lit,vec3(.97,.985,1.),max(stL,topW*.85)); /* bright strokes over pale blue snow */
+  vec3 shd=mix(vec3(.4,.5,.82),vec3(.3,.39,.72),smoothstep(.2,1.,dep));shd=mix(shd,vec3(.64,.74,.94),max(stR*.9,topW*.6)); /* paler strokes over the shaded blue */
+  vec3 sc=mix(shd,lit,side);sc=mix(sc,vec3(1.),smoothstep(.008,0.,dd)*side*.45);
    /* the summit nub catching the sun */
-  gap=gu;
-  float gulS=gap;
+  float gulS=gu;
   float gul=gulS;
   vec3 bodyS=mix(vec3(.2,.3,.6),vec3(.06,.11,.3),smoothstep(.75,.15,hgt)),bodyL=mix(vec3(.3,.42,.72),vec3(.1,.17,.4),smoothstep(.75,.15,hgt)); /* lighter blue just under the snow, deep navy toward the foot */
   vec3 bc=mix(bodyS,bodyL,side*.7);float rdg=1.-abs(rfb(vec2(ang*26.+.6*rfb(vec2(ang*4.,hgt*2.)),hgt*2.2)+9.)*2.-1.);bc*=.9+.14*smoothstep(.55,.85,rdg)*smoothstep(.0,.35,hgt)+.05*(rfb(vec2(ang*90.,hgt*30.))-.5); /* ridges and gullies scoring the flanks, a rocky grain */bc=mix(bc,bc*.85,gul*smoothstep(.35,.6,hgt)*.6);
