@@ -854,7 +854,9 @@ const AMBDEF = {
 };
 const AMBV = { golden: .5, eclipse: .5, halo: .4, dusk: .45, spring: .42, bhole: .5, bholeAir: .35, ufo: .4, rainHi: .03, rainLo: .036, wind: .055, snowAir: .08, aurora: .55, night: .5, fog: .18, heat: .13 }; // weather sits well under the game: about 40% of what it was
 let sndPrev = '', sndAcc = {};
+let sndWake = 0;
 function sndTick(dt) {
+  if (AB && ac.state !== 'running' && !document.hidden && (sndWake -= dt) <= 0) { sndWake = 1; ac.resume().catch(() => {}); } // iOS can pause the sound on its own after a while (an interruption, a long idle): bring it straight back, no need to start a game
   if (!AB || ac.state !== 'running') return;
   const now = ac.currentTime, play = state === 'play', fxOn = sndOn('fx'), k = wx.kind, a = play && fxOn ? wx.a : 0, T = {};
   if (k === 'storm') { T.rainHi = a * .62; T.rainLo = a * .7; T.wind = a * (.75 + .5 * Math.pow(Math.max(0, Math.sin(t * .37 + 2)), 4)); } /* a storm, not just rain: less hiss, gusting wind under it; no louder overall */ else if (k === 'rain') { T.rainHi = a * .72; T.rainLo = a * .55; } else if (k === 'hail') { T.rainHi = a * .45; T.rainLo = a * .55; T.wind = a * .25; }
@@ -970,6 +972,7 @@ function alienMus(lv) {
   const th = ALM.thr; if (now > th.next) { const f = ALMEL[Math.random() * ALMEL.length | 0]; th.o.frequency.setTargetAtTime(f, now, .18); th.og.gain.cancelScheduledValues(now); th.og.gain.setTargetAtTime(.022, now, .4); th.og.gain.setTargetAtTime(0, now + 1.6 + Math.random(), .6); th.next = now + 2.6 + Math.random() * 2.2; } // the theremin glides to a new note, sings, and fades
 }
 function sndApply() { if (!AB) return; AB.amb.gain.setTargetAtTime(sndOn('fx') ? 1 : 0, ac.currentTime, .3); }
+addEventListener('pointerdown', () => { if (ac && ac.state !== 'running' && !document.hidden) ac.resume().catch(() => {}); }, { capture: true, passive: true }); // any touch wakes the sound too
 document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend().catch(() => {}); else ac.resume().catch(() => {}); }); // silent in the background, back the moment the game returns
 addEventListener('pointerdown', audioWake, { capture: true, passive: true }); // the first touch unlocks audio on iOS
 
@@ -1546,7 +1549,7 @@ function drawSpDeath(i, c, r, P) { // each weather takes the ball in its own sho
       const fs = r * (1 + 1.7 * op) * (1 + .05 * Math.sin(k * 20) * (1 - q)); ctx.save(); ctx.translate(x, y); ctx.rotate(op * .5); ctx.globalAlpha = op * fade; ctx.drawImage(AFLOWER(P), -fs, -fs, fs * 2, fs * 2); ctx.restore();
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = op * fade * .35; ctx.drawImage(softBlob('255,226,236'), x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2); ctx.globalCompositeOperation = 'source-over'; } // a soft glow as it opens
     if (k > .3) { const tt = k - .3; for (const [j, p] of c.ps.entries()) { const dmp = 1 - Math.exp(-tt * 3), px = p.x + p.vx * dmp / 3 + Math.sin(tt * 2.2 + p.ph) * 18 * tt, py = p.y + p.vy * dmp / 3 + 38 * tt * tt, life = smooth(clamp01(1 - (tt - .8) / .75)) * smooth(clamp01(tt / .1)), tb = Math.cos(tt * 5 * p.s + p.ph), sz = 1.2 + p.s * .9;
-        ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * tt * .5 + Math.sin(tt * 3 + p.ph) * .6); ctx.scale(sz * (.18 + .82 * Math.abs(tb)), sz); ctx.globalAlpha = life; ctx.drawImage(j % 3 === 2 ? PETAL(tb < 0) : BPETAL(P), -6, -7, 12, 14); /* mostly the ball's own colour, with a few pink cherry petals among them */ ctx.restore(); } } }
+        ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot + p.vr * tt * .5 + Math.sin(tt * 3 + p.ph) * .6); ctx.scale(sz * (.18 + .82 * Math.abs(tb)), sz); ctx.globalAlpha = life; ctx.drawImage(j % 7 === 3 ? PETAL(tb < 0) : BPETAL(P), -6, -7, 12, 14); /* mostly the ball's own colour, with a few pink cherry petals among them */ ctx.restore(); } } }
   else if (sp === 'dark') { // a dark disc slides across the ball like the moon across the sun; a diamond ring flashes at the last moment, then a corona opens out and fades
     const q = clamp01(k / .55), mx = x - r * 2.1 * (1 - ease(q)), my = y - r * 1.2 * (1 - ease(q));
     const dfo = 1 - smooth(clamp01((k - .5) / .25)); if (k < .76) { ctx.globalAlpha = 1; drawBall(x, y, r, P, side, 1, 1, .5, 0, dfo); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .35 * q; ctx.strokeStyle = 'rgba(235,240,255,1)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, r * 1.08, 0, 7); ctx.stroke(); ctx.globalCompositeOperation = 'source-over';
@@ -3240,11 +3243,12 @@ function lakeRings(a) { // rings spreading on the lake where petals land
     ctx.strokeStyle = `rgba(255,246,250,${(1 - ph) * .45 * a})`; ctx.beginPath(); ctx.ellipse(x, y, r, r * .28, 0, 0, 7); ctx.stroke(); ctx.strokeStyle = `rgba(255,246,250,${(1 - ph) * .25 * a})`; ctx.beginPath(); ctx.ellipse(x, y, r * .6, r * .17, 0, 0, 7); ctx.stroke(); }
   ctx.restore(); }
 const AFLOWER = (P) => sprite('aflower' + P.base, 192, 192, g => { const c = 96, r = 70; // the ball becomes one of the tree's blossoms, in the ball's own colours: five oval petals, deep at the heart, pale at the tips, with a soft pink centre
-  const pg = g.createRadialGradient(c, c, r * .1, c, c, r * 1.05); pg.addColorStop(0, P.deep); pg.addColorStop(.35, P.base); pg.addColorStop(.8, P.hi); pg.addColorStop(1, P.hi); g.fillStyle = pg; g.beginPath();
+  const pg = g.createRadialGradient(c, c, r * .1, c, c, r * 1.05); pg.addColorStop(0, P.lo); pg.addColorStop(.4, P.base); pg.addColorStop(.85, P.hi); pg.addColorStop(1, P.hi); g.fillStyle = pg; g.beginPath();
   for (let p = 0; p < 5; p++) { const a = -1.5708 + p * 1.2566, px = c + Math.cos(a) * r * .52, py = c + Math.sin(a) * r * .52; g.moveTo(px + r * .52, py); g.ellipse(px, py, r * .52, r * .4, a, 0, 7); } g.fill();
-  const hg = g.createRadialGradient(c, c, 0, c, c, r * .3); hg.addColorStop(0, 'rgba(232,96,150,.9)'); hg.addColorStop(1, 'rgba(250,170,200,0)'); g.fillStyle = hg; g.beginPath(); g.arc(c, c, r * .3, 0, 7); g.fill(); });
+  const hg = g.createRadialGradient(c, c, 0, c, c, r * .2); hg.addColorStop(0, P.deep); hg.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = .7; g.fillStyle = hg; g.beginPath(); g.arc(c, c, r * .2, 0, 7); g.fill(); g.globalAlpha = 1; // a small deeper centre in the ball's own colour
+  if (P === GOLDP) { g.globalCompositeOperation = 'source-atop'; const sg = g.createLinearGradient(20, 20, 172, 172); sg.addColorStop(0, 'rgba(255,255,240,.55)'); sg.addColorStop(.35, 'rgba(255,240,200,0)'); sg.addColorStop(.55, 'rgba(255,250,225,.4)'); sg.addColorStop(.7, 'rgba(255,240,200,0)'); g.fillStyle = sg; g.fillRect(0, 0, 192, 192); } }); // a gold blossom gets a metallic sheen
 const BPETAL = (P) => sprite('bpet' + P.base, 48, 56, g => { const r = 26, cx = 24, cy = 28, fy = cy + r * .52; const pg = g.createRadialGradient(cx, fy, r * .1, cx, fy, r * 1.05); // a single petal of that blossom, in the ball's colours
-  pg.addColorStop(0, P.deep); pg.addColorStop(.35, P.base); pg.addColorStop(.8, P.hi); pg.addColorStop(1, P.hi); g.fillStyle = pg; g.beginPath(); g.ellipse(cx, cy, r * .4, r * .52, 0, 0, 7); g.fill(); });
+  pg.addColorStop(0, P.lo); pg.addColorStop(.4, P.base); pg.addColorStop(.85, P.hi); pg.addColorStop(1, P.hi); g.fillStyle = pg; g.beginPath(); g.ellipse(cx, cy, r * .4, r * .52, 0, 0, 7); g.fill(); });
 function drawPetals(a, near) { // petals tumbling down on the breeze, turning as they fall; now and then a gust carries them sideways
   if (!near) { const dt = Math.min(.05, Math.max(0, t - petT)); petT = t; petG += dt * (16 + 110 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
   for (const p of PET) { if (near ? p.z < .86 : p.z >= .86) continue; const dn = clamp01((a * 1.2 - (p.x * 7.31 + p.y * 3.17) % 1) / .2); if (dn <= 0) continue;
