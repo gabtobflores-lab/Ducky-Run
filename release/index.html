@@ -703,7 +703,9 @@ let hapT = 0; const haptic = kind => { if (!IS_NATIVE) return; const n = perform
 const nativePrefs = IS_NATIVE ? { get: o => capCall('Preferences', 'get', o), set: o => capCall('Preferences', 'set', o) } : null;
 const hadLocal = {}; SAVE_KEYS.forEach(k => { try { hadLocal[k] = localStorage[k] != null; } catch (e) { hadLocal[k] = false; } }); // what this device had saved before anything is written this session
 let nativeQ = nativePrefs ? {} : null; // until the backup has been checked, writes to it wait here, so a fresh start can never overwrite a good backup
-function saveKey(k, v) { try { localStorage[k] = v; } catch (e) {} if (!nativePrefs) return; if (nativeQ) nativeQ[k] = String(v); else nativePrefs.set({ key: k, value: String(v) }).catch(() => {}); }
+const MD_TEST = window.__mdTest || ''; // only the separate tester builds set this: 'all' owns everything, 'free' is the free version
+function saveKey(k, v) { if (MD_TEST && (k === 'mirrorEnt' || (MD_TEST === 'all' && k === 'mirrorWallet'))) return; // a tester build never overwrites the real game's purchases or wallet
+  try { localStorage[k] = v; } catch (e) {} if (!nativePrefs) return; if (nativeQ) nativeQ[k] = String(v); else nativePrefs.set({ key: k, value: String(v) }).catch(() => {}); }
 if (nativePrefs) Promise.all(SAVE_KEYS.map(k => nativePrefs.get({ key: k }).then(r => [k, r && r.value]).catch(() => [k, null]))).then(kv => {
   let restored = false; for (const [k, v] of kv) if (v != null && !hadLocal[k]) { try { localStorage[k] = v; restored = true; } catch (e) {} }
   if (restored) { nativeQ = null; location.reload(); return; } // the web storage had been wiped: bring the player's progress straight back
@@ -769,7 +771,7 @@ const rowGap = () => { const p = params(), k = wx.kind === 'rain' && wx.rv === '
 const wxSK = () => mode === 'zen' ? 1 : wx.kind === 'snow' ? 1 - .24 * wx.a : wx.kind === 'rain' && wx.rv === 'fast' ? 1 + .22 * wx.a : 1; // snow slows the blocks in the cold; a fast rain speeds them up a little
 // ---------- unlocks: what each pack opens (0 free, 1 Plus, 2 Pro, 3 Max, 4 Supporter) ----------
 const TIERS = ['free', 'plus', 'pro', 'max', 'supporter'], TIER_NAMES = ['Free', 'Plus', 'Pro', 'Max', 'Supporter'];
-let ent = 0; try { ent = Math.min(4, Math.max(0, +localStorage.mirrorEnt | 0)); } catch (e) {}
+let ent = 0; try { ent = Math.min(4, Math.max(0, +localStorage.mirrorEnt | 0)); } catch (e) {} if (MD_TEST) ent = MD_TEST === 'all' ? 4 : 0;
 const SECT_NEED = [1, 0, 0, 2, 3, 3], MODE_NEED = { normal: 0, infinite: 3, zen: 1, daily: 3 }, WX_NEED = { fog: 0, storm: 2, hail: 2, rain: 2 };
 const wxNeed = k => k in WX_NEED ? WX_NEED[k] : 3; // aurora, meteors, wind, sun and heat come with Max
 const dayKey = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -800,6 +802,7 @@ const weekKey = (d = new Date()) => { const m = new Date(d.getFullYear(), d.getM
 let wal = { sh: 0, cont: 0, vf: 0, vfWk: '', pvWk: '', pvEv: '', dd: {}, sw: '' };
 try { const w = JSON.parse(localStorage.mirrorWallet || 'null'); if (w && typeof w === 'object') wal = Object.assign(wal, w); } catch (e) {}
 wal.sh = Math.max(0, wal.sh | 0); wal.cont = Math.max(0, wal.cont | 0); wal.vf = Math.max(0, Math.min(ECON.vipWeekly, wal.vf | 0)); if (typeof wal.dd !== 'object' || !wal.dd) wal.dd = {};
+if (MD_TEST === 'all') { wal.sh = Math.max(wal.sh, 99999); wal.cont = Math.max(wal.cont, 20); }
 function saveWallet() { const ks = Object.keys(wal.dd).sort(); while (ks.length > 40) delete wal.dd[ks.shift()]; saveKey('mirrorWallet', JSON.stringify(wal)); }
 function vipWeek() { const wk = weekKey(); if (vip && wal.vfWk !== wk) { wal.vf = ECON.vipWeekly; wal.vfWk = wk; saveWallet(); } } // two free continues each week: topped up, never piled up
 const vipFree = () => { vipWeek(); return vip && wal.vfWk === weekKey() ? wal.vf : 0; };
@@ -4380,6 +4383,13 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
   ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side, and the beam slowly pulls up anything that stays in the middle. Move out of the middle to break free.', 1],
 ];
 const RARITY = { fog: 0, wind: 0, rain: 0, hail: 0, sun: 0, storm: 1, heat: 1, snow: 1, meteor: 1, blossom: 2, firefly: 2, aurora: 2, halo: 3, golden: 3, eclipse: 4, alien: 4 }, RARN = ['Common', 'Uncommon', 'Rare', 'Very rare', 'Legendary']; // how often each event comes round
+function testerHTML() { // tester builds only: start a run with any event, top up shards, reset the weekly VIP gifts
+  const all = MD_TEST === 'all';
+  return `<div class="sgrp"><h3>TESTER · ${all ? 'OWNS EVERYTHING + VIP' : 'FREE VERSION'}</h3><div class="slist" style="padding:12px;display:flex;flex-wrap:wrap;gap:6px">`
+    + (all ? EVINFO.map(([k, c, n]) => `<button type="button" class="evpv" data-act="tev" data-k="${k}">${n}</button>`).join('')
+      + `<button type="button" class="evpv lk" data-act="tshard">+10,000 shards</button><button type="button" class="evpv lk" data-act="tvip">Reset weekly VIP</button>`
+      : `<span style="font-size:13px;color:var(--ink-2)">Everything locked as on a fresh free install. Purchases are ignored in this build.</span>`) + `</div></div>`; }
+function startTestEvent(k) { closeSheet(); setTimeout(() => { if (mode === 'zen') mode = 'normal'; startGame(); setTimeout(() => { if (state !== 'play') return; wx.cool = 9999; wx.kind = k; wx.phase = 'warn'; wx.t = 0; if (k === 'wind') windDir = 1; if (k === 'rain') wx.rv = 'dense'; wxNote(k); }, 1200); }, 380); }
 function pvBtn(k) { if (!vip) return `<button type="button" class="evpv lk" data-act="vip" aria-label="Preview with VIP">VIP</button>`;
   const used = wal.pvWk === weekKey(); return used && wal.pvEv !== k ? `<button type="button" class="evpv" disabled>Next week</button>` : `<button type="button" class="evpv" data-act="evpv" data-k="${k}">${used ? 'Watch again' : 'Preview'}</button>`; }
 function eventsHTML() {
@@ -4420,6 +4430,7 @@ function renderSheet() {
     const sc = bestNow();
     h += `<div class="pstats"><div><b>${sc || '–'}</b><small>Best · ${NAMES[bucket()]}</small></div><div><b>${prof.runs}</b><small>Runs</small></div><div><b>${prof.combo > 1 ? '×' + prof.combo : '–'}</b><small>Best combo</small></div></div>`;
     h += `<div class="sgrp"><h3>CONTINUES</h3><button class="row csrow" data-act="cshop"><span class="av">${SHARD_SVG}</span><span class="nm">Purchase Continues<small>${wal.sh.toLocaleString()} Mirror Shards · ${contOwned()} continue${contOwned() === 1 ? '' : 's'}${vip ? ' · VIP' : ''}</small></span><span class="chev">›</span></button></div>`;
+    if (MD_TEST) h += testerHTML();
     h += guideHTML();
     h += eventsHTML();
     { const ss = (k, b, sm) => `<label class="sopt"><span class="tx"><b>${b}</b><small>${sm}</small></span><span class="sw g"><input type="checkbox" data-snd="${k}"${prof.snd[k] ? ' checked' : ''}><span></span></span></label>`;
@@ -4520,6 +4531,9 @@ srows.addEventListener('click', e => {
   if (a === 'guide') { guideOpen = !guideOpen; b.closest('.guide').classList.toggle('open', guideOpen); b.setAttribute('aria-expanded', guideOpen); haptic('selection'); }
   if (a === 'events') { evOpen = !evOpen; b.closest('.guide').classList.toggle('open', evOpen); b.setAttribute('aria-expanded', evOpen); haptic('selection'); }
   else if (a === 'cshop') { haptic('selection'); openShop(); }
+  else if (a === 'tev' && MD_TEST === 'all') startTestEvent(b.dataset.k);
+  else if (a === 'tshard' && MD_TEST === 'all') { wal.sh += 10000; renderSheet(); }
+  else if (a === 'tvip' && MD_TEST === 'all') { wal.vfWk = ''; wal.pvWk = ''; vipWeek(); renderSheet(); }
   else if (a === 'vip') { haptic('selection'); openVip(); }
   else if (a === 'evpv') { haptic('selection'); startPreview(b.dataset.k); }
   else if (a === 'pic') { editPic = !editPic; renderSheet(); }
@@ -4651,7 +4665,7 @@ function renderVip() {
     + `<div class="vpfine">${vipPrice()}, auto-renews every ${vipP().period || 'period'} until cancelled. Payment is charged to your Apple Account; it renews unless cancelled at least 24 hours before the end of the period. Manage or cancel any time in Settings → your name → Subscriptions. VIP is separate from Supporter and the packs, which stay yours forever.<br><button type="button" data-vp="terms">Terms of Use</button> · <button type="button" data-vp="privacy">Privacy Policy</button></div>`;
   vpbody.innerHTML = h; }
 function openVip() { vpMsg = ''; if (IS_NATIVE) loadPrices(); renderVip(); openFsh(vipsh); }
-function setVip(v, until, renews) { const was = vip; vip = !!v; vipUntil = +until || 0; vipRenews = !!renews; vipWeek();
+function setVip(v, until, renews) { if (MD_TEST) { v = MD_TEST === 'all'; until = v ? Date.now() + 30 * 864e5 : 0; renews = v; } const was = vip; vip = !!v; vipUntil = +until || 0; vipRenews = !!renews; vipWeek();
   if (cshop.classList.contains('on')) renderShop(); if (vipsh.classList.contains('on')) renderVip(); if (pSheet.classList.contains('on')) renderSheet(); return !was && vip; }
 vpbody.addEventListener('click', e => { const b = e.target.closest('[data-vp]'); if (!b || b.disabled) return; const k = b.dataset.vp; haptic('selection');
   if (k === 'buy' && !IS_NATIVE) { vpMsg = 'Subscriptions open in the Mirror Drop app on iPhone.'; renderVip(); }
@@ -4676,6 +4690,7 @@ function startPreview(k) { if (!vip || state !== 'menu') return; const wk = week
     wxNote(k); $('#pvdone').classList.add('on'); }, 380); }
 function endPreview() { if (!previewEv) return; $('#pvdone').classList.remove('on'); goMenu(); }
 $('#pvdone').onclick = endPreview;
+if (MD_TEST) setVip(MD_TEST === 'all');
 // the Daily Challenge: today's run up top, then a calendar of every day; past days can be played again any time
 const dSheet = $('#dsheet'), drows = $('#drows'); let dMonth = null, dSel = null;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -4715,7 +4730,7 @@ $('#ucta').onclick = () => { if (unlBusy || ent >= 4 || !IS_NATIVE) return; cons
 $('#urestore').onclick = () => { if (!IS_NATIVE) { $('#umsg').textContent = 'Purchases are restored in the App Store app.'; return; }
   $('#umsg').textContent = 'Restoring…'; capCall('Store', 'restore').then(r => { setEnt(r && r.tier | 0); $('#umsg').textContent = ent ? `Restored: ${TIER_NAMES[ent]}.` : 'No earlier purchases were found for this Apple ID.'; renderUnlock(); })
     .catch(() => { $('#umsg').textContent = 'The App Store didn\'t respond. Try again in a moment.'; }); };
-function setEnt(n, celebrate) { n = Math.min(4, Math.max(0, n | 0)); const up = n > ent; ent = n; saveKey('mirrorEnt', String(ent)); syncDiffUI(); syncPfp();
+function setEnt(n, celebrate) { n = Math.min(4, Math.max(0, n | 0)); if (MD_TEST) n = MD_TEST === 'all' ? 4 : 0; const up = n > ent; ent = n; saveKey('mirrorEnt', String(ent)); syncDiffUI(); syncPfp();
   if (pSheet.classList.contains('on')) renderSheet(); if (unl.classList.contains('on')) renderUnlock();
   if (up && celebrate) setTimeout(() => thankYou(ent), 380); }
 // ---------- thank you: a calm, premium moment after buying, with confetti ----------

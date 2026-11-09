@@ -1,6 +1,7 @@
 #!/bin/bash
 # Mirror Drop updater for the Mac. Paste into Terminal:
 #   curl -fsSL https://raw.githubusercontent.com/gabtobflores-lab/ducky-run/claude/ducky-run-game/update-mac.sh | bash
+# Tester builds: ... | MD_VARIANT=all bash   (owns everything)   or   ... | MD_VARIANT=free bash   (free version)
 # It finds your Xcode project's MirrorDrop folder(s), keeps a backup, and downloads the newest game files.
 set -uo pipefail
 BASE="https://raw.githubusercontent.com/gabtobflores-lab/ducky-run/claude/ducky-run-game"
@@ -24,7 +25,7 @@ update_web() {  # $1 = the MirrorDrop folder with index.html + MirrorDropApp.swi
   local bk="$1/../Mirror Drop backup $STAMP"
   mkdir -p "$bk"; cp "$1/MirrorDropApp.swift" "$1/index.html" "$bk/" 2>/dev/null
   get app-update/MirrorDropApp.swift "$1/MirrorDropApp.swift"
-  get app-update/index.html "$1/index.html"
+  get "app-update/${MD_VARIANT:+tester-$MD_VARIANT/}index.html" "$1/index.html"   # MD_VARIANT=all or free installs a tester build instead
   get app-update/aurora.mp4 "$1/aurora.mp4"   # our own pre-rendered aurora loop
   get app-update/blackhole.mp4 "$1/blackhole.mp4"   # our ray-traced black hole loop
   echo "  game installed"
