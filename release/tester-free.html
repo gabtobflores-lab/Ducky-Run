@@ -4303,8 +4303,11 @@ function draw() {
       const ck = 1 + .25 * ease(fx.combo), heat = clamp01((combo - 2) / 6);
       ctx.save(); ctx.translate(W / 2, 156); ctx.scale(ck, ck);
       if (heat > 0) { const cg = ctx.createRadialGradient(0, 0, 4, 0, 0, 46); cg.addColorStop(0, `rgba(255,200,103,${.25 * heat})`); cg.addColorStop(1, 'rgba(255,200,103,0)'); ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, 46, 0, 7); ctx.fill(); }
-      const cs = '×' + combo + ' COMBO'; ctx.font = '900 20px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const cm = ctx.measureText(cs), pw = Math.max(64, cm.width + 34);
-      ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.beginPath(); ctx.roundRect(-pw / 2, -16, pw, 32, 16); ctx.fill(); // the pill is centred on 0, and so is the text's ink
+      const cs = '×' + combo; ctx.font = '900 20px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const cm = ctx.measureText(cs), pw = Math.max(52, cm.width + 30);
+      { const nk = uiNight(), gl = ctx.createLinearGradient(0, -16, 0, 16); // a tinted glass pill: the sky shows through, a soft highlight along its top edge
+        gl.addColorStop(0, nk > .5 ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.34)'); gl.addColorStop(1, nk > .5 ? 'rgba(255,255,255,.08)' : 'rgba(43,45,66,.1)');
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.roundRect(-pw / 2, -16, pw, 32, 16); ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = nk > .5 ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.roundRect(-pw / 2 + .5, -15.5, pw - 1, 31, 15.5); ctx.stroke(); } // the pill is centred on 0, and so is the text's ink
       txt(cs, (cm.actualBoundingBoxLeft - cm.actualBoundingBoxRight) / 2, (cm.actualBoundingBoxAscent - cm.actualBoundingBoxDescent) / 2, 20, combo >= 5 ? '#f08f1c' : '#e9a23b', 'center', 900); ctx.restore();
     }
     // countdown to the next speed-up
