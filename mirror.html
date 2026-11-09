@@ -2185,7 +2185,7 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i)
 float fbm(vec2 p){float v=0.,a=.5;for(int k=0;k<5;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
 float fbm3(vec2 p){float v=0.,a=.5;for(int k=0;k<3;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v/.875;}
 vec2 UV(){vec2 uv=gl_FragCoord.xy/res;uv.y=1.-uv.y;return uv;}
-float auroraCalm(float y){return mix(.5,1.,smoothstep(.06,.62,y))*.86;} /* the aurora a little gentler, and calmest across the top of the screen so it never fills the whole upper half */
+float auroraCalm(float y){return mix(.62,1.,smoothstep(.06,.62,y))*.94;} /* the aurora a little gentler, and calmest across the top of the screen so it never fills the whole upper half */
 uniform vec2 cam; /* the scenes' camera: x = parallax from where the balls are, y = a slow push-in across the event */
 vec3 grade(vec3 c){float l=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(l),c,1.1);c=mix(c,c*c*(3.-2.*c),.2);return clamp(c,0.,1.);} /* a gentle S-curve and a touch more colour: rich, never flat */
 vec3 sunCam(vec2 P,vec2 S,float k){vec2 d=P-S;float r=length(d),an=atan(d.y,d.x); /* the Sun Flash sun, as a phone camera sees it: blown-out core, soft glow at several scales, gently turning spikes, a lens streak and a faint ring */
