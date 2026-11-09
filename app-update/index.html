@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop</title>
-<meta name="build" content="4f03914">
+<meta name="build" content="99f2289">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -185,7 +185,7 @@
   .fhd{display:grid;grid-template-columns:40px 1fr 40px;align-items:center}.fhd b{text-align:center;font-size:17px;font-weight:800}
   .fx{width:34px;height:34px;border-radius:50%;border:0;background:rgba(43,45,66,.07);display:grid;place-items:center;cursor:pointer}.fx svg{width:12px;height:12px;stroke:var(--ink-2);stroke-width:2;stroke-linecap:round}
   .cshero{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0 4px}
-  .cshero .shd-i{width:58px;height:58px;filter:drop-shadow(0 8px 16px rgba(240,143,28,.35));animation:shfloat 3.2s ease-in-out infinite}
+  .cshero .shd-i{width:58px;height:58px;filter:drop-shadow(0 8px 16px rgba(240,143,28,.35));will-change:transform;backface-visibility:hidden;animation:shfloat 3.2s ease-in-out infinite}
   @keyframes shfloat{50%{transform:translateY(-4px) rotate(4deg)}}
   .cshero .bal{font-size:44px;font-weight:900;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--ink)}
   .cshero small{font-size:13px;font-weight:800;letter-spacing:.12em;color:#b8650a}
@@ -238,7 +238,7 @@
   .evpv{flex:none;align-self:center;border:0;border-radius:999px;padding:6px 11px;font:inherit;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(150deg,#7b68ff,#3b2bb8);cursor:pointer}
   .evpv.lk{background:rgba(91,63,214,.1);color:#5b3fd6}.evpv:disabled{background:rgba(43,45,66,.07);color:var(--ink-3)}
   .gi.g8c{background:linear-gradient(160deg,#ffd27a,#f08f1c)}
-  .gi.gsh{background:linear-gradient(160deg,#fff4dc,#ffe0a8)}.gi.gsh svg{width:22px;height:22px}.gi.gcont{background:linear-gradient(160deg,#4fd8d6,#2a9fc0)}
+  .gi.gsh{background:linear-gradient(160deg,#fff4dc,#ffe0a8)}.gi.gsh svg{width:22px;height:22px;stroke:none} .shd-i,.shd-i *{stroke:none}.gi.gcont{background:linear-gradient(160deg,#4fd8d6,#2a9fc0)}
   .gi.gvip{background:linear-gradient(150deg,#8fe3ff,#6f5bff 55%,#3b2bb8)}
   .vtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;vertical-align:1px;background:rgba(91,63,214,.12);color:#5b3fd6}
   .row.csrow .av{background:linear-gradient(160deg,#fff4dc,#ffe0a8)}.row.csrow .av svg{width:22px;height:22px}
@@ -662,6 +662,7 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
     <div class="ufine"><span>One-time purchase · Family Sharing</span><button type="button" id="urestore">Restore Purchases</button></div>
     <div class="umsg" id="umsg" role="status"></div></div>
 </div></div>
+<svg width="0" height="0" style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false"><defs><linearGradient id="mdShardG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd37a"/><stop offset=".55" stop-color="#ffad33"/><stop offset="1" stop-color="#f08f1c"/></linearGradient></defs></svg>
 <div id="cshop" class="fsh" role="dialog" aria-modal="true" aria-labelledby="cstitle" aria-hidden="true"><div class="fin">
   <div class="fhd"><button class="fx" id="csclose" type="button" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg></button><b id="cstitle">Continues</b><span></span></div>
   <div id="csbody"></div></div></div>
@@ -791,7 +792,7 @@ const dayNum = k => Math.round((keyDate(k) - DAY0) / 864e5) + 1;
 function dayInfo(k) { const r = mulberry(hashStr('mirrordrop-day-' + k)); r(); return { n: dayNum(k), per: r() < .45 ? 2 : 3, feat: DFEAT[r() * DFEAT.length | 0] }; }
 // ---------- Mirror Shards: the one currency, earned by catching gems, spent only on continues ----------
 const ECON = { perGem: 5, daily: 50, streakDays: 7, packs: [[1, 1500], [2, 3000], [5, 6000], [10, 10000], [20, 18000]], limit: 2, vipLimit: 3, vipWeekly: 2 }; // tune the economy here
-const SHARD_SVG = '<svg class="shd-i" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="shg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd37a"/><stop offset=".55" stop-color="#ffad33"/><stop offset="1" stop-color="#f08f1c"/></linearGradient></defs><rect x="5.2" y="5.2" width="13.6" height="13.6" rx="3.2" transform="rotate(45 12 12)" fill="url(#shg)"/><rect x="7.4" y="9.6" width="4.2" height="4.2" rx="1.1" transform="rotate(45 9.5 11.7)" fill="#fff" fill-opacity=".6"/></svg>';
+const SHARD_SVG = '<svg class="shd-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.2" y="5.2" width="13.6" height="13.6" rx="3.2" transform="rotate(45 12 12)" fill="url(#mdShardG)"/><rect x="7.4" y="9.6" width="4.2" height="4.2" rx="1.1" transform="rotate(45 9.5 11.7)" fill="#fff" fill-opacity=".6"/></svg>';
 let vip = false, vipUntil = 0, vipRenews = false; // VIP comes only from the App Store's own subscription status, never from saved data
 const weekKey = (d = new Date()) => { const m = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7); return dateKey(m); }; // weeks start on Monday
 let wal = { sh: 0, cont: 0, vf: 0, vfWk: '', pvWk: '', pvEv: '', dd: {}, sw: '' };
@@ -1370,7 +1371,7 @@ function update(dt) {
   $('#pbtn').style.display = state === 'play' && resumeT <= 0 ? 'flex' : 'none';
   if (state === 'paused') return;
   if (state === 'play' && resumeT <= 0) fogT = Math.max(0, fogT - dt);
-  if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
+  if (state === 'play' && resumeT > 0) { const before = Math.ceil(resumeT); resumeT -= dt; if (resumeT <= 0) contResume = false; if (Math.ceil(resumeT) !== before && resumeT > 0) beep(440, .1, 'triangle', .05); return; }
   if (state === 'dead' && fx.freeze > 0) { fx.freeze -= dt; updateCrash(dt); return; } // hit-stop: hold the impact frame
   t += dt; flashA = Math.max(0, flashA - dt * 3.5); shake = Math.max(0, shake - dt * 30); pulse = Math.max(0, pulse - dt * 4); fxA = Math.max(0, fxA - dt / 1.2);
   for (const k of ['gem', 'combo', 'score', 'arrow', 'squash', 'near']) fx[k] = Math.max(0, fx[k] - dt * (k === 'gem' || k === 'near' ? 3 : 4.5));
