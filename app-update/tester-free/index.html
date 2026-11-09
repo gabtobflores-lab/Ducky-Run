@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mirror Drop (free tester)</title>
-<meta name="build" content="387bbfd">
+<meta name="build" content="86d6603">
 <meta name="description" content="Guide two mirrored balls through falling blocks, through fog, rain, snow, storms, aurora, meteor showers, cherry blossom, fireflies and a total solar eclipse.">
 <meta name="theme-color" content="#f6f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -236,6 +236,7 @@
   #pvdone{position:fixed;z-index:25;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:10px;border:0;border-radius:999px;padding:7px 8px 7px 14px;font:inherit;font-size:11px;font-weight:800;letter-spacing:.14em;color:#fff;background:rgba(40,28,120,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);cursor:pointer}
   #pvdone b{padding:5px 12px;border-radius:999px;background:#fff;color:#3b2bb8;letter-spacing:.02em;font-size:13px}
   #pvdone.on{display:flex}
+  #pvveil{position:fixed;inset:0;z-index:24;pointer-events:none;background:#f6f1ea;opacity:0;transition:opacity .65s var(--ios)}#pvveil.on{opacity:1;pointer-events:auto}
   .evpv{flex:none;align-self:center;border:0;border-radius:999px;padding:6px 11px;font:inherit;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(150deg,#7b68ff,#3b2bb8);cursor:pointer}
   .evpv.lk{background:rgba(91,63,214,.1);color:#5b3fd6}.evpv:disabled{background:rgba(43,45,66,.07);color:var(--ink-3)}
   .gi.g8c{background:linear-gradient(160deg,#ffd27a,#f08f1c)}
@@ -442,7 +443,7 @@
   .daily .dgo{flex:none;font-size:20px;font-weight:800;color:var(--ink-3)}
   #onote{font-size:13px;font-weight:700;color:var(--ink-2);max-width:270px;line-height:1.4}
   #onote:empty{display:none}
-  #over.daily .card.diff{display:none}
+  #over.isdaily .card.diff{display:none}
   /* Supporter: gold ring around the profile picture, the badge, the settings */
   /* Supporter ring: polished gold that slowly turns, a hairline gap, a soft warm glow and one travelling glint */
   #pfp.ring,.pav.ring{isolation:isolate;box-shadow:0 0 0 2px #fbf8f4,0 6px 18px rgba(217,160,40,.35)}
@@ -670,6 +671,7 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
 <div id="vipsh" class="fsh vip" role="dialog" aria-modal="true" aria-labelledby="vptitle" aria-hidden="true"><div class="fin">
   <div class="fhd"><button class="fx" id="vpclose" type="button" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg></button><b></b><span></span></div>
   <div id="vpbody"></div></div></div>
+<div id="pvveil" aria-hidden="true"></div>
 <button id="pvdone" type="button">VIP PREVIEW<b>Done</b></button>
 <div id="dsheet" class="xsh" aria-hidden="true"><div class="bd"></div><div class="pn" role="dialog" aria-modal="true" aria-labelledby="dtitle"><div class="grab"></div>
   <div class="shd"><b id="dtitle">Daily Challenge</b><button class="done" id="ddone">Done</button></div>
@@ -906,7 +908,7 @@ function syncLocks() { // locked difficulties and modes stay visible with a smal
     dc.querySelector('i').innerHTML = ent < 3 ? LOCK_SVG : done ? '<svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
     dc.setAttribute('aria-label', ent < 3 ? 'Daily Challenge, included with Max' : done ? 'Daily Challenge, played today' : 'Daily Challenge, today\'s run is ready'); }
   const db = bests['daily_' + dayKey()]; swapText($('#dsub'), ent < 3 ? 'Included with Max' : db ? `Today's best: ${db}` : 'Today\'s run is ready');
-  $('#over').classList.toggle('daily', mode === 'daily');
+  $('#over').classList.toggle('isdaily', mode === 'daily');
 }
 // thumb grows while a finger is on the slider
 document.querySelectorAll('.drange').forEach(r => {
@@ -1599,7 +1601,7 @@ function wxNote(kind) {
 setInterval(() => { const n = $('#wxnote'); if (!wxNote.dk || !n.classList.contains('show')) return; n.classList.toggle('dark', skyE > .45 || (wx.a > .45 && wx.phase !== 'warn')); }, 120); // switches to dark glass as the night sky arrives
 function wxHide() { $('#wxnote').classList.remove('show'); clearTimeout(wxNote.h); }
 function updateWeather(dt) {
-  if (previewEv && !wx.kind && state === 'play') { endPreview(); return; } // the preview ends with its event
+  if (previewEv && !pvEnding && (!wx.kind || wx.phase === 'out') && state === 'play') { endPreview(); } // the preview ends with its event
   if (mode === 'daily' && state === 'play') { dailyT += dt; if (!dailyFeat && !wx.kind && dailyT > 16) { const k = dayInfo(dkey()).feat; dailyFeat = true; wx.kind = k; wx.phase = 'warn'; wx.t = 0; if (k === 'wind') windDir = Math.random() < .5 ? -1 : 1; if (k === 'rain') wx.rv = Math.random() < .5 ? 'fast' : 'dense'; wxNote(k); } } // the day's own event, once in every run
   if (!wx.kind) {
     wx.cool -= dt;
@@ -2185,7 +2187,8 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i)
 float fbm(vec2 p){float v=0.,a=.5;for(int k=0;k<5;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
 float fbm3(vec2 p){float v=0.,a=.5;for(int k=0;k<3;k++){v+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v/.875;}
 vec2 UV(){vec2 uv=gl_FragCoord.xy/res;uv.y=1.-uv.y;return uv;}
-float auroraCalm(float y){return mix(.62,1.,smoothstep(.06,.62,y))*.94;} /* the aurora a little gentler, and calmest across the top of the screen so it never fills the whole upper half */
+uniform float aurB;
+float auroraCalm(float y){return mix(.62,1.,smoothstep(.06,.62,y))*.94*(1.+aurB);} /* the aurora a little gentler, and calmest across the top of the screen so it never fills the whole upper half */
 uniform vec2 cam; /* the scenes' camera: x = parallax from where the balls are, y = a slow push-in across the event */
 vec3 grade(vec3 c){float l=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(l),c,1.1);c=mix(c,c*c*(3.-2.*c),.2);return clamp(c,0.,1.);} /* a gentle S-curve and a touch more colour: rich, never flat */
 vec3 sunCam(vec2 P,vec2 S,float k){vec2 d=P-S;float r=length(d),an=atan(d.y,d.x); /* the Sun Flash sun, as a phone camera sees it: blown-out core, soft glow at several scales, gently turning spikes, a lens streak and a faint ring */
@@ -2707,7 +2710,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
     gl.bindFramebuffer(gl.FRAMEBUFFER, dst ? dst.f : null); gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
     gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
     const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
-    gl.uniform2f(L('res'), w, h); gl.uniform1f(L('t'), t % 1000);
+    gl.uniform2f(L('res'), w, h); gl.uniform1f(L('t'), t % 1000); { const ab = L('aurB'); if (ab) gl.uniform1f(ab, window.__aurB || 0); } /* aurB: only the screenshot tool sets it */
     srcs.forEach(([nm, tx, unit]) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tx); gl.uniform1i(L(nm), unit); });
     for (const k in ex) gl.uniform2fv(L(k), ex[k]);
     gl.drawArrays(gl.TRIANGLES, 0, 3); return true; };
@@ -4692,7 +4695,12 @@ function startPreview(k) { if (!vip || state !== 'menu') return; const wk = week
   wal.pvWk = wk; wal.pvEv = k; saveWallet(); closeSheet();
   setTimeout(() => { previewBefore = mode; previewEv = k; mode = 'zen'; show('#menu', false); state = 'play'; reset(); wx.cool = 9999; wx.kind = k; wx.phase = 'warn'; wx.t = 0; if (k === 'rain') wx.rv = 'dense';
     wxNote(k); $('#pvdone').classList.add('on'); }, 380); }
-function endPreview() { if (!previewEv) return; $('#pvdone').classList.remove('on'); goMenu(); }
+let pvEnding = false;
+function endPreview() { // the event's sky fades out first, then a soft veil carries the game back to the menu
+  if (!previewEv || pvEnding) return; pvEnding = true; $('#pvdone').classList.remove('on');
+  if (wx.kind && wx.phase !== 'out') { wx.phase = 'out'; wx.t = 0; }
+  const v = $('#pvveil'); v.classList.add('on');
+  setTimeout(() => { if (!previewEv) { pvEnding = false; v.classList.remove('on'); return; } goMenu(); requestAnimationFrame(() => requestAnimationFrame(() => { v.classList.remove('on'); pvEnding = false; })); }, 700); }
 $('#pvdone').onclick = endPreview;
 if (MD_TEST) setVip(MD_TEST === 'all');
 // the Daily Challenge: today's run up top, then a calendar of every day; past days can be played again any time
