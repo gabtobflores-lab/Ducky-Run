@@ -2663,7 +2663,7 @@ vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);vec4 o=vec4(0.);float 
 `,
   sakura: `/* spring at Mt Fuji across a still lake: the broad cone with its snowcap, wooded hills misted with cherry blossom framing the water on either side,
    the lake mirroring it all, reeds at the near shore. variant 0: the mountain; variant 1: the hills, the lake and the reeds. sunp.xy: the sun */
-const float LK=.80;
+const float LK=.80;uniform sampler2D fmap;
 vec3 hazeS(vec2 uv){return mix(vec3(.84,.86,.97),vec3(.96,.9,.96),smoothstep(.55,.8,uv.y));}
 vec3 skyS(vec2 uv,vec2 P,vec2 S){float r=length(P-S);vec3 c=uv.y<.55?mix(vec3(.07,.24,.55),vec3(.2,.43,.76),uv.y/.55):mix(vec3(.2,.43,.76),vec3(.5,.66,.88),(uv.y-.55)/.45); /* a deep, clear blue, the daytime twin of the reference's night sky */c=mix(c,vec3(.96,.86,.92),smoothstep(.62,.82,uv.y)*.45);c+=vec3(1.,.93,.82)*(exp(-r*3.2)*.16+exp(-r*9.)*.22);return c;}
 float bump(float u){float v=max(0.,1.-u*u);return v*(1.5-.5*v);} /* a rounded billow whose sides meet the base smoothly */
@@ -2746,45 +2746,22 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   vec2 Q=vec2(v,hgt);float sky=fujiR(v);float dsk=max(sky-hgt,0.);
   vec3 bodyS=mix(vec3(.15,.23,.52),vec3(.06,.11,.3),smoothstep(.75,.15,hgt)),bodyL=mix(vec3(.2,.3,.6),vec3(.09,.15,.38),smoothstep(.75,.15,hgt)); /* lighter blue just under the snow, deep navy toward the foot */
   vec3 bc=mix(bodyS,bodyL,side*.55); /* smooth: the flanks graded softly from blue to deep navy, no lines */
-  /* the snowcap painted as in the reference: solid bright snow at the top, broken further down by dark streaks that run down the fall lines,
-     each starting at its own depth as a thin line and widening as it goes, until neighbouring streaks meet and the snow between them ends in a tapering finger.
-     That one rule gives the long irregular fingers, the dark gullies reaching up into the cap, and a ragged snow line. */
-  float rr=1.-hgt;float tl2=v-.04-.75*rr;float sd=1.-smoothstep(-.025,.025,tl2); /* the sunlit west face and the shaded east face, split by a crisp ridge from the summit's east corner */
-  float fa=v/(rr+.07);                                                    /* constant along each fall line fanning out from the summit */
-  float K=8.;float cq=fa*K+1.7*rfb(vec2(fa*2.,rr*1.6))+.6*sin(rr*7.+fa*2.)+.5,cid=floor(cq),cf=fract(cq);
-  float aa=clamp(px*K/(FH*(rr+.07))*1.2,.004,.2);
-  float lw=smoothstep(-.3,-.9,v);                                        /* further down the west ridge the snow reaches lower */
-  float r0L=mix(.14,.5,hs(vec2(cid,1.)))+.1*lw,kL=mix(.7,2.2,hs(vec2(cid,2.)));
-  float r0R=mix(.14,.5,hs(vec2(cid+1.,1.)))+.1*lw,kR=mix(.7,2.2,hs(vec2(cid+1.,2.)));
-  float glob=mix(.6*smoothstep(.3,.58,rr),.6*smoothstep(.45+.15*lw,.8,rr),sd);float ke=mix(.55,1.,sd); /* the shaded east snow is a solid blue face broken by thin streaks, and ends higher */                             /* nothing reaches the foot */
-  float gL=clamp(.5*(1.-sqrt(max(1.-(rr-r0L)*kL*ke*1.6,0.)))*step(r0L,rr)+glob,0.,.6),gR=clamp(.5*(1.-sqrt(max(1.-(rr-r0R)*kR*ke*1.6,0.)))*step(r0R,rr)+glob,0.,.6); /* the streaks widen faster near their ends: rounded finger tips */
-  float sn=(gL>0.?smoothstep(gL-aa,gL+aa,cf):1.)*(gR>0.?smoothstep(gR-aa,gR+aa,1.-cf):1.);
-  float eL=gL>0.?cf-gL:1.,eR=gR>0.?1.-cf-gR:1.;float ed=min(eL,eR);    /* how far inside the finger: shading toward its edges rounds it */
-  /* a second, finer set of streaks between the first, starting lower */
-  float cq2=cq*2.+.5,c2=floor(cq2),f2=fract(cq2);float g2=clamp((rr-mix(.32,.7,hs(vec2(c2,11.))))*mix(.6,1.5,hs(vec2(c2,12.))),0.,.22)*step(.45,hs(vec2(c2,13.)));
-  float d2=min(f2,1.-f2);sn*=g2>0.?smoothstep(g2-aa*2.,g2+aa*2.,d2):1.;
-  /* the bright band of long streaks along the west ridge */
-  float sR=-v,pR=dsk;float rq=pR*46.,rid=floor(rq),rf=fract(rq);
-  float send=1.2-pR*3.4+.3*(hs(vec2(rid,7.))-.5);
-  float rw=.42*(1.-smoothstep(send-.25,send,sR));
-  float row=smoothstep(rw+.1,rw-.06,abs(rf-.5))*step(pR,.26)*step(.0,sR);
-  float bandS=smoothstep(.07,.05,pR+.025*smoothstep(.2,.9,sR))*step(-.02,sR);
-  float band=max(row*smoothstep(.26,.16,pR),bandS)*step(.02,-tl2);
-  /* fine streaks inside the snow */
-  float ln=vn(vec2(cq*7.,rr*3.))*vn(vec2(cq*13.+3.,rr*6.));
-  float snowM=max(sn,band)*step(hgt,1.02)*smoothstep(.0,.02,hgt-.28);
-  vec3 white=vec3(.98,.99,1.);
-  float dp=smoothstep(.05,.6,rr);
-  vec3 litF=mix(white,vec3(.7,.8,.98),dp);                                 /* sunlit: white high up, cooling to pale blue lower down */
-  litF=mix(litF,vec3(.52,.64,.93),smoothstep(.12,.0,ed)*.55*smoothstep(.1,.3,rr)); /* each finger shaded toward its edges */
-  litF*=1.-.12*smoothstep(.35,.7,ln);
-  vec3 shF=mix(vec3(.56,.67,.93),vec3(.34,.46,.79),smoothstep(.0,.4,rr));  /* shaded: mid blue */
-  shF=mix(shF,vec3(.3,.41,.74),smoothstep(.12,.0,ed)*.5);shF=mix(shF,shF*1.18,smoothstep(.4,.75,ln));
-  vec3 scol=mix(shF,litF,sd);
-  vec3 bandC=mix(vec3(.6,.72,.96),white,max(row,bandS));
-  scol=mix(scol,bandC,band);
-  scol=mix(scol,white,smoothstep(.012,0.,dd)*step(v,.04)*smoothstep(-1.4,-.9,v)*.8); /* the rim of light along the sunlit skyline */
-  float side_=sd;
+  /* the snowcap as in the reference: a coarse map of light and shade over the cone says where the snow lies and how lit it is;
+     it is painted in a few crisp tones, white where the sun catches it, pale blue, then the mid blue of the shaded snow, with soft brushed edges */
+  float hS=min(hgt,sky-.035);                                            /* just under our own skyline, read the snow just under the reference's */
+  float bw=(rfb(vec2(ang*26.,hgt*5.))-.5);                               /* a brushed wobble along the fall lines */
+  vec2 mu=vec2((v+1.2)/2.3+bw*.006,(1.03-hS)/.63+bw*.012);
+  vec2 rd=normalize(mix(vec2(.62,-.48),vec2(-.72,-.45),side));vec2 rdu=vec2(rd.x/2.3,-rd.y/.63); /* down along each ridge, in map space */
+  float mp=0.;for(int k=-3;k<=3;k++){float fk=float(k);mp+=texture2D(fmap,mu+rdu*fk*.022).r*(1.-abs(fk)*.2);}mp/=4.6; /* smeared along the ridge: brush strokes, not blotches */
+  vec2 rn=vec2(-rd.y,rd.x);float pc=dot(Q,rn),ac=dot(Q,rd);
+  float stk=rfb(vec2(pc*95.,ac*2.2))-.5;mp+=.14*stk*smoothstep(.05,.2,mp);       /* long streaks lying along the ridge break every edge */
+  float th=mix(.085,.16,side);float snowM=smoothstep(th-.015,th+.015,mp)*step(hgt,1.02)*smoothstep(.3,.36,hgt);
+  float t1=smoothstep(.33,.37,mp),t2=smoothstep(.58,.62,mp);
+  vec3 sh=mix(vec3(.34,.46,.79),vec3(.5,.62,.9),smoothstep(.1,.33,mp));   /* the shaded snow */
+  vec3 pa=mix(vec3(.66,.77,.97),vec3(.78,.86,1.),smoothstep(.37,.58,mp));   /* the pale lit snow */
+  vec3 wh=mix(vec3(.9,.94,1.),vec3(.99,.995,1.),smoothstep(.62,.85,mp));    /* full sun */
+  vec3 scol=mix(mix(sh,pa,t1),wh,t2);
+  scol=mix(scol,vec3(1.),smoothstep(.012,0.,dd)*step(v,.04)*smoothstep(-1.4,-.9,v)*.7); /* the rim of light along the sunlit skyline */
   vec3 c=mix(bc,scol,snowM);
   /* one family of blues, as in the reference: the snow cooled toward the sky's blue, nothing stark */
   c=mix(c,c*vec3(.86,.92,1.)+vec3(.0,.02,.06),.45);
@@ -3028,6 +3005,7 @@ vec4 scene(vec2 uv,vec2 P){vec2 S=vec2(sunp.x*asp,sunp.y);vec4 o=vec4(0.);
 // The landscapes of the scenic events barely move, so instead of redrawing them every frame they are rendered once, at full resolution and
 // supersampled, by their own shaders: a few tiles per frame while the event is being announced. The result is drawn as one image, with depth
 // (a far and a near layer that shift by different amounts as the balls move). Everything that moves stays live. Nothing is shipped: it is all drawn here.
+const FUJIMAP = new Uint8Array([44,35,28,25,19,17,16,13,12,12,10,10,10,10,8,8,10,10,10,10,10,10,10,10,12,12,12,13,14,14,14,14,11,13,13,12,8,8,8,5,5,3,3,3,2,1,1,1,1,1,0,0,0,0,0,0,0,0,0,2,18,19,16,10,41,33,26,25,19,17,16,13,13,14,12,12,11,10,8,8,12,12,12,12,12,12,12,12,14,15,14,16,19,20,31,25,45,78,18,15,12,10,8,7,7,5,5,7,19,3,3,3,3,3,2,1,1,1,3,6,6,4,0,3,15,13,3,0,41,32,28,23,20,18,17,16,13,12,12,12,13,12,12,12,12,12,12,12,14,14,16,16,15,16,24,41,107,109,153,72,134,207,30,24,25,16,12,9,7,8,8,6,7,6,6,3,3,4,6,4,5,3,4,15,13,8,3,3,5,1,0,0,36,30,25,23,23,22,20,16,14,14,14,14,13,9,14,14,14,14,14,14,16,16,18,18,20,24,64,189,241,240,143,133,192,154,53,35,37,25,21,14,11,10,10,8,8,8,8,6,6,9,11,9,7,5,7,8,10,4,3,3,5,1,2,2,34,29,24,23,28,20,18,16,16,16,16,16,26,14,16,16,16,16,16,16,17,18,21,20,23,60,224,248,255,205,190,217,215,71,61,38,38,33,27,23,14,13,13,9,9,8,8,7,7,10,11,10,8,7,6,4,6,2,3,1,5,2,3,3,33,28,25,23,21,21,20,18,16,16,16,16,16,16,16,16,16,16,18,21,19,23,26,29,58,224,255,255,215,197,213,227,131,47,62,56,30,39,28,35,24,14,12,12,12,10,10,10,10,8,8,8,7,7,7,7,7,7,10,7,7,5,3,3,30,28,25,23,21,21,21,21,19,19,19,19,19,19,19,19,19,19,23,23,24,28,28,63,220,255,255,224,193,207,231,136,89,71,63,56,44,32,36,27,38,25,13,14,14,12,12,12,12,10,10,10,7,7,8,8,8,8,8,6,10,7,6,6,29,28,27,25,22,21,20,19,22,19,19,19,19,19,19,19,20,20,23,24,29,33,59,213,255,255,187,186,194,220,220,116,64,81,55,45,39,38,28,27,34,37,22,18,16,15,14,14,15,10,10,11,10,9,8,8,8,8,7,12,10,8,7,7,30,28,28,26,23,23,24,22,25,19,20,20,20,20,23,21,23,23,24,27,34,59,210,255,244,173,92,191,200,217,171,127,48,114,64,50,42,37,34,35,33,32,29,19,14,17,15,15,13,17,13,12,12,12,10,10,10,10,10,10,10,10,8,8,30,28,28,26,23,25,24,23,42,23,24,23,23,23,24,26,25,25,29,32,60,205,255,255,147,110,130,193,202,180,151,126,67,127,69,58,43,41,44,34,36,38,31,29,25,19,17,16,20,15,14,14,14,14,13,13,13,13,13,13,13,13,10,10,31,28,28,28,26,23,23,24,40,21,23,23,25,25,25,27,25,29,34,61,212,255,249,191,154,128,113,198,208,151,150,126,94,86,74,53,52,44,42,38,36,41,34,33,36,22,20,19,17,19,17,17,16,16,13,15,20,16,14,14,14,14,14,14,30,28,28,28,28,25,25,25,25,25,25,25,26,26,26,30,33,33,68,222,255,235,217,171,123,86,176,204,173,144,144,120,105,44,83,60,53,44,44,38,32,34,44,33,36,36,25,23,21,19,19,19,17,17,20,19,17,17,16,16,16,16,16,16,29,28,28,28,28,26,26,26,26,26,26,26,30,30,31,34,39,85,226,255,255,194,171,143,85,156,191,192,160,150,125,126,116,89,42,70,56,44,43,41,37,35,36,37,32,34,33,28,24,21,21,21,19,19,17,17,19,19,17,17,17,17,17,17,32,30,30,30,30,30,30,30,30,30,32,32,30,33,33,39,107,228,255,255,188,141,166,129,100,181,191,165,151,177,109,132,122,95,36,66,45,29,38,41,41,39,34,31,35,30,34,34,27,25,24,23,23,24,23,21,21,21,19,19,19,19,19,19,32,32,32,32,32,32,32,32,32,32,34,34,34,36,45,124,218,245,255,183,127,126,156,94,157,175,167,161,182,175,139,129,120,71,53,43,41,16,27,36,37,37,40,29,21,29,30,29,35,30,27,25,23,26,26,22,24,24,21,21,21,21,21,21,32,34,34,34,34,34,34,34,34,34,35,36,37,54,144,210,235,232,170,151,80,143,134,137,162,161,174,162,190,146,134,127,119,74,79,24,40,26,8,40,42,24,40,39,26,9,27,32,30,32,29,27,25,25,27,25,25,25,23,23,23,23,23,23,42,49,44,34,32,34,35,35,35,35,37,40,63,169,206,223,219,129,132,105,119,143,148,154,148,164,185,167,157,138,131,125,114,86,71,42,30,44,21,17,39,13,22,37,25,13,4,30,28,22,29,28,28,29,27,28,27,25,25,25,25,25,23,23,56,60,56,49,46,46,40,37,37,37,44,83,159,179,212,213,150,149,127,131,149,136,138,149,88,123,125,144,143,138,126,122,100,86,70,50,24,34,44,23,9,19,3,11,18,11,0,7,29,26,17,23,28,27,28,30,27,37,28,28,28,28,26,26,44,48,46,46,42,38,39,39,39,45,88,123,121,162,203,149,130,150,139,135,136,120,145,72,30,99,48,103,132,131,135,124,106,87,71,48,10,23,32,37,21,8,24,2,7,1,3,0,8,22,16,21,27,15,26,31,30,30,30,30,30,30,28,28,40,40,40,40,41,40,46,43,46,66,68,96,139,176,158,136,139,142,99,121,135,118,93,23,28,89,27,102,76,123,137,116,101,75,72,48,29,36,13,32,19,12,10,17,0,12,0,4,3,4,11,9,24,20,14,22,29,34,31,29,32,32,31,31,43,43,43,43,42,45,40,35,35,31,42,146,167,159,145,145,134,79,106,103,110,120,28,16,65,52,41,82,23,113,117,110,100,76,67,42,30,30,29,11,26,12,8,2,4,0,0,5,6,6,9,11,24,12,19,17,14,24,34,35,34,34,34,34,45,44,44,43,44,34,23,21,22,29,100,142,73,115,143,137,60,84,76,37,32,53,13,28,80,32,81,22,27,118,108,108,94,80,32,3,0,0,0,0,0,3,0,0,0,0,0,0,0,5,1,0,10,18,12,14,13,4,7,28,36,35,37,37,46,45,46,39,26,20,23,16,34,98,98,34,20,71,84,50,74,43,11,15,17,15,10,67,37,69,30,21,88,117,102,77,53,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,3,7,0,0,12,35,41,37,48,41,27,18,12,19,12,40,74,36,15,18,44,44,32,54,17,4,2,5,4,1,26,65,35,30,16,78,98,62,24,7,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,21,36,29,16,12,15,11,10,24,41,15,7,9,43,24,14,17,5,0,0,0,0,0,0,27,35,17,10,54,52,15,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,10,9,6,11,8,11,5,7,9,16,15,14,15,9,0,0,0,0,0,0,0,23,16,1,13,16,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]); // where the snow lies on Fuji and how it catches the light: a coarse 64x26 map of light and shade over the cone, from the reference view
 const SCENE = (() => {
   let cvs = null, gl = null, buf = null, failed = false; const P = {}, done = {}; let job = null, sizeKey = '';
   const SC = `precision highp float;uniform vec2 res,reg,cw;uniform float variant;uniform vec4 sunp;
@@ -3073,6 +3051,7 @@ void main(){asp=res.x/res.y;px=1.25/res.y;vec4 acc=vec4(0.);
     tick(n = 3) { if (!job || !gl) { if (!job && this.q && this.q.length) { const q = this.q.shift(); this.want(q.key, q.name, q.variant, q.top, q.sun, q.ovw); } return; }
       const { pr, w, h } = job; gl.useProgram(pr); gl.bindBuffer(gl.ARRAY_BUFFER, buf); const a = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
       const L = nm => gl.getUniformLocation(pr, nm); gl.uniform2f(L('res'), cv.width, cv.height); gl.uniform2f(L('reg'), job.top, job.ov); gl.uniform2f(L('cw'), w, h); gl.uniform1f(L('variant'), job.variant); gl.uniform4fv(L('sunp'), job.sun);
+      if (job.name === 'sakura') { if (!this.fmap) { this.fmap = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.fmap); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, 64, 26, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, FUJIMAP); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(p => gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE)); } gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.fmap); gl.uniform1i(L('fmap'), 0); }
       gl.viewport(0, 0, w, h); gl.enable(gl.SCISSOR_TEST);
       for (let i = 0; i < (job.heavy ? 1 : n) && job.tiles.length; i++) { const [x, y] = job.tiles.shift(); gl.scissor(x, y, job.T, job.T); gl.drawArrays(gl.TRIANGLES, 0, 3); }
       gl.disable(gl.SCISSOR_TEST);
