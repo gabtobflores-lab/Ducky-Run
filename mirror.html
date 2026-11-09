@@ -2405,7 +2405,12 @@ void main(){vec2 uv=camUV(UV());float asp=res.x/res.y;vec2 P=vec2(uv.x*asp,uv.y)
   float den=.45+.75*veil,den2=.55+.6*fbm3(P*1.6+vec2(-t*.03,3.));
   sky*=1.-.12*(1.-smoothstep(.5,1.,r/R));
   { vec4 k=skyCloud(P,1.5,.5,8.3,.38,.15);float band=smoothstep(.48,.62,uv.y)*(1.-smoothstep(.74,.84,uv.y));sky=mix(sky,mix(vec3(.7,.78,.92),vec3(1.,.99,.97),k.x),k.y*band*.75); } /* soft clouds low in the cold sky, lit white */
-  vec3 L=(vec3(1.,.36,.24)*exp(-pow((x+.004)/.012,2.))*.95+vec3(1.,.8,.46)*exp(-pow((x-.013)/.02,2.))*.75+vec3(.94,.97,1.)*exp(-max(x-.025,0.)/.16)*smoothstep(-.01,.035,x)*.5)*den;
+  float rx=x+.0035*(fbm3(vec2(atan(d.y,d.x)*6.,t*.05))-.5); /* the ring's edge breathes very slightly as the crystals drift */
+  vec3 L=(vec3(1.,.3,.2)*exp(-pow((rx+.003)/.009,2.))*1.6+vec3(1.,.62,.3)*exp(-pow((rx-.007)/.012,2.))*1.2+vec3(1.,.9,.6)*exp(-pow((rx-.019)/.017,2.))*.95 /* a crisp red inner edge, then orange and pale gold */
+    +vec3(.95,.98,1.)*exp(-max(rx-.03,0.)/.15)*smoothstep(-.005,.035,rx)*.65+vec3(.62,.72,1.)*exp(-pow((rx-.075)/.03,2.))*.12)*den; /* fading to white, a faint blue beyond */
+  L*=1.-.4*smoothstep(.0,-.02,rx); /* the sky just inside the ring is darker, as in a real halo */
+  { float an=atan(d.y,d.x);vec2 gq=vec2(an*120.,rx*90.);vec2 gi=floor(gq);float gh=hs(gi+11.);float tw=pow(max(0.,sin(t*(1.5+gh*3.)+gh*40.)),12.); /* single crystals glinting in the ring */
+    L+=vec3(1.,.97,.92)*step(.93,gh)*smoothstep(.4,0.,length(fract(gq)-.5))*tw*exp(-pow(rx/.03,2.))*1.4*den; }
   for(int i=0;i<2;i++){float sg=i==0?-1.:1.;vec2 q=P-(S+vec2(sg*R*1.05,0.));float hx=q.x*sg;
     vec3 pc=hx<-.006*R?vec3(1.,.35,.24):hx<.01*R?vec3(1.,.78,.4):mix(vec3(.95,.97,1.),vec3(.62,.8,1.),clamp(hx/(R*.08),0.,1.));
     float core=exp(-pow(q.y/(R*.05),2.))*exp(-pow(hx/(R*.028),2.));float soft=exp(-pow(q.y/(R*.1),2.))*exp(-pow(hx/(R*.075),2.));
@@ -2556,7 +2561,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
   return {
     ok, warm() { if (!ok()) return; for (const n of Object.keys(FS)) if (!prog(n)) failed = true; moonTex(); VA.get(); },
     aurora, bhole, draw(name, U) { if (!ok()) return false; const pg = prog(name); if (!pg) { failed = true; return false; }
-      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : name === 'eclipse' || name === 'halo' || name === 'golden' || name === 'sakura' ? .88 * skyQs : qLevel ? .55 : .8) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
+      const sc = Math.min(devicePixelRatio || 1, 2) * (name === 'bhole' || name === 'alien' ? 1.15 * skyQs : name === 'halo' ? 1.05 * skyQs : name === 'eclipse' || name === 'golden' || name === 'sakura' ? .88 * skyQs : qLevel ? .55 : .8) /* the heavy skies are soft light: drawn at about 1.4x and scaled up, the phone stays smooth */, w = Math.max(1, Math.round(innerWidth * sc)), h = Math.max(1, Math.round(innerHeight * sc));
       if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; } gl.viewport(0, 0, w, h); gl.useProgram(pg.pr);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(pg.a); gl.vertexAttribPointer(pg.a, 2, gl.FLOAT, false, 0, 0);
       const L = n => pg.loc[n] !== undefined ? pg.loc[n] : (pg.loc[n] = gl.getUniformLocation(pg.pr, n));
@@ -2795,7 +2800,7 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
     float h1=hs(vec2(fi,1.)),h2=hs(vec2(fi,2.)),h3=hs(vec2(fi,3.)),h4=hs(vec2(fi,4.)),h5=hs(vec2(fi,5.));
     vec2 dir=sdR<.5?normalize(vec2(-.72,-.43)):normalize(vec2(.66,-.5)); /* down each slope, parallel to the skyline */
     float sv=sdR<.5?mix(-.34,.06,h1):mix(-.04,.16,h1);vec2 st=vec2(sv,fujiR(sv)-.004-.05*h2)+dir*(pow(h3,1.1)*.52); /* strokes start at every depth down the cap */
-    float L=(.08+.4*h4)*(sdR<.5?1.:.75),wd=.004+.01*h5; /* finer streaks, as in the reference */vec2 e=Q-st;float al=dot(e,dir)/L;if(al<0.||al>1.)continue;
+    float L=(.08+.4*h4)*(sdR<.5?1.+.5*h4*h4:.75),wd=.004+.01*h5; /* finer streaks, as in the reference */vec2 e=Q-st;float al=dot(e,dir)/L;if(al<0.||al>1.)continue;
     vec2 nrm=vec2(-dir.y,dir.x);float off=dot(e,nrm)-.01*sin(al*3.+fi*1.7)*L; /* each stroke gently bowed */
     float tp=wd*pow(1.-al,.8)*smoothstep(0.,.12,al);float k=smoothstep(tp+.0025,tp-.0015,abs(off));
     if(sdR<.5)stL=max(stL,k);else stR=max(stR,k);}
@@ -2811,8 +2816,8 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   float strokes=max(stL,stR)*step(hgt,sky);
   float snow=max(base,strokes)*step(hgt,1.02);
   float topW=smoothstep(.06,.0,dsk); /* right under the summit the snow is solid */
-  vec3 lit=mix(vec3(.6,.72,.94),vec3(.46,.6,.9),smoothstep(.1,1.,dep));lit=mix(lit,mix(vec3(.98,.99,1.),vec3(.86,.92,1.),dep),max(stL,topW*.9)); /* bright streaks of snow with blue showing between them */
-  vec3 shd=mix(vec3(.32,.42,.74),vec3(.24,.33,.64),smoothstep(.1,1.,dep));shd=mix(shd,mix(vec3(.66,.76,.96),vec3(.54,.65,.9),dep),max(stR,topW*.6)); /* paler streaks over the shaded blue */
+  vec3 lit=mix(vec3(.6,.72,.94),vec3(.46,.6,.9),smoothstep(.1,1.,dep));lit=mix(lit,mix(vec3(.9,.95,1.),vec3(.78,.87,1.),dep),max(stL,topW*.9));lit=mix(lit,vec3(1.),stL*smoothstep(.5,.0,dep)*.5); /* icy blue-white streaks, pure white only high up */ /* bright streaks of snow with blue showing between them */
+  vec3 shd=mix(vec3(.24,.34,.66),vec3(.16,.25,.54),smoothstep(.1,1.,dep)); /* the shaded face a deep blue, as in the reference */shd=mix(shd,mix(vec3(.66,.76,.96),vec3(.54,.65,.9),dep),max(stR,topW*.6)); /* paler streaks over the shaded blue */
   vec3 sc=mix(shd,lit,side);sc=mix(sc,vec3(1.),smoothstep(.008,0.,dd)*side*.45);
    /* the summit nub catching the sun */
   float gulS=gu;
@@ -3304,11 +3309,11 @@ const PUFF = () => sprite('puff', 360, 160, (g, w, h) => { // one billowing bank
   const R = Math.random, blobs = []; for (let i = 0; i < 14; i++) { const x = w * (.12 + .76 * i / 13) + (R() - .5) * 20, r = h * (.2 + .22 * Math.sin(i / 13 * Math.PI) + R() * .08); blobs.push([x, h * .72 - r * .55, r]); }
   for (const [x, y, r] of blobs) { const rg = g.createRadialGradient(x - r * .25, y - r * .35, r * .1, x, y, r); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(.6, 'rgba(242,247,255,.98)'); rg.addColorStop(1, 'rgba(214,226,248,0)'); g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
   const sh = g.createLinearGradient(0, h * .45, 0, h); sh.addColorStop(0, 'rgba(180,198,236,0)'); sh.addColorStop(1, 'rgba(176,196,236,.55)'); g.globalCompositeOperation = 'source-atop'; g.fillStyle = sh; g.fillRect(0, 0, w, h); g.globalCompositeOperation = 'source-over'; });
-const DRIFT = Array.from({ length: 10 }, (_, i) => ({ x: Math.random(), row: i % 4, sp: .012 + Math.random() * .014, ph: Math.random() * 7, s: .8 + Math.random() * .5 }));
+const DRIFT = Array.from({ length: 10 }, (_, i) => ({ x: Math.random(), row: i % 4, sp: .018 + Math.random() * .016, ph: Math.random() * 7, s: .8 + Math.random() * .5 }));
 function drawCloudDrift(a) { // banks of cloud drifting slowly across the sea of cloud below us, rising and settling, so the valley breathes
   ctx.save(); const pf = PUFF(), k = a * clamp01(skyE * 1.15);
   for (const d of DRIFT.slice().sort((p, q) => p.row - q.row)) { const dep = d.row / 3, wd = W * (.9 + .7 * dep) * d.s, hd = wd * .3, y = H * (.86 + .045 * d.row) + Math.sin(t * .35 + d.ph) * 4 * (1 + dep);
-    const x = ((d.x * (W + wd) + t * W * d.sp * (1 + dep)) % (W + wd)) - wd; ctx.globalAlpha = k * (.45 + .4 * dep); ctx.drawImage(pf, x, y - hd * .7, wd, hd); }
+    const x = ((d.x * (W + wd) + t * W * d.sp * (1 + dep)) % (W + wd)) - wd; ctx.globalAlpha = k * (.7 + .3 * dep); ctx.drawImage(pf, x, y - hd * .7, wd, hd); }
   ctx.restore(); ctx.globalAlpha = 1; }
 function drawValleyMist(a) { // soft veils of mist drifting slowly across the valley in front of the mountain
   ctx.save(); const b = softBlob('235,242,255');
