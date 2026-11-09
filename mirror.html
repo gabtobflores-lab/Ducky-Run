@@ -2832,8 +2832,12 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   vec3 bc=mix(bodyS,bodyL,side*.55); /* smooth: the flanks graded softly from blue to deep navy, no lines */
   float streak=0.;
   /* fine painted grain in the snow, running along the slopes as in the reference: very fine, very gentle */
-  float slopeL=hgt+(v+.0)*.62,slopeR=hgt-(v)*.78;float grain=sin(mix(slopeR,slopeL,side)*900.+6.*rfb(vec2(v*8.,hgt*6.)))*.5+.5;
-  sc*=1.-.07*smoothstep(.55,1.,grain)*smoothstep(.04,.2,dsk);
+  /* the reference's hatching: fine broken streaks lying parallel to the slope, dark between bright on the sunlit face, pale on the shaded face */
+  vec2 nL=normalize(vec2(.5,-.86)),nR=normalize(vec2(.6,.8));vec2 nn=normalize(mix(nR,nL,side));float pc=dot(Q,nn),ac=dot(Q,vec2(-nn.y,nn.x)); /* across and along the fall line of each face */
+  float hq=pc*150.+2.2*rfb(vec2(ac*3.,pc*4.)),hid=floor(hq),hf=fract(hq);
+  float seg=smoothstep(.42,.6,vn(vec2(ac*(14.+6.*hs(vec2(hid,3.)))+hid*7.3,hid*.37))); /* each streak broken into long dashes */
+  float line=smoothstep(.32,.0,abs(hf-.5)-.12)*seg*smoothstep(.03,.12,dsk)*smoothstep(1.3,.6,dep);
+  sc=mix(sc,mix(sc*.72,mix(sc,vec3(.86,.92,1.),.6),1.-side),line*.55);
   vec3 c=mix(bc,sc,snow);
   /* one family of blues, as in the reference: the snow cooled toward the sky's blue, nothing stark */
   c=mix(c,c*vec3(.86,.92,1.)+vec3(.0,.02,.06),.45);
