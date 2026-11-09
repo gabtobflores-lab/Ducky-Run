@@ -2750,7 +2750,7 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   float v=mx/FH,u=-v;float r=length(vec2(v,(1.-hgt))); /* lit from the upper left, as in the reference */
   float ang=atan(v,(1.-hgt)*.42+.01); /* the fall lines, fanning out from the summit and lying close along the slopes, as the snow streaks do in the reference */ /* the fall lines, fanning out from the summit */
   float tl=v-.45*(1.-hgt)-.005; /* the line between the sunlit and shaded faces runs down and a little to the right from the tip, as in the reference */ /* the line between the sunlit face and the shaded face runs almost straight down from the tip */
-  float side=1.-smoothstep(-.03,.03,tl);
+  float side=1.-smoothstep(-.07,.07,tl); /* a soft turn from light to shade, no seam */
   /* the snowcap, drawn like the reference from placed shapes: the cap down to the measured snow line, a set of tapering fingers running on down the slopes,
      narrow blue gullies between them on the sunlit west, darker gullies and pale ribs on the shaded east */
   vec2 Q=vec2(v,hgt);float sh=snowH(v);float dep=clamp((1.-hgt)/max(1.-sh,.05),0.,1.4);
@@ -2830,10 +2830,16 @@ vec4 fuji(vec2 uv,vec2 P,vec2 S){float mx=P.x-FX*asp;float top=fujiTop(mx);float
   float gulS=gu;
   float gul=gulS;
   vec3 bodyS=mix(vec3(.2,.3,.6),vec3(.06,.11,.3),smoothstep(.75,.15,hgt)),bodyL=mix(vec3(.3,.42,.72),vec3(.1,.17,.4),smoothstep(.75,.15,hgt)); /* lighter blue just under the snow, deep navy toward the foot */
-  vec3 bc=mix(bodyS,bodyL,side*.7);float rdg=1.-abs(rfb(vec2(ang*26.+.6*rfb(vec2(ang*4.,hgt*2.)),hgt*2.2)+9.)*2.-1.);bc*=.96+.06*smoothstep(.55,.85,rdg)*smoothstep(.0,.35,hgt)+.0*(rfb(vec2(ang*90.,hgt*30.))-.5); /* ridges and gullies scoring the flanks, a rocky grain */bc=mix(bc,bc*.85,gul*smoothstep(.35,.6,hgt)*.6);
+  vec3 bc=mix(bodyS,bodyL,side*.55); /* smooth: the flanks graded softly from blue to deep navy, no lines */
   float streak=0.;
+  /* fine painted grain in the snow, running along the slopes as in the reference: very fine, very gentle */
+  float slopeL=hgt+(v+.0)*.62,slopeR=hgt-(v)*.78;float grain=sin(mix(slopeR,slopeL,side)*900.+6.*rfb(vec2(v*8.,hgt*6.)))*.5+.5;
+  sc*=1.-.07*smoothstep(.55,1.,grain)*smoothstep(.04,.2,dsk);
   vec3 c=mix(bc,sc,snow);
-  c=mix(c,hazeS(uv),.03+.18*smoothstep(.2,.0,hgt)); /* the foot softened by the air over the lake */
+  /* one family of blues, as in the reference: the snow cooled toward the sky's blue, nothing stark */
+  c=mix(c,c*vec3(.86,.92,1.)+vec3(.0,.02,.06),.45);
+  c+=vec3(.75,.85,1.)*exp(-dd/.004)*.18; /* a faint glow along the whole skyline */
+  c=mix(c,hazeS(uv)*vec3(.82,.88,1.),.08+.3*smoothstep(.45,.0,hgt)); /* atmosphere thickening toward the foot */
   return vec4(c,m);}
 vec4 farLayer(vec2 uv,vec2 P,vec2 S){vec4 o=vec4(0.);
   { float band=smoothstep(.5,.56,uv.y)*smoothstep(.72,.62,uv.y);vec2 q=vec2(P.x*2.2,uv.y*14.);float f=fbm(q+vec2(fbm3(q*.6)*1.4,0.)); /* long wisps of cloud drifting behind the mountain */
