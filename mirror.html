@@ -3134,10 +3134,10 @@ const hillY = (x, i) => H * [.865, .925][i] + Math.sin(x * .011 + 1 + i * 2.1) *
 const GRASS = Array.from({ length: 150 }, (_, i) => ({ x: (i + Math.random() * .8) / 150, h: 9 + Math.random() ** 1.6 * 30, l: (Math.random() - .5) * .5, w: .9 + Math.random() * 1.1, ph: Math.random() * 7, i: Math.random() < .35 ? 0 : 1 }));
 const TREES = [[.08, 1.1], [.14, .8], [.63, 1.25], [.7, .9], [.76, 1.05], [.93, .75]];
 const BIRDS = Array.from({ length: 9 }, (_, i) => ({ g: i < 6 ? 0 : 1, k: i < 6 ? i : i - 6, ph: Math.random() * 7, f: 3.2 + Math.random() * 1.4 }));
-function drawBirds(a, col) { // birds crossing the sky in loose V formations: a small body and head, a forked tail, curved wings that beat, then glide
+function drawBirds(a, col, yo = 0) { // birds crossing the sky in loose V formations: a small body and head, a forked tail, curved wings that beat, then glide
   ctx.save(); ctx.fillStyle = `rgba(${col},${.78 * a})`;
   for (const b of BIRDS) { const per = b.g ? 46 : 34, u = ((t + b.g * 19) / per) % 1, k = b.k, side = k % 2 ? 1 : -1, row = Math.ceil(k / 2);
-    const x = -60 + u * (W + 120) - row * 18 + (b.g ? 30 : 0), y = H * (b.g ? .42 : .33) + side * row * 10 + Math.sin(t * .4 + b.g) * 6 + Math.sin(t * .9 + b.ph) * 1.5, s = b.g ? 4.2 : 5.8;
+    const x = -60 + u * (W + 120) - row * 18 + (b.g ? 30 : 0), y = H * ((b.g ? .42 : .33) + yo) + side * row * 10 + Math.sin(t * .4 + b.g) * 6 + Math.sin(t * .9 + b.ph) * 1.5, s = b.g ? 4.2 : 5.8;
     const ph = (t * b.f * .55 + b.ph) % 6.283, glide = Math.sin(t * .23 + b.ph) > .35, fl = glide ? .15 : Math.sin(ph * 2.2), w = fl * s * .9; // they beat their wings, then glide a while
     ctx.save(); ctx.translate(x, y); ctx.rotate(-.04);
     ctx.beginPath(); ctx.ellipse(0, 0, s * .55, s * .2, 0, 0, 7); ctx.fill(); // the body
@@ -3223,13 +3223,16 @@ function drawBranch(a, right) { // a flowering cherry branch reaching in from th
   for (const [x0, y0, x1, y1, w] of BRANCH.segs) if (w > 2) { ctx.strokeStyle = 'rgba(40,26,34,.35)'; ctx.lineWidth = .6; for (let k = 1; k < 4; k++) { const u = k / 4; ctx.beginPath(); ctx.moveTo((x0 + (x1 - x0) * u) * W - w * .3, oy + (y0 + (y1 - y0) * u) * W - w * .3); ctx.lineTo((x0 + (x1 - x0) * u) * W + w * .3, oy + (y0 + (y1 - y0) * u) * W + w * .3); ctx.stroke(); } } // the cherry's horizontal bark rings
   for (const [x, y, sc, vi, rot] of BRANCH.cl) { const sz = 66 * sc * (1 + .02 * Math.sin(t * 1.1 + rot * 9)); ctx.save(); ctx.translate(x * W, oy + y * W); ctx.rotate(rot * .3); ctx.drawImage(BLCL(vi), -sz / 2, -sz / 2, sz, sz); ctx.restore(); } // painted clusters of blossom at every node
   ctx.restore(); ctx.globalAlpha = 1; }
-const GPET = Array.from({ length: 6 }, (_, i) => ({ t0: -i * 1.7, x: 0, y: 0, r: 0, s: 1, dur: 4 }));
-function glassPetals(a) { // now and then a petal lands on the glass, rests a moment, then slides down and away
-  for (const g of GPET) { let k = (t - g.t0) / g.dur; if (k >= 1 || k < 0) { g.t0 = t + Math.random() * 3; g.dur = 3.5 + Math.random() * 3; g.x = W * (.08 + Math.random() * .84); g.y = H * (.08 + Math.random() * .6); g.r = Math.random() * 6; g.s = .9 + Math.random() * .7; continue; }
-    const land = smooth(clamp01(k / .08)), out = smooth(clamp01((k - .7) / .3)), y = g.y + (k > .45 ? (k - .45) * (k - .45) * H * .35 : 0);
-    ctx.save(); ctx.translate(g.x, y); ctx.rotate(g.r + (k > .45 ? (k - .45) * .6 : 0)); const sc = g.s * (1.25 - .25 * land);
+const GPET = Array.from({ length: 5 }, (_, i) => ({ t0: -i * 2.3, x: 0, y: 0, r: 0, s: 1, dur: 6, fall: 1.6, sw: 30, ph: 0 }));
+function glassPetals(a) { // now and then a petal drifts down toward us, tumbling, lands on the glass, rests a moment, then slides down and away
+  for (const g of GPET) { const life = g.fall + g.dur, k0 = t - g.t0; if (k0 >= life || k0 < 0) { if (k0 >= life || k0 < -9) { g.t0 = t + Math.random() * 3.5; g.fall = 1.3 + Math.random() * .9; g.dur = 3 + Math.random() * 2.5; g.x = W * (.1 + Math.random() * .8); g.y = H * (.1 + Math.random() * .58); g.r = Math.random() * 6; g.s = .9 + Math.random() * .6; g.sw = (Math.random() < .5 ? -1 : 1) * (20 + Math.random() * 40); g.ph = Math.random() * 7; } continue; }
+    if (k0 < g.fall) { // falling: it comes from above, swaying and turning over, growing as it nears the lens
+      const q = k0 / g.fall, e = q * q * (3 - 2 * q), y = g.y - (1 - e) * (g.y + 40), x = g.x - g.sw * (1 - q) + Math.sin(q * 7 + g.ph) * 14 * (1 - q), tb = Math.cos(k0 * 5.5 + g.ph), sc = g.s * (.45 + .8 * e);
+      ctx.save(); ctx.translate(x, y); ctx.rotate(g.r + (1 - q) * 3 + Math.sin(k0 * 3 + g.ph) * .5); ctx.scale(sc * (.2 + .8 * Math.abs(tb)), sc); ctx.globalAlpha = a * (.55 + .4 * q) * smooth(clamp01(q / .15)); ctx.drawImage(APETAL(tb < 0), -13, -15, 26, 30); ctx.restore(); continue; }
+    const k = (k0 - g.fall) / g.dur, land = smooth(clamp01(k / .06)), out = smooth(clamp01((k - .7) / .3)), y = g.y + (k > .45 ? (k - .45) * (k - .45) * H * .35 : 0);
+    ctx.save(); ctx.translate(g.x, y); ctx.rotate(g.r + (k > .45 ? (k - .45) * .6 : 0)); const sc = g.s * (1.25 + .08 * (1 - land)) * (1 + .06 * Math.sin(clamp01(k / .06) * 3.14)); // a small press as it touches the glass
     ctx.globalAlpha = a * land * (1 - out) * .22; ctx.drawImage(softBlob('120,60,90'), -16 * sc, -10 * sc, 34 * sc, 26 * sc); // its soft shadow on the glass
-    ctx.globalAlpha = a * land * (1 - out) * .92; ctx.drawImage(PETAL(false), -13 * sc, -15 * sc, 26 * sc, 30 * sc); ctx.restore(); }
+    ctx.globalAlpha = a * (1 - out) * .95; ctx.drawImage(APETAL(false), -13 * sc, -15 * sc, 26 * sc, 30 * sc); ctx.restore(); }
   ctx.globalAlpha = 1; }
 function lakeRings(a) { // rings spreading on the lake where petals land
   const lk = H * .875 + (offY ? 0 : 0); ctx.save(); ctx.lineWidth = 1;
@@ -3245,14 +3248,6 @@ const AFLOWER = () => sprite('aflower', 192, 192, g => { const c = 96, r = 70; /
   for (let p = 0; p < 5; p++) { const a = -1.5708 + p * 1.2566, px = c + Math.cos(a) * r * .52, py = c + Math.sin(a) * r * .52; g.moveTo(px + r * .5, py); g.ellipse(px, py, r * .5, r * .4, a, 0, 7); } g.fill();
   g.globalCompositeOperation = 'source-atop'; const lg = g.createLinearGradient(30, 30, 170, 170); lg.addColorStop(0, 'rgba(255,255,255,.18)'); lg.addColorStop(.6, 'rgba(255,255,255,0)'); lg.addColorStop(1, 'rgba(110,110,190,.16)'); g.fillStyle = lg; g.fillRect(0, 0, 192, 192); g.globalCompositeOperation = 'source-over';
   g.fillStyle = 'rgba(200,80,132,.75)'; g.beginPath(); g.arc(c, c, r * .13, 0, 7); g.fill(); });
-const FLOCK = { t0: 3, n: 0, f: [] };
-function drawFlock(a) { // now and then a small flock crosses the far sky above the lake, wings beating and gliding
-  if (t > FLOCK.t0 + (W + 120) / (FLOCK.sp || 25) || !FLOCK.f.length) { { FLOCK.t0 = t + (FLOCK.f.length ? 4 + Math.random() * 8 : .5); const n = 3 + (Math.random() * 5 | 0), dir = Math.random() < .5 ? 1 : -1, y = H * (.42 + Math.random() * .16); FLOCK.f = Array.from({ length: n }, (_, i) => ({ dx: -i * (14 + Math.random() * 10), dy: (i % 2 ? 1 : -1) * Math.ceil(i / 2) * (5 + Math.random() * 4) + Math.random() * 3, ph: Math.random() * 7, sz: .8 + Math.random() * .4 })); FLOCK.dir = dir; FLOCK.y = y; FLOCK.sp = 22 + Math.random() * 10; } }
-  const k = t - FLOCK.t0; if (k < 0) return; const lead = FLOCK.dir > 0 ? -40 + k * FLOCK.sp : W + 40 - k * FLOCK.sp;
-  ctx.save(); ctx.strokeStyle = `rgba(34,48,86,${.75 * a})`; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  for (const b of FLOCK.f) { const x = lead - b.dx * FLOCK.dir, y = FLOCK.y + b.dy + Math.sin(k * .8 + b.ph) * 3, ph = k * 7 + b.ph, glide = Math.sin(k * .5 + b.ph) > .55, fl = glide ? .15 : Math.sin(ph), w = 6 * b.sz, up = fl * 4 * b.sz;
-    if (x < -30 || x > W + 30) continue; ctx.lineWidth = 1.3 * b.sz; ctx.beginPath(); ctx.moveTo(x - w, y - up); ctx.quadraticCurveTo(x - w * .4, y - up * .3 - 1.5 * b.sz, x, y); ctx.quadraticCurveTo(x + w * .4, y - up * .3 - 1.5 * b.sz, x + w, y - up); ctx.stroke(); }
-  ctx.restore(); }
 function drawPetals(a, near) { // petals tumbling down on the breeze, turning as they fall; now and then a gust carries them sideways
   if (!near) { const dt = Math.min(.05, Math.max(0, t - petT)); petT = t; petG += dt * (16 + 110 * Math.pow(Math.max(0, Math.sin(t * .42 + 1)), 6)); }
   for (const p of PET) { if (near ? p.z < .86 : p.z >= .86) continue; const dn = clamp01((a * 1.2 - (p.x * 7.31 + p.y * 3.17) % 1) / .2); if (dn <= 0) continue;
@@ -3368,7 +3363,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
   if (wx.kind === 'golden') { const p = goldP(); drawBirds(a * (1 - .7 * smooth(clamp01((p - .7) / .3))), p < .5 ? '70,48,72' : '40,26,52'); drawMotes(a * (1 - smooth(clamp01((p - .55) / .3))), '255,214,150'); }
   if (wx.kind === 'eclipse') drawMotes(a * (1 - ECL.dk) * .7, '255,236,214');
   if (wx.kind === 'blossom' && G) { drawScene('blossom0', a, scPar * .35); drawScene('blossom1', a, scPar * 1.1); } // Fuji, the blossoming shore and the lake, rendered once; rings on the lake live
-  if (wx.kind === 'blossom') { if (!G) blossomHills(a); drawFlock(a); drawPetals(a, false); ctx.save(); ctx.translate(-scPar * 10, 0); drawBranch(a, false); drawBranch(a, true); ctx.restore(); } // two flowering branches frame the top of the scene
+  if (wx.kind === 'blossom') { if (!G) blossomHills(a); drawBirds(a, '30,44,82', .12); drawPetals(a, false); ctx.save(); ctx.translate(-scPar * 10, 0); drawBranch(a, false); drawBranch(a, true); ctx.restore(); } // two flowering branches frame the top of the scene
   if (wx.kind === 'halo' && !G) snowForest(a);
   if (wx.kind === 'halo' && G) { drawScene('halo0', a, scPar * .4); drawCloudSea('halo1', a, scPar * .6, .03, 1.3); drawCloudSea('halo2', a, scPar * .9, .045, 4.1); drawValleyMist(a); } // the frozen valley, rendered once
   if (wx.kind === 'eclipse' && !G) eclTick();
