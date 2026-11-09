@@ -3526,6 +3526,7 @@ function drawBackWeather() { // events that live behind the blocks and balls
     meteors(wx.phase === 'on' ? 1.7 : wx.phase === 'warn' ? 0 : .6, a);
     lowres(() => [[.16, .26, 4, 2.2, .7, 61], [.5, .34, -3, 2, 1, 62], [.74, .36, 5, 2.4, 1, 63]].forEach(([y, h, sp, sc, al, sd], i) => drawSheet(cloudTex('mcn' + i, '52,34,96', '236,186,236', { seed: sd, cover: .54, base: .8, top: .12, alpha: .92, squash: 1.5, sharp: 3, shadow: .7, p: 3 }), H * y + nz(t * .05, i + 3) * 10, H * h, sp, al * a, sc))); // soft violet clouds, their tops lit pink by the moon
     ctx.globalAlpha = .45 * a; ctx.drawImage(softBlob('220,120,180'), -W * .4, H * .82, W * 1.8, H * .4); ctx.globalAlpha = 1; } // a pink glow along the horizon
+  if (wx.kind === 'meteor' && G) meteors(wx.phase === 'on' ? 1.2 : wx.phase === 'warn' ? 0 : .4, a); // bright shooting stars in front of the painted night sky
   if (wx.kind === 'aurora' && !G) { nightSky(a * .5, .12); meteors(.06, a); drawAurora(a);
     lowres(() => { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .55 * a; ctx.drawImage(softBlob('50,70,210'), -W * .5, H * .72, W * 2, H * .5); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }); // a deep blue glow beneath the curtains
   }
