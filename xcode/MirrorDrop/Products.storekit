@@ -159,7 +159,37 @@
     "_storefront": "USA",
     "_storeKitErrors": []
   },
-  "subscriptionGroups": [],
+  "subscriptionGroups": [
+    {
+      "id": "5F1C2A80",
+      "localizations": [],
+      "name": "Mirror Drop VIP",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "3.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6740000100",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Free weekly continues, advanced tips and rare event previews.",
+              "displayName": "Mirror Drop VIP",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "mirrordrop.vip.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "VIP Monthly",
+          "subscriptionGroupID": "5F1C2A80",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    }
+  ],
   "version": {
     "major": 4,
     "minor": 0

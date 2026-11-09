@@ -151,6 +151,11 @@
   .best.celebrate{animation:celebrate 1.6s var(--ease) both}
   @keyframes celebrate{0%{box-shadow:var(--sh-card),0 0 0 0 rgba(233,162,59,.55)}35%{box-shadow:var(--sh-card),0 0 0 10px rgba(233,162,59,0)}36%{box-shadow:var(--sh-card),0 0 0 0 rgba(233,162,59,.4)}80%,100%{box-shadow:var(--sh-card),0 0 0 12px rgba(233,162,59,0)}}
   .tag{min-height:22px;font-weight:900;letter-spacing:.2em;font-size:12px}
+  #ocont{display:none;flex-direction:column;align-items:center;gap:1px;background:linear-gradient(180deg,#e6f6ff,#c8e9fb);color:#1d6fa5;box-shadow:0 0 0 1.5px rgba(61,160,220,.28) inset,0 4px 14px rgba(61,160,220,.18)}#ocont.on{display:flex}#ocont small{font-size:11px;font-weight:700;letter-spacing:.04em;color:#4b93c2;text-transform:none}
+  #ocont:active{box-shadow:0 0 0 1.5px rgba(61,160,220,.4) inset}
+  .shd-i{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
+  #oearn{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:0}#oearn .earn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,173,51,.14);color:#b8650a;font-size:14px;font-weight:800}
+  #oearn small{font-size:12px;font-weight:700;color:var(--ink-3)}
   .tag:not(:empty){padding:4px 12px;border-radius:99px;color:#fff;background:linear-gradient(180deg,var(--gold-hi),var(--gold));box-shadow:0 4px 12px rgba(233,162,59,.35);animation:tagpop .45s var(--spring) both}
   @keyframes tagpop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
   #ocombo{font-size:14px;font-weight:800;letter-spacing:.06em;color:var(--gold);min-height:18px;margin-top:-6px}
@@ -175,6 +180,68 @@
   #sheet .pn,.xsh .pn{position:absolute;left:0;right:0;bottom:0;margin:0 auto;width:min(480px,100%);max-height:84vh;max-height:84dvh;display:flex;flex-direction:column;gap:12px;
     padding:8px 16px calc(16px + env(safe-area-inset-bottom));background:rgba(250,247,242,.97);border-radius:28px 28px 0 0;box-shadow:0 -12px 40px rgba(20,22,34,.2);transform:translateY(100%);transition:transform .5s var(--ios)}
   #sheet.open .pn,.xsh.open .pn{transform:none}
+  /* full-screen panels: Purchase Continues and VIP */
+  .fsh{position:fixed;inset:0;z-index:40;display:none;background:#f7f3ee;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateY(100%);transition:transform .5s var(--ios)}
+  .fsh.on{display:block}.fsh.open{transform:none}
+  .fin{width:min(480px,100%);margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px}
+  .fhd{display:grid;grid-template-columns:40px 1fr 40px;align-items:center}.fhd b{text-align:center;font-size:17px;font-weight:800}
+  .fx{width:34px;height:34px;border-radius:50%;border:0;background:rgba(43,45,66,.07);display:grid;place-items:center;cursor:pointer}.fx svg{width:12px;height:12px;stroke:var(--ink-2);stroke-width:2;stroke-linecap:round}
+  .cshero{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0 4px}
+  .cshero .shd-i{width:58px;height:58px;filter:drop-shadow(0 8px 16px rgba(240,143,28,.35));animation:shfloat 3.2s ease-in-out infinite}
+  @keyframes shfloat{50%{transform:translateY(-4px) rotate(4deg)}}
+  .cshero .bal{font-size:44px;font-weight:900;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .cshero small{font-size:13px;font-weight:800;letter-spacing:.12em;color:#b8650a}
+  .csown{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+  .csown span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#fff;box-shadow:var(--sh-card);font-size:13.5px;font-weight:700;color:var(--ink)}
+  .csown span.v{color:#5b3fd6}
+  .csnote{font-size:12.5px;font-weight:500;line-height:1.45;color:var(--ink-2);text-align:center;padding:0 12px}
+  .cspacks{display:flex;flex-direction:column;border-radius:20px;background:#fff;box-shadow:var(--sh-card);overflow:hidden}
+  .cspk{display:flex;align-items:center;gap:12px;padding:14px;transition:background .3s}
+  .cspk+.cspk{border-top:.5px solid rgba(43,45,66,.09)}
+  .cspk.got{background:rgba(46,196,214,.1)}
+  .cspk .n{width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:19px;font-weight:900;color:#fff;background:linear-gradient(160deg,#4fd8d6,#2a9fc0);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+  .cspk .tx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.cspk .tx b{font-size:15.5px;font-weight:800;white-space:nowrap}
+  .cspk .tx small{display:flex;align-items:center;gap:4px;font-size:13.5px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .cspk .sv{margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(34,176,125,.13);color:#178a60;font-size:10.5px;font-weight:800;letter-spacing:.04em}
+  .cspk button{flex:none;min-width:86px;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:var(--ink);cursor:pointer;transition:transform .25s var(--ios),background .2s,opacity .2s}
+  .cspk button:active{transform:scale(.95)} .cspk button.cf{background:#22b07d} .cspk button:disabled{background:rgba(43,45,66,.08);color:var(--ink-3);cursor:default;font-size:12px}
+  .csvip{margin-top:6px;border-radius:22px;padding:18px;color:#fff;background:radial-gradient(120% 140% at 0% 0%,#6f5bff 0%,#3b2bb8 45%,#1b1550 100%);box-shadow:0 12px 30px rgba(59,43,184,.3);display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+  .csvip::after{content:'';position:absolute;inset:-40% -10% auto auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(closest-side,rgba(140,220,255,.35),transparent);pointer-events:none}
+  .csvip .q{font-size:13px;font-weight:700;opacity:.75}.csvip h3{margin:0;font-size:21px;font-weight:900;letter-spacing:.06em}
+  .csvip p{margin:0;font-size:13.5px;line-height:1.45;opacity:.85}
+  .vbtn{align-self:flex-start;border:0;border-radius:999px;padding:11px 20px;font:inherit;font-weight:900;font-size:14.5px;letter-spacing:.06em;color:#3b2bb8;background:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .25s var(--ios)}
+  .vbtn:active{transform:scale(.96)}
+  .fsh.vip{background:radial-gradient(1.5px 1.5px at 12% 18%,rgba(255,255,255,.7),transparent),radial-gradient(1px 1px at 78% 12%,rgba(255,255,255,.6),transparent),radial-gradient(1.5px 1.5px at 64% 30%,rgba(191,238,255,.7),transparent),radial-gradient(1px 1px at 30% 8%,rgba(255,255,255,.5),transparent),radial-gradient(1px 1px at 90% 40%,rgba(255,255,255,.5),transparent),radial-gradient(60% 40% at 50% 14%,rgba(111,91,255,.55),transparent 70%),linear-gradient(180deg,#0f0b33 0%,#1f1668 50%,#33279e 100%);color:#fff}
+  .vpmark{animation:vpglow 3.6s ease-in-out infinite}@keyframes vpglow{50%{box-shadow:0 14px 46px rgba(143,227,255,.55),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(-3px)}}
+  .vpcta{display:flex;flex-direction:column;align-items:center;gap:1px;width:100%}.vpcta b{font-size:17px;font-weight:900;letter-spacing:.04em}.vpcta small{font-size:13px;font-weight:700;letter-spacing:.01em;opacity:.7}
+  .vpcan{margin-top:-6px;text-align:center;font-size:12.5px;font-weight:700;opacity:.7}
+  .spin{display:inline-block;width:20px;height:20px;border-radius:50%;border:2.5px solid rgba(42,31,143,.25);border-top-color:#2a1f8f;animation:spin .8s linear infinite;margin:6px}@keyframes spin{to{transform:rotate(360deg)}}
+  .fsh.vip .fx{background:rgba(255,255,255,.12)} .fsh.vip .fx svg{stroke:#fff}
+  .vphero{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:10px 0 4px}
+  .vpmark{width:74px;height:74px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(150deg,#8fe3ff,#6f5bff 55%,#3b2bb8);box-shadow:0 12px 34px rgba(111,91,255,.55),inset 0 1px 0 rgba(255,255,255,.5)}
+  .vpmark svg{width:38px;height:38px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linejoin:round}
+  .vphero .w{font-size:12px;font-weight:800;letter-spacing:.24em;opacity:.7}.vphero h2{margin:0;font-size:30px;font-weight:900;letter-spacing:.04em}
+  .vphero p{margin:0;font-size:14px;line-height:1.45;opacity:.8;max-width:320px}
+  .vplist{border-radius:20px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14);overflow:hidden}
+  .vpit{display:flex;gap:12px;padding:13px 14px;align-items:flex-start}.vpit+.vpit{border-top:.5px solid rgba(255,255,255,.1)}
+  .vpit .ic{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(143,227,255,.16)}.vpit .ic svg{width:18px;height:18px;fill:none;stroke:#bfeeff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .vpit b{display:block;font-size:15px;font-weight:800}.vpit small{display:block;font-size:13px;line-height:1.4;opacity:.75;margin-top:1px}
+  .vpcta{border:0;border-radius:999px;padding:16px;font:inherit;font-weight:900;font-size:16px;letter-spacing:.06em;color:#2a1f8f;background:linear-gradient(180deg,#fff,#e6e2ff);cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.25);transition:transform .25s var(--ios),opacity .2s}
+  .vpcta:active{transform:scale(.97)} .vpcta:disabled{opacity:.6}
+  .vpfine{font-size:11.5px;line-height:1.5;opacity:.65;text-align:center;padding:0 8px}.vpfine button{border:0;background:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:0 2px}
+  .vprow{display:flex;justify-content:center;gap:18px}.vprow button{border:0;background:none;color:#cfc8ff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:6px}
+  .vpmsg{min-height:18px;font-size:13px;font-weight:600;text-align:center;color:#ffd9a6}
+  .vpstat{text-align:center;padding:12px;border-radius:18px;background:rgba(143,227,255,.12);font-size:14px;font-weight:700}
+  #pvdone{position:fixed;z-index:25;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:10px;border:0;border-radius:999px;padding:7px 8px 7px 14px;font:inherit;font-size:11px;font-weight:800;letter-spacing:.14em;color:#fff;background:rgba(40,28,120,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);cursor:pointer}
+  #pvdone b{padding:5px 12px;border-radius:999px;background:#fff;color:#3b2bb8;letter-spacing:.02em;font-size:13px}
+  #pvdone.on{display:flex}
+  .evpv{flex:none;align-self:center;border:0;border-radius:999px;padding:6px 11px;font:inherit;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(150deg,#7b68ff,#3b2bb8);cursor:pointer}
+  .evpv.lk{background:rgba(91,63,214,.1);color:#5b3fd6}.evpv:disabled{background:rgba(43,45,66,.07);color:var(--ink-3)}
+  .gi.g8c{background:linear-gradient(160deg,#ffd27a,#f08f1c)}
+  .gi.gsh{background:linear-gradient(160deg,#fff4dc,#ffe0a8)}.gi.gsh svg{width:22px;height:22px}.gi.gcont{background:linear-gradient(160deg,#4fd8d6,#2a9fc0)}
+  .gi.gvip{background:linear-gradient(150deg,#8fe3ff,#6f5bff 55%,#3b2bb8)}
+  .vtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;vertical-align:1px;background:rgba(91,63,214,.12);color:#5b3fd6}
+  .row.csrow .av{background:linear-gradient(160deg,#fff4dc,#ffe0a8)}.row.csrow .av svg{width:22px;height:22px}
   /* the Daily Challenge calendar */
   .dtoday{border-radius:22px;padding:16px;background:linear-gradient(160deg,#3d78d6,#2a4fa8);color:#fff;box-shadow:0 10px 26px rgba(42,79,168,.28);display:flex;flex-direction:column;gap:10px;flex:none}
   .dtoday .dn{display:flex;align-items:baseline;justify-content:space-between}.dtoday .dn b{font-size:26px;font-weight:900;letter-spacing:-.01em}.dtoday .dn small{font-size:13px;font-weight:700;opacity:.8}
@@ -570,10 +637,12 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
   <h1 class="logo"><span class="p">CRASH</span></h1>
   <div class="big" id="oscore">0</div>
   <div id="ocombo"></div>
+  <div id="oearn"></div>
   <div id="onote"></div>
   <div class="card best" id="obest"></div>
   <div class="card diff"><div class="dl"><span class="label">DIFFICULTY</span><b class="dname">Normal</b></div><input class="drange" type="range" min="0" max="120" step="any" value="50" aria-label="Difficulty"><div class="dlocks" aria-hidden="true"></div><div class="dticks"><span>Chill</span><span>Impossible</span></div><div class="dfoot"><div><span class="dft"></span><button type="button" class="dfl">See Packs</button></div></div></div>
   <button class="btn" id="retry">TRY AGAIN</button>
+  <button class="btn alt" id="ocont" type="button">CONTINUE</button>
   <button class="btn alt" id="tomenu">RETURN TO MENU</button>
 </div>
 
@@ -593,6 +662,13 @@ addEventListener('error', e => { const b = document.getElementById('boot'); if (
     <div class="ufine"><span>One-time purchase · Family Sharing</span><button type="button" id="urestore">Restore Purchases</button></div>
     <div class="umsg" id="umsg" role="status"></div></div>
 </div></div>
+<div id="cshop" class="fsh" role="dialog" aria-modal="true" aria-labelledby="cstitle" aria-hidden="true"><div class="fin">
+  <div class="fhd"><button class="fx" id="csclose" type="button" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg></button><b id="cstitle">Continues</b><span></span></div>
+  <div id="csbody"></div></div></div>
+<div id="vipsh" class="fsh vip" role="dialog" aria-modal="true" aria-labelledby="vptitle" aria-hidden="true"><div class="fin">
+  <div class="fhd"><button class="fx" id="vpclose" type="button" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg></button><b></b><span></span></div>
+  <div id="vpbody"></div></div></div>
+<button id="pvdone" type="button">VIP PREVIEW<b>Done</b></button>
 <div id="dsheet" class="xsh" aria-hidden="true"><div class="bd"></div><div class="pn" role="dialog" aria-modal="true" aria-labelledby="dtitle"><div class="grab"></div>
   <div class="shd"><b id="dtitle">Daily Challenge</b><button class="done" id="ddone">Done</button></div>
   <div class="rows" id="drows"></div></div></div>
@@ -713,6 +789,21 @@ const dateKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2
 const DAY0 = new Date(2026, 0, 1), DFEAT = ['wind', 'rain', 'storm', 'snow', 'fog', 'hail', 'heat', 'meteor', 'halo', 'blossom', 'firefly', 'golden', 'aurora'];
 const dayNum = k => Math.round((keyDate(k) - DAY0) / 864e5) + 1;
 function dayInfo(k) { const r = mulberry(hashStr('mirrordrop-day-' + k)); r(); return { n: dayNum(k), per: r() < .45 ? 2 : 3, feat: DFEAT[r() * DFEAT.length | 0] }; }
+// ---------- Mirror Shards: the one currency, earned by catching gems, spent only on continues ----------
+const ECON = { perGem: 5, daily: 50, streakDays: 7, packs: [[1, 1500], [2, 3000], [5, 6000], [10, 10000], [20, 18000]], limit: 2, vipLimit: 3, vipWeekly: 2 }; // tune the economy here
+const SHARD_SVG = '<svg class="shd-i" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="shg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd37a"/><stop offset=".55" stop-color="#ffad33"/><stop offset="1" stop-color="#f08f1c"/></linearGradient></defs><rect x="5.2" y="5.2" width="13.6" height="13.6" rx="3.2" transform="rotate(45 12 12)" fill="url(#shg)"/><rect x="7.4" y="9.6" width="4.2" height="4.2" rx="1.1" transform="rotate(45 9.5 11.7)" fill="#fff" fill-opacity=".6"/></svg>';
+let vip = false, vipUntil = 0, vipRenews = false; // VIP comes only from the App Store's own subscription status, never from saved data
+const weekKey = (d = new Date()) => { const m = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7); return dateKey(m); }; // weeks start on Monday
+let wal = { sh: 0, cont: 0, vf: 0, vfWk: '', pvWk: '', pvEv: '', dd: {}, sw: '' };
+try { const w = JSON.parse(localStorage.mirrorWallet || 'null'); if (w && typeof w === 'object') wal = Object.assign(wal, w); } catch (e) {}
+wal.sh = Math.max(0, wal.sh | 0); wal.cont = Math.max(0, wal.cont | 0); wal.vf = Math.max(0, Math.min(ECON.vipWeekly, wal.vf | 0)); if (typeof wal.dd !== 'object' || !wal.dd) wal.dd = {};
+function saveWallet() { const ks = Object.keys(wal.dd).sort(); while (ks.length > 40) delete wal.dd[ks.shift()]; saveKey('mirrorWallet', JSON.stringify(wal)); }
+function vipWeek() { const wk = weekKey(); if (vip && wal.vfWk !== wk) { wal.vf = ECON.vipWeekly; wal.vfWk = wk; saveWallet(); } } // two free continues each week: topped up, never piled up
+const vipFree = () => { vipWeek(); return vip && wal.vfWk === weekKey() ? wal.vf : 0; };
+const contOwned = () => wal.cont + vipFree();
+const contLimit = () => vip ? ECON.vipLimit : ECON.limit;
+const contLeftRound = () => Math.max(0, contLimit() - runCont);
+let runPending = false, runShards = 0, runNote = '', contBusy = false, contResume = false, lastEntry = null;
 function dailyStreak() { const d = new Date(); if (!bests['daily_' + dateKey(d)]) d.setDate(d.getDate() - 1); let n = 0; while (bests['daily_' + dateKey(d)] && n < 3650) { n++; d.setDate(d.getDate() - 1); } return n; }
 let rowRng = null; const R = () => rowRng ? rowRng() : Math.random();
 const bkey = () => mode === 'daily' ? 'daily_' + dkey() : per + '_' + bucket() + (mode === 'infinite' ? '_inf' : mode === 'zen' ? '_zen' : ''); // infinite runs keep their own bests
@@ -752,10 +843,18 @@ function flushGc() { // scores made offline or before sign-in are sent once Game
   Promise.all(q.map(p => capCall('GameCenter', 'submitScore', p).then(() => p).catch(() => null))).then(done => {
     pendingGc = pendingGc.filter(p => !done.includes(p)); try { localStorage.mirrorPending = JSON.stringify(pendingGc); } catch (e) {} gc.busy = false; });
 }
+function bankRun() { // the shards caught this run go in the wallet; finishing today's Daily adds a bonus, and every seventh day in a row a free continue
+  const today = dayKey(); let add = runShards, note = [];
+  const cb = fx.maxCombo >= 3 && !runCont ? (fx.maxCombo - 1) * 10 : 0; if (cb) { add += cb; note.push(`Best combo ×${fx.maxCombo}: +${cb}`); } // a high combo pays out in shards
+  if (mode === 'daily' && !dailyFor && score > 0 && !wal.dd[today]) { wal.dd[today] = 1; add += ECON.daily; note.push(`+${ECON.daily} Daily bonus`); }
+  if (mode === 'daily' && !dailyFor && score > 0) { const st = dailyStreak(); if (st > 0 && st % ECON.streakDays === 0 && wal.sw !== today) { wal.sw = today; wal.cont++; note.push(`${st}-day streak: a free continue`); } }
+  wal.sh += add; runShards = 0; runNote = add > 0 || note.length ? `<span class="earn">${SHARD_SVG}+${add.toLocaleString()} Mirror Shards</span>${note.length ? `<small>${note.join(' · ')}</small>` : ''}` : ''; saveWallet(); }
 function recordRun(sc) { // this phone's top ten runs for each setting, plus Game Center when signed in
-  if (mode === 'zen') return 0; // Zen runs are for relaxing: nothing is ranked
-  prof.runs++; prof.combo = Math.max(prof.combo, fx.maxCombo | 0); saveBests();
+  if (mode === 'zen') return 0;
+  bankRun(); // Zen runs are for relaxing: nothing is ranked
+  if (!runCont) prof.runs++; prof.combo = Math.max(prof.combo, fx.maxCombo | 0); saveBests(); // a continued run is still one run
   if (!(sc > 0)) return 0; const k = bkey(), L = board[k] = Array.isArray(board[k]) ? board[k] : [], e = { s: sc, d: Date.now() };
+  if (runCont && lastEntry) { const j = L.indexOf(lastEntry); if (j >= 0) L.splice(j, 1); } lastEntry = e; // after a continue, the run's earlier entry gives way to its final score
   L.push(e); L.sort((a, b) => b.s - a.s || a.d - b.d); L.length = Math.min(L.length, 10); saveKey('mirrorBoard', JSON.stringify(board));
   if (IS_NATIVE && !(mode === 'daily' && dailyFor) && !runCont) { pendingGc.push({ leaderboardId: lbId(), score: sc }); pendingGc = pendingGc.slice(-50); try { localStorage.mirrorPending = JSON.stringify(pendingGc); } catch (e) {} flushGc(); }
   return L.indexOf(e) + 1; }
@@ -1024,7 +1123,7 @@ let pos, dirv, bx, things, parts, floaters, score, combo, speed, nextY, pulse, l
 // visual-only feedback timers (they never affect the rules)
 const fx = { gem: 0, combo: 0, score: 0, arrow: 0, squash: 0, near: 0, nearCool: 0, freeze: 0, dead: 0, edgePending: false, lastMove: -9, maxCombo: 1, shownScore: 0 };
 const crash = { ball: [null, null], shards: [], waves: [], tmpl: null, hole: -1 };
-let dailyT = 0, dailyFeat = false, runCont = 0; // the Daily's own event; continues used in this run
+let dailyT = 0, dailyFeat = false, runCont = 0, previewEv = ''; // the Daily's own event; continues used in this run
 // weather: rare random FOG and super-rare STORM (visual events; lightning can electrify a block and slide it side to side)
 // per-second chances once the cooldown has passed; warn = seconds of notice before it starts (longer for events that affect play)
 const WX = {
@@ -1055,7 +1154,7 @@ const bxOf = o => o.ex !== undefined ? o.ex : LX[o.l]; // electrified blocks sli
 function reset() {
   const p = params();
   ABD.k = ABD.lift = 0; pos = per - 1; dirv = -1; bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = []; scored = new Set(); things = []; parts = []; floaters = [];
-  fog = 0; resumeT = 0; fogT = 0; dailyT = 0; dailyFeat = false;
+  fog = 0; resumeT = 0; fogT = 0; dailyT = 0; dailyFeat = false; runCont = 0; runPending = false; runShards = 0; runNote = ''; contBusy = false; contResume = false; lastEntry = null;
   bestBanked = false; lastRank = 0; score = 0; combo = 1; speed = state === 'menu' ? 230 : p.start; nextY = -160; pulse = 0; lastSafe = per - 1; genDir = -1; level = 0; levelT = 0; fxA = 0; banner = ''; newBest = false; won = false; gate = null;
   crash.ball = [null, null]; crash.shards = []; crash.waves = [];
   Object.assign(wx, { kind: '', phase: '', t: 0, p: 0, hits: 0, cool: 14, roll: 0, a: 0, flash: 0, nextBolt: 0, bolt: null, glows: [], nextGlow: 0 }); if (typeof wxHide === 'function') wxHide();
@@ -1121,16 +1220,20 @@ function pauseGame(away) {
 }
 function resumeGame() {
   if (state !== 'paused') return;
-  show('#pause', false); if (!freePause) { fog++; fogT = 5; } resumeT = 3; state = 'play'; beep(300, .3, 'sine', .06, -100); // fog lingers 5s after the countdown, thicker with every pause
+  show('#pause', false); if (!freePause) { fog++; fogT = 5; } resumeT = 3; contResume = false; state = 'play'; beep(300, .3, 'sine', .06, -100); // fog lingers 5s after the countdown, thicker with every pause
 }
 $('#pbtn').onclick = () => pauseGame(); $('#resume').onclick = () => { if (!fresh()) resumeGame(); };
 $('#pmenu').onclick = () => { if (fresh()) return; show('#pause', false); goMenu(); };
-function goMenu() { wxHide(); show('#over', false); endDaily(); state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
+function goMenu() { wxHide(); show('#over', false); endDaily(); if (previewEv) { previewEv = ''; mode = previewBefore; $('#pvdone').classList.remove('on'); } state = 'menu'; reset(); syncDiffUI(); show('#menu', true); }
+function finalizeRun() { if (!runPending) return; runPending = false; prof.comboPrev = prof.combo;
+  if (score > bestNow() || (bestBanked && score >= bestNow())) { bests[bkey()] = score; newBest = true; saveBests(); }
+  lastRank = recordRun(score); }
 function showOver() {
   if (state !== 'dead') return;
+  finalizeRun();
   $('#over .logo').innerHTML = won ? '<span class="c">COMPLETE</span>' : crash.ball[0] && crash.ball[0].abd ? '<span class="p">TAKEN</span>' : '<span class="p">CRASH</span>';
-  $('#onew').textContent = newBest ? 'NEW BEST' : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo x${fx.maxCombo}` : '';
-  syncDiffUI(); $('#oshare').classList.toggle('hide', !score); show('#over', true);
+  $('#onew').textContent = newBest ? 'NEW BEST' : ''; $('#ocombo').textContent = fx.maxCombo > 1 ? `best combo ×${fx.maxCombo}${fx.maxCombo > (prof.comboPrev || 0) && prof.comboPrev ? ' · new record' : ''}` : '';
+  syncDiffUI(); $('#oshare').classList.toggle('hide', !score); $('#oearn').innerHTML = runNote; syncCont(); show('#over', true);
   $('#onote').textContent = freeHardRun ? 'That was today\'s free Hard run. Unlock Hard to play it any time.' : '';
   if (freeHardRun) setTimeout(() => { if (state === 'dead') openUnlock(3, { title: 'Liked Hard?', sub: 'Play it any time with Pro or Max. Pay once, keep it forever. No ads, no subscription.' }); }, 1500); // the offer appears only at moments like this
   else if (newBest && mode === 'normal' && bucket() === 2 && ent < 3) { let shown = false; try { shown = localStorage.mirrorNudged === '1'; } catch (e) {}
@@ -1140,6 +1243,18 @@ function showOver() {
   const el = $('#oscore'), target = score, t0 = performance.now();
   (function tick(now) { const p = clamp01((now - t0) / 450), e = 1 - Math.pow(1 - p, 3); el.textContent = Math.round(target * e); if (p < 1 && state === 'dead') requestAnimationFrame(tick); else el.textContent = target; })(t0);
 }
+// ---------- continues: pick the run back up where it ended ----------
+function canContinue() { return state === 'dead' && !won && !previewEv && mode !== 'zen' && mode !== 'daily' && contOwned() > 0 && contLeftRound() > 0; } // never in the Daily: its board stays fair
+function syncCont() { const b = $('#ocont'), on = canContinue(); b.classList.toggle('on', on); b.disabled = false; if (on) { const n = contOwned(); b.innerHTML = `CONTINUE<small>${n} continue${n === 1 ? '' : 's'} saved</small>`; } }
+function doContinue() {
+  if (contBusy || !canContinue()) return; contBusy = true; $('#ocont').disabled = true;
+  if (vipFree() > 0) wal.vf--; else wal.cont--; runCont++; saveWallet(); // spent and saved before anything else, so a restart can't hand it back
+  show('#over', false); haptic('success'); [523, 784, 1047].forEach((f, i) => bell(f, .012, 1.2, 'fx', .9, i * .07));
+  crash.ball = [null, null]; crash.shards = []; crash.waves = []; crash.tmpl = null; crash.hole = -1; crash.shown = false; fx.dead = 0; fx.freeze = 0; shake = 0;
+  ABD.k = ABD.lift = 0; things = things.filter(o => !(o.k === 'b' && o.y > BY - 420)); // clear the blocks closing in, so the run picks up with room to breathe
+  bx = [LX[pos], LX[N - 1 - pos]]; bv[0] = bv[1] = 0; trail[0] = []; trail[1] = [];
+  runPending = false; won = false; newBest = false; state = 'play'; resumeT = 3; contResume = true; setTimeout(() => { contBusy = false; }, 400); } // the same 3-2-1 as after a pause, without the fog
+$('#ocont').onclick = () => { if (!fresh()) doContinue(); };
 document.querySelectorAll('#mode button').forEach(b => b.onclick = () => { mode = b.dataset.mode; saveKey('mirrorMode', mode); syncDiffUI(); });
 $('#daily').onclick = () => { if (fresh()) return; if (ent < 3) startDaily(); else openDaily(); };
 $('#oshare').onclick = () => shareScore(score);
@@ -1201,8 +1316,7 @@ function die(x, y, bi = 0, blk = null) {
     haptic('error'); }
   else { for (let k = 0; k < 2; k++) { const c = crash.ball[k]; if (!c) continue; if (c.chain) continue; if (c.elec) c.at = .12; else { c.burst = true; c.bt = 0; shatter(k, bx[k], BY); } } // normal: burst instantly; electrified: a short electrocution flash first
   beep(190, .45, 'sawtooth', .1, -140); haptic('error'); }
-  if (score > bestNow() || (bestBanked && score >= bestNow())) { bests[bkey()] = score; newBest = true; saveBests(); }
-  lastRank = recordRun(score);
+  runPending = true; // the run is only scored once the player turns down a continue
   if (!sp && crash.hole < 0) setTimeout(showOver, 750);
 }
 
@@ -1320,13 +1434,14 @@ function update(dt) {
       if (Math.abs(bx[bi] - x) < (o.k === 'b' ? 30 : 34)) {
         if (o.k === 'b') { if (mode !== 'zen') return die(x, o.y, bi, o); if (!o.zen) { o.zen = true; combo = 1; fx.near = 1; burst(bx[bi], BY, 6, '#ffffff', 140, .4, 0, .8); haptic('soft'); } continue; } // Zen: nothing breaks, the combo just resets
         if (!o.got) {
-          o.got = true; const gv = combo * (wxOn('golden') ? 3 : o.ff ? 2 : 1); score = mode === 'normal' ? Math.min(GOAL, score + gv) : score + gv; if (gv > combo) float(x, o.y - 44, '×' + gv / combo, '#f2a93b'); // golden hour: every gem counts double combo = Math.min(wxOn('blossom') ? 12 : 8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
+          o.got = true; const gv = combo * (wxOn('golden') ? 3 : o.ff ? 2 : 1); if (mode !== 'zen' && !previewEv) runShards += ECON.perGem * (wxOn('golden') ? 3 : o.ff ? 2 : 1); /* Mirror Shards: worth more in golden hour and among the fireflies */ score = mode === 'normal' ? Math.min(GOAL, score + gv) : score + gv; if (gv > combo) float(x, o.y - 44, '×' + gv / combo, '#f2a93b'); /* golden hour: every gem counts triple */ combo = Math.min(wxOn('blossom') ? 12 : 8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
+          if (combo === 2 && !prof.comboSeen) { prof.comboSeen = 1; saveBests(); float(W / 2, 196, 'Gems in a row multiply your points', '#e9a23b'); } else if (combo === 5 || combo === 8 || combo === 12) float(W / 2, 196, `COMBO ×${combo}!`, '#f08f1c'); // the combo explains itself the first time, and cheers its milestones
           fx.gem = 1; fx.combo = 1; fx.maxCombo = Math.max(fx.maxCombo, combo); // visual feedback only
           burst(x, o.y, 7, '#ffc867', 160, .4, 60, .9); burst(x, o.y, 3, '#ffffff', 120, .3, 0, .8); float(x, o.y - 24, '+' + (combo - 1 || 1), '#e9a23b');
         }
       }
     }
-    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; if (!wxOn('blossom')) { if (combo > 2) beep(440, .3, 'sine', .028, -120); combo = 1; } } // during cherry blossom a missed gem keeps the combo // a gentle falling note when a combo is lost
+    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; if (!wxOn('blossom')) { if (combo > 2) { beep(440, .3, 'sine', .028, -120); float(W / 2, 196, `Combo ×${combo} lost`, '#9a9db0'); } combo = 1; } } // during cherry blossom a missed gem keeps the combo // a gentle falling note when a combo is lost
   }
   things = things.filter(o => o.y < H + 80 && !(o.got && o.k === 'g'));
   if (mode === 'normal' && !gate && score >= GOAL) { gate = { y: Math.min(nextY + 40, -80), t: 0 }; banner = 'FINAL STRETCH'; fxA = 1; beep(520, .5, 'sine', .06, 260); haptic('medium'); } // no new rows: the finish line comes down behind the last one
@@ -1479,6 +1594,7 @@ function wxNote(kind) {
 setInterval(() => { const n = $('#wxnote'); if (!wxNote.dk || !n.classList.contains('show')) return; n.classList.toggle('dark', skyE > .45 || (wx.a > .45 && wx.phase !== 'warn')); }, 120); // switches to dark glass as the night sky arrives
 function wxHide() { $('#wxnote').classList.remove('show'); clearTimeout(wxNote.h); }
 function updateWeather(dt) {
+  if (previewEv && !wx.kind && state === 'play') { endPreview(); return; } // the preview ends with its event
   if (mode === 'daily' && state === 'play') { dailyT += dt; if (!dailyFeat && !wx.kind && dailyT > 16) { const k = dayInfo(dkey()).feat; dailyFeat = true; wx.kind = k; wx.phase = 'warn'; wx.t = 0; if (k === 'wind') windDir = Math.random() < .5 ? -1 : 1; if (k === 'rain') wx.rv = Math.random() < .5 ? 'fast' : 'dense'; wxNote(k); } } // the day's own event, once in every run
   if (!wx.kind) {
     wx.cool -= dt;
@@ -1525,8 +1641,7 @@ function abduct() { // taken by the beam: both balls rise into the ship, stretch
   crash.shown = false; crash.ball = [0, 1].map(i => ({ at: 99, burst: false, elec: false, abd: true, y0: BY - ABD.lift, x0: bx[i] }));
   ABD.k = 1; // the beam stays at full brightness while it takes them
   hush(2600, 1.6, .5, .4, 300, 0, .3); beep(140, 1.5, 'sine', .07, 700); haptic('error');
-  if (score > bestNow() || (bestBanked && score >= bestNow())) { bests[bkey()] = score; newBest = true; saveBests(); }
-  lastRank = recordRun(score); }
+  runPending = true; }
 function drawAbducted(i, c, r, P) { // the ball rising up the beam into the ship: it lifts, spins slowly, burns brighter and smaller, and is gone in a flash of light at the aperture
   const [ax, ay] = apPos(), k = clamp01(fx.dead / 1.25), e = k * k * (3 - 2 * k), x = c.x0 + (ax - c.x0) * e + Math.sin(fx.dead * 9 + i * 3) * 6 * (1 - e), y = c.y0 + (ay - c.y0) * e, rr = r * (1 - .72 * e);
   const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.4); g.addColorStop(0, `rgba(255,${200 + 40 * e | 0},${130 + 80 * e | 0},${.55 * (1 - k * .4)})`); g.addColorStop(1, 'rgba(255,160,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3.4, 0, 7); ctx.fill();
@@ -2618,7 +2733,7 @@ void main(){vec2 uv=UV();float asp=res.x/res.y;vec2 q=vec2((uv.x-.5)*asp,(1.-uv.
 const pgEl = document.getElementById('pglass'); let pgOn = false;
 function pGlass(on, fy, fade, edge) { // the frosted layer is cut to the sheet's own wavy lip, so the blur ends exactly under the glowing line (a mask does not soften a backdrop blur everywhere)
   if (!on) { if (pgOn) { pgEl.style.display = 'none'; pgOn = false; } return; }
-  const k = innerHeight / cv.height, op = (resumeT > 0 || state === 'paused') ? 1 : clamp01(fogT / .8);
+  const k = innerHeight / cv.height, op = ((resumeT > 0 && !contResume) || state === 'paused') ? 1 : clamp01(fogT / .8);
   const pts = []; let ymax = 0; for (let x = -20; x <= W + 20; x += 10) { const px = (offX + x * scale) * (innerWidth / cv.width), py = (offY + (edge(x) - 1) * scale) * k; ymax = Math.max(ymax, py); pts.push(`${px.toFixed(1)}px ${py.toFixed(1)}px`); }
   pgEl.style.height = Math.ceil(ymax + 2) + 'px'; pgEl.style.webkitMaskImage = pgEl.style.maskImage = 'none'; pgEl.style.clipPath = `polygon(0 0,100% 0,${pts.reverse().join(',')})`; pgEl.style.opacity = op;
   if (!pgOn) { pgEl.style.display = 'block'; pgOn = true; } }
@@ -4108,7 +4223,7 @@ function draw() {
   } else bannerUI(0);
 
   // pause fog: a frosted liquid-glass sheet with a glossy lip; pink and cyan tints mirror each other
-  const fogVis = resumeT > 0 || state === 'paused' ? 1 : clamp01(fogT / .8);
+  const fogVis = (resumeT > 0 && !contResume) || state === 'paused' ? 1 : clamp01(fogT / .8);
   if (fog > 0 && fogVis > 0) {
     ctx.save(); ctx.globalAlpha = fogVis;
     const fy = Math.min(BY - 110, (BY - 60) * Math.min(.88, .3 * fog + .15)), fade = 120;
@@ -4181,7 +4296,7 @@ function draw() {
       const ck = 1 + .25 * ease(fx.combo), heat = clamp01((combo - 2) / 6);
       ctx.save(); ctx.translate(W / 2, 156); ctx.scale(ck, ck);
       if (heat > 0) { const cg = ctx.createRadialGradient(0, 0, 4, 0, 0, 46); cg.addColorStop(0, `rgba(255,200,103,${.25 * heat})`); cg.addColorStop(1, 'rgba(255,200,103,0)'); ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, 46, 0, 7); ctx.fill(); }
-      const cs = '×' + combo; ctx.font = '900 20px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const cm = ctx.measureText(cs), pw = Math.max(64, cm.width + 34);
+      const cs = '×' + combo + ' COMBO'; ctx.font = '900 20px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const cm = ctx.measureText(cs), pw = Math.max(64, cm.width + 34);
       ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.beginPath(); ctx.roundRect(-pw / 2, -16, pw, 32, 16); ctx.fill(); // the pill is centred on 0, and so is the text's ink
       txt(cs, (cm.actualBoundingBoxLeft - cm.actualBoundingBoxRight) / 2, (cm.actualBoundingBoxAscent - cm.actualBoundingBoxDescent) / 2, 20, combo >= 5 ? '#f08f1c' : '#e9a23b', 'center', 900); ctx.restore();
     }
@@ -4226,10 +4341,23 @@ const GUIDE = [
   ['g6', '<path d="M7 18h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 11.2 3.5 3.5 0 0 0 7 18z"/>', 'Weather', 'Fog, storms, hail and more roll in during a run and change how it plays.'],
   ['g7', '<path d="M9 6.5v11M15 6.5v11"/>', 'Pause', 'Top left during a run. Each pause brings in a little more fog.'],
 ];
+const GUIDE_MORE = [
+  ['g8c', '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>', 'Combo', 'Catch gems one after another to build a combo: each gem is worth as many points as your combo (×2, ×3… up to ×8). Miss a gem and it starts again at ×1. Your best combo in a run earns bonus Mirror Shards.'],
+  ['gsh', SHARD_SVG.replace('class="shd-i" ', ''), 'Mirror Shards', 'The gems you catch are Mirror Shards, kept between runs: 5 for each gem, more in golden hour and among the fireflies. Finishing the Daily adds 50. Spend them on continues in Purchase Continues.'],
+  ['gcont', '<path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/>', 'Continues', 'When a run ends you can use a continue to pick it up right where you crashed, with the same score. Up to 2 per round (3 with VIP). Not in the Daily, and continued runs don\'t go to the world leaderboard. A 7-day Daily streak earns one free.']];
+const GUIDE_VIP = [ // advanced tips: everything basic stays free; these are extra strategy for VIP members
+  ['Read two rows ahead', 'Every row is safe for exactly one position: outer, middle or inner. Spot the next safe gap early and count the taps before the row arrives.'],
+  ['Use the turn at the edge', 'From the outer column the balls turn around. Sometimes the quickest way to the inner gap is through the edge: count both ways.'],
+  ['Protect the combo', 'Each gem raises your combo and a missed one resets it, except in cherry blossom. Only chase a gem when the next row is already solved.'],
+  ['Pause sparingly', 'Each pause thickens the fog when you resume. Leaving the app pauses for free, so you never lose a run to an interruption.'],
+  ['Wind and ice', 'In wind, tap a moment early against the gust. On the ice halo the balls overshoot and swing back: never double-tap while they slide.'],
+  ['Storms', 'A charged block can slide to the mirror side. Pick a position that is safe on both sides when a block glows.'],
+  ['Eclipse and aliens', 'At totality blocks appear only near the balls, so settle into position early. In an invasion stay out of the middle: the beam only pulls there.']];
 function guideHTML() {
-  const items = GUIDE.concat(ent >= 4 ? [['g8', '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>', 'Golden Run', 'Pass your best and the balls turn to liquid gold.']] : []);
+  const vipTips = vip ? GUIDE_VIP.map(([t, x]) => ['gvip', VIP_ICON.replace(/<\/?svg[^>]*>/g, ''), `${t}<span class="vtag">VIP</span>`, x]) : [['gvip', VIP_ICON.replace(/<\/?svg[^>]*>/g, ''), 'Advanced tips<span class="vtag">VIP</span>', `${GUIDE_VIP.length} more strategies for every event, with Mirror Drop VIP. <button type="button" class="evpv lk" data-act="vip">See VIP</button>`]];
+  const items = GUIDE.concat(GUIDE_MORE).concat(ent >= 4 ? [['g8', '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>', 'Golden Run', 'Pass your best and the balls turn to liquid gold.']] : []);
   return `<div class="sgrp guide${guideOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="guide" aria-expanded="${guideOpen}"><span class="gi g0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><path d="M12 16.6v.1"/></svg></span><b>How to Play</b><span class="gchev" aria-hidden="true">›</span></button>`
-    + `<div class="gbody"><div>${items.map(([c, d, t, x]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${d}</svg></span><span class="gtx"><b>${t}</b><small>${x}</small></span></div>`).join('')}</div></div></div></div>`; }
+    + `<div class="gbody"><div>${items.concat(vipTips).map(([c, d, t, x]) => `<div class="gitem"><span class="gi ${c}">${d.startsWith('<svg') ? d : `<svg viewBox="0 0 24 24">${d}</svg>`}</span><span class="gtx"><b>${t}</b><small>${x}</small></span></div>`).join('')}</div></div></div></div>`; }
 const EVINFO = [ // the events, from the most common to the rarest; p = changes how the game plays
   ['fog', 'e-grey', 'Fog', 'Mist rolls in and the blocks are harder to see.', 0],
   ['wind', 'e-sky', 'Wind', 'A strong gust pushes both balls well off their columns. Lean against it.', 1],
@@ -4249,10 +4377,12 @@ const EVINFO = [ // the events, from the most common to the rarest; p = changes 
   ['alien', 'e-alien', 'Alien invasion', 'The rarest of all. Some blocks are alien ships that can warp to the mirror side, and the beam slowly pulls up anything that stays in the middle. Move out of the middle to break free.', 1],
 ];
 const RARITY = { fog: 0, wind: 0, rain: 0, hail: 0, sun: 0, storm: 1, heat: 1, snow: 1, meteor: 1, blossom: 2, firefly: 2, aurora: 2, halo: 3, golden: 3, eclipse: 4, alien: 4 }, RARN = ['Common', 'Uncommon', 'Rare', 'Very rare', 'Legendary']; // how often each event comes round
+function pvBtn(k) { if (!vip) return `<button type="button" class="evpv lk" data-act="vip" aria-label="Preview with VIP">VIP</button>`;
+  const used = wal.pvWk === weekKey(); return used && wal.pvEv !== k ? `<button type="button" class="evpv" disabled>Next week</button>` : `<button type="button" class="evpv" data-act="evpv" data-k="${k}">${used ? 'Watch again' : 'Preview'}</button>`; }
 function eventsHTML() {
   return `<div class="sgrp guide${evOpen ? ' open' : ''}"><div class="slist"><button type="button" class="ghead" data-act="events" aria-expanded="${evOpen}"><span class="gi e-aur"><svg viewBox="0 0 24 24">${WXICON.aurora}</svg></span><b>Events</b><span class="gchev" aria-hidden="true">›</span></button>`
     + `<div class="gbody"><div><div class="gintro">There are ${EVINFO.length} events in Mirror Drop. They arrive at random during a run, with a note just before they start. Some only change the sky; others change how the game plays. In Zen, every event is only to look at.</div>`
-    + EVINFO.map(([k, c, n, x, p]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${WXICON[k]}</svg></span><span class="gtx"><b>${n}<span class="etag ${p ? 'p' : 'v'}">${p ? 'AFFECTS PLAY' : 'VISUAL'}</span></b><small class="erar r${RARITY[k]}">${RARN[RARITY[k]]}</small><small>${x}</small></span></div>`).join('') + `</div></div></div></div>`; }
+    + (vip ? `<div class="gintro">VIP: preview one rare event each week. ${wal.pvWk === weekKey() ? `This week: ${evMeta(wal.pvEv)[2]}.` : 'Choose any rare one below.'}</div>` : '') + EVINFO.map(([k, c, n, x, p]) => `<div class="gitem"><span class="gi ${c}"><svg viewBox="0 0 24 24">${WXICON[k]}</svg></span><span class="gtx" style="flex:1"><b>${n}<span class="etag ${p ? 'p' : 'v'}">${p ? 'AFFECTS PLAY' : 'VISUAL'}</span></b><small class="erar r${RARITY[k]}">${RARN[RARITY[k]]}</small><small>${x}</small></span>${RARITY[k] >= 2 ? pvBtn(k) : ''}</div>`).join('') + `</div></div></div></div>`; }
 const BAD = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'cock', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'fag', 'retard', 'rape', 'nazi', 'hitler', 'porn', 'penis', 'vagina', 'boob', 'jizz', 'wank', 'twat', 'kike', 'spic', 'chink', 'dildo', 'anus', 'tits', 'piss', 'damn', 'hell'];
 function nameProblem(n) { // nicknames stay friendly: letters, numbers and a few marks, nothing rude even when spelled with numbers
   if (n.length < 2) return 'At least 2 characters.';
@@ -4286,6 +4416,7 @@ function renderSheet() {
     }
     const sc = bestNow();
     h += `<div class="pstats"><div><b>${sc || '–'}</b><small>Best · ${NAMES[bucket()]}</small></div><div><b>${prof.runs}</b><small>Runs</small></div><div><b>${prof.combo > 1 ? '×' + prof.combo : '–'}</b><small>Best combo</small></div></div>`;
+    h += `<div class="sgrp"><h3>CONTINUES</h3><button class="row csrow" data-act="cshop"><span class="av">${SHARD_SVG}</span><span class="nm">Purchase Continues<small>${wal.sh.toLocaleString()} Mirror Shards · ${contOwned()} continue${contOwned() === 1 ? '' : 's'}${vip ? ' · VIP' : ''}</small></span><span class="chev">›</span></button></div>`;
     h += guideHTML();
     h += eventsHTML();
     { const ss = (k, b, sm) => `<label class="sopt"><span class="tx"><b>${b}</b><small>${sm}</small></span><span class="sw g"><input type="checkbox" data-snd="${k}"${prof.snd[k] ? ' checked' : ''}><span></span></span></label>`;
@@ -4385,6 +4516,9 @@ srows.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act, i = +b.dataset.i;
   if (a === 'guide') { guideOpen = !guideOpen; b.closest('.guide').classList.toggle('open', guideOpen); b.setAttribute('aria-expanded', guideOpen); haptic('selection'); }
   if (a === 'events') { evOpen = !evOpen; b.closest('.guide').classList.toggle('open', evOpen); b.setAttribute('aria-expanded', evOpen); haptic('selection'); }
+  else if (a === 'cshop') { haptic('selection'); openShop(); }
+  else if (a === 'vip') { haptic('selection'); openVip(); }
+  else if (a === 'evpv') { haptic('selection'); startPreview(b.dataset.k); }
   else if (a === 'pic') { editPic = !editPic; renderSheet(); }
   else if (a === 'name') { editName = true; nameErr = ''; renderSheet(); }
   else if (a === 'save') commitName();
@@ -4470,6 +4604,75 @@ function openUnlock(tier, ctx) { // ctx: { what } when a locked item was tapped,
   if (IS_NATIVE) loadPrices(); }
 function closeUnlock() { if (!unl.classList.contains('on')) return; unl.classList.remove('open'); unl.setAttribute('aria-hidden', 'true');
   setTimeout(() => { if (!unl.classList.contains('open')) { unl.classList.remove('on'); cancelAnimationFrame(unlRaf); } }, 420); }
+// ---------- Purchase Continues: spend Mirror Shards on continues; VIP at the bottom ----------
+const cshop = $('#cshop'), csbody = $('#csbody'), vipsh = $('#vipsh'), vpbody = $('#vpbody');
+const VIP_ID = 'mirrordrop.vip.monthly', VIP_PRICE = { price: '$3.99', period: 'month' }; // the subscription's product ID; its price and period come from the App Store
+let csConfirm = -1, csConfTimer = 0, csGot = -1, vpBusy = false, vpMsg = '';
+const openFsh = el => { el.classList.add('on'); el.setAttribute('aria-hidden', 'false'); el.scrollTop = 0; requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('open'))); beep(520, .07, 'sine', .035, 160); };
+const closeFsh = el => { if (!el.classList.contains('on')) return; el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); beep(680, .07, 'sine', .03, -160); setTimeout(() => { if (!el.classList.contains('open')) el.classList.remove('on'); }, 500); };
+function renderShop() {
+  const fr = vipFree(), base = ECON.packs[0][1] / ECON.packs[0][0];
+  let h = `<div class="cshero">${SHARD_SVG}<div class="bal">${wal.sh.toLocaleString()}</div><small>MIRROR SHARDS</small></div>
+    <div class="csown"><span>${wal.cont} continue${wal.cont === 1 ? '' : 's'}</span>${vip ? `<span class="v">${fr} free this week</span>` : ''}<span>Up to ${contLimit()} per round</span></div>
+    <div class="csnote">Catch gems during a run to earn Mirror Shards: more in golden hour and among the fireflies. Finishing the Daily adds ${ECON.daily}, and every ${ECON.streakDays}-day streak earns a free continue.</div><div class="cspacks">`;
+  ECON.packs.forEach(([n, c], i) => { const save = Math.round((1 - c / (n * base)) * 100), can = wal.sh >= c;
+    h += `<div class="cspk${csGot === i ? ' got' : ''}"><span class="n">${n}</span><span class="tx"><b>${n} Continue${n > 1 ? 's' : ''}</b><small>${SHARD_SVG}${c.toLocaleString()}${save > 0 ? `<span class="sv">SAVE ${save}%</span>` : ''}</small></span>`
+      + `<button type="button" data-cs="${i}"${can ? '' : ' disabled'} class="${csConfirm === i ? 'cf' : ''}">${can ? (csConfirm === i ? 'Confirm' : 'Buy') : `Need ${(c - wal.sh).toLocaleString()}`}</button></div>`; });
+  h += `</div><div class="csvip"><span class="q">Want more benefits?</span><h3>MIRROR DROP VIP</h3><p>${vip ? 'You\'re a VIP. Thank you!' : 'Two free continues every week, up to three per round, advanced tips and a weekly preview of a rare event.'}</p><button class="vbtn" type="button" data-cs="vip">${vip ? 'Manage VIP' : 'Buy VIP'}</button></div>`;
+  csbody.innerHTML = h; }
+function openShop() { csConfirm = -1; csGot = -1; renderShop(); openFsh(cshop); }
+csbody.addEventListener('click', e => { const b = e.target.closest('[data-cs]'); if (!b || b.disabled) return; const k = b.dataset.cs;
+  if (k === 'vip') { openVip(); return; }
+  const i = +k, [n, c] = ECON.packs[i]; if (wal.sh < c) return;
+  if (csConfirm !== i) { csConfirm = i; haptic('selection'); clearTimeout(csConfTimer); csConfTimer = setTimeout(() => { csConfirm = -1; if (cshop.classList.contains('on')) renderShop(); }, 3000); renderShop(); return; } // a second tap confirms
+  clearTimeout(csConfTimer); csConfirm = -1; wal.sh -= c; wal.cont += n; saveWallet(); csGot = i; haptic('success'); [784, 988, 1175].forEach((f, j) => bell(f, .012, 1, 'fx', .9, j * .06));
+  renderShop(); setTimeout(() => { csGot = -1; if (cshop.classList.contains('on')) renderShop(); }, 1400); if (pSheet.classList.contains('on')) renderSheet(); });
+$('#csclose').onclick = () => closeFsh(cshop);
+// ---------- Mirror Drop VIP: an auto-renewing subscription, granted only while the App Store says it is active ----------
+const VIP_ICON = '<svg viewBox="0 0 24 24"><path d="M12 2.8l2.6 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.4 3 1.2-6.1L3.3 9.2l6.1-.8z"/></svg>';
+const VIPFEATS = [
+  ['<path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/>', 'Two free continues every week', 'Topped up each Monday. Unused ones don\'t pile up.'],
+  ['<path d="M5 17l4-4 3 3 7-7M14 9h5v5"/>', 'Up to three continues per round', 'Instead of two.'],
+  ['<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.5M12 16v.1"/>', 'Advanced tips', 'Strategies for every event, in How to Play.'],
+  ['<path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/>', 'Preview a rare event each week', 'See a rare event\'s real sky without waiting for it in a run.']];
+const vipP = () => storePrices[VIP_ID] || VIP_PRICE; // the App Store's own price once the product is live; until then the planned one
+function vipPrice() { const p = vipP(); return `${p.price}${p.period ? ' / ' + p.period : ''}`; }
+function renderVip() {
+  const pr = vipPrice();
+  let h = `<div class="vphero"><span class="vpmark">${VIP_ICON}</span><span class="w">MIRROR DROP</span><h2>VIP</h2><p>A little extra for regulars: more continues, deeper tips and a look at the rarest skies.</p></div>`
+    + `<div class="vplist">${VIPFEATS.map(([d, b, x]) => `<div class="vpit"><span class="ic"><svg viewBox="0 0 24 24">${d}</svg></span><span><b>${b}</b><small>${x}</small></span></div>`).join('')}</div>`;
+  if (vip) h += `<div class="vpstat">You're a VIP${vipUntil ? ` · ${vipRenews ? 'renews' : 'ends'} ${new Date(vipUntil).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}</div>`
+    + `<button class="vpcta" type="button" data-vp="manage">Manage Subscription</button>`;
+  else h += `<button class="vpcta" type="button" data-vp="buy"${vpBusy ? ' disabled' : ''}>${vpBusy ? '<span class="spin"></span>' : `<b>Get VIP</b><small>${pr}</small>`}</button><div class="vpcan">Cancel any time</div>`;
+  h += `<div class="vpmsg" role="status">${esc(vpMsg)}</div><div class="vprow"><button type="button" data-vp="restore">Restore Purchases</button></div>`
+    + `<div class="vpfine">${vipPrice()}, auto-renews every ${vipP().period || 'period'} until cancelled. Payment is charged to your Apple Account; it renews unless cancelled at least 24 hours before the end of the period. Manage or cancel any time in Settings → your name → Subscriptions. VIP is separate from Supporter and the packs, which stay yours forever.<br><button type="button" data-vp="terms">Terms of Use</button> · <button type="button" data-vp="privacy">Privacy Policy</button></div>`;
+  vpbody.innerHTML = h; }
+function openVip() { vpMsg = ''; if (IS_NATIVE) loadPrices(); renderVip(); openFsh(vipsh); }
+function setVip(v, until, renews) { const was = vip; vip = !!v; vipUntil = +until || 0; vipRenews = !!renews; vipWeek();
+  if (cshop.classList.contains('on')) renderShop(); if (vipsh.classList.contains('on')) renderVip(); if (pSheet.classList.contains('on')) renderSheet(); return !was && vip; }
+vpbody.addEventListener('click', e => { const b = e.target.closest('[data-vp]'); if (!b || b.disabled) return; const k = b.dataset.vp; haptic('selection');
+  if (k === 'buy' && !IS_NATIVE) { vpMsg = 'Subscriptions open in the Mirror Drop app on iPhone.'; renderVip(); }
+  else if (k === 'buy' && !vpBusy) { vpBusy = true; vpMsg = ''; renderVip();
+    capCall('Store', 'buy', { id: VIP_ID }).then(r => { vpBusy = false; if (r && r.error && r.error !== 'cancelled') vpMsg = r.error; if (r && 'tier' in r) setEnt(r.tier, false); if (setVip(r && r.vip, r && r.vipUntil, r && r.vipRenews)) { vpMsg = 'Welcome to VIP. Your two free continues are ready.'; haptic('success'); } renderVip(); })
+      .catch(() => { vpBusy = false; vpMsg = 'The App Store couldn\'t be reached. Try again in a moment.'; renderVip(); }); }
+  else if (k === 'restore') { if (!IS_NATIVE) { vpMsg = 'Restoring works in the iPhone app.'; renderVip(); return; } vpMsg = 'Restoring…'; renderVip();
+    capCall('Store', 'restore').then(r => { if (r && 'tier' in r) setEnt(r.tier, false); setVip(r && r.vip, r && r.vipUntil, r && r.vipRenews); vpMsg = vip ? 'VIP restored.' : 'No active VIP subscription found.'; renderVip(); }).catch(() => { vpMsg = 'Couldn\'t restore right now.'; renderVip(); }); }
+  else if (k === 'manage') capCall('Store', 'manage').catch(() => {});
+  else if (k === 'terms') openLink('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/');
+  else if (k === 'privacy') openLink('https://gabtobflores-lab.github.io/Ducky-Run/privacy.html'); });
+function openLink(u) { if (IS_NATIVE) capCall('App', 'open', { url: u }).catch(() => {}); else window.open(u, '_blank', 'noopener'); }
+$('#vpclose').onclick = () => closeFsh(vipsh);
+function refreshVip() { if (IS_NATIVE) capCall('Store', 'entitlement').then(r => { if (r && 'tier' in r) setEnt(r.tier | 0); setVip(r && r.vip, r && r.vipUntil, r && r.vipRenews); }).catch(() => {}); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshVip(); }); // a renewal, a cancellation or an expiry shows up as soon as the game comes back
+setInterval(() => { if (vip && vipUntil && Date.now() > vipUntil) refreshVip(); }, 60000);
+// ---------- VIP: a weekly preview of one rare event, using the event itself ----------
+let previewBefore = 'normal';
+function startPreview(k) { if (!vip || state !== 'menu') return; const wk = weekKey(); if (wal.pvWk === wk && wal.pvEv !== k) return;
+  wal.pvWk = wk; wal.pvEv = k; saveWallet(); closeSheet();
+  setTimeout(() => { previewBefore = mode; previewEv = k; mode = 'zen'; show('#menu', false); state = 'play'; reset(); wx.cool = 9999; wx.kind = k; wx.phase = 'warn'; wx.t = 0; if (k === 'rain') wx.rv = 'dense';
+    wxNote(k); $('#pvdone').classList.add('on'); }, 380); }
+function endPreview() { if (!previewEv) return; $('#pvdone').classList.remove('on'); goMenu(); }
+$('#pvdone').onclick = endPreview;
 // the Daily Challenge: today's run up top, then a calendar of every day; past days can be played again any time
 const dSheet = $('#dsheet'), drows = $('#drows'); let dMonth = null, dSel = null;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -4545,9 +4748,9 @@ function thxFrame(now) {
   ctx = saved;
   if (thx.classList.contains('on')) thxRaf = requestAnimationFrame(thxFrame); }
 $('#thxgo').onclick = () => { thx.classList.remove('open'); thx.setAttribute('aria-hidden', 'true'); setTimeout(() => { thx.classList.remove('on'); cancelAnimationFrame(thxRaf); }, 450); };
-window.onStore = r => setEnt(r && r.tier, false); // the app reports purchases made or restored outside this screen (Family Sharing, refunds)
-function loadPrices() { capCall('Store', 'products').then(r => { const list = (r && r.products) || []; storePrices = {}; for (const p of list) storePrices[p.id] = p.price; if (unl.classList.contains('on')) renderUnlock(); }).catch(() => {}); }
-if (IS_NATIVE) { capCall('Store', 'entitlement').then(r => { supFounding = !!(r && r.founding); setEnt(r && r.tier | 0); }).catch(() => {}); loadPrices(); }
+window.onStore = r => { setEnt(r && r.tier, false); if (r && 'vip' in r) setVip(r.vip, r.vipUntil, r.vipRenews); }; // the app reports purchases made or restored outside this screen (Family Sharing, refunds)
+function loadPrices() { capCall('Store', 'products').then(r => { const list = (r && r.products) || []; storePrices = {}; for (const p of list) storePrices[p.id] = p.id === VIP_ID ? { price: p.price, period: p.period || '' } : p.price; if (unl.classList.contains('on')) renderUnlock(); if (vipsh.classList.contains('on')) renderVip(); }).catch(() => {}); }
+if (IS_NATIVE) { capCall('Store', 'entitlement').then(r => { supFounding = !!(r && r.founding); setEnt(r && r.tier | 0); setVip(r && r.vip, r && r.vipUntil, r && r.vipRenews); }).catch(() => {}); loadPrices(); }
 function unlFrame(now) { // the hero: the two balls slide between lanes; with Supporter picked, the score passes the best and the Golden Run starts
   const W0 = ucv.clientWidth, H0 = ucv.clientHeight; if (W0 && H0) {
     if (ucv.width !== Math.round(W0 * dpr)) { ucv.width = Math.round(W0 * dpr); ucv.height = Math.round(H0 * dpr); }

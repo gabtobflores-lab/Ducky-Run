@@ -261,18 +261,34 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
         // Purchases: Plus, Pro, Max and Supporter, bought once through the App Store
         case ("Store", "products"):
             await Store.shared.loadProducts()
-            return (["products": Store.shared.products.map { ["id": $0.key, "price": $0.value.displayPrice] }], nil)
+            return (["products": Store.shared.products.map { id, product -> [String: Any] in
+                var p: [String: Any] = ["id": id, "price": product.displayPrice]
+                if let period = product.subscription?.subscriptionPeriod { p["period"] = Store.periodName(period) }
+                return p
+            }], nil)
         case ("Store", "entitlement"):
             await Store.shared.refresh()
-            return (["tier": Store.shared.tier, "founding": Store.shared.founding], nil)
+            return (Store.shared.status, nil)
         case ("Store", "buy"):
-            let (tier, error) = await Store.shared.buy(opts["id"] as? String ?? "")
-            var reply: [String: Any] = ["tier": tier]
+            let (_, error) = await Store.shared.buy(opts["id"] as? String ?? "")
+            var reply = Store.shared.status
             if let error { reply["error"] = error }
             return (reply, nil)
         case ("Store", "restore"):
             await Store.shared.restore()
-            return (["tier": Store.shared.tier], nil)
+            return (Store.shared.status, nil)
+        // VIP: Apple's own sheet for managing or cancelling the subscription
+        case ("Store", "manage"):
+            guard let scene = webView?.window?.windowScene else { return (nil, "no window") }
+            try? await AppStore.showManageSubscriptions(in: scene)
+            await Store.shared.refresh(push: true)
+            return ([String: Any](), nil)
+
+        // Links (Terms of Use, Privacy Policy) open in Safari, never inside the game
+        case ("App", "open"):
+            guard let s = opts["url"] as? String, let url = URL(string: s), url.scheme == "https" else { return (nil, "bad link") }
+            await UIApplication.shared.open(url)
+            return ([String: Any](), nil)
 
         // Supporter's app icon: Classic or Gold on the Home Screen
         case ("App", "setIcon"):
@@ -379,6 +395,8 @@ final class ProMotion: NSObject {
 
 /// The App Store side of the packs. Tiers: 0 free, 1 Plus, 2 Pro, 3 Max, 4 Supporter. Each pack is a one-time purchase
 /// (non-consumable); upgrades are their own products priced at the difference. Owning any product gives at least its tier.
+/// Mirror Drop VIP is separate: an auto-renewing subscription. It counts only while the App Store reports it active
+/// (verified, not revoked, not expired); the packs and Supporter stay owned whatever happens to VIP.
 @MainActor
 final class Store {
     static let shared = Store()
@@ -386,7 +404,24 @@ final class Store {
     private(set) var products: [String: Product] = [:]
     private(set) var tier = 0
     private(set) var founding = false
+    private(set) var vip = false
+    private(set) var vipUntil: Date?
+    private(set) var vipRenews = false
     private var started = false
+    /// VIP's product IDs (one subscription group in App Store Connect). Its price is set there, not here.
+    static let vipIds = ["mirrordrop.vip.monthly"]
+
+    var status: [String: Any] {
+        var d: [String: Any] = ["tier": tier, "founding": founding, "vip": vip, "vipRenews": vipRenews]
+        if let vipUntil { d["vipUntil"] = vipUntil.timeIntervalSince1970 * 1000 }
+        return d
+    }
+
+    static func periodName(_ p: Product.SubscriptionPeriod) -> String {
+        let unit: String
+        switch p.unit { case .day: unit = "day"; case .week: unit = "week"; case .month: unit = "month"; case .year: unit = "year"; @unknown default: unit = "period" }
+        return p.value == 1 ? unit : "\(p.value) \(unit)s"
+    }
     /// Supporters who buy before this date get the Founding Supporter badge (set it to one year after launch)
     static let foundingUntil = DateComponents(calendar: Calendar(identifier: .gregorian), year: 2027, month: 12, day: 31).date ?? .distantFuture
 
@@ -417,22 +452,39 @@ final class Store {
     }
 
     func loadProducts() async {
-        guard products.isEmpty, let list = try? await Product.products(for: Store.ids) else { return }
+        guard products.isEmpty, let list = try? await Product.products(for: Store.ids + Store.vipIds) else { return }
         for product in list where products[Store.base(product.id)] == nil || product.id.hasSuffix(".v2") { products[Store.base(product.id)] = product } // the ".v2" pack wins when both exist
+        // VIP's IDs are kept as they are
     }
 
     func refresh(push: Bool = false) async {
-        var best = 0, firstSupporter: Date?
+        var best = 0, firstSupporter: Date?, vipNow = false, vipEnd: Date?, vipProduct: String?
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result, transaction.revocationDate == nil else { continue }
+            if Store.vipIds.contains(transaction.productID) {
+                if let end = transaction.expirationDate, end > Date() { vipNow = true; vipEnd = max(vipEnd ?? end, end); vipProduct = transaction.productID }
+                continue
+            }
             let t = Store.tier(of: transaction.productID)
             best = max(best, t)
             if t == 4 { firstSupporter = min(firstSupporter ?? transaction.purchaseDate, transaction.purchaseDate) }
         }
-        let changed = best != tier
+        var renews = false
+        if vipNow, let id = vipProduct {
+            var product = products[id]
+            if product == nil { product = (try? await Product.products(for: [id]))?.first }
+            if let statuses = try? await product?.subscription?.status {
+                for st in statuses { if case .verified(let info) = st.renewalInfo, info.willAutoRenew { renews = true } }
+            }
+        }
+        let changed = best != tier || vipNow != vip
         tier = best
+        vip = vipNow; vipUntil = vipEnd; vipRenews = renews
         founding = firstSupporter.map { $0 < Store.foundingUntil } ?? false
-        if push && changed { bridge?.tellGame("window.onStore && window.onStore({tier: \(best)})") }
+        if push && changed {
+            let until = vipEnd.map { String(Int($0.timeIntervalSince1970 * 1000)) } ?? "0"
+            bridge?.tellGame("window.onStore && window.onStore({tier: \(best), vip: \(vipNow), vipUntil: \(until), vipRenews: \(renews)})")
+        }
     }
 
     func buy(_ id: String) async -> (Int, String?) {
