@@ -423,11 +423,11 @@ final class Store {
     var pendingContinues: Int { UserDefaults.standard.integer(forKey: Store.pendingKey) }
     func ackContinues(_ n: Int) { UserDefaults.standard.set(max(0, pendingContinues - max(0, n)), forKey: Store.pendingKey) }
     /// a transaction that finished outside the purchase sheet: continues are credited, everything else simply finished
-    func handle(_ transaction: Transaction) async {
+    func handle(_ transaction: StoreKit.Transaction) async {
         if Store.continueIds[transaction.productID] != nil { await credit(transaction) } else { await transaction.finish() }
     }
     /// credits a verified consumable exactly once (by transaction ID), then finishes it
-    func credit(_ transaction: Transaction) async {
+    func credit(_ transaction: StoreKit.Transaction) async {
         guard let n = Store.continueIds[transaction.productID], transaction.revocationDate == nil else { return }
         var seen = Set(UserDefaults.standard.stringArray(forKey: Store.seenKey) ?? [])
         let id = String(transaction.id)
