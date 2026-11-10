@@ -38,7 +38,7 @@ can be tested in the simulator with the StoreKit configuration selected in the s
 - 5 Mirror Shards per gem caught (x3 in golden hour, x2 among fireflies), none in Zen.
 - Best combo bonus: (best combo - 1) x 10 shards when it reaches x3.
 - Daily Challenge: +50 the first time you finish each day's run; every 7-day streak gives a free continue.
-- Continues: 1 for 1,500 · 2 for 3,000 · 5 for 6,000 · 10 for 10,000 · 20 for 18,000.
+- Continues: 1 for 3,000 · 2 for 6,000 · 5 for 12,000 · 10 for 20,000 · 20 for 36,000.
 - Up to 2 continues per round (3 with VIP). VIP adds 2 free continues every week (topped up, never stacked).
 - No continues in the Daily; continued runs aren't sent to Game Center.
 
