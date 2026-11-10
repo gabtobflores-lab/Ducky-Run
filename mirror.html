@@ -89,7 +89,6 @@
   .mrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px}
   .seg.sm{flex:0 0 64%;padding:3px;border-radius:12px} .seg.sm .pill{top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:9px}
   .seg.sm button{padding:6px;font-size:13px;border-radius:9px} #mode[data-mode="infinite"] .pill{transform:translateX(100%)}
-  .seg
 
   /* buttons */
   .btn{position:relative;width:min(300px,80vw);border:0;border-radius:var(--r-pill);padding:16px 20px;font-weight:900;font-size:19px;letter-spacing:.16em;cursor:pointer;color:#fff;
@@ -211,7 +210,7 @@
   .csmsg{min-height:0;text-align:center;font-size:13px;font-weight:700;color:#1d6fa5}.csmsg:empty{display:none}
   .csfine{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;text-align:center;font-size:11.5px;line-height:1.4;color:var(--ink-3);padding:0 10px}.csfine button{border:0;background:none;font:inherit;font-weight:800;color:var(--ink-2);text-decoration:underline;cursor:pointer;padding:2px}
   .cspk button{flex:none;min-width:70px;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:var(--ink);cursor:pointer;transition:transform .25s var(--ios),background .2s,opacity .2s}
-  .cspk .cspk button.cf{background:#22b07d} .cspk button:disabled{background:rgba(43,45,66,.08);color:rgba(43,45,66,.32);box-shadow:none;cursor:default}
+  .cspk button.cf{background:#22b07d} .cspk button:disabled{background:rgba(43,45,66,.08);color:rgba(43,45,66,.32);box-shadow:none;cursor:default}
   .csvip{margin-top:6px;border-radius:22px;padding:18px;color:#fff;background:radial-gradient(120% 140% at 0% 0%,#6f5bff 0%,#3b2bb8 45%,#1b1550 100%);box-shadow:0 12px 30px rgba(59,43,184,.3);display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;position:relative;overflow:hidden}
   .csvip::after{content:'';position:absolute;inset:-40% -10% auto auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(closest-side,rgba(140,220,255,.35),transparent);pointer-events:none}
   .csvip .q{font-size:13px;font-weight:700;opacity:.75}.csvip h3{margin:0;font-size:21px;font-weight:900;letter-spacing:.06em}
@@ -266,7 +265,6 @@
   .dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
   .dgrid .wd{font-size:11px;font-weight:800;color:var(--ink-3);padding-bottom:2px}
   .dgrid button{aspect-ratio:1;border:0;border-radius:50%;background:none;font:inherit;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;position:relative;transition:transform .25s var(--ios),background .2s}
-  .dgrid
   .dgrid button.fut{color:var(--ink-3);opacity:.45;cursor:default}
   .dgrid button.did{background:rgba(61,120,214,.14);color:#2a4fa8}
   .dgrid button.did::after{content:'';position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#3d78d6}
@@ -276,6 +274,12 @@
   .dpick .tx{flex:1;display:flex;flex-direction:column;gap:2px}.dpick b{font-size:15px;font-weight:800}.dpick small{font-size:12.5px;font-weight:600;color:var(--ink-2)}
   .dpick button{border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:#3d78d6;cursor:pointer}
 
+  /* scroll indicators: a slim, soft pill that only shows against the content, never a dark bar */
+  .rows,.fsh,.screen,#ucv,.ubody{scrollbar-width:thin;scrollbar-color:rgba(43,45,66,.18) transparent}
+  .rows::-webkit-scrollbar,.fsh::-webkit-scrollbar,.screen::-webkit-scrollbar,.ubody::-webkit-scrollbar{width:5px;height:5px;background:transparent}
+  .rows::-webkit-scrollbar-thumb,.fsh::-webkit-scrollbar-thumb,.screen::-webkit-scrollbar-thumb,.ubody::-webkit-scrollbar-thumb{background:rgba(43,45,66,.16);border-radius:3px}
+  .rows::-webkit-scrollbar-track,.fsh::-webkit-scrollbar-track,.screen::-webkit-scrollbar-track,.ubody::-webkit-scrollbar-track{background:transparent}
+  .fsh.vip{scrollbar-color:rgba(255,255,255,.25) transparent}.fsh.vip::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22)}
   .grab{width:38px;height:5px;border-radius:3px;background:rgba(43,45,66,.18);margin:0 auto}
   .shd{display:flex;align-items:center;justify-content:space-between;padding:0 4px}
   .shd b{font-size:21px;font-weight:800;letter-spacing:-.01em}
