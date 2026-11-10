@@ -211,7 +211,10 @@
   .spin2{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite;vertical-align:-2px}
   .csmsg{min-height:0;text-align:center;font-size:13px;font-weight:700;color:#1d6fa5}.csmsg:empty{display:none}
   .csfine{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;text-align:center;font-size:11.5px;line-height:1.4;color:var(--ink-3);padding:0 10px}.csfine button{border:0;background:none;font:inherit;font-weight:800;color:var(--ink-2);text-decoration:underline;cursor:pointer;padding:2px}
-  .cspk button{flex:none;min-width:70px;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:var(--ink);cursor:pointer;transition:transform .25s var(--ios),background .2s,opacity .2s}
+  .cspk button{position:relative;overflow:hidden;flex:none;min-width:70px;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:var(--ink);cursor:pointer;transition:transform .25s var(--ios),background .35s var(--ease),opacity .2s}
+  .cspk .lbl{display:block}.cspk .lbl.in{animation:lblin .38s cubic-bezier(.32,.72,0,1) both}.cspk .lbl.out{position:absolute;inset:0;display:grid;place-items:center;animation:lblout .3s cubic-bezier(.4,0,1,1) both}
+  @keyframes lblin{from{transform:translateY(90%);opacity:0}to{transform:none;opacity:1}}@keyframes lblout{to{transform:translateY(-90%);opacity:0}}
+  @media (prefers-reduced-motion: reduce){.cspk .lbl.in,.cspk .lbl.out{animation:none}.cspk .lbl.out{display:none}}
   .cspk button.cf{background:#22b07d} .cspk button:disabled{background:rgba(43,45,66,.08);color:rgba(43,45,66,.32);box-shadow:none;cursor:default}
   .csvip{margin-top:6px;border-radius:22px;padding:18px;color:#fff;background:radial-gradient(120% 140% at 0% 0%,#6f5bff 0%,#3b2bb8 45%,#1b1550 100%);box-shadow:0 12px 30px rgba(59,43,184,.3);display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;position:relative;overflow:hidden}
   .csvip::after{content:'';position:absolute;inset:-40% -10% auto auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(closest-side,rgba(140,220,255,.35),transparent);pointer-events:none}
@@ -4703,7 +4706,8 @@ csbody.addEventListener('click', e => { const pb = e.target.closest('[data-pay]'
   if (k === 'vip') { openVip(); return; }
   if (k === 'restore') { if (!IS_NATIVE) { csMsg = 'Restoring works in the iPhone app.'; renderShop(); return; } csMsg = 'Restoring…'; renderShop(); capCall('Store', 'restore').then(r => { if (r && 'tier' in r) setEnt(r.tier, false); setVip(r && r.vip, r && r.vipUntil, r && r.vipRenews); csMsg = 'Purchases restored.'; claimContinues(); renderShop(); }).catch(() => { csMsg = 'Couldn\'t restore right now.'; renderShop(); }); return; }
   const i = +k, [n, c] = ECON.packs[i]; if (wal.sh < c) return;
-  if (csConfirm !== i) { csConfirm = i; haptic('selection'); clearTimeout(csConfTimer); csConfTimer = setTimeout(() => { csConfirm = -1; if (cshop.classList.contains('on')) renderShop(); }, 3000); renderShop(); return; } // a second tap confirms
+  if (csConfirm !== i) { const prev = csbody.querySelector(`[data-cs="${csConfirm}"]`); if (prev) flipLabel(prev, 'Buy', false); csConfirm = i; haptic('selection'); flipLabel(b, 'Confirm', true); clearTimeout(csConfTimer);
+    csConfTimer = setTimeout(() => { const cb = csbody.querySelector(`[data-cs="${csConfirm}"]`); csConfirm = -1; if (cb) flipLabel(cb, 'Buy', false); }, 3000); return; } // a second tap confirms
   clearTimeout(csConfTimer); csConfirm = -1; wal.sh -= c; wal.cont += n; saveWallet(); csGot = i; haptic('success'); [784, 988, 1175].forEach((f, j) => bell(f, .012, 1, 'fx', .9, j * .06));
   renderShop(); setTimeout(() => { csGot = -1; if (cshop.classList.contains('on')) renderShop(); }, 1400); if (pSheet.classList.contains('on')) renderSheet(); });
 function buyContinues(n) { haptic('selection');
@@ -4711,6 +4715,11 @@ function buyContinues(n) { haptic('selection');
   csPayBusy = n; csMsg = ''; renderShop();
   capCall('Store', 'buy', { id: ECON.cash[n][0] }).then(r => { csPayBusy = 0; if (r && r.error && r.error !== 'cancelled') csMsg = r.error; renderShop(); claimContinues(); })
     .catch(() => { csPayBusy = 0; csMsg = 'The App Store couldn\'t be reached. Try again in a moment.'; renderShop(); }); }
+function flipLabel(btn, text, on) { // Buy ⇄ Confirm: the word rolls over, the button eases to its new width and colour
+  if (btn.textContent === text) return; const w0 = btn.getBoundingClientRect().width, old = btn.textContent;
+  btn.classList.toggle('cf', on); btn.innerHTML = `<span class="lbl in">${text}</span><span class="lbl out" aria-hidden="true">${old}</span>`;
+  const w1 = btn.getBoundingClientRect().width; if (!matchMedia('(prefers-reduced-motion: reduce)').matches && Math.abs(w1 - w0) > 1) btn.animate([{ width: w0 + 'px' }, { width: w1 + 'px' }], { duration: 380, easing: 'cubic-bezier(.32,.72,0,1)' });
+  setTimeout(() => { if (btn.isConnected && btn.querySelector('.lbl.out')) btn.textContent = text; }, 420); }
 $('#csclose').onclick = () => closeFsh(cshop);
 // ---------- Mirror Drop VIP: an auto-renewing subscription, granted only while the App Store says it is active ----------
 const VIP_ICON = '<svg viewBox="0 0 24 24"><path d="M12 2.8l2.6 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.4 3 1.2-6.1L3.3 9.2l6.1-.8z"/></svg>';
