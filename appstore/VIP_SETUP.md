@@ -41,3 +41,21 @@ can be tested in the simulator with the StoreKit configuration selected in the s
 - Continues: 1 for 1,500 · 2 for 3,000 · 5 for 6,000 · 10 for 10,000 · 20 for 18,000.
 - Up to 2 continues per round (3 with VIP). VIP adds 2 free continues every week (topped up, never stacked).
 - No continues in the Daily; continued runs aren't sent to Game Center.
+
+# Paid continues (consumables)
+
+The Continues screen sells continues for money next to the Mirror Shards price. Create these in
+App Store Connect as **Consumable** in-app purchases (Family Sharing off):
+
+| Product ID | Price | Gives |
+|---|---|---|
+| mirrordrop.continues.1 | $0.29 | 1 continue |
+| mirrordrop.continues.2 | $0.49 | 2 continues |
+| mirrordrop.continues.5 | $0.99 | 5 continues |
+| mirrordrop.continues.10 | $1.79 | 10 continues |
+| mirrordrop.continues.20 | $2.99 | 20 continues |
+
+The game shows the App Store's own price once a product is live. Each purchase is credited exactly
+once (by transaction ID) and held by the app until the game confirms it saved the continues, so a
+crash or restart can't lose or duplicate them. They are not in `appstore/products.json`, because that
+file's workflow creates non-consumables. They're in `xcode/MirrorDrop/Products.storekit` for simulator testing.

@@ -151,7 +151,8 @@
   .best.celebrate{animation:celebrate 1.6s var(--ease) both}
   @keyframes celebrate{0%{box-shadow:var(--sh-card),0 0 0 0 rgba(233,162,59,.55)}35%{box-shadow:var(--sh-card),0 0 0 10px rgba(233,162,59,0)}36%{box-shadow:var(--sh-card),0 0 0 0 rgba(233,162,59,.4)}80%,100%{box-shadow:var(--sh-card),0 0 0 12px rgba(233,162,59,0)}}
   .tag{min-height:22px;font-weight:900;letter-spacing:.2em;font-size:12px}
-  #ocont{display:none;flex-direction:column;align-items:center;gap:1px;background:linear-gradient(180deg,#e6f6ff,#c8e9fb);color:#1d6fa5;box-shadow:0 0 0 1.5px rgba(61,160,220,.28) inset,0 4px 14px rgba(61,160,220,.18)}#ocont.on{display:flex}#ocont small{font-size:11px;font-weight:700;letter-spacing:.04em;color:#4b93c2;text-transform:none}
+  #ocont{display:none;flex-direction:column;align-items:center;gap:1px;background:linear-gradient(180deg,#e6f6ff,#c8e9fb);color:#1d6fa5;box-shadow:0 0 0 1.5px rgba(61,160,220,.28) inset,0 4px 14px rgba(61,160,220,.18)}#ocont.on{display:flex;overflow:hidden}#ocont.on::after{content:'';position:absolute;top:0;bottom:0;width:40%;left:-50%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.6),transparent);animation:cshine 3.2s ease-in-out 1s infinite;pointer-events:none}@keyframes cshine{0%{left:-50%}35%,100%{left:120%}}
+  @media (prefers-reduced-motion: reduce){#ocont.on::after,.cspk.got,.cspk.got .n{animation:none}}#ocont small{font-size:11px;font-weight:700;letter-spacing:.04em;color:#4b93c2;text-transform:none}
   #ocont:active{box-shadow:0 0 0 1.5px rgba(61,160,220,.4) inset}
   .shd-i{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
   #oearn{display:flex;flex-direction:column;align-items:center;gap:1px;min-height:0;margin-top:-8px}#oearn .earn{display:inline-flex;align-items:center;gap:4px;color:#c27a1c;font-size:12.5px;font-weight:700;opacity:.9}#oearn .earn .shd-i{width:13px;height:13px}
@@ -194,17 +195,24 @@
   .csown{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
   .csown span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#fff;box-shadow:var(--sh-card);font-size:13.5px;font-weight:700;color:var(--ink)}
   .csown span.v{color:#5b3fd6}
-  .csnote{font-size:12.5px;font-weight:500;line-height:1.45;color:var(--ink-2);text-align:center;padding:0 12px}
+  .csnote{margin-top:2px;font-size:12.5px;font-weight:500;line-height:1.45;color:var(--ink-2);text-align:center;padding:0 12px}
   .cspacks{display:flex;flex-direction:column;border-radius:20px;background:#fff;box-shadow:var(--sh-card);overflow:hidden}
   .cspk{display:flex;align-items:center;gap:12px;padding:14px;transition:background .3s}
   .cspk+.cspk{border-top:.5px solid rgba(43,45,66,.09)}
-  .cspk.got{background:rgba(46,196,214,.1)}
+  .cspk.got{background:rgba(46,196,214,.1);animation:gotpulse .9s var(--ios)}@keyframes gotpulse{0%{background:rgba(46,196,214,.28)}100%{background:rgba(46,196,214,.1)}}
+  .cspk.got .n{animation:gotpop .5s var(--ios)}@keyframes gotpop{40%{transform:scale(1.14)}}
   .cspk .n{width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:19px;font-weight:900;color:#fff;background:linear-gradient(160deg,#4fd8d6,#2a9fc0);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
-  .cspk .tx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.cspk .tx b{font-size:15.5px;font-weight:800;white-space:nowrap}
-  .cspk .tx small{display:flex;align-items:center;gap:4px;font-size:13.5px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
-  .cspk .sv{margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(34,176,125,.13);color:#178a60;font-size:10.5px;font-weight:800;letter-spacing:.04em}
-  .cspk button{flex:none;min-width:86px;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:var(--ink);cursor:pointer;transition:transform .25s var(--ios),background .2s,opacity .2s}
-  .cspk button:active{transform:scale(.95)} .cspk button.cf{background:#22b07d} .cspk button:disabled{background:rgba(43,45,66,.08);color:var(--ink-3);cursor:default;font-size:12px}
+  .cspk .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;min-width:0}.cspk .tx b{font-size:15.5px;font-weight:800;white-space:nowrap}
+  .cspk .tx small{white-space:nowrap;display:flex;align-items:center;gap:4px;font-size:13.5px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .cspk .n{position:relative}.cspk .sv{position:absolute!important;right:-10px;top:-8px;margin:0!important;font-style:normal;white-space:nowrap;padding:2px 6px!important;font-size:10px!important;letter-spacing:0!important;color:#fff!important;background:linear-gradient(180deg,#34c58b,#1fa06d)!important;box-shadow:0 2px 6px rgba(23,138,96,.3);border:1.5px solid #fff;line-height:1.2;padding:1px 7px;border-radius:999px;background:rgba(34,176,125,.13);color:#178a60;font-size:10.5px;font-weight:800;letter-spacing:.04em}
+  .cspk{flex-wrap:wrap}.cspk .csb{display:flex;gap:6px;flex:none}.cspk .need{flex-basis:100%;padding-left:58px;margin-top:-6px;font-size:11.5px;font-weight:600;color:var(--ink-3)}
+  .cspk button.pay{min-width:70px;background:linear-gradient(180deg,#4fb6ff,#2a7ff0);box-shadow:0 4px 12px rgba(42,127,240,.25),inset 0 1px 0 rgba(255,255,255,.3)}
+  .cspk button.pay:disabled{opacity:.55;background:linear-gradient(180deg,#4fb6ff,#2a7ff0);color:#fff;font-size:14px}
+  .spin2{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite;vertical-align:-2px}
+  .csmsg{min-height:0;text-align:center;font-size:13px;font-weight:700;color:#1d6fa5}.csmsg:empty{display:none}
+  .csfine{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;text-align:center;font-size:11.5px;line-height:1.4;color:var(--ink-3);padding:0 10px}.csfine button{border:0;background:none;font:inherit;font-weight:800;color:var(--ink-2);text-decoration:underline;cursor:pointer;padding:2px}
+  .cspk button{flex:none;min-width:70px;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:var(--ink);cursor:pointer;transition:transform .25s var(--ios),background .2s,opacity .2s}
+  .cspk button:active{transform:scale(.95)} .cspk button.cf{background:#22b07d} .cspk button:disabled{background:rgba(43,45,66,.08);color:rgba(43,45,66,.32);box-shadow:none;cursor:default}
   .csvip{margin-top:6px;border-radius:22px;padding:18px;color:#fff;background:radial-gradient(120% 140% at 0% 0%,#6f5bff 0%,#3b2bb8 45%,#1b1550 100%);box-shadow:0 12px 30px rgba(59,43,184,.3);display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;position:relative;overflow:hidden}
   .csvip::after{content:'';position:absolute;inset:-40% -10% auto auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(closest-side,rgba(140,220,255,.35),transparent);pointer-events:none}
   .csvip .q{font-size:13px;font-weight:700;opacity:.75}.csvip h3{margin:0;font-size:21px;font-weight:900;letter-spacing:.06em}
@@ -463,6 +471,16 @@
   .sgrp h3{margin:2px 0 0 14px;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--ink-3)}
   .slist{border-radius:18px;background:#fff;box-shadow:var(--sh-card);overflow:hidden}
   .sopt{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer}
+  /* premium touch feedback: rows and cards respond to a finger with a soft press, buttons settle with a spring */
+  button.row,.dpick,.cspk{transition:transform .35s var(--ios),background .25s var(--ease)}
+  button.row:active{transform:scale(.985);background:rgba(255,255,255,.75);transition-duration:.08s}
+  .fx,.uclose,.done,.vbtn,.vpcta,.dplay,.evpv{-webkit-tap-highlight-color:transparent}
+  .fx:active,.uclose:active{transform:scale(.88);transition:transform .08s} .fx,.uclose{transition:transform .35s var(--ios)}
+  .evpv{transition:transform .3s var(--ios),opacity .2s}.evpv:active{transform:scale(.93);transition-duration:.06s}
+  .done:active{opacity:.55} .done{transition:opacity .2s}
+  .fsh .fin>*{animation:fshin .55s var(--ios) both}.fsh .fin>*:nth-child(2){animation-delay:.04s}.fsh .fin>*:nth-child(3){animation-delay:.08s}
+  @keyframes fshin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.fsh .fin>*{animation:none}}
   .sopt+.sopt{border-top:.5px solid rgba(43,45,66,.08)}
   .sopt .tx{flex:1;min-width:0;display:flex;flex-direction:column}
   .sopt b{font-size:15px;font-weight:800}
@@ -797,7 +815,7 @@ const DAY0 = new Date(2026, 0, 1), DFEAT = ['wind', 'rain', 'storm', 'snow', 'fo
 const dayNum = k => Math.round((keyDate(k) - DAY0) / 864e5) + 1;
 function dayInfo(k) { const r = mulberry(hashStr('mirrordrop-day-' + k)); r(); return { n: dayNum(k), per: r() < .45 ? 2 : 3, feat: DFEAT[r() * DFEAT.length | 0] }; }
 // ---------- Mirror Shards: the one currency, earned by catching gems, spent only on continues ----------
-const ECON = { perGem: 5, daily: 50, streakDays: 7, packs: [[1, 1500], [2, 3000], [5, 6000], [10, 10000], [20, 18000]], limit: 2, vipLimit: 3, vipWeekly: 2 }; // tune the economy here
+const ECON = { perGem: 5, daily: 50, streakDays: 7, packs: [[1, 1500], [2, 3000], [5, 6000], [10, 10000], [20, 18000]], cash: { 1: ['mirrordrop.continues.1', '$0.29'], 2: ['mirrordrop.continues.2', '$0.49'], 5: ['mirrordrop.continues.5', '$0.99'], 10: ['mirrordrop.continues.10', '$1.79'], 20: ['mirrordrop.continues.20', '$2.99'] }, limit: 2, vipLimit: 3, vipWeekly: 2 }; // tune the economy here
 const SHARD_SVG = '<svg class="shd-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.2" y="5.2" width="13.6" height="13.6" rx="3.2" transform="rotate(45 12 12)" fill="url(#mdShardG)"/><rect x="7.4" y="9.6" width="4.2" height="4.2" rx="1.1" transform="rotate(45 9.5 11.7)" fill="#fff" fill-opacity=".6"/></svg>';
 let vip = false, vipUntil = 0, vipRenews = false; // VIP comes only from the App Store's own subscription status, never from saved data
 const weekKey = (d = new Date()) => { const m = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7); return dateKey(m); }; // weeks start on Monday
@@ -4637,21 +4655,41 @@ const openFsh = el => { el.classList.add('on'); el.setAttribute('aria-hidden', '
 const closeFsh = el => { if (!el.classList.contains('on')) return; el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); beep(680, .07, 'sine', .03, -160); setTimeout(() => { if (!el.classList.contains('open')) el.classList.remove('on'); }, 500); };
 function renderShop() {
   const fr = vipFree(), base = ECON.packs[0][1] / ECON.packs[0][0];
-  let h = `<div class="cshero">${SHARD_SVG}<div class="bal">${wal.sh.toLocaleString()}</div><small>MIRROR SHARDS</small></div>
+  let h = `<div class="cshero">${SHARD_SVG}<div class="bal">${(csShown < 0 ? wal.sh : csShown).toLocaleString()}</div><small>MIRROR SHARDS</small></div>
     <div class="csown"><span>${wal.cont} continue${wal.cont === 1 ? '' : 's'}</span>${vip ? `<span class="v">${fr} free this week</span>` : ''}<span>Up to ${contLimit()} per round</span></div>
     <div class="csnote">Catch gems during a run to earn Mirror Shards: more in golden hour and among the fireflies. Finishing the Daily adds ${ECON.daily}, and every ${ECON.streakDays}-day streak earns a free continue.</div><div class="cspacks">`;
   ECON.packs.forEach(([n, c], i) => { const save = Math.round((1 - c / (n * base)) * 100), can = wal.sh >= c;
-    h += `<div class="cspk${csGot === i ? ' got' : ''}"><span class="n">${n}</span><span class="tx"><b>${n} Continue${n > 1 ? 's' : ''}</b><small>${SHARD_SVG}${c.toLocaleString()}${save > 0 ? `<span class="sv">SAVE ${save}%</span>` : ''}</small></span>`
-      + `<button type="button" data-cs="${i}"${can ? '' : ' disabled'} class="${csConfirm === i ? 'cf' : ''}">${can ? (csConfirm === i ? 'Confirm' : 'Buy') : `Need ${(c - wal.sh).toLocaleString()}`}</button></div>`; });
-  h += `</div><div class="csvip"><span class="q">Want more benefits?</span><h3>MIRROR DROP VIP</h3><p>${vip ? 'You\'re a VIP. Thank you!' : 'Two free continues every week, up to three per round, advanced tips and a weekly preview of a rare event.'}</p><button class="vbtn" type="button" data-cs="vip">${vip ? 'MANAGE VIP' : 'BUY VIP'}</button></div>`;
-  csbody.innerHTML = h; }
-function openShop() { csConfirm = -1; csGot = -1; renderShop(); openFsh(cshop); }
-csbody.addEventListener('click', e => { const b = e.target.closest('[data-cs]'); if (!b || b.disabled) return; const k = b.dataset.cs;
+    h += `<div class="cspk${csGot === i ? ' got' : ''}"><span class="n">${n}${save > 0 ? `<i class="sv">−${save}%</i>` : ''}</span><span class="tx"><b>${n} Continue${n > 1 ? 's' : ''}</b><small>${SHARD_SVG}${c.toLocaleString()}</small></span>`
+      + `<span class="csb"><button type="button" data-cs="${i}"${can ? '' : ' disabled aria-disabled="true"'} class="${csConfirm === i ? 'cf' : ''}" aria-label="Buy ${n} with Mirror Shards">${csConfirm === i ? 'Confirm' : 'Buy'}</button>`
+      + `<button type="button" class="pay${csPayBusy === n ? ' busy' : ''}" data-pay="${n}"${csPayBusy ? ' disabled' : ''} aria-label="Pay ${cashPrice(n)} for ${n}">${csPayBusy === n ? '<i class="spin2"></i>' : cashPrice(n)}</button></span>`
+      + (can ? '' : `<small class="need">${(c - wal.sh).toLocaleString()} more shards</small>`) + `</div>`; });
+  h += `</div><div class="csmsg" role="status">${esc(csMsg)}</div><div class="csfine">Pay: a one-time App Store purchase. Continues bought with money are added straight to your saved continues.<button type="button" data-cs="restore">Restore</button></div>`;
+  h += `<div class="csvip"><span class="q">Want more benefits?</span><h3>MIRROR DROP VIP</h3><p>${vip ? 'You\'re a VIP. Thank you!' : 'Two free continues every week, up to three per round, advanced tips and a weekly preview of a rare event.'}</p><button class="vbtn" type="button" data-cs="vip">${vip ? 'MANAGE VIP' : 'BUY VIP'}</button></div>`;
+  csbody.innerHTML = h; tickBalance(); }
+const cashPrice = n => storePrices[ECON.cash[n][0]] || ECON.cash[n][1]; // the App Store's own price once live, else the planned one
+let csPayBusy = 0, csMsg = '', csShown = -1;
+function tickBalance() { const el = csbody.querySelector('.bal'); if (!el) return; const to = wal.sh, from = csShown < 0 ? to : csShown; csShown = to; if (from === to) { el.textContent = to.toLocaleString(); return; } const t0 = performance.now();
+  (function f(now) { const p = Math.min(1, (now - t0) / 650), e = 1 - Math.pow(1 - p, 3); el.textContent = Math.round(from + (to - from) * e).toLocaleString(); if (p < 1) requestAnimationFrame(f); })(t0); } /* the balance counts to its new value */
+function claimContinues(note) { // continues bought with money are kept by the app until the game has saved them: nothing can be lost or counted twice
+  if (!IS_NATIVE) return; capCall('Store', 'claimContinues').then(r => { const n = r && r.count | 0; if (n > 0) { wal.cont += n; saveWallet(); capCall('Store', 'ackContinues', { count: n }).catch(() => {});
+    csMsg = `${n} continue${n === 1 ? '' : 's'} added.`; haptic('success'); [784, 988, 1175, 1568].forEach((f, j) => bell(f, .012, 1, 'fx', .9, j * .06));
+    if (cshop.classList.contains('on')) renderShop(); if (pSheet.classList.contains('on')) renderSheet(); if (state === 'dead') syncCont(); } }).catch(() => {}); }
+window.onContinues = () => claimContinues(); // the app announces a purchase that finished outside the sheet (Ask to Buy, a restored transaction)
+if (IS_NATIVE) setTimeout(() => claimContinues(), 2500);
+function openShop() { csConfirm = -1; csGot = -1; csMsg = ''; csShown = -1; if (IS_NATIVE) { loadPrices(); claimContinues(); } renderShop(); openFsh(cshop); }
+csbody.addEventListener('click', e => { const pb = e.target.closest('[data-pay]'); if (pb) { if (pb.disabled || csPayBusy) return; buyContinues(+pb.dataset.pay); return; }
+  const b = e.target.closest('[data-cs]'); if (!b || b.disabled) return; const k = b.dataset.cs;
   if (k === 'vip') { openVip(); return; }
+  if (k === 'restore') { if (!IS_NATIVE) { csMsg = 'Restoring works in the iPhone app.'; renderShop(); return; } csMsg = 'Restoring…'; renderShop(); capCall('Store', 'restore').then(r => { if (r && 'tier' in r) setEnt(r.tier, false); setVip(r && r.vip, r && r.vipUntil, r && r.vipRenews); csMsg = 'Purchases restored.'; claimContinues(); renderShop(); }).catch(() => { csMsg = 'Couldn\'t restore right now.'; renderShop(); }); return; }
   const i = +k, [n, c] = ECON.packs[i]; if (wal.sh < c) return;
   if (csConfirm !== i) { csConfirm = i; haptic('selection'); clearTimeout(csConfTimer); csConfTimer = setTimeout(() => { csConfirm = -1; if (cshop.classList.contains('on')) renderShop(); }, 3000); renderShop(); return; } // a second tap confirms
   clearTimeout(csConfTimer); csConfirm = -1; wal.sh -= c; wal.cont += n; saveWallet(); csGot = i; haptic('success'); [784, 988, 1175].forEach((f, j) => bell(f, .012, 1, 'fx', .9, j * .06));
   renderShop(); setTimeout(() => { csGot = -1; if (cshop.classList.contains('on')) renderShop(); }, 1400); if (pSheet.classList.contains('on')) renderSheet(); });
+function buyContinues(n) { haptic('selection');
+  if (!IS_NATIVE) { csMsg = 'Purchases open in the Mirror Drop app on iPhone.'; renderShop(); return; }
+  csPayBusy = n; csMsg = ''; renderShop();
+  capCall('Store', 'buy', { id: ECON.cash[n][0] }).then(r => { csPayBusy = 0; if (r && r.error && r.error !== 'cancelled') csMsg = r.error; renderShop(); claimContinues(); })
+    .catch(() => { csPayBusy = 0; csMsg = 'The App Store couldn\'t be reached. Try again in a moment.'; renderShop(); }); }
 $('#csclose').onclick = () => closeFsh(cshop);
 // ---------- Mirror Drop VIP: an auto-renewing subscription, granted only while the App Store says it is active ----------
 const VIP_ICON = '<svg viewBox="0 0 24 24"><path d="M12 2.8l2.6 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.4 3 1.2-6.1L3.3 9.2l6.1-.8z"/></svg>';
@@ -4780,7 +4818,7 @@ function thxFrame(now) {
   if (thx.classList.contains('on')) thxRaf = requestAnimationFrame(thxFrame); }
 $('#thxgo').onclick = () => { thx.classList.remove('open'); thx.setAttribute('aria-hidden', 'true'); setTimeout(() => { thx.classList.remove('on'); cancelAnimationFrame(thxRaf); }, 450); };
 window.onStore = r => { setEnt(r && r.tier, false); if (r && 'vip' in r) setVip(r.vip, r.vipUntil, r.vipRenews); }; // the app reports purchases made or restored outside this screen (Family Sharing, refunds)
-function loadPrices() { capCall('Store', 'products').then(r => { const list = (r && r.products) || []; storePrices = {}; for (const p of list) storePrices[p.id] = p.id === VIP_ID ? { price: p.price, period: p.period || '' } : p.price; if (unl.classList.contains('on')) renderUnlock(); if (vipsh.classList.contains('on')) renderVip(); }).catch(() => {}); }
+function loadPrices() { capCall('Store', 'products').then(r => { const list = (r && r.products) || []; storePrices = {}; for (const p of list) storePrices[p.id] = p.id === VIP_ID ? { price: p.price, period: p.period || '' } : p.price; if (unl.classList.contains('on')) renderUnlock(); if (vipsh.classList.contains('on')) renderVip(); if (cshop.classList.contains('on')) renderShop(); }).catch(() => {}); }
 if (IS_NATIVE) { capCall('Store', 'entitlement').then(r => { supFounding = !!(r && r.founding); setEnt(r && r.tier | 0); setVip(r && r.vip, r && r.vipUntil, r && r.vipRenews); }).catch(() => {}); loadPrices(); }
 function unlFrame(now) { // the hero: the two balls slide between lanes; with Supporter picked, the score passes the best and the Golden Run starts
   const W0 = ucv.clientWidth, H0 = ucv.clientHeight; if (W0 && H0) {

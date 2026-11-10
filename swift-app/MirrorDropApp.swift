@@ -277,6 +277,12 @@ final class NativeBridge: NSObject, WKScriptMessageHandlerWithReply, WKNavigatio
         case ("Store", "restore"):
             await Store.shared.restore()
             return (Store.shared.status, nil)
+        // Continues bought with money (consumables): the app holds them until the game confirms it has saved them
+        case ("Store", "claimContinues"):
+            return (["count": Store.shared.pendingContinues], nil)
+        case ("Store", "ackContinues"):
+            Store.shared.ackContinues((opts["count"] as? NSNumber)?.intValue ?? 0)
+            return ([String: Any](), nil)
         // VIP: Apple's own sheet for managing or cancelling the subscription
         case ("Store", "manage"):
             guard let scene = webView?.window?.windowScene else { return (nil, "no window") }
@@ -410,6 +416,29 @@ final class Store {
     private var started = false
     /// VIP's product IDs (one subscription group in App Store Connect). Its price is set there, not here.
     static let vipIds = ["mirrordrop.vip.monthly"]
+    /// Continues sold for money: consumables, each adds that many continues. Prices are set in App Store Connect.
+    static let continueIds: [String: Int] = ["mirrordrop.continues.1": 1, "mirrordrop.continues.2": 2, "mirrordrop.continues.5": 5, "mirrordrop.continues.10": 10, "mirrordrop.continues.20": 20]
+    private static let pendingKey = "md.continues.pending", seenKey = "md.continues.seen"
+    /// continues paid for but not yet saved by the game; kept in the app's own storage so a crash or restart never loses them
+    var pendingContinues: Int { UserDefaults.standard.integer(forKey: Store.pendingKey) }
+    func ackContinues(_ n: Int) { UserDefaults.standard.set(max(0, pendingContinues - max(0, n)), forKey: Store.pendingKey) }
+    /// a transaction that finished outside the purchase sheet: continues are credited, everything else simply finished
+    func handle(_ transaction: Transaction) async {
+        if Store.continueIds[transaction.productID] != nil { await credit(transaction) } else { await transaction.finish() }
+    }
+    /// credits a verified consumable exactly once (by transaction ID), then finishes it
+    func credit(_ transaction: Transaction) async {
+        guard let n = Store.continueIds[transaction.productID], transaction.revocationDate == nil else { return }
+        var seen = Set(UserDefaults.standard.stringArray(forKey: Store.seenKey) ?? [])
+        let id = String(transaction.id)
+        if !seen.contains(id) {
+            seen.insert(id)
+            UserDefaults.standard.set(Array(seen.suffix(500)), forKey: Store.seenKey)
+            UserDefaults.standard.set(pendingContinues + n, forKey: Store.pendingKey)
+        }
+        await transaction.finish()
+        bridge?.tellGame("window.onContinues && window.onContinues()")
+    }
 
     var status: [String: Any] {
         var d: [String: Any] = ["tier": tier, "founding": founding, "vip": vip, "vipRenews": vipRenews]
@@ -444,15 +473,19 @@ final class Store {
         // purchases that finish outside the purchase sheet: Ask to Buy approvals, Family Sharing, refunds
         Task.detached(priority: .background) {
             for await update in Transaction.updates {
-                if case .verified(let transaction) = update { await transaction.finish() }
+                if case .verified(let transaction) = update { await Store.shared.handle(transaction) }
                 await Store.shared.refresh(push: true)
             }
         }
-        Task { await loadProducts(); await refresh(push: true) }
+        Task {
+            await loadProducts(); await refresh(push: true)
+            // any paid continues whose purchase finished while the app was closed
+            for await result in Transaction.unfinished { if case .verified(let t) = result, Store.continueIds[t.productID] != nil { await credit(t) } }
+        }
     }
 
     func loadProducts() async {
-        guard products.isEmpty, let list = try? await Product.products(for: Store.ids + Store.vipIds) else { return }
+        guard products.isEmpty, let list = try? await Product.products(for: Store.ids + Store.vipIds + Array(Store.continueIds.keys)) else { return }
         for product in list where products[Store.base(product.id)] == nil || product.id.hasSuffix(".v2") { products[Store.base(product.id)] = product } // the ".v2" pack wins when both exist
         // VIP's IDs are kept as they are
     }
@@ -494,6 +527,7 @@ final class Store {
             switch try await product.purchase() {
             case .success(let verification):
                 guard case .verified(let transaction) = verification else { return (tier, "The App Store couldn't confirm this purchase.") }
+                if Store.continueIds[transaction.productID] != nil { await credit(transaction); return (tier, nil) }
                 await transaction.finish()
                 await refresh()
                 return (tier, nil)
