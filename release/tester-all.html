@@ -1469,13 +1469,12 @@ function update(dt) {
         if (o.k === 'b') { if (mode !== 'zen') return die(x, o.y, bi, o); if (!o.zen) { o.zen = true; combo = 1; fx.near = 1; burst(bx[bi], BY, 6, '#ffffff', 140, .4, 0, .8); haptic('soft'); } continue; } // Zen: nothing breaks, the combo just resets
         if (!o.got) {
           o.got = true; const gv = combo * (wxOn('golden') ? 3 : o.ff ? 2 : 1); if (mode !== 'zen' && !previewEv) runShards += ECON.perGem * (wxOn('golden') ? 3 : o.ff ? 2 : 1); /* Mirror Shards: worth more in golden hour and among the fireflies */ score = mode === 'normal' ? Math.min(GOAL, score + gv) : score + gv; if (gv > combo) float(x, o.y - 44, '×' + gv / combo, '#f2a93b'); /* golden hour: every gem counts triple */ combo = Math.min(wxOn('blossom') ? 12 : 8, combo + 1); beep(700 + combo * 70, .12, 'triangle', .07, 400); haptic('soft');
-          if (combo === 5 || combo === 8 || combo === 12) float(W / 2, 196, `COMBO ×${combo}!`, '#f08f1c'); // the combo explains itself the first time, and cheers its milestones
           fx.gem = 1; fx.combo = 1; fx.maxCombo = Math.max(fx.maxCombo, combo); // visual feedback only
           burst(x, o.y, 7, '#ffc867', 160, .4, 60, .9); burst(x, o.y, 3, '#ffffff', 120, .3, 0, .8); float(x, o.y - 24, '+' + (combo - 1 || 1), '#e9a23b');
         }
       }
     }
-    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; if (!wxOn('blossom')) { if (combo > 2) { beep(440, .3, 'sine', .028, -120); float(W / 2, 196, `Combo ×${combo} lost`, '#9a9db0'); } combo = 1; } } // during cherry blossom a missed gem keeps the combo // a gentle falling note when a combo is lost
+    if (o.k === 'g' && !o.got && o.y > BY + 70) { o.got = true; if (!wxOn('blossom')) { if (combo > 2) { beep(440, .3, 'sine', .028, -120); } combo = 1; } } // during cherry blossom a missed gem keeps the combo // a gentle falling note when a combo is lost
   }
   things = things.filter(o => o.y < H + 80 && !(o.got && o.k === 'g'));
   if (mode === 'normal' && !gate && score >= GOAL) { gate = { y: Math.min(nextY + 40, -80), t: 0 }; banner = 'FINAL STRETCH'; fxA = 1; beep(520, .5, 'sine', .06, 260); haptic('medium'); } // no new rows: the finish line comes down behind the last one
@@ -4141,7 +4140,7 @@ function drawDivider(k) {
 }
 
 // ---------- draw: frame ----------
-let shownScore = 0;
+let shownScore = 0; const CMB = { s: 1, v: 0, a: 0, n: 1, last: 1, w: 0, t: 0 };
 let heatC = null;
 const themeMeta = document.querySelector('meta[name=theme-color]');
 const bannerEl = document.getElementById('banner'); let bannerTxt = '', bannerOn = false, nightOn = false;
@@ -4329,16 +4328,20 @@ function draw() {
     txt('LEVEL ' + (level + 1) + '  ·  ' + (mode === 'daily' ? 'DAILY CHALLENGE' : mode === 'zen' ? 'ZEN' : NAMES[bucket()].toUpperCase()), W / 2, 124, 14, hudInk(.45), 'center', 800);
     const nb = score > bestNow() && bestNow() > 0; // live high score in the top-right corner
     if (mode !== 'zen') { if (goldOn) { goldTxt('GOLDEN RUN', W - 18, 32, 11, 'right', 900); goldTxt(Math.max(score, bestNow()) + '', W - 18, 56, 22, 'right', 900); } else { txt(nb ? 'NEW BEST' : 'BEST', W - 18, 32, 11, nb ? '#ff6b81' : '#e9a23b', 'right', 900); txt(Math.max(score, bestNow()) + '', W - 18, 56, 22, hudInk(.7), 'right', 900); } }
-    if (combo > 1) { // combo pill grows a little warmer as it climbs
-      const ck = 1 + .25 * ease(fx.combo), heat = clamp01((combo - 2) / 6);
-      ctx.save(); ctx.translate(W / 2, 156); ctx.scale(ck, ck);
+    { const now = performance.now(), dt = Math.min(.05, Math.max(0, (now - CMB.t) / 1000)); CMB.t = now; // the combo pill moves on a soft spring: a gentle pop with each gem, settling smoothly, fading in and out
+      if (combo !== CMB.last) { if (combo > CMB.last && combo > 1) CMB.v += 2.6 + Math.min(1.6, combo * .12); CMB.last = combo; if (combo > 1) CMB.n = combo; }
+      const sub = 4; for (let k = 0; k < sub; k++) { const h = dt / sub, acc = -210 * (CMB.s - 1) - 17 * CMB.v; CMB.v += acc * h; CMB.s += CMB.v * h; }
+      CMB.a += ((combo > 1 ? 1 : 0) - CMB.a) * (1 - Math.exp(-dt * (combo > 1 ? 14 : 7))); }
+    if (CMB.a > .01 && CMB.n > 1) { // combo pill grows a little warmer as it climbs
+      const ck = CMB.s * (.86 + .14 * CMB.a), heat = clamp01((CMB.n - 2) / 6);
+      ctx.save(); ctx.globalAlpha *= CMB.a; ctx.translate(W / 2, 156); ctx.scale(ck, ck);
       if (heat > 0) { const cg = ctx.createRadialGradient(0, 0, 4, 0, 0, 46); cg.addColorStop(0, `rgba(255,200,103,${.25 * heat})`); cg.addColorStop(1, 'rgba(255,200,103,0)'); ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, 46, 0, 7); ctx.fill(); }
-      const cs = '×' + combo; ctx.font = '900 20px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const cm = ctx.measureText(cs), pw = Math.max(52, cm.width + 30);
+      const cs = '×' + CMB.n; ctx.font = '900 20px -apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const cm = ctx.measureText(cs), pwT = Math.max(52, cm.width + 30); CMB.w = CMB.w ? CMB.w + (pwT - CMB.w) * .25 : pwT; const pw = CMB.w; // the pill widens smoothly when a digit is added
       { const nk = uiNight(), gl = ctx.createLinearGradient(0, -16, 0, 16); // a tinted glass pill: the sky shows through, a soft highlight along its top edge
         gl.addColorStop(0, nk > .5 ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.34)'); gl.addColorStop(1, nk > .5 ? 'rgba(255,255,255,.08)' : 'rgba(43,45,66,.1)');
         ctx.fillStyle = gl; ctx.beginPath(); ctx.roundRect(-pw / 2, -16, pw, 32, 16); ctx.fill();
         ctx.lineWidth = 1; ctx.strokeStyle = nk > .5 ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.roundRect(-pw / 2 + .5, -15.5, pw - 1, 31, 15.5); ctx.stroke(); } // the pill is centred on 0, and so is the text's ink
-      txt(cs, (cm.actualBoundingBoxLeft - cm.actualBoundingBoxRight) / 2, (cm.actualBoundingBoxAscent - cm.actualBoundingBoxDescent) / 2, 20, combo >= 5 ? '#f08f1c' : '#e9a23b', 'center', 900); ctx.restore();
+      txt(cs, (cm.actualBoundingBoxLeft - cm.actualBoundingBoxRight) / 2, (cm.actualBoundingBoxAscent - cm.actualBoundingBoxDescent) / 2, 20, CMB.n >= 5 ? '#f08f1c' : '#e9a23b', 'center', 900); ctx.restore();
     }
     // countdown to the next speed-up
     ctx.fillStyle = 'rgba(43,45,66,.08)'; ctx.beginPath(); ctx.roundRect(W / 2 - 80, 22, 160, 6, 3); ctx.fill();
