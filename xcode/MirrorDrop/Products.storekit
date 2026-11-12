@@ -1,0 +1,272 @@
+{
+  "identifier": "5F1C2A7E",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": true,
+      "internalID": "6740000000",
+      "localizations": [
+        {
+          "description": "Chill and Zen modes.",
+          "displayName": "Plus",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.plus",
+      "referenceName": "Plus",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.79",
+      "familyShareable": true,
+      "internalID": "6740000001",
+      "localizations": [
+        {
+          "description": "Hard, storms and hail.",
+          "displayName": "Pro",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.pro",
+      "referenceName": "Pro",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": true,
+      "internalID": "6740000002",
+      "localizations": [
+        {
+          "description": "Every mode, every event and the Daily.",
+          "displayName": "Max",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.max",
+      "referenceName": "Max",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": true,
+      "internalID": "6740000003",
+      "localizations": [
+        {
+          "description": "Everything in Max, plus the Golden Run.",
+          "displayName": "Supporter",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.supporter",
+      "referenceName": "Supporter",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.79",
+      "familyShareable": true,
+      "internalID": "6740000004",
+      "localizations": [
+        {
+          "description": "Upgrade from Plus to Pro.",
+          "displayName": "Pro Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.pro.from.plus",
+      "referenceName": "Pro (upgrade from Plus)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": true,
+      "internalID": "6740000005",
+      "localizations": [
+        {
+          "description": "Upgrade from Plus to Max.",
+          "displayName": "Max Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.max.from.plus",
+      "referenceName": "Max (upgrade from Plus)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.29",
+      "familyShareable": true,
+      "internalID": "6740000006",
+      "localizations": [
+        {
+          "description": "Upgrade from Pro to Max.",
+          "displayName": "Max Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.max.from.pro",
+      "referenceName": "Max (upgrade from Pro)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "3.99",
+      "familyShareable": true,
+      "internalID": "6740000007",
+      "localizations": [
+        {
+          "description": "Upgrade from Plus to Supporter.",
+          "displayName": "Supporter Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.supporter.from.plus",
+      "referenceName": "Supporter (upgrade from Plus)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "3.29",
+      "familyShareable": true,
+      "internalID": "6740000008",
+      "localizations": [
+        {
+          "description": "Upgrade from Pro to Supporter.",
+          "displayName": "Supporter Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.supporter.from.pro",
+      "referenceName": "Supporter (upgrade from Pro)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": true,
+      "internalID": "6740000009",
+      "localizations": [
+        {
+          "description": "Upgrade from Max to Supporter.",
+          "displayName": "Supporter Upgrade",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.upgrade.supporter.from.max",
+      "referenceName": "Supporter (upgrade from Max)",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.29",
+      "familyShareable": false,
+      "internalID": "6740000200",
+      "localizations": [
+        {
+          "description": "Adds 1 continue to Mirror Drop.",
+          "displayName": "1 Continue",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.continues.1",
+      "referenceName": "1 Continue",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "0.49",
+      "familyShareable": false,
+      "internalID": "6740000201",
+      "localizations": [
+        {
+          "description": "Adds 2 continues to Mirror Drop.",
+          "displayName": "2 Continues",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.continues.2",
+      "referenceName": "2 Continues",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "6740000202",
+      "localizations": [
+        {
+          "description": "Adds 5 continues to Mirror Drop.",
+          "displayName": "5 Continues",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.continues.5",
+      "referenceName": "5 Continues",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "1.79",
+      "familyShareable": false,
+      "internalID": "6740000203",
+      "localizations": [
+        {
+          "description": "Adds 10 continues to Mirror Drop.",
+          "displayName": "10 Continues",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.continues.10",
+      "referenceName": "10 Continues",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "6740000204",
+      "localizations": [
+        {
+          "description": "Adds 20 continues to Mirror Drop.",
+          "displayName": "20 Continues",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "mirrordrop.continues.20",
+      "referenceName": "20 Continues",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [
+    {
+      "id": "5F1C2A80",
+      "localizations": [],
+      "name": "Mirror Drop VIP",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "3.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6740000100",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Free weekly continues, advanced tips and rare event previews.",
+              "displayName": "Mirror Drop VIP",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "mirrordrop.vip.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "VIP Monthly",
+          "subscriptionGroupID": "5F1C2A80",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

@@ -1,0 +1,12 @@
+[
+  {"id": "mirrordrop.plus", "ref": "Plus", "name": "Plus", "desc": "Chill and Zen modes.", "price": "0.99"},
+  {"id": "mirrordrop.pro", "ref": "Pro", "name": "Pro", "desc": "Hard, storms and hail.", "price": "1.79"},
+  {"id": "mirrordrop.max", "ref": "Max", "name": "Max", "desc": "Every mode, every event and the Daily.", "price": "1.99"},
+  {"id": "mirrordrop.supporter", "ref": "Supporter", "name": "Supporter", "desc": "Everything in Max, plus the Golden Run.", "price": "4.99"},
+  {"id": "mirrordrop.upgrade.pro.from.plus", "ref": "Pro (upgrade from Plus)", "name": "Pro Upgrade", "desc": "Upgrade from Plus to Pro.", "price": "0.79"},
+  {"id": "mirrordrop.upgrade.max.from.plus", "ref": "Max (upgrade from Plus)", "name": "Max Upgrade", "desc": "Upgrade from Plus to Max.", "price": "0.99"},
+  {"id": "mirrordrop.upgrade.max.from.pro", "ref": "Max (upgrade from Pro)", "name": "Max Upgrade", "desc": "Upgrade from Pro to Max.", "price": "0.29"},
+  {"id": "mirrordrop.upgrade.supporter.from.plus", "ref": "Supporter (upgrade from Plus)", "name": "Supporter Upgrade", "desc": "Upgrade from Plus to Supporter.", "price": "3.99"},
+  {"id": "mirrordrop.upgrade.supporter.from.pro", "ref": "Supporter (upgrade from Pro)", "name": "Supporter Upgrade", "desc": "Upgrade from Pro to Supporter.", "price": "3.29"},
+  {"id": "mirrordrop.upgrade.supporter.from.max", "ref": "Supporter (upgrade from Max)", "name": "Supporter Upgrade", "desc": "Upgrade from Max to Supporter.", "price": "2.99"}
+]

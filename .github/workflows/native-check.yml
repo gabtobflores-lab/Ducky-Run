@@ -1,0 +1,25 @@
+# Compiles the native (SpriteKit) Mirror Drop with the settings a brand-new Xcode 26 project uses,
+# so files dropped into a new project by update-mac.sh build there too.
+name: Native app check
+on:
+  push:
+    branches: [claude/ducky-run-game]
+    paths: ['native/**', '.github/workflows/native-check.yml']
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use the newest Xcode
+        run: |
+          NEWEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$NEWEST" ] && sudo xcode-select -s "$NEWEST/Contents/Developer"; xcodebuild -version
+      - name: Build with new-project settings
+        run: |
+          set -o pipefail
+          cd native
+          xcodebuild -project MirrorDrop.xcodeproj -target MirrorDrop -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO \
+            SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY=YES SWIFT_DEFAULT_ACTOR_ISOLATION=MainActor SWIFT_APPROACHABLE_CONCURRENCY=YES \
+            build 2>&1 | grep -E "error:|BUILD" | sort -u | head -80
